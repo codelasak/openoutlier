@@ -1,4 +1,4 @@
-// ReelScope Library – the Reddit "Mentions" page: watch list editor, inbox and
+// OpenOutlier Library – the Reddit "Mentions" page: watch list editor, inbox and
 // the optional link to the reddit-watch home server. The checking itself runs
 // in the service worker (src/mentions-bg.js); this page only edits storage.
 (function (root) {
@@ -202,7 +202,7 @@
             m.author ? h('span', { text: 'u/' + m.author }) : null,
             h('span', { title: m.createdAt ? new Date(m.createdAt).toLocaleString() : '', text: m.createdAt ? ago(m.createdAt) : '' }),
             m.score != null ? h('span', { text: m.score + ' pts' }) : null,
-            h('span', { class: 'm-query', title: w ? 'Watch' : 'This watch was deleted', text: '🔎 ' + (m.query || '') + (w ? '' : ' (deleted)') }),
+            h('span', { class: 'm-query', title: w ? 'Watch' : 'This watch was deleted', text: 'Watch: ' + (m.query || '') + (w ? '' : ' (deleted)') }),
             m.source === 'hayati' ? h('span', { class: 'm-source', title: 'Found by the reddit-watch home server', text: 'home server' }) : null),
           h('button', { class: 'm-title', type: 'button', onclick: open }, (m.kind === 'comment' ? 'Comment on: ' : '') + (m.title || '(no title)')),
           m.excerpt ? h('p', { class: 'm-excerpt', text: m.excerpt }) : null,
@@ -250,7 +250,7 @@
 
       return h('section', { class: 'm-card' },
         h('h2', { text: 'Home server (optional)' }),
-        h('p', { class: 'muted', text: 'Link the reddit-watch service on your home server so watching continues 24/7 when Chrome is closed. ReelScope sends it your watch list and pulls its matches into this inbox. The extension keeps working on its own if the server is down. Off by default.' }),
+        h('p', { class: 'muted', text: 'Link the reddit-watch service on your home server so watching continues 24/7 when Chrome is closed. OpenOutlier sends it your watch list and pulls its matches into this inbox. The extension keeps working on its own if the server is down. Off by default.' }),
         h('div', { class: 'm-form' },
           h('label', { class: 'm-field' }, h('span', { text: 'Server address' }), url, h('small', { text: 'Tailscale IP or tunnel host, e.g. http://100.101.102.103:8787' })),
           h('label', { class: 'm-field' }, h('span', { text: 'API token' }), token),

@@ -1,4 +1,4 @@
-// ReelScope – the library on disk: one SQLite file, ~/.reelscope/reelscope.db.
+// OpenOutlier – the library on disk: one SQLite file, ~/.reelscope/reelscope.db.
 //
 // The extension pushes its data through the bridge; this module stores it.
 // Every MCP server instance reads the same file (WAL mode, so readers never
@@ -78,7 +78,7 @@ export class Store {
   revision() { return this.getMeta('revision', 0); }
 
   /**
-   * Import ~/.reelscope/library.json (written by older ReelScope versions) and
+   * Import ~/.reelscope/library.json (written by older OpenOutlier versions) and
    * rename it. Safe to run any number of times: it only adds and updates, so
    * a file written by an old MCP server that's still running gets merged in
    * the next time this runs (daemon takeover, a new MCP server, …).

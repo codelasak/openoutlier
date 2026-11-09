@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReelScope Reddit demo</title>
+  <title>OpenOutlier Reddit demo</title>
   <style>
     body { margin: 0; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; color: #111; }
     header { padding: 24px 32px; border-bottom: 1px solid #ddd; }
@@ -70,7 +70,7 @@
 </head>
 <body>
   <header>
-    <h1>ReelScope Reddit demo (r/excel)</h1>
+    <h1>OpenOutlier Reddit demo (r/excel)</h1>
     <p>Stands in for reddit.com/r/excel/top. The posts below are fake <code>&lt;shreddit-post&gt;</code> elements. "Collect top posts" in the panel scrolls this page and reads them (Reddit refuses its listing JSON, so the page is the source). The fake listing JSON is only used by agent commands; <code>#blocked</code> makes it answer 403.</p>
   </header>
   <nav>
@@ -87,7 +87,7 @@
   </script>
   <script src="/src/metrics.js"></script>
   <script src="/src/reddit.js"></script>
-  <script src="/src/panel.js"></script>
+  <script src="/src/brand.js"></script>  <script src="/src/panel.js"></script>
   <script src="/src/reddit-content.js"></script>
   <script>setTimeout(function () { window.__demoOpenPanel(); }, 900);</script>
 </body>

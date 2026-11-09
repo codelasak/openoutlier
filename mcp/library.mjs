@@ -1,4 +1,4 @@
-// ReelScope MCP – the on-disk copy of the library and the queries agents run on it.
+// OpenOutlier MCP – the on-disk copy of the library and the queries agents run on it.
 // The extension pushes its data here (see bridge.mjs); every MCP server
 // instance (Claude Desktop, Claude Code, …) reads the same files.
 import { createRequire } from 'node:module';
@@ -601,7 +601,7 @@ export function mentionsQuery(lib, { watch, since_days, since, unread_only = fal
   if (watch) {
     const w = watches.find((x) => x.id === watch) || watches.find((x) => x.query.toLowerCase() === String(watch).toLowerCase()) ||
       watches.find((x) => x.query.toLowerCase().includes(String(watch).toLowerCase()));
-    if (!w) throw new Error(`No watch matches "${watch}". Watches: ${watches.map((x) => x.query).join(' | ') || 'none (add them on the Mentions page of the ReelScope Library)'}`);
+    if (!w) throw new Error(`No watch matches "${watch}". Watches: ${watches.map((x) => x.query).join(' | ') || 'none (add them on the Mentions page of the OpenOutlier Library)'}`);
     watchId = w.id;
   }
   const sinceMs = since ? Date.parse(since) : since_days ? Date.now() - since_days * 864e5 : null;

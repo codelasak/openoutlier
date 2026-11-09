@@ -3,27 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReelScope Library</title>
+  <title>OpenOutlier Library</title>
   <link rel="icon" href="../icons/icon32.png">
+  <link rel="stylesheet" href="../fonts/fonts.css">
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
   <header class="top">
-    <div class="brand"><img src="../icons/icon32.png" width="22" height="22" alt=""><span>ReelScope</span><span class="brand-sub">Library</span></div>
+    <a class="brand" href="#/all" aria-label="OpenOutlier Library: all accounts">
+      <img class="wordmark" src="../brand/v2/wordmark/openoutlier-inline-trail3-transparent.svg" alt="OpenOutlier" width="150" height="46">
+      <span class="brand-sub">Library</span>
+    </a>
     <input id="search" type="search" placeholder="Search accounts" aria-label="Search accounts">
     <div class="top-actions">
       <button id="backup" class="btn btn-ghost" type="button" title="Download all saved data and folders as one JSON file">Back up</button>
-      <label class="btn btn-ghost" title="Restore from a ReelScope backup file">Restore<input id="restore" type="file" accept="application/json,.json" hidden></label>
+      <label class="btn btn-ghost" title="Restore from an OpenOutlier (or ReelScope) backup file">Restore<input id="restore" type="file" accept="application/json,.json" hidden></label>
     </div>
+    <span class="hazepx" aria-hidden="true"><i style="left:0;top:8px"></i><i style="left:8px;top:8px"></i><i style="left:8px;top:4px"></i><i style="left:16px;top:4px"></i><i style="left:16px;top:0"></i><i style="left:24px;top:0"></i><i style="left:40px;top:8px"></i><i style="left:48px;top:4px"></i><i style="left:56px;top:0"></i><i style="left:76px;top:8px"></i><i style="left:84px;top:4px"></i><i style="left:92px;top:0"></i><i style="left:100px;top:0"></i></span>
   </header>
 
   <div class="layout">
     <aside class="side" aria-label="Library">
-      <nav id="nav-library"></nav>
+      <nav id="nav-library" aria-label="Views"></nav>
       <div class="side-head"><span>Folders</span><button id="new-folder" class="icon-btn" type="button" aria-label="New folder" title="New folder">+</button></div>
-      <nav id="nav-folders"></nav>
+      <nav id="nav-folders" aria-label="Folders"></nav>
       <div class="side-head"><span>Tags</span></div>
-      <nav id="nav-tags"></nav>
+      <nav id="nav-tags" aria-label="Tags"></nav>
       <label class="side-option"><input id="show-small" type="checkbox"> Show accounts with fewer than 5 posts</label>
       <p class="side-hint">Tip: drag an account card onto a folder.</p>
     </aside>
@@ -33,6 +38,7 @@
 
   <script src="../src/metrics.js"></script>
   <script src="../src/compare.js"></script>
+  <script src="../src/brand.js"></script>
   <script src="../src/panel.js"></script>
   <script src="../src/mentions.js"></script>
   <script src="mentions-view.js"></script>

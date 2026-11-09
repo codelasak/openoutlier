@@ -1,4 +1,4 @@
-// ReelScope – Reddit "Mentions" checker. Runs in the service worker.
+// OpenOutlier – Reddit "Mentions" checker. Runs in the service worker.
 //
 // • Every ~15 min (chrome.alarms) while Chrome is open, checks each enabled
 //   watch (search sorted by new; latest comments of the watched subreddits),
@@ -93,7 +93,7 @@
   }
 
   // Runs inside the reddit.com tab (injected with chrome.scripting, so it works
-  // even in tabs opened before ReelScope was installed or reloaded): a
+  // even in tabs opened before OpenOutlier was installed or reloaded): a
   // same-origin, read-only GET with the page's own cookies. Must be self-contained.
   async function fetchInPage(path, accept) {
     try {
@@ -132,7 +132,7 @@
         if (res && res.status) return Object.assign(classify(res.status, res.text, format), { via: 'tab', waitMs: headerWaitMs(res.headers, res.status === 429) });
         if (res && res.error) tabProblem = 'The reddit.com tab could not make the request (' + res.error + ').';
       } catch (e) {
-        tabProblem = 'ReelScope could not use your reddit.com tab (' + String(e && e.message || e) + '). Reload that tab.';
+        tabProblem = 'OpenOutlier could not use your reddit.com tab (' + String(e && e.message || e) + '). Reload that tab.';
       }
     }
     try {
@@ -310,7 +310,7 @@
       } else if (r.kind === 'refused') {
         var strikes = (st.strikes || 0) + 1;
         Object.assign(patch, { rssQueue: [], lastRunAt: Date.now(), strikes: strikes,
-          lastError: 'Reddit refused its RSS feeds (HTTP ' + (r.status || '?') + '). ReelScope will try again later; your home server (if linked) keeps watching.',
+          lastError: 'Reddit refused its RSS feeds (HTTP ' + (r.status || '?') + '). OpenOutlier will try again later; your home server (if linked) keeps watching.',
           backoffUntil: Date.now() + BACKOFF_MIN[Math.min(strikes, BACKOFF_MIN.length) - 1] * 60000 });
       } else {
         Object.assign(patch, { lastRunAt: Date.now(), lastError: errorText(r) });

@@ -3,38 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReelScope</title>
+  <title>OpenOutlier</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header>
-    <img src="../icons/icon32.png" width="20" height="20" alt="">
-    <h1>ReelScope</h1>
+  <header class="band">
+    <img class="wordmark" src="../brand/v2/wordmark/openoutlier-inline-trail3-transparent.svg" alt="OpenOutlier" width="143" height="44">
+    <span id="version" class="version"></span>
+    <span class="hazepx" aria-hidden="true"><i style="left:0;top:8px"></i><i style="left:8px;top:8px"></i><i style="left:8px;top:4px"></i><i style="left:16px;top:4px"></i><i style="left:16px;top:0"></i><i style="left:24px;top:0"></i><i style="left:40px;top:8px"></i><i style="left:48px;top:4px"></i><i style="left:56px;top:0"></i><i style="left:76px;top:8px"></i><i style="left:84px;top:4px"></i><i style="left:92px;top:0"></i><i style="left:100px;top:0"></i></span>
   </header>
 
-  <button id="library" class="btn btn-primary" type="button">Open library (all saved accounts)</button>
-  <button id="open" class="btn btn-wide" type="button">Open panel on this tab</button>
-  <button id="mentions" class="btn btn-wide" type="button">🔔 Reddit mentions</button>
-  <p id="hint" class="hint" hidden>Open <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> (a profile's <b>Reels</b> tab), a profile on <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a> or a subreddit on <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>, then scroll. Reload the tab if you just installed ReelScope.</p>
+  <main>
+    <button id="library" class="btn btn-primary" type="button">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z" fill="currentColor"/></svg>
+      <span>Open the Library</span><span class="aside">all saved accounts</span>
+    </button>
+    <button id="open" class="btn" type="button">Open the panel on this tab</button>
+    <button id="mentions" class="btn" type="button">
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M7 1h2v2H7zM5 3h6v2H5zM4 5h8v5H4zM3 10h10v2H3zM6 13h4v2H6z" fill="currentColor"/></svg>
+      <span id="mentions-label">Reddit mentions</span><span id="mentions-count" class="count" hidden></span>
+    </button>
+    <p id="hint" class="hint" hidden>Open <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> (a profile's <b>Reels</b> tab), a profile on <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a> or a subreddit on <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>, then scroll. Reload the tab if you just installed OpenOutlier.</p>
 
-  <label class="toggle">
-    <input id="details" type="checkbox" checked>
-    <span><b>Load missing views &amp; dates</b><br><span class="muted">Asks Instagram for each post's details, one at a time, the same way its own post page does. Turn off if Instagram shows "try again later".</span></span>
-  </label>
+    <label class="toggle">
+      <span><b>Load missing views &amp; dates</b><span class="muted">Asks Instagram for each post's details, one at a time, the same way its own post page does. Turn off if Instagram shows "try again later".</span></span>
+      <span class="switch"><input id="details" type="checkbox" checked><span></span></span>
+    </label>
 
-  <label class="toggle">
-    <input id="agents" type="checkbox" checked>
-    <span><b>Save to this Mac &amp; connect AI agents</b><br><span class="muted" id="agent-status">Checking…</span></span>
-  </label>
+    <label class="toggle">
+      <span><b>Save to this Mac &amp; connect AI agents</b><span class="muted" id="agent-status">Checking…</span></span>
+      <span class="switch"><input id="agents" type="checkbox" checked><span></span></span>
+    </label>
 
-  <h2>Saved accounts &amp; subreddits</h2>
-  <ul id="profiles"></ul>
-  <p id="none" class="muted" hidden>Nothing saved yet.</p>
+    <h2 class="label">Saved accounts &amp; subreddits</h2>
+    <ul id="profiles"></ul>
+    <p id="none" class="muted" hidden>Nothing saved yet. Open a profile on Instagram or TikTok, or a subreddit, then scroll.</p>
+  </main>
 
   <footer>
     <button id="clear" class="btn btn-ghost" type="button">Delete all data</button>
     <span class="muted">Free &amp; open source · MIT</span>
   </footer>
+  <script src="../src/metrics.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

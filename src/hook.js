@@ -1,4 +1,4 @@
-// ReelScope – page hook (runs in the page's MAIN world at document_start).
+// OpenOutlier – page hook (runs in the page's MAIN world at document_start).
 //
 // Instagram and TikTok load profile videos through their own API calls. This
 // script listens to those responses as they arrive and forwards the raw JSON
@@ -11,7 +11,7 @@
 // TikTok: /api/post/item_list, /api/item/detail, /api/repost/item_list,
 // /api/recommend/item_list, /api/search/…, /api/related/item_list … (any
 // /api/ response that carries video items). TikTok signs these requests, so
-// ReelScope never replays them; it only reads what the page already got.
+// OpenOutlier never replays them; it only reads what the page already got.
 (function () {
   'use strict';
   if (window.__reelscopeHooked) return;

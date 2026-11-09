@@ -1,4 +1,4 @@
-// ReelScope – scoring, analytics and CSV. Pure functions (Node-testable).
+// OpenOutlier – scoring, analytics and CSV. Pure functions (Node-testable).
 (function (root, factory) {
   var api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;

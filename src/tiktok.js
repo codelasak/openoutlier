@@ -1,8 +1,8 @@
-// ReelScope – turn TikTok's own JSON (the /api/… responses its web app loads,
+// OpenOutlier – turn TikTok's own JSON (the /api/… responses its web app loads,
 // and the SSR blob it embeds in the page) into normalized post records.
 // Pure functions, no DOM or chrome.* access, so they run in Node tests too.
 //
-// ReelScope makes no TikTok API requests of its own: TikTok signs them
+// OpenOutlier makes no TikTok API requests of its own: TikTok signs them
 // (X-Bogus, X-Gnarly, msToken) and replayed requests break within minutes.
 // Everything here comes from responses the page already received.
 //

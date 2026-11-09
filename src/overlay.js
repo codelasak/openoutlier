@@ -1,4 +1,4 @@
-// ReelScope – toolbar + stats card shown on top of the reel/post you're viewing
+// OpenOutlier – toolbar + stats card shown on top of the reel/post you're viewing
 // (instagram.com/reel/…, /reels/…, /p/…; tiktok.com/@user/video/…). It lives in its own Shadow DOM host
 // and is positioned over the video with position:fixed, so it never touches
 // Instagram's own markup.
@@ -45,7 +45,10 @@
     svg.appendChild(p);
     return svg;
   }
-  var I_LOGO = 'M4 20V10M10 20V4M16 20v-7M21 21l-3.2-3.2M18.5 15.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0z';
+  function brandLogo(name, cls) {
+    var B = root.OpenOutlierBrand;
+    return B ? B.logo(name, cls) : h('span', { class: cls, text: 'O' });
+  }
   var I_DOWN = 'M12 4v11M7 10l5 5 5-5M5 20h14';
   var I_IMAGE = 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9.5a1 1 0 1 0 0-.01';
 
@@ -101,7 +104,8 @@
     var timer = null;
     var status = '';
 
-    var statsBtn = h('button', { class: 'ov-btn ov-logo', type: 'button', title: 'ReelScope stats', 'aria-label': 'Show ReelScope stats', onclick: function () { open = !open; writeOpen(open); render(); } }, icon(I_LOGO));
+    var statsBtn = h('button', { class: 'ov-btn ov-logo', type: 'button', title: 'OpenOutlier stats', 'aria-label': 'Show OpenOutlier stats', onclick: function () { open = !open; writeOpen(open); render(); } },
+      brandLogo('markInk', 'mark mark-on-ink'), brandLogo('mark', 'mark mark-on-blue'));
     var dlBtn = h('button', { class: 'ov-btn', type: 'button', title: 'Download video', 'aria-label': 'Download video', onclick: function () { download('media'); } }, icon(I_DOWN));
     var coverBtn = h('button', { class: 'ov-btn', type: 'button', title: 'Download cover image', 'aria-label': 'Download cover image', onclick: function () { download('cover'); } }, icon(I_IMAGE));
     var bar = h('div', { class: 'ov-bar' }, dlBtn, statsBtn, coverBtn);
@@ -117,7 +121,7 @@
       status = 'Starting download…';
       render();
       opts.onDownloadMedia([p], what).then(function (r) {
-        status = r && r.queued ? 'Saved to Downloads/ReelScope/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the page and try again.';
+        status = r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the page and try again.';
         render();
         setTimeout(function () { status = ''; render(); }, 3500);
       }, function () { status = 'Download failed.'; render(); });
@@ -159,14 +163,17 @@
       if (others.length >= 5 && p.views > 0) {
         var med = M.median(others.map(function (x) { return x.views; }));
         var ratio = p.views / med;
-        card.appendChild(h('p', { class: 'ov-compare' + (ratio >= M.OUTLIER_RATIO ? ' is-outlier' : '') },
-          ratio.toFixed(1) + '× ' + handle + '\'s median · Viral Score ' + M.viralScore(p.views, med)));
+        var hit = ratio >= M.OUTLIER_RATIO;
+        card.appendChild(h('p', { class: 'ov-compare' + (hit ? ' is-outlier' : '') },
+          hit ? h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')) : null,
+          h('b', { text: ratio.toFixed(1) + '×' }),
+          h('span', { text: handle + '\'s median · Viral Score ' + M.viralScore(p.views, med) })));
       }
       var audio = p.audio ? (p.audio.kind === 'music' || tt ? '♪ ' + p.audio.title + (p.audio.artist && p.audio.kind === 'music' ? ' · ' + p.audio.artist : '') : '♪ Original audio') : '';
       if (audio) card.appendChild(h('p', { class: 'ov-muted ov-audio', text: audio }));
       if (opts.isLoading(code)) card.appendChild(h('p', { class: 'ov-muted', text: 'Loading more details…' }));
       if (status) card.appendChild(h('p', { class: 'ov-status', text: status }));
-      card.appendChild(h('button', { class: 'ov-link', type: 'button', onclick: opts.onOpenPanel }, 'Open ReelScope panel'));
+      card.appendChild(h('button', { class: 'ov-link', type: 'button', onclick: opts.onOpenPanel }, 'Open the OpenOutlier panel'));
     }
 
     function position() {

@@ -1,4 +1,4 @@
-// ReelScope – Reddit keyword "Mentions": matching, request planning, parsing,
+// OpenOutlier – Reddit keyword "Mentions": matching, request planning, parsing,
 // dedupe and merge. Pure functions (no DOM / chrome.*), so they run in Node tests.
 //
 // The matching rules and the mention record are a contract shared with the

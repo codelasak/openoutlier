@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenOutlier popup demo</title>
+  <link rel="stylesheet" href="../fonts/fonts.css">
+  <link rel="stylesheet" href="../popup/popup.css">
+  <style>body { margin: 24px auto; box-shadow: 0 18px 48px -12px rgba(11, 14, 26, 0.35); }</style>
+</head>
+<body>
+  <!-- Loads the real popup/popup.html markup and popup.js with a stubbed chrome.* API.
+       Add ?empty to see the first-run state. -->
+  <script>
+    (async function () {
+      var empty = /[?&]empty\b/.test(location.search);
+      var M = null;
+      function posts(n, base, spread) {
+        var o = {};
+        for (var i = 0; i < n; i++) {
+          var views = Math.round(base * (i % 9 === 0 ? spread : 0.5 + (i % 5) / 4));
+          o['c' + i] = { code: 'c' + i, platform: 'instagram', type: 'reel', views: views, likes: Math.round(views / 20), comments: 40, takenAt: Date.now() - i * 864e5 };
+        }
+        return o;
+      }
+      var store = empty ? {} : {
+        'rs:p:excel.ipuclari': { posts: posts(60, 200000, 9), updatedAt: Date.now() - 2 * 36e5 },
+        'rs:p:tt/excel.ipuclari': { posts: posts(48, 230000, 6), updatedAt: Date.now() - 3 * 36e5 },
+        'rs:p:exceldersleri': { posts: posts(20, 60000, 1.2), updatedAt: Date.now() - 864e5 },
+        'rs:mentions': { items: { a: {}, b: {}, c: {}, d: {} }, read: { d: true } },
+        'rs:watches': [{}],
+        'rs:bridge': { connected: true, port: 47321, lastSyncAt: Date.now() - 6e4, lastBackupAt: Date.now() - 36e5, lastBackupOk: true }
+      };
+      window.chrome = {
+        storage: {
+          local: {
+            get: async function (k) {
+              var all = JSON.parse(JSON.stringify(store));
+              if (k == null) return all;
+              var o = {};
+              [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; });
+              return o;
+            },
+            set: async function (o) { Object.assign(store, o); },
+            remove: async function (k) { [].concat(k).forEach(function (x) { delete store[x]; }); }
+          },
+          onChanged: { addListener: function () {} }
+        },
+        runtime: {
+          getURL: function (p) { return '/' + p; },
+          getManifest: function () { return { version: '0.2.0' }; },
+          sendMessage: async function () { return null; }
+        },
+        tabs: { query: async function () { return [{ id: 1 }]; }, create: function () {}, sendMessage: async function () { throw new Error('demo'); } }
+      };
+      var html = await (await fetch('/popup/popup.html')).text();
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('script').forEach(function (s) { s.remove(); });
+      document.body.insertAdjacentHTML('beforeend', doc.body.innerHTML.replace(/\.\.\/brand\//g, '/brand/'));
+      for (var src of ['/src/metrics.js', '/popup/popup.js']) {
+        await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
+      }
+    })();
+  </script>
+</body>
+</html>

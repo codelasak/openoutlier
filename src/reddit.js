@@ -1,4 +1,4 @@
-// ReelScope – turn Reddit data into normalized post records.
+// OpenOutlier – turn Reddit data into normalized post records.
 // Two sources: listing JSON (/r/<sub>/top.json …, from the logged-in tab) and
 // the <shreddit-post> elements on www.reddit.com pages. Pure functions, no
 // DOM or chrome.* access, so they run in Node tests too.
@@ -56,7 +56,7 @@
     return isFinite(t) ? t : null;
   }
 
-  /** Only https: links leave ReelScope (no javascript:, data:, http: …). */
+  /** Only https: links leave OpenOutlier (no javascript:, data:, http: …). */
   function httpsOnly(u) {
     u = typeof u === 'string' ? u.trim() : '';
     return /^https:\/\/[^\s/]+/i.test(u) ? u : null;

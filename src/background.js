@@ -1,4 +1,4 @@
-// ReelScope – service worker: saves media files with chrome.downloads (content
+// OpenOutlier – service worker: saves media files with chrome.downloads (content
 // scripts can't download cross-origin CDN files themselves); the MCP bridge and
 // the Reddit Mentions checker live in their own files (imported below).
 'use strict';
@@ -43,7 +43,7 @@ function jobsFor(posts, what) {
       var suffix = what === 'cover' ? '_cover' : (files.length > 1 ? '_' + (i + 1) : '');
       var job = {
         url: f.url,
-        filename: 'ReelScope/' + safeName(p.owner) + '/' + base + suffix + '.' + extensionFor(f.url, f.kind),
+        filename: 'OpenOutlier/' + safeName(p.owner) + '/' + base + suffix + '.' + extensionFor(f.url, f.kind),
         conflictAction: 'uniquify',
         saveAs: false
       };
@@ -143,7 +143,7 @@ async function tiktokDownloads(jobs, senderTab) {
     else {
       out.failed++;
       out.errors.push(r.error === 'no-tab'
-        ? 'TikTok refused the direct download (' + (directError || 'forbidden') + '). Open any tiktok.com tab and try again: ReelScope then fetches the file inside that tab.'
+        ? 'TikTok refused the direct download (' + (directError || 'forbidden') + '). Open any tiktok.com tab and try again: OpenOutlier then fetches the file inside that tab.'
         : 'TikTok refused this file (' + (directError ? 'direct: ' + directError + '; ' : '') + 'in the page: ' + r.error + '). The link may have expired: open the video on TikTok and try again.');
     }
   }

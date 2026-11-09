@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "ReelScope – open-source Reels, TikTok & Reddit analytics",
-  "short_name": "ReelScope",
-  "version": "0.1.0",
-  "description": "Sort Instagram Reels and TikTok videos by views, compare the same video across both, sort Reddit posts by score, spot outliers, find the best time to post. Free and open source.",
+  "name": "OpenOutlier – open-source Reels, TikTok & Reddit analytics",
+  "short_name": "OpenOutlier",
+  "version": "0.2.0",
+  "description": "Spot the posts that beat an account’s median: sort Reels, TikTok and Reddit posts, find outliers and the best time to post. Free.",
   "minimum_chrome_version": "111",
   "permissions": [
     "storage",
@@ -37,7 +37,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "ReelScope",
+    "default_title": "OpenOutlier",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -64,6 +64,7 @@
       "js": [
         "src/extract.js",
         "src/metrics.js",
+        "src/brand.js",
         "src/panel.js",
         "src/overlay.js",
         "src/content.js"
@@ -77,6 +78,7 @@
       "js": [
         "src/metrics.js",
         "src/tiktok.js",
+        "src/brand.js",
         "src/panel.js",
         "src/overlay.js",
         "src/tiktok-content.js"
@@ -90,6 +92,7 @@
       "js": [
         "src/metrics.js",
         "src/reddit.js",
+        "src/brand.js",
         "src/panel.js",
         "src/reddit-content.js"
       ],
@@ -99,7 +102,11 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/panel.css"
+        "src/panel.css",
+        "fonts/*.woff2",
+        "brand/v2/wordmark/openoutlier-inline-trail3-transparent.svg",
+        "brand/v2/mark/openoutlier-mark.svg",
+        "brand/v2/mark/openoutlier-mark-on-ink.svg"
       ],
       "matches": [
         "https://www.instagram.com/*",

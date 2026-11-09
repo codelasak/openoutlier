@@ -1,5 +1,5 @@
 #!/bin/sh
-# Install two macOS LaunchAgents for ReelScope (current user only, no sudo):
+# Install two macOS LaunchAgents for OpenOutlier (current user only, no sudo):
 #   dev.reelscope.bridge  – always-on bridge: the extension's data → ~/.reelscope/reelscope.db
 #   dev.reelscope.backup  – daily 03:30 (and at login if missed): backup → hayati-ts
 # Uninstall with: sh mcp/launchd/uninstall.sh

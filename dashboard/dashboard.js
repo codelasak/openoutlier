@@ -1,4 +1,4 @@
-// ReelScope Library – full-page view of every saved account (Instagram
+// OpenOutlier Library – full-page view of every saved account (Instagram
 // profiles, TikTok profiles, subreddits and Reddit users side by side), with
 // folders, tags, per-account analytics, a cross-account "Top posts" ranking and
 // an Instagram ↔ TikTok comparison of the same videos.
@@ -268,10 +268,41 @@
   var mentionsView = self.ReelScopeMentionsView.create({ h: h, ago: ago, rerender: function () { if (route().kind === 'mentions') { renderSidebar(route()); mentionsView.render(main); } } });
   var reelsPanel = P.create(Object.assign({}, common, { preEnriched: true, showOwner: true, defaultSort: 'viralScore', listTabLabel: 'Posts' }));
 
+  // ---- pixel icons (16-unit grid, crisp edges) -------------------------------
+  var PX = {
+    bell: 'M7 1h2v2H7zM5 3h6v2H5zM4 5h8v5H4zM3 10h10v2H3zM6 13h4v2H6z',
+    all: 'M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z',
+    top: 'M2 12h3v3H2zM6 8h3v7H6zM10 3h3v12h-3z',
+    folder: 'M1 3h6v2h8v9H1z',
+    inbox: 'M1 2h14v12H1zM3 4v4h3v2h4V8h3V4z',
+    compare: 'M10 2h2v2h2v2H2V4h8zM2 10h12v2h-2v2h-2v-2H2z',
+    back: 'M6 3h2v2H6zM4 5h2v2H4zM2 7h12v2H2zM4 9h2v2H4zM6 11h2v2H6z'
+  };
+  function px(name, size) {
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('width', size || 14);
+    svg.setAttribute('height', size || 14);
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('shape-rendering', 'crispEdges');
+    var path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', PX[name]);
+    path.setAttribute('fill', 'currentColor');
+    svg.appendChild(path);
+    return svg;
+  }
+  /** Three pixels rising up-right (the logo's trail): marks an outlier. */
+  function stair() { return h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')); }
+  function outlierBadge(ratio, tip) { return h('span', { class: 'badge-outlier', title: tip || null }, stair(), times(ratio)); }
+
   // ---- sidebar --------------------------------------------------------------
   function navItem(label, count, hash, current, extra) {
+    var ico = extra && extra.icon;
     var b = h('button', { class: 'nav-item', type: 'button', 'aria-current': current ? 'true' : 'false', onclick: function () { go(hash); } },
-      h('span', { class: 'label', text: label }), h('span', { class: 'count', text: count == null ? '' : String(count) }));
+      h('span', { class: 'nav-ico' }, ico === '#' ? '#' : ico ? px(ico) : null),
+      h('span', { class: 'label', text: label }),
+      extra && extra.badge ? h('span', { class: 'nav-new', text: String(count) }) : h('span', { class: 'count', text: count == null ? '' : String(count) }));
     if (extra && extra.dropFolder !== undefined) {
       b.addEventListener('dragover', function (e) { e.preventDefault(); b.classList.add('drop-target'); });
       b.addEventListener('dragleave', function () { b.classList.remove('drop-target'); });
@@ -292,18 +323,19 @@
     var lib = document.getElementById('nav-library');
     lib.textContent = '';
     var unreadMentions = mentionsView.unread();
-    lib.appendChild(navItem('🔔 Mentions', unreadMentions ? unreadMentions + ' new' : null, '#/mentions', r.kind === 'mentions'));
-    lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all'));
-    lib.appendChild(navItem('Unsorted', all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null }));
+    lib.appendChild(navItem('Mentions', unreadMentions ? unreadMentions + ' new' : null, '#/mentions', r.kind === 'mentions', { icon: 'bell', badge: !!unreadMentions }));
+    lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all' && r.tab !== 'reels', { icon: 'all' }));
+    lib.appendChild(navItem('Top posts', null, '#/all/reels', r.kind === 'all' && r.tab === 'reels', { icon: 'top' }));
+    lib.appendChild(navItem('Unsorted', all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null, icon: 'inbox' }));
     var nReddit = all.filter(isRedditId).length;
     var nTikTok = all.filter(isTikTokId).length;
     var nIg = all.length - nReddit - nTikTok;
     if (nReddit || nTikTok) {
       [['instagram', nIg], ['tiktok', nTikTok], ['reddit', nReddit]].forEach(function (x) {
-        if (x[1]) lib.appendChild(navItem(PLATFORM_NAMES[x[0]], x[1], '#/platform/' + x[0], r.kind === 'platform' && r.id === x[0]));
+        if (x[1]) lib.appendChild(navItem(PLATFORM_NAMES[x[0]], x[1], '#/platform/' + x[0], r.kind === 'platform' && r.id === x[0], { icon: null }));
       });
     }
-    if (nTikTok && nIg) lib.appendChild(navItem('⇄ Compare IG ↔ TikTok', null, '#/compare', r.kind === 'compare'));
+    if (nTikTok && nIg) lib.appendChild(navItem('Compare IG ↔ TikTok', null, '#/compare', r.kind === 'compare', { icon: 'compare' }));
 
     var nf_ = document.getElementById('nav-folders');
     nf_.textContent = '';
@@ -312,7 +344,7 @@
       var count = Object.keys(accounts).filter(function (u) { return folderOf(u) === f.id; }).length;
       var current = (r.kind === 'folder' && r.id === f.id) || (r.kind === 'account' && folderOf(r.id) === f.id);
       nf_.appendChild(h('div', { class: 'nav-row' },
-        navItem('📁 ' + f.name, count, '#/folder/' + encodeURIComponent(f.id), current, { dropFolder: f.id }),
+        navItem(f.name, count, '#/folder/' + encodeURIComponent(f.id), current, { dropFolder: f.id, icon: 'folder' }),
         h('span', { class: 'row-tools' },
           h('button', { class: 'icon-btn', type: 'button', title: 'Rename folder', 'aria-label': 'Rename folder ' + f.name, onclick: function (e) {
             e.stopPropagation();
@@ -333,7 +365,7 @@
     var tags = allTags();
     if (!tags.length) nt.appendChild(h('p', { class: 'nav-empty', text: 'Add tags on an account page.' }));
     tags.forEach(function (t) {
-      nt.appendChild(navItem('#' + t.tag, t.count, '#/tag/' + encodeURIComponent(t.tag), r.kind === 'tag' && r.id === t.tag));
+      nt.appendChild(navItem(t.tag, t.count, '#/tag/' + encodeURIComponent(t.tag), r.kind === 'tag' && r.id === t.tag, { icon: '#' }));
     });
     document.getElementById('show-small').checked = showSmall;
   }
@@ -342,7 +374,7 @@
   var main = document.getElementById('main');
 
   function platformChip(platform) {
-    return h('span', { class: 'chip chip-platform chip-' + platform, text: PLATFORM_NAMES[platform] });
+    return h('span', { class: 'chip chip-platform', title: PLATFORM_NAMES[platform], text: platform === 'instagram' ? 'IG' : platform === 'tiktok' ? 'TT' : 'Reddit' });
   }
 
   function accountCard(a) {
@@ -355,19 +387,23 @@
       ondragstart: function (e) { e.dataTransfer.setData('text/reelscope-account', u); card.classList.add('dragging'); },
       ondragend: function () { card.classList.remove('dragging'); } },
       h('div', { class: 'card-head' },
-        reddit ? h('div', { class: 'avatar thumb-empty avatar-reddit', text: u.charAt(0) }) : img(a.pic, 'avatar', u.charAt(0).toUpperCase()),
-        h('div', { class: 'card-name' }, h('b', { text: label(u) }), h('span', { text: (reddit ? 'Reddit · ' : (a.name ? a.name + ' · ' : '')) + 'updated ' + ago(a.updatedAt) }))),
+        reddit ? h('div', { class: 'avatar thumb-empty', text: u.charAt(2).toUpperCase() }) : img(a.pic, 'avatar', handle(u).charAt(1).toUpperCase()),
+        h('div', { class: 'card-name' }, h('b', { text: label(u) }), h('span', { text: (reddit ? 'Reddit · ' : (a.name ? a.name + ' · ' : '')) + 'updated ' + ago(a.updatedAt) })),
+        platformChip(a.platform)),
       reddit
         ? h('ol', { class: 'top-titles' }, a.top.map(function (p) { return h('li', null, h('b', { text: fmt(p.score) }), ' ', p.title || ''); }))
-        : h('div', { class: 'covers' }, [0, 1, 2].map(function (i) { return a.top[i] ? img(a.top[i].thumb, 'cover') : h('div', { class: 'thumb-empty' }); })),
+        : h('div', { class: 'covers' }, [0, 1, 2].map(function (i) {
+          var t = a.top[i];
+          if (!t) return h('div', { class: 'cover-cell' }, h('div', { class: 'thumb-empty' }));
+          return h('div', { class: 'cover-cell' }, img(t.thumb, 'cover'), t.outlier ? outlierBadge(t.ratio, times(t.ratio) + ' this account\'s median views') : null);
+        })),
       h('div', { class: 'card-stats' },
         h('div', null, h('b', { text: nfFull.format(a.reels) }), h('span', { text: reddit ? 'posts' : tiktok ? 'videos' : 'reels' })),
         h('div', null, h('b', { text: fmt(a.medianViews) }), h('span', { text: reddit ? 'median score' : 'median views' })),
         h('div', null, h('b', { text: nfFull.format(a.outliers) }), h('span', { text: 'outliers' }))),
-      h('div', { class: 'chips' },
-        platformChip(a.platform),
-        folderOf(u) ? h('span', { class: 'chip folder', text: '📁 ' + folderName(folderOf(u)) }) : null,
-        tagsOf(u).map(function (t) { return h('span', { class: 'chip', text: '#' + t }); })));
+      folderOf(u) || tagsOf(u).length ? h('div', { class: 'chips' },
+        folderOf(u) ? h('span', { class: 'chip folder' }, px('folder', 12), folderName(folderOf(u))) : null,
+        tagsOf(u).map(function (t) { return h('span', { class: 'chip', text: '#' + t }); })) : null);
     return card;
   }
 
@@ -392,7 +428,7 @@
     if (!Object.keys(accounts).length) {
       main.appendChild(h('div', { class: 'empty' },
         h('h2', { text: 'No saved accounts yet' }),
-        h('p', null, 'Open a profile\'s Reels tab on instagram.com, a profile on tiktok.com, or a subreddit on reddit.com (e.g. r/excel/top), and scroll or press Auto-scroll / Collect top posts in the ReelScope panel. Every account you collect is saved here automatically.')));
+        h('p', null, 'Open a profile\'s Reels tab on instagram.com, a profile on tiktok.com, or a subreddit on reddit.com (e.g. r/excel/top), and scroll or press Auto-scroll / Collect top posts in the OpenOutlier panel. Every account you collect is saved here automatically.')));
       return;
     }
     if (!list.length) {
@@ -409,6 +445,13 @@
       reelsPanel.update({ posts: posts, selected: scopeTitle(r).replace(/[^\w.-]+/g, '-'), profiles: [], platform: null });
       return;
     }
+    var totals = { posts: 0, outliers: 0, last: 0 };
+    list.forEach(function (u) { var a = accounts[u]; totals.posts += a.reels; totals.outliers += a.outliers; totals.last = Math.max(totals.last, a.updatedAt || 0); });
+    main.appendChild(h('div', { class: 'kpis' },
+      h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: 'Posts' }), h('b', { text: nfFull.format(totals.posts) })),
+      h('div', { class: 'kpi' + (totals.outliers ? ' hot' : '') }, h('span', { class: 'kpi-label', text: 'Outliers (≥ ' + M.OUTLIER_RATIO + '×)' }), h('b', { text: nfFull.format(totals.outliers) })),
+      h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: 'Accounts' }), h('b', { text: nfFull.format(list.length) })),
+      h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: 'Last collected' }), h('b', { text: totals.last ? ago(totals.last) : '–' }))));
     main.appendChild(h('div', { class: 'cards' }, list.map(function (u) { return accountCard(accounts[u]); })));
   }
 
@@ -444,11 +487,11 @@
       tagInput.value = '';
     });
 
-    main.appendChild(h('button', { class: 'btn btn-ghost back', type: 'button', onclick: function () { go(lastScopeHash); } }, '← ' + 'Back'));
+    main.appendChild(h('button', { class: 'btn btn-ghost back', type: 'button', onclick: function () { go(lastScopeHash); } }, px('back'), 'Back'));
     var twin = a.platform === 'tiktok' ? (accounts[u.slice(3)] ? u.slice(3) : null) : a.platform === 'instagram' ? (accounts['tt/' + u] ? 'tt/' + u : null) : null;
     var prof = a.profile || {};
     main.appendChild(h('div', { class: 'acct-head' },
-      a.platform === 'reddit' ? h('div', { class: 'avatar big thumb-empty avatar-reddit', text: u.charAt(0) }) : img(a.pic, 'avatar big', handle(u).charAt(1).toUpperCase()),
+      a.platform === 'reddit' ? h('div', { class: 'avatar big thumb-empty', text: u.charAt(2).toUpperCase() }) : img(a.pic, 'avatar big', handle(u).charAt(1).toUpperCase()),
       h('div', { class: 'acct-title' },
         h('h1', null, label(u), ' ', platformChip(a.platform)),
         h('p', { text: (a.platform === 'reddit' ? 'Reddit · ' : (a.name ? a.name + ' · ' : '')) +
@@ -555,13 +598,13 @@
     else if (cmpUi.sort === 'ig') pairs.sort(function (a, b) { return (a.viewsRatio == null ? Infinity : a.viewsRatio) - (b.viewsRatio == null ? Infinity : b.viewsRatio); });
     else if (cmpUi.sort === 'score') pairs.sort(function (a, b) { return b.score - a.score; });
     main.appendChild(h('div', { class: 'cmp-bar' }, h('h2', { text: res.pairs.length + ' matched videos' }), h('label', null, 'Sort ', sortSel),
-      h('button', { class: 'btn', type: 'button', onclick: function () { downloadFile('reelscope-compare-' + handle(pair.ig).slice(1) + '-' + new Date().toISOString().slice(0, 10) + '.csv', '\ufeff' + compareCsv(res.pairs), 'text/csv;charset=utf-8'); } }, 'Download CSV')));
+      h('button', { class: 'btn', type: 'button', onclick: function () { downloadFile('openoutlier-compare-' + handle(pair.ig).slice(1) + '-' + new Date().toISOString().slice(0, 10) + '.csv', '\ufeff' + compareCsv(res.pairs), 'text/csv;charset=utf-8'); } }, 'Download CSV')));
 
     function sideCell(x, tt) {
       return h('td', { class: 'cmp-side' },
         h('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer', class: 'cmp-views', text: fmt(x.views) }), h('span', { class: 'muted', text: ' views' }),
         h('div', { class: 'cmp-meta' },
-          h('span', { class: 'cmp-x' + (x.ratio >= M.OUTLIER_RATIO ? ' is-hit' : ''), text: times(x.ratio) + ' median' }),
+          x.ratio >= M.OUTLIER_RATIO ? outlierBadge(x.ratio, times(x.ratio) + ' this account\'s median') : h('span', { class: 'cmp-x', text: times(x.ratio) + ' median' }),
           h('span', { text: pct(x.engagement) + ' eng.' }),
           tt && x.saves != null ? h('span', { text: fmt(x.saves) + ' saves' }) : null,
           x.shares != null ? h('span', { text: fmt(x.shares) + ' shares' }) : null),
@@ -574,11 +617,13 @@
           h('td', { class: 'cmp-video' }, img(p.b.thumb || p.a.thumb, 'cmp-thumb'), h('span', { class: 'cmp-cap', text: (p.b.caption || p.a.caption).replace(/\s+/g, ' ').slice(0, 140) })),
           sideCell(p.a, false),
           sideCell(p.b, true),
-          h('td', { class: 'cmp-ratio' }, h('b', { text: times(p.viewsRatio) }), p.winner ? h('div', { class: 'chip chip-' + (p.winner === 'a' ? 'instagram' : 'tiktok'), text: (p.winner === 'a' ? 'IG' : 'TikTok') + ' better', title: 'Relative to each account\'s own median' }) : null),
+          h('td', { class: 'cmp-ratio' }, h('b', { text: times(p.viewsRatio) }), p.winner ? h('div', { class: 'cmp-winner', text: (p.winner === 'a' ? 'Instagram' : 'TikTok') + ' did better', title: 'Relative to each account\'s own median' }) : null),
           h('td', { class: 'cmp-score', title: 'caption ' + Math.round((p.parts.text || 0) * 100) + '%, hashtags ' + (p.parts.tags == null ? '–' : Math.round(p.parts.tags * 100) + '%') + ', length ' + (p.parts.duration == null ? '–' : Math.round(p.parts.duration * 100) + '%') + ', date ' + (p.parts.date == null ? '–' : Math.round(p.parts.date * 100) + '%') },
-            h('span', { class: 'cmp-conf cmp-' + p.confidence, text: p.confidence }), h('div', { class: 'muted small', text: p.days == null ? '' : p.days + ' d apart' })));
+            h('span', { class: 'cmp-conf cmp-' + p.confidence },
+              h('span', { class: 'conf-px', 'aria-hidden': 'true' }, [0, 1, 2].map(function (i) { return h('i', { class: i < ({ high: 3, medium: 2, low: 1 }[p.confidence] || 1) ? 'on' : null }); })),
+              p.confidence), h('div', { class: 'muted small', text: p.days == null ? '' : p.days + ' d apart' })));
       })));
-    main.appendChild(res.pairs.length ? h('div', { class: 'cmp-wrap' }, table) : h('p', { class: 'empty', text: 'No video matched. Are these the same creator? Collect more videos on both sides (dates are needed: open the reels on Instagram so ReelScope can load them).' }));
+    main.appendChild(res.pairs.length ? h('div', { class: 'cmp-wrap' }, table) : h('p', { class: 'empty', text: 'No video matched. Are these the same creator? Collect more videos on both sides (dates are needed: open the reels on Instagram so OpenOutlier can load them).' }));
 
     function onlyList(title, list) {
       if (!list.length) return null;
@@ -609,7 +654,7 @@
     else if (r.kind === 'mentions') mentionsView.render(main);
     else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? label(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · ReelScope';
+    document.title = (r.kind === 'account' ? label(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
   }
 
   // ---- wiring ---------------------------------------------------------------
@@ -634,7 +679,7 @@
     if (out.data['rs:mention-server']) out.data['rs:mention-server'] = Object.assign({}, out.data['rs:mention-server'], { token: '' });
     delete out.data['rs:mentions-state'];
     delete out.data['rs:bridge'];
-    downloadFile('reelscope-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(out), 'application/json');
+    downloadFile('openoutlier-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(out), 'application/json');
   });
   document.getElementById('restore').addEventListener('change', async function (e) {
     var file = e.target.files[0];
@@ -642,7 +687,7 @@
     if (!file) return;
     try {
       var json = JSON.parse(await file.text());
-      if (!json || json.app !== 'reelscope' || !json.data) throw new Error('Not a ReelScope backup');
+      if (!json || json.app !== 'reelscope' || !json.data) throw new Error('Not an OpenOutlier backup');
       var current = await chrome.storage.local.get(null);
       var patch = {};
       var n = 0;

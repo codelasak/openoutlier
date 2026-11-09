@@ -20,7 +20,7 @@ const FIRST = 47911; // test range, away from the real one
 const EXT_ORIGIN = 'chrome-extension://' + 'a'.repeat(32);
 const home = mkdtempSync(join(tmpdir(), 'reelscope-test-'));
 
-// A program that is NOT ReelScope sitting on the first port: the server must skip it.
+// A program that is NOT OpenOutlier sitting on the first port: the server must skip it.
 const squatter = http.createServer((req, res) => { res.end('hello from another app'); });
 await new Promise((r) => squatter.listen(FIRST, '127.0.0.1', r));
 
@@ -399,7 +399,7 @@ test('TikTok: accounts next to Instagram, top_reels across platforms, compare_pl
   }
   assert.equal(cmds[0].type, 'download_tiktok');
   assert.deepEqual(cmds[0].args, { id: blocked.code, username: 'excel.bugs.demo', what: 'video' });
-  await bridge('/commands/result', { method: 'POST', body: { id: cmds[0].id, result: { ok: true, files: [{ filename: '/Users/x/Downloads/ReelScope/tt_excel.bugs.demo/a_tiktok_1.mp4', state: 'complete' }] } } });
+  await bridge('/commands/result', { method: 'POST', body: { id: cmds[0].id, result: { ok: true, files: [{ filename: '/Users/x/Downloads/OpenOutlier/tt_excel.bugs.demo/a_tiktok_1.mp4', state: 'complete' }] } } });
   const viaBrowser = await pendingDl;
   assert.equal(viaBrowser.isError, false, viaBrowser.text);
   assert.equal(viaBrowser.data.saved[0].via, 'browser');

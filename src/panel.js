@@ -1,8 +1,9 @@
-// ReelScope – the on-page panel (Shadow DOM, so Instagram's CSS can't touch it
+// OpenOutlier – the on-page panel (Shadow DOM, so Instagram's CSS can't touch it
 // and ours can't leak out). All text is set via textContent, never innerHTML.
 (function (root) {
   'use strict';
   var M = root.ReelScopeMetrics;
+  var B = root.OpenOutlierBrand || null;
 
   var nf = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
   var nfFull = new Intl.NumberFormat();
@@ -49,9 +50,11 @@
     el.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c);
   }
 
-  var ICON_PATH = 'M4 20V10M10 20V4M16 20v-7M21 21l-3.2-3.2M18.5 15.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0z';
+  // Pixel icons (filled, on a 16-unit grid, crisp edges): the brand's square-pixel language.
+  var PX_CLOSE = 'M2 2h2v2H2zM4 4h2v2H4zM6 6h4v4H6zM10 4h2v2h-2zM12 2h2v2h-2zM4 10h2v2H4zM2 12h2v2H2zM10 10h2v2h-2zM12 12h2v2h-2z';
+  var PX_BACK = 'M6 3h2v2H6zM4 5h2v2H4zM2 7h12v2H2zM4 9h2v2H4zM6 11h2v2H6z';
+  var PX_GRID = 'M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z';
   var DL_PATH = 'M12 4v11M7 10l5 5 5-5M5 20h14';
-  var GRID_PATH = 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z';
   var IMG_PATH = 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9.5a1 1 0 1 0 0-.01';
   function icon(path, size) {
     var NS = 'http://www.w3.org/2000/svg';
@@ -69,6 +72,55 @@
     p.setAttribute('stroke-linejoin', 'round');
     svg.appendChild(p);
     return svg;
+  }
+  function pxIcon(path, size) {
+    var NS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('width', size || 16);
+    svg.setAttribute('height', size || 16);
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('shape-rendering', 'crispEdges');
+    var p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', path);
+    p.setAttribute('fill', 'currentColor');
+    svg.appendChild(p);
+    return svg;
+  }
+  /** Three pixels rising up and to the right (the logo's trail): marks an outlier. */
+  function stair() { return h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')); }
+  /** Decorative Haze pixels, rising up-right, for the blue band only. */
+  function hazePixels() {
+    var pts = [[0, 8], [8, 8], [8, 4], [16, 4], [16, 0], [24, 0], [40, 8], [48, 4], [56, 0], [76, 8], [84, 4], [92, 0], [100, 0]];
+    return h('span', { class: 'hazepx', 'aria-hidden': 'true' }, pts.map(function (q) { return h('i', { style: { left: q[0] + 'px', top: q[1] + 'px' } }); }));
+  }
+  function logo(name, cls, label) {
+    if (B) return B.logo(name, cls, label);
+    return h('span', { class: cls, text: label || '' });
+  }
+  /** "9.0×" badge for posts at or above the outlier ratio: lime on ink (light) / ink on lime (dark). */
+  function outlierBadge(p, tip) {
+    return h('span', { class: 'badge badge-outlier', 'data-tip': tip || null }, stair(), p.ratio.toFixed(1) + '×');
+  }
+  /**
+   * The verdict block of the detail card: × median in the display face plus Viral Score
+   * as a 20-pixel meter (each pixel = 5 points; pixels above 75 = 2× are lime when lit).
+   */
+  function verdict(p, what) {
+    if (!p.ratio) return null;
+    var score = p.viralScore != null ? p.viralScore : null;
+    var meter = h('div', { class: 'meter', 'aria-hidden': 'true' });
+    for (var i = 1; i <= 20; i++) {
+      var v = i * 5;
+      meter.appendChild(h('i', { class: score !== null && v <= score ? (v > 75 ? 'hot' : 'on') : null }));
+    }
+    return h('div', { class: 'verdict' + (p.outlier ? ' is-outlier' : ''), 'data-tip': 'Viral Score: 50 = median, 75 = 2×, 100 = 4× or more' },
+      h('div', { class: 'verdict-big' }, p.ratio.toFixed(1) + '×'),
+      h('div', { class: 'verdict-what' }, what, score !== null ? [' · Viral Score ', h('b', { text: String(score) })] : null),
+      score !== null ? meter : null,
+      score !== null ? h('div', { class: 'meter-scale', 'aria-hidden': 'true' },
+        h('span', { style: { left: '0' }, text: '0' }), h('span', { style: { left: '50%' }, text: 'median' }),
+        h('span', { style: { left: '75%' }, text: '2×' }), h('span', { style: { left: '100%' }, text: '4×' })) : null);
   }
 
   var SORT_OPTIONS = [
@@ -171,8 +223,8 @@
 
     // ---- skeleton -----------------------------------------------------------
     var launcherCount = h('span', { class: 'launcher-count', text: '0' });
-    var launcher = h('button', { class: 'launcher', type: 'button', 'aria-label': 'Open ReelScope', onclick: function () { toggle(true); } },
-      icon(ICON_PATH, 16), h('span', { text: 'ReelScope' }), launcherCount);
+    var launcher = h('button', { class: 'launcher', type: 'button', 'aria-label': 'Open OpenOutlier', 'data-tip': 'OpenOutlier', onclick: function () { toggle(true); } },
+      logo('mark', 'mark'), h('span', { class: 'launcher-sep', 'aria-hidden': 'true' }), launcherCount);
 
     var profileSelect = h('select', { class: 'profile-select', 'aria-label': 'Profile', onchange: function () { opts.onSelectProfile(profileSelect.value); } });
     var autoBtn = h('button', { class: 'btn btn-primary', type: 'button', onclick: function () { opts.onAutoScroll(); } });
@@ -188,6 +240,7 @@
       tabs[t[0]] = h('button', { class: 'tab', type: 'button', role: 'tab', onclick: function () {
         if (ui.tab !== t[0]) body.scrollTop = 0;
         ui.tab = t[0];
+        ui.detail = null; // a tab always shows its own content, not a detail card left open
         render();
       } }, t[1]);
       tabBar.appendChild(tabs[t[0]]);
@@ -196,14 +249,16 @@
     var body = h('div', { class: 'body' });
     var detailEl = h('div', { class: 'detail', role: 'dialog', 'aria-label': 'Post details', hidden: true });
     var dashBtn = opts.onOpenDashboard
-      ? h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Open dashboard', 'data-tip': 'Open the dashboard: all saved accounts, folders and tags', onclick: function () { opts.onOpenDashboard(); } }, icon(GRID_PATH, 17))
+      ? h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Open the Library', 'data-tip': 'Open the Library: all saved accounts, folders and tags', onclick: function () { opts.onOpenDashboard(); } }, pxIcon(PX_GRID, 16))
       : null;
-    var drawer = h('aside', { class: 'drawer' + (embedded ? ' embedded' : ''), 'aria-label': 'ReelScope', hidden: !embedded },
+    var drawer = h('aside', { class: 'drawer' + (embedded ? ' embedded' : ''), 'aria-label': 'OpenOutlier', hidden: !embedded },
       embedded ? null : h('header', { class: 'head' },
-        h('div', { class: 'brand' }, icon(ICON_PATH, 18), h('span', { text: 'ReelScope' })),
-        profileSelect,
-        dashBtn,
-        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: function () { toggle(false); } }, '×')),
+        h('div', { class: 'head-row' },
+          logo('wordmark', 'wordmark', 'OpenOutlier'),
+          profileSelect,
+          dashBtn,
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', 'data-tip': 'Close (Esc)', onclick: function () { toggle(false); } }, pxIcon(PX_CLOSE, 16))),
+        hazePixels()),
       embedded ? null : h('div', { class: 'toolbar' }, autoBtn, collectBtn, autoStatus, clearBtn),
       tabBar,
       h('div', { class: 'body-wrap' }, body, detailEl));
@@ -343,7 +398,7 @@
             h('li', null, 'Open a profile, e.g. ', h('code', { text: 'tiktok.com/@name' })),
             h('li', { text: 'Scroll down, or press Auto-scroll. Videos are collected as TikTok loads them.' }),
             h('li', { text: 'Come back here to sort, analyze and export.' })),
-          h('p', { class: 'muted', text: 'Everything stays in this browser. ReelScope only reads what TikTok already loaded; it never likes, follows, comments or posts.' }));
+          h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier only reads what TikTok already loaded; it never likes, follows, comments or posts.' }));
       }
       if (opts.platform === 'reddit') {
         return h('div', { class: 'empty' },
@@ -352,7 +407,7 @@
             h('li', null, 'Open a subreddit or a user, e.g. ', h('code', { text: 'reddit.com/r/excel/top/?t=year' })),
             h('li', { text: 'Press "Collect top posts" (pages through the top posts of the year), or scroll / Auto-scroll: posts are collected as they appear.' }),
             h('li', { text: 'Come back here to sort, analyze and export.' })),
-          h('p', { class: 'muted', text: 'Everything stays in this browser. ReelScope only reads; it never posts, comments, votes or sends messages.' }));
+          h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier only reads; it never posts, comments, votes or sends messages.' }));
       }
       return h('div', { class: 'empty' },
         h('p', { class: 'empty-title', text: 'No reels collected yet' }),
@@ -360,7 +415,7 @@
           h('li', null, 'Open a profile\'s Reels tab, e.g. ', h('code', { text: 'instagram.com/name/reels/' })),
           h('li', { text: 'Scroll down, or press Auto-scroll. Reels are collected as Instagram loads them.' }),
           h('li', { text: 'Come back here to sort, analyze and export.' })),
-        h('p', { class: 'muted', text: 'Everything stays in this browser. ReelScope never asks for your password and never posts, likes or follows.' }));
+        h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier never asks for your password and never posts, likes or follows.' }));
     }
 
     function renderReels(data) {
@@ -383,7 +438,7 @@
       wrap.appendChild(h('div', { class: 'controls' }, h('label', { class: 'field' }, 'Sort', sortSel), typeSel, outl, search));
 
       var list = data.list;
-      wrap.appendChild(h('p', { class: 'muted small' },
+      wrap.appendChild(h('p', { class: 'summary' },
         fmtFull(list.length) + ' shown · ' + (plat === 'mixed' ? 'scored against each account\'s own median' : 'median ' + fmt(M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' ' + unit()) + ' · outlier = ' + M.OUTLIER_RATIO + '× median or more'));
 
       if (!list.length) { wrap.appendChild(h('p', { class: 'empty-small', text: 'Nothing matches these filters.' })); return wrap; }
@@ -436,7 +491,7 @@
         var b = h('button', { class: what === 'media' ? 'btn btn-primary' : 'btn', type: 'button', disabled: !enabled, onclick: function () {
           b.disabled = true;
           opts.onDownloadMedia([p], what).then(function (r) {
-            msg.textContent = r && r.queued ? 'Saved to Downloads/ReelScope/' + String(p.owner || '').replace('/', '_') + '/'
+            msg.textContent = r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') + '/'
               : (r && r.errors && r.errors[0]) || 'Download failed. Open the post on ' + siteName(p) + ' once, then try again.';
           }, function () { msg.textContent = 'Download failed.'; }).then(function () { b.disabled = false; });
         } }, label);
@@ -444,7 +499,7 @@
       }
 
       detailEl.appendChild(h('div', { class: 'd-top' },
-        h('button', { class: 'btn btn-ghost d-back', type: 'button', onclick: closeDetail }, '← Back'),
+        h('button', { class: 'btn btn-ghost d-back', type: 'button', onclick: closeDetail }, pxIcon(PX_BACK, 14), 'Back'),
         h('a', { class: 'd-open', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Open on ' + siteName(p) + ' ↗')));
 
       detailEl.appendChild(h('div', { class: 'd-hero' },
@@ -452,11 +507,10 @@
         h('div', { class: 'd-side' },
           h('p', { class: 'd-owner', text: ownerHandle(p) + (multiPlat || isTT(p) ? ' · ' + siteName(p) : '') }),
           h('p', { class: 'muted small d-when', text: when ? when.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date not loaded yet' }),
-          h('div', { class: 'badges' },
-            p.outlier ? h('span', { class: 'badge badge-outlier' }, p.ratio.toFixed(1) + '× median') : null,
-            p.viralScore !== null && p.viralScore !== undefined ? h('span', { class: 'badge badge-score' }, 'Viral Score ' + p.viralScore) : null,
+          verdict(p, 'this account\'s median views'),
+          p.pinned || p.paidPartnership ? h('div', { class: 'badges' },
             p.pinned ? h('span', { class: 'badge' }, 'Pinned') : null,
-            p.paidPartnership ? h('span', { class: 'badge' }, 'Paid partnership') : null),
+            p.paidPartnership ? h('span', { class: 'badge' }, 'Paid partnership') : null) : null,
           h('div', { class: 'd-actions' },
             dl('media', nFiles > 1 ? 'Download ' + nFiles + ' files' : (p.type === 'reel' || p.type === 'video' ? 'Download video' : 'Download photo'), nFiles > 0),
             dl('cover', 'Download cover', !!p.thumb),
@@ -497,7 +551,7 @@
       var when = p.takenAt ? new Date(p.takenAt) : null;
       var msg = h('p', { class: 'status-line', 'aria-live': 'polite' });
       detailEl.appendChild(h('div', { class: 'd-top' },
-        h('button', { class: 'btn btn-ghost d-back', type: 'button', onclick: closeDetail }, '← Back'),
+        h('button', { class: 'btn btn-ghost d-back', type: 'button', onclick: closeDetail }, pxIcon(PX_BACK, 14), 'Back'),
         h('a', { class: 'd-open', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Open on Reddit ↗')));
       detailEl.appendChild(h('div', { class: 'd-hero d-hero-text' },
         p.thumb ? image(p.thumb, 'd-cover') : null,
@@ -505,9 +559,8 @@
           h('p', { class: 'd-owner', text: (p.subreddit ? 'r/' + p.subreddit : '') + (p.author ? ' · u/' + p.author : '') }),
           h('p', { class: 'muted small d-when', text: when ? when.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date unknown' }),
           h('p', { class: 'd-title', text: p.title || '' }),
+          verdict(p, 'this ' + (/^u\//.test(p.owner || '') ? 'user' : 'subreddit') + '\'s median score'),
           h('div', { class: 'badges' },
-            p.outlier ? h('span', { class: 'badge badge-outlier' }, p.ratio.toFixed(1) + '× median') : null,
-            p.viralScore !== null && p.viralScore !== undefined ? h('span', { class: 'badge badge-score' }, 'Viral Score ' + p.viralScore) : null,
             p.flair ? h('span', { class: 'badge' }, p.flair) : null,
             M.isQuestion(p.title) ? h('span', { class: 'badge', 'data-tip': 'The title asks a question' }, 'Question') : null,
             p.pinned ? h('span', { class: 'badge' }, 'Pinned') : null),
@@ -539,8 +592,8 @@
 
     function redditRow(p, i) {
       var badges = h('span', { class: 'badges' });
-      if (p.outlier) badges.appendChild(h('span', { class: 'badge badge-outlier', 'data-tip': 'This post got ' + p.ratio.toFixed(1) + '× the median score' }, p.ratio.toFixed(1) + '×'));
-      if (p.viralScore !== null && p.viralScore !== undefined) badges.appendChild(h('span', { class: 'badge badge-score', 'data-tip': 'Viral Score: 50 = median score, 75 = 2×, 100 = 4× or more' }, 'Score ' + p.viralScore));
+      if (p.outlier) badges.appendChild(outlierBadge(p, 'This post got ' + p.ratio.toFixed(1) + '× the median score'));
+      if (p.viralScore !== null && p.viralScore !== undefined) badges.appendChild(h('span', { class: 'badge badge-score', 'data-tip': 'Viral Score: 50 = median score, 75 = 2×, 100 = 4× or more' }, 'VS ' + p.viralScore));
       if (p.flair) badges.appendChild(h('span', { class: 'badge', 'data-tip': 'Flair' }, p.flair));
       var meta = [];
       if (opts.showOwner && p.owner) meta.push(accountLabel(p.owner));
@@ -572,10 +625,10 @@
       var thumb = image(p.thumb, 'thumb');
 
       var badges = h('span', { class: 'badges' });
-      if (p.outlier) badges.appendChild(h('span', { class: 'badge badge-outlier', 'data-tip': 'This post got ' + p.ratio.toFixed(1) + '× the profile\'s median views' }, p.ratio.toFixed(1) + '×'));
-      if (p.viralScore !== null) badges.appendChild(h('span', { class: 'badge badge-score', 'data-tip': 'Viral Score: 50 = median views, 75 = 2×, 100 = 4× or more' }, 'Score ' + p.viralScore));
+      if (p.outlier) badges.appendChild(outlierBadge(p, 'This post got ' + p.ratio.toFixed(1) + '× the profile\'s median views'));
+      if (p.viralScore !== null) badges.appendChild(h('span', { class: 'badge badge-score', 'data-tip': 'Viral Score: 50 = median views, 75 = 2×, 100 = 4× or more' }, 'VS ' + p.viralScore));
       if (p.pinned) badges.appendChild(h('span', { class: 'badge', 'data-tip': 'Pinned to the profile' }, 'Pinned'));
-      if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform badge-' + (isTT(p) ? 'tiktok' : 'instagram'), 'data-tip': siteName(p) }, isTT(p) ? 'TikTok' : 'IG'));
+      if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform', 'data-tip': siteName(p) }, isTT(p) ? 'TT' : 'IG'));
 
       var meta = [];
       if (p.likes !== null && p.likes !== undefined) meta.push(fmt(p.likes) + ' likes');
@@ -614,7 +667,7 @@
       var b = h('button', { class: 'icon-btn dl-btn', type: 'button', 'aria-label': tip, 'data-tip': tip, onclick: function () {
         b.disabled = true;
         opts.onDownloadMedia([p], what).then(function (r) {
-          b.setAttribute('data-tip', r && r.queued ? 'Saved to Downloads/ReelScope/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the profile and try again.');
+          b.setAttribute('data-tip', r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the profile and try again.');
         }, function () { b.setAttribute('data-tip', 'Download failed. Reload the profile and try again.'); })
           .then(function () { setTimeout(function () { b.disabled = false; }, 1500); });
       } }, icon(path, 17));
@@ -635,18 +688,15 @@
       wrap.appendChild(h('div', { class: 'tiles' },
         tile('Posts analyzed', fmtFull(s.count)),
         tile('Median views', fmt(s.medianViews), fmtFull(s.medianViews)),
-        tile('Outliers', fmtFull(s.outliers), 'Posts with ≥ ' + M.OUTLIER_RATIO + '× median views'),
+        tile('Outliers (≥ ' + M.OUTLIER_RATIO + '×)', fmtFull(s.outliers), 'Posts with ≥ ' + M.OUTLIER_RATIO + '× median views', s.outliers > 0),
         tile('Avg. engagement', pct(s.avgEngagement), tt ? '(likes + comments + shares + saves) ÷ views' : '(likes + comments) ÷ views'),
         tile('Posts / week', s.postsPerWeek ? s.postsPerWeek.toFixed(1) : '–'),
         tile('Total views', fmt(s.totalViews), fmtFull(s.totalViews)),
         tt && s.avgShareRate != null ? tile('Shares / 100 views', s.avgShareRate.toFixed(2), 'Average shares per 100 views. Shares push a video to new viewers.') : null,
         tt && s.avgSaveRate != null ? tile('Saves / 100 views', s.avgSaveRate.toFixed(2), 'Average saves per 100 views. Tutorials people come back to get saved.') : null));
 
-      wrap.appendChild(section('Best time to post',
-        a.heatmap.best
-          ? 'Median views by day and time, in your local time. Strongest slot: ' + a.heatmap.dayLabels[a.heatmap.best.day] + ' ' + hourRange(a.heatmap.best.block, a.heatmap.blockHours) + ' (' + a.heatmap.best.count + ' posts, median ' + fmt(a.heatmap.best.medianViews) + ').'
-          : 'Median views by day and time, in your local time.',
-        heatmapEl(a.heatmap)));
+      wrap.appendChild(section('Best time to post', 'Median views by day and time, in your local time.',
+        [bestSlot(a.heatmap, s.medianViews), heatmapEl(a.heatmap)]));
 
       wrap.appendChild(section('Hashtags that bring views',
         'Median views of posts using each hashtag' + (a.hashtags.length && a.hashtags[a.hashtags.length - 1].count >= 2 ? ' (used 2+ times).' : '.'),
@@ -676,15 +726,13 @@
       wrap.appendChild(h('div', { class: 'tiles' },
         tile('Posts analyzed', fmtFull(s.count)),
         tile('Median score', fmt(s.medianViews), fmtFull(s.medianViews)),
-        tile('Outliers', fmtFull(s.outliers), 'Posts with ≥ ' + M.OUTLIER_RATIO + '× the median score'),
+        tile('Outliers (≥ ' + M.OUTLIER_RATIO + '×)', fmtFull(s.outliers), 'Posts with ≥ ' + M.OUTLIER_RATIO + '× the median score', s.outliers > 0),
         tile('Median comments', fmt(s.medianComments)),
         tile('Posts / week', s.postsPerWeek ? s.postsPerWeek.toFixed(1) : '–', 'Among the posts collected (top posts are a sample, not every post)'),
         tile('Avg. upvote ratio', s.avgUpvoteRatio != null ? Math.round(s.avgUpvoteRatio * 100) + '%' : '–')));
       wrap.appendChild(section('Best time to post',
-        (a.heatmap.best
-          ? 'Median score by day and time, in your local time. Strongest slot: ' + a.heatmap.dayLabels[a.heatmap.best.day] + ' ' + hourRange(a.heatmap.best.block, a.heatmap.blockHours) + ' (' + a.heatmap.best.count + ' posts, median ' + fmt(a.heatmap.best.medianViews) + ').'
-          : 'Median score by day and time, in your local time.') + ' Collect "new" posts too for a fuller picture: top posts only show what won.',
-        heatmapEl(a.heatmap, 'score')));
+        'Median score by day and time, in your local time. Collect "new" posts too for a fuller picture: top posts only show what won.',
+        [bestSlot(a.heatmap, s.medianViews), heatmapEl(a.heatmap, 'score')]));
       wrap.appendChild(section('Question vs. statement', 'Median score of titles that ask a question (contain "?" or start with how / why / is there…) vs. the rest.',
         r.questions.length ? bars(r.questions, function (g) { return g.key; }, 'score') : h('p', { class: 'muted small', text: 'No titles yet.' })));
       wrap.appendChild(section('Title length', 'Median score by number of words in the title.',
@@ -699,8 +747,17 @@
       return wrap;
     }
 
-    function tile(label, value, tip) {
-      return h('div', { class: 'tile', 'data-tip': tip || null }, h('span', { class: 'tile-value', text: value }), h('span', { class: 'tile-label', text: label }));
+    function tile(label, value, tip, hot) {
+      return h('div', { class: 'tile' + (hot ? ' hot' : ''), 'data-tip': tip || null }, h('span', { class: 'tile-value', text: value }), h('span', { class: 'tile-label', text: label }));
+    }
+
+    /** The strongest slot, called out on blue (the one highlighted number is lime). */
+    function bestSlot(hm, overall) {
+      if (!hm.best) return null;
+      var lift = overall > 0 ? hm.best.medianViews / overall : null;
+      return h('p', { class: 'callout' }, stair(),
+        h('span', null, 'Strongest slot: ', h('b', { text: hm.dayLabels[hm.best.day] + ' ' + hourRange(hm.best.block, hm.blockHours) }),
+          ' · ' + hm.best.count + ' post' + (hm.best.count === 1 ? '' : 's') + ', median ' + fmt(hm.best.medianViews) + (lift ? ' (' + lift.toFixed(1) + '× overall)' : '')));
     }
 
     function section(title, sub, content) {
@@ -761,7 +818,7 @@
     // ---- export ---------------------------------------------------------------
     function renderExport(data) {
       var list = data.list;
-      var name = 'reelscope-' + String(state.selected || 'export').replace(/[^\w.-]+/g, '-') + '-' + new Date().toISOString().slice(0, 10);
+      var name = 'openoutlier-' + String(state.selected || 'export').replace(/[^\w.-]+/g, '-') + '-' + new Date().toISOString().slice(0, 10);
       var msg = h('p', { class: 'status-line', 'aria-live': 'polite' });
       function flash(text) { msg.textContent = text; setTimeout(function () { if (msg.textContent === text) msg.textContent = ''; }, 3000); }
       return h('div', { class: 'export' },
@@ -793,11 +850,11 @@
         var posts = list.filter(function (p) { return what === 'cover' ? !!p.thumb : (p.files || []).length; });
         var count = what === 'cover' ? posts.length : posts.reduce(function (s, p) { return s + p.files.length; }, 0);
         var btn = h('button', { class: what === 'media' ? 'btn btn-primary' : 'btn', type: 'button', disabled: !count, onclick: function () {
-          if (count > 20 && !confirm('Download ' + count + ' files to Downloads/ReelScope/' + (state.selected || '') + '?')) return;
+          if (count > 20 && !confirm('Download ' + count + ' files to Downloads/OpenOutlier/' + (state.selected || '') + '?')) return;
           btn.disabled = true;
           msg.textContent = 'Starting ' + count + ' downloads…';
           opts.onDownloadMedia(posts, what).then(function (r) {
-            msg.textContent = 'Started ' + r.queued + ' downloads' + (r.failed ? ', ' + r.failed + ' failed' : '') + '. Saved to Downloads/ReelScope/' + String(state.selected || '').replace('/', '_') + '/' +
+            msg.textContent = 'Started ' + r.queued + ' downloads' + (r.failed ? ', ' + r.failed + ' failed' : '') + '. Saved to Downloads/OpenOutlier/' + String(state.selected || '').replace('/', '_') + '/' +
               (r.errors && r.errors[0] ? ' ' + r.errors[0] : '');
           }, function () { msg.textContent = 'Downloads could not start.'; }).then(function () { btn.disabled = false; });
         } }, label.replace('{n}', fmtFull(count)));

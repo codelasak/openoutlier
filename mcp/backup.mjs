@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ReelScope – daily backup of ~/.reelscope/reelscope.db to the home server.
+// OpenOutlier – daily backup of ~/.reelscope/reelscope.db to the home server.
 //
 //   node mcp/backup.mjs            once a day (skips if today's backup already succeeded)
 //   node mcp/backup.mjs --force    run again anyway

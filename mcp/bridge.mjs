@@ -1,7 +1,7 @@
-// ReelScope MCP – localhost bridge the browser extension talks to.
+// OpenOutlier MCP – localhost bridge the browser extension talks to.
 //
 // Port: the first free port in 47811–47820 (or REELSCOPE_PORT). If a port is
-// taken by another ReelScope instance (e.g. Claude Desktop and Claude Code
+// taken by another OpenOutlier instance (e.g. Claude Desktop and Claude Code
 // both started one) we share it: all instances use the same files in
 // ~/.reelscope. If it's taken by some other program, we try the next port.
 // The extension scans the same range and only talks to a server whose
@@ -78,7 +78,7 @@ async function handle(req, res, port) {
   }
 
   const m = origin.match(/^chrome-extension:\/\/([a-p]{32})$/);
-  if (!m) return send(res, 403, { error: 'only the ReelScope extension may use this endpoint' });
+  if (!m) return send(res, 403, { error: 'only the OpenOutlier extension may use this endpoint' });
   const cfg = await readConfig();
   if (cfg.extensionId && cfg.extensionId !== m[1]) {
     return send(res, 403, { error: `paired with another extension (${cfg.extensionId}). Delete ${CONFIG_FILE} to re-pair.` });
@@ -130,7 +130,7 @@ function listen(port) {
   });
 }
 
-/** Start the bridge, or join an existing ReelScope bridge. Returns { port, shared }. */
+/** Start the bridge, or join an existing OpenOutlier bridge. Returns { port, shared }. */
 export async function startBridge() {
   await ensureHome();
   for (const port of PORTS) {
@@ -142,7 +142,7 @@ export async function startBridge() {
     }
     if (r.error && r.error.code === 'EADDRINUSE') {
       if (await probe(port)) {
-        log(`another ReelScope bridge is already on port ${port}; sharing it`);
+        log(`another OpenOutlier bridge is already on port ${port}; sharing it`);
         return { port, shared: true };
       }
       log(`port ${port} is used by another program; trying the next one`);

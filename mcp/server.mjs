@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ReelScope MCP server (stdio). Gives AI agents read access to your ReelScope
+// OpenOutlier MCP server (stdio). Gives AI agents read access to your OpenOutlier
 // library, video files for analysis, and a way to ask the extension to
 // collect or refresh profiles. Everything stays on this computer.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -17,7 +17,7 @@ import {
   comparePlatforms, queueCommand, waitForCommand, readCommandState, linkExpiry, T
 } from './library.mjs';
 
-const log = (...a) => console.error('[reelscope-mcp]', ...a);
+const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
 function json(value) {
   return { content: [{ type: 'text', text: JSON.stringify(value, null, 1) }] };
@@ -40,14 +40,14 @@ function bridgeInfo() {
 }
 
 function noExtensionHint() {
-  return 'The ReelScope extension has not contacted this server in the last few minutes. Make sure Chrome is open with ReelScope installed and "Connect to AI agents" turned on in its popup. The command stays queued for 20 minutes.';
+  return 'The OpenOutlier extension has not contacted this server in the last few minutes. Make sure Chrome is open with OpenOutlier installed and "Connect to AI agents" turned on in its popup. The command stays queued for 20 minutes.';
 }
 
 const server = new McpServer(
-  { name: 'reelscope', version: '0.1.0' },
+  { name: 'openoutlier', version: '0.1.0' },
   {
     instructions: [
-      'ReelScope is a local library of Instagram Reels, TikTok videos and Reddit posts the user collected with the ReelScope browser extension.',
+      'OpenOutlier is a local library of Instagram Reels, TikTok videos and Reddit posts the user collected with the OpenOutlier browser extension.',
       'Start with list_accounts (or list_folders_and_tags) to see what is saved. Accounts are organized in folders and tags by the user; a folder can mix Instagram accounts (username), TikTok accounts (tt/username) and subreddits (r/name) / Reddit users (u/name). The same handle can exist on Instagram and TikTok: "name" is Instagram, "tt/name" is TikTok.',
       'Instagram and TikTok: x_account_median = views ÷ that account\'s median views. Reddit: the same with score (upvotes) ÷ the subreddit\'s (or user\'s) median score. viral_score = 50 + 25·log2(x), capped 0–100. ≥2× is an outlier. TikTok engagement counts likes + comments + shares + saves (TikTok shows them publicly); Instagram counts likes + comments.',
       'compare_platforms matches the same videos posted to Instagram and TikTok (caption, hashtags, length, date ±3 days) and shows how each did on both, relative to each account\'s median.',
@@ -60,14 +60,14 @@ const server = new McpServer(
 );
 
 const scope = {
-  folder: z.string().optional().describe('Folder name (as shown in the ReelScope library)'),
+  folder: z.string().optional().describe('Folder name (as shown in the OpenOutlier library)'),
   tag: z.string().optional().describe('Tag, with or without #'),
   usernames: z.array(z.string()).optional().describe('Limit to these accounts')
 };
 
 server.registerTool('list_accounts', {
   title: 'List saved accounts',
-  description: 'All accounts saved in the ReelScope library — Instagram profiles (username), TikTok profiles (tt/username), subreddits (r/name) and Reddit users (u/name) — with platform, folder, tags, post count, median views (Instagram, TikTok) or median score (Reddit) and outliers. Filter by folder, tag or platform.',
+  description: 'All accounts saved in the OpenOutlier library — Instagram profiles (username), TikTok profiles (tt/username), subreddits (r/name) and Reddit users (u/name) — with platform, folder, tags, post count, median views (Instagram, TikTok) or median score (Reddit) and outliers. Filter by folder, tag or platform.',
   inputSchema: {
     folder: scope.folder,
     tag: scope.tag,
@@ -85,7 +85,7 @@ server.registerTool('list_accounts', {
 
 server.registerTool('list_folders_and_tags', {
   title: 'List folders and tags',
-  description: 'The folders and tags the user created in the ReelScope library, with how many accounts each has.',
+  description: 'The folders and tags the user created in the OpenOutlier library, with how many accounts each has.',
   inputSchema: {},
   annotations: { readOnlyHint: true }
 }, () => safe(() => {
@@ -153,7 +153,7 @@ server.registerTool('get_reel', {
 function safeName(s) { return String(s || '').replace(/[^\w.-]+/g, '_').slice(0, 80) || 'instagram'; }
 
 async function save(url, file, headers = {}) {
-  const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 ReelScope', ...headers } });
+  const res = await fetch(url, { headers: { 'user-agent': 'Mozilla/5.0 OpenOutlier', ...headers } });
   if (!res.ok) throw new Error(`HTTP ${res.status}${res.status === 403 || res.status === 410 ? ' (link expired: call refresh_reel)' : ''}`);
   await pipeline(Readable.fromWeb(res.body), createWriteStream(file));
   return (await fs.stat(file)).size;
@@ -161,18 +161,18 @@ async function save(url, file, headers = {}) {
 
 server.registerTool('download_reel', {
   title: 'Download a reel',
-  description: 'Save a reel\'s or TikTok video\'s file (mp4) and/or cover image to this computer and return the file paths, so the video can be analyzed (frames, audio, transcription). Default folder: ~/Downloads/ReelScope/<account>/. Files are named with their stats. TikTok: tries the saved link directly; TikTok usually refuses that without the browser session, so ReelScope then asks the extension to open the video in a small Chrome window and download it there (Chrome must be running; the file lands in Chrome\'s Downloads/ReelScope/tt_<name>/ folder and its path is returned).',
+  description: 'Save a reel\'s or TikTok video\'s file (mp4) and/or cover image to this computer and return the file paths, so the video can be analyzed (frames, audio, transcription). Default folder: ~/Downloads/OpenOutlier/<account>/. Files are named with their stats. TikTok: tries the saved link directly; TikTok usually refuses that without the browser session, so OpenOutlier then asks the extension to open the video in a small Chrome window and download it there (Chrome must be running; the file lands in Chrome\'s Downloads/OpenOutlier/tt_<name>/ folder and its path is returned).',
   inputSchema: {
     code: z.string().describe('Shortcode, reel URL, TikTok video id or URL'),
     what: z.enum(['video', 'cover', 'both']).optional().describe('Default video'),
-    directory: z.string().optional().describe('Save here instead of ~/Downloads/ReelScope/<account>')
+    directory: z.string().optional().describe('Save here instead of ~/Downloads/OpenOutlier/<account>')
   }
 }, ({ code, what = 'video', directory }) => safe(async () => {
   const p = findReel(readLibrary(), code);
   if (!p) return fail(`Reel ${code} is not in the library. Use refresh_reel or collect_profile first.`);
-  if (p.platform === 'reddit') return fail('That is a Reddit post. ReelScope does not download Reddit media; use get_reel for its title, text and link.');
+  if (p.platform === 'reddit') return fail('That is a Reddit post. OpenOutlier does not download Reddit media; use get_reel for its title, text and link.');
   if (p.platform === 'tiktok') return downloadTikTok(p, what, directory);
-  const dir = directory ? resolve(directory.replace(/^~(?=$|\/)/, homedir())) : join(homedir(), 'Downloads', 'ReelScope', safeName(p.owner));
+  const dir = directory ? resolve(directory.replace(/^~(?=$|\/)/, homedir())) : join(homedir(), 'Downloads', 'OpenOutlier', safeName(p.owner));
   await fs.mkdir(dir, { recursive: true });
   const base = M.fileBaseName(p);
   const saved = [];
@@ -204,7 +204,7 @@ const TT_HEADERS = { referer: 'https://www.tiktok.com/', 'user-agent': 'Mozilla/
 
 /** TikTok: try the saved links from here (with a tiktok.com referer); if TikTok refuses, let the extension download it in the browser. */
 async function downloadTikTok(p, what, directory) {
-  const dir = directory ? resolve(directory.replace(/^~(?=$|\/)/, homedir())) : join(homedir(), 'Downloads', 'ReelScope', safeName(p.owner));
+  const dir = directory ? resolve(directory.replace(/^~(?=$|\/)/, homedir())) : join(homedir(), 'Downloads', 'OpenOutlier', safeName(p.owner));
   const base = M.fileBaseName(p);
   const saved = [];
   const problems = [];
@@ -247,7 +247,7 @@ async function downloadTikTok(p, what, directory) {
 
 server.registerTool('collect_profile', {
   title: 'Collect a profile',
-  description: 'Ask the ReelScope extension to open an Instagram profile\'s Reels tab in a background Chrome tab, scroll through it and load views and dates. New and existing accounts both work; results land in the library. Waits up to wait_seconds, then returns a command id you can check with command_status. Given tt/name or a tiktok.com/@name URL it collects that TikTok profile: the extension opens it in a small unfocused Chrome window and scrolls it for up to ~4 minutes, reading the videos TikTok loads (no TikTok API calls of its own; if TikTok shows a puzzle, the user has to solve it once). Given r/name or u/name it collects that subreddit / Reddit user instead (see collect_subreddit).',
+  description: 'Ask the OpenOutlier extension to open an Instagram profile\'s Reels tab in a background Chrome tab, scroll through it and load views and dates. New and existing accounts both work; results land in the library. Waits up to wait_seconds, then returns a command id you can check with command_status. Given tt/name or a tiktok.com/@name URL it collects that TikTok profile: the extension opens it in a small unfocused Chrome window and scrolls it for up to ~4 minutes, reading the videos TikTok loads (no TikTok API calls of its own; if TikTok shows a puzzle, the user has to solve it once). Given r/name or u/name it collects that subreddit / Reddit user instead (see collect_subreddit).',
   inputSchema: {
     username: z.string().describe('Instagram username, TikTok as tt/name or tiktok.com/@name (or r/name, u/name for Reddit)'),
     max_reels: z.number().int().min(12).max(2000).optional().describe('Stop after this many reels (default 300)'),
@@ -278,7 +278,7 @@ async function collectReddit({ id, sort = 'top', time = 'year', max_posts = 500,
 
 server.registerTool('collect_subreddit', {
   title: 'Collect a subreddit',
-  description: 'Ask the ReelScope extension to collect a subreddit\'s (or a Reddit user\'s) posts with the user\'s logged-in Chrome: it opens the top posts of the year (default) in a small unfocused window, scrolls until no more load (up to max_posts, at most ~4 minutes) and reads every post. Reddit currently refuses its listing JSON, so this is page reading: no upvote ratio, and Reddit may load fewer posts while that window is hidden behind others. Read-only: never posts, comments or votes. Results land in the library as r/<name> or u/<name>.',
+  description: 'Ask the OpenOutlier extension to collect a subreddit\'s (or a Reddit user\'s) posts with the user\'s logged-in Chrome: it opens the top posts of the year (default) in a small unfocused window, scrolls until no more load (up to max_posts, at most ~4 minutes) and reads every post. Reddit currently refuses its listing JSON, so this is page reading: no upvote ratio, and Reddit may load fewer posts while that window is hidden behind others. Read-only: never posts, comments or votes. Results land in the library as r/<name> or u/<name>.',
   inputSchema: {
     name: z.string().describe('Subreddit (excel, r/excel, or a reddit.com URL) or a user as u/name'),
     sort: z.enum(['top', 'new', 'hot', 'controversial']).optional().describe('Default top'),
@@ -333,7 +333,7 @@ server.registerTool('content_ideas', {
 
 server.registerTool('mentions', {
   title: 'Reddit mentions',
-  description: 'Reddit posts and comments that matched the user\'s keyword watches (TrackReddit-style "Mentions" inbox in ReelScope), newest first, plus the watch list with found/unread counts. Each mention: id (t3_/t1_), kind, watchId, query, title, excerpt, subreddit, author, permalink, createdAt, score, foundAt, source (extension | hayati = home server), read.',
+  description: 'Reddit posts and comments that matched the user\'s keyword watches (TrackReddit-style "Mentions" inbox in OpenOutlier), newest first, plus the watch list with found/unread counts. Each mention: id (t3_/t1_), kind, watchId, query, title, excerpt, subreddit, author, permalink, createdAt, score, foundAt, source (extension | hayati = home server), read.',
   inputSchema: {
     watch: z.string().optional().describe('Watch id or (part of) its query'),
     since_days: z.number().positive().optional().describe('Only mentions created in the last N days'),
@@ -392,7 +392,7 @@ server.registerTool('command_status', {
 
 server.registerTool('bridge_status', {
   title: 'Connection status',
-  description: 'Whether the ReelScope extension is connected to this server and when the library was last synced.',
+  description: 'Whether the OpenOutlier extension is connected to this server and when the library was last synced.',
   inputSchema: {},
   annotations: { readOnlyHint: true }
 }, () => safe(() => {
@@ -411,7 +411,7 @@ server.registerTool('bridge_status', {
 
 server.registerTool('reel_history', {
   title: 'Reel history',
-  description: 'How one post\'s views, likes, comments, shares and saves changed over time. ReelScope records a dated snapshot every time it sees new numbers, so this shows growth (e.g. first 48 hours vs. later). Accepts a shortcode, TikTok video id or post URL.',
+  description: 'How one post\'s views, likes, comments, shares and saves changed over time. OpenOutlier records a dated snapshot every time it sees new numbers, so this shows growth (e.g. first 48 hours vs. later). Accepts a shortcode, TikTok video id or post URL.',
   inputSchema: { code: z.string().describe('Shortcode, video id or URL') },
   annotations: { readOnlyHint: true }
 }, ({ code }) => safe(() => {

@@ -1,4 +1,4 @@
-// ReelScope – match the same video posted on two platforms (e.g. an "Excel Bug"
+// OpenOutlier – match the same video posted on two platforms (e.g. an "Excel Bug"
 // episode on Instagram and on TikTok) and compare how it did on each.
 // Pure functions (Node-testable); used by the Library page and the MCP server.
 //

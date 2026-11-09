@@ -1,4 +1,4 @@
-// ReelScope – content script for www.reddit.com (isolated world).
+// OpenOutlier – content script for www.reddit.com (isolated world).
 //
 // Two ways in, both read-only and from your own logged-in tab:
 //  1. Posts on the page: every <shreddit-post> element (and the ones that load
@@ -6,7 +6,7 @@
 //  2. "Collect top posts": pages through same-origin listing JSON
 //     (/r/<sub>/top.json?t=year&limit=100&after=…, /user/<name>/submitted.json),
 //     one request every ~2 s, backing off on 429. If Reddit refuses the JSON
-//     (403 / login wall), ReelScope switches to DOM-only mode and says so.
+//     (403 / login wall), OpenOutlier switches to DOM-only mode and says so.
 // It never posts, comments, votes or sends messages.
 //
 // Storage: rs:p:r/<sub> and rs:p:u/<user> = { posts: {id: post}, updatedAt, platform: 'reddit' }.
@@ -68,7 +68,7 @@
     await chrome.storage.local.set(batch);
   }
   function saveNow() {
-    saving = saving.then(writeDirty).catch(function (e) { console.warn('[ReelScope] save failed', e); });
+    saving = saving.then(writeDirty).catch(function (e) { console.warn('[OpenOutlier] save failed', e); });
     return saving;
   }
   function scheduleSave() {
@@ -357,8 +357,8 @@
     await flushSave();
     var got = countFor(target.id) - before;
     return { ok: countFor(target.id) > 0, account: target.id, mode: 'page', collected_now: got, saved_total: countFor(target.id),
-      note: 'Reddit refuses its listing JSON, so ReelScope scrolled ' + R.pageUrl(target.id, a) + ' in a small window and read the posts (no upvote ratio).' +
-        (got < 50 ? ' Few posts loaded: Reddit may load less while that window is hidden behind others. For more, open the page in Chrome and press Collect top posts in the ReelScope panel.' : '') };
+      note: 'Reddit refuses its listing JSON, so OpenOutlier scrolled ' + R.pageUrl(target.id, a) + ' in a small window and read the posts (no upvote ratio).' +
+        (got < 50 ? ' Few posts loaded: Reddit may load less while that window is hidden behind others. For more, open the page in Chrome and press Collect top posts in the OpenOutlier panel.' : '') };
   }
 
   async function runCommand(cmd) {
@@ -369,6 +369,7 @@
   // ---- UI -------------------------------------------------------------------
   var cssText = '';
   try { cssText = await (await fetch(chrome.runtime.getURL('src/panel.css'))).text(); } catch (e) { /* unstyled */ }
+  try { if (self.OpenOutlierBrand) await self.OpenOutlierBrand.load(); } catch (e) { /* text fallbacks */ }
 
   function downloadFile(filename, text, mime) {
     var url = URL.createObjectURL(new Blob([text], { type: mime }));

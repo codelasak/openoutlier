@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// ReelScope – always-on bridge (no MCP). Run by launchd so the extension's data
+// OpenOutlier – always-on bridge (no MCP). Run by launchd so the extension's data
 // reaches ~/.reelscope/reelscope.db even when Claude Desktop / Claude Code are
 // closed. MCP server instances share this bridge; if one of them already holds
 // the port, this daemon waits and takes over when it goes away.

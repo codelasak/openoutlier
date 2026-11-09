@@ -1,4 +1,4 @@
-// ReelScope – turn Instagram JSON into normalized post records.
+// OpenOutlier – turn Instagram JSON into normalized post records.
 // Pure functions, no DOM or chrome.* access, so they run in Node tests too.
 (function (root, factory) {
   var api = factory();

@@ -1,4 +1,4 @@
-// ReelScope – connection to the local MCP server (mcp/server.mjs) so AI agents
+// OpenOutlier – connection to the local MCP server (mcp/server.mjs) so AI agents
 // can use your library. Runs in the service worker.
 //
 // • Finds the server by scanning 127.0.0.1:47811–47820 for /health that
@@ -10,7 +10,7 @@
 //   their own small, unfocused window on the subreddit's / user's page, since
 //   Reddit is read by scrolling the page (it refuses its listing JSON).
 //   TikTok commands (collect_tiktok, refresh_tiktok, download_tiktok) do the
-//   same on the profile / video page: TikTok's API is signed, so ReelScope
+//   same on the profile / video page: TikTok's API is signed, so OpenOutlier
 //   only reads what the page loads.
 // Turn it off in the popup ("Connect to AI agents").
 'use strict';

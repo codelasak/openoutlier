@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ReelScope TikTok demo</title>
+  <title>OpenOutlier TikTok demo</title>
   <style>
     body { margin: 0; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; color: #111; }
     header { padding: 24px 32px; border-bottom: 1px solid #ddd; }
@@ -47,7 +47,7 @@
             var names = [];
             (m.posts || []).forEach(function (p) {
               var base = ReelScopeMetrics.fileBaseName(p);
-              var dir = 'ReelScope/' + String(p.owner).replace('/', '_') + '/';
+              var dir = 'OpenOutlier/' + String(p.owner).replace('/', '_') + '/';
               if (m.what === 'cover') { if (p.cover) names.push(dir + base + '_cover.jpg'); }
               else (p.files || []).forEach(function (f, i, all) { names.push(dir + base + (all.length > 1 ? '_' + (i + 1) : '') + (f.kind === 'video' ? '.mp4' : '.jpg')); });
             });
@@ -81,7 +81,7 @@
 </head>
 <body>
   <header>
-    <h1>ReelScope TikTok demo page</h1>
+    <h1>OpenOutlier TikTok demo page</h1>
     <p>Stands in for tiktok.com/@excel.bugs.demo. The page "loads" a fake <code>/api/post/item_list/</code> response through the same hook the extension uses, and the next page when you scroll to the bottom (or press Auto-scroll). The video view shows the on-video overlay. All data is made up (dev/make-tiktok-fixture.mjs).</p>
   </header>
   <nav>
@@ -95,7 +95,7 @@
   </main>
   <script src="../src/metrics.js"></script>
   <script src="../src/tiktok.js"></script>
-  <script src="../src/panel.js"></script>
+  <script src="../src/brand.js"></script>  <script src="../src/panel.js"></script>
   <script src="../src/overlay.js"></script>
   <script src="../src/tiktok-content.js"></script>
   <script>

@@ -1,4 +1,4 @@
-// ReelScope – content script (isolated world). Receives Instagram responses
+// OpenOutlier – content script (isolated world). Receives Instagram responses
 // from hook.js, keeps per-profile records in chrome.storage.local, fills in
 // missing details, and drives the panel, the on-video toolbar and auto-scroll.
 (async function () {
@@ -50,7 +50,7 @@
     await chrome.storage.local.set(batch);
   }
   function saveNow() {
-    saving = saving.then(writeDirty).catch(function (e) { console.warn('[ReelScope] save failed', e); });
+    saving = saving.then(writeDirty).catch(function (e) { console.warn('[OpenOutlier] save failed', e); });
     return saving;
   }
   function scheduleSave() {
@@ -140,7 +140,7 @@
 
   window.addEventListener('message', function (e) {
     if (e.source !== window || !e.data || e.data.__reelscope !== 1 || e.data.type !== 'payload') return;
-    try { ingest(X.parseText(e.data.text)); } catch (err) { console.warn('[ReelScope] parse failed', err); }
+    try { ingest(X.parseText(e.data.text)); } catch (err) { console.warn('[OpenOutlier] parse failed', err); }
   });
 
   // Data Instagram embeds in the initial HTML (first page of a profile).
@@ -414,6 +414,7 @@
   // ---- UI -------------------------------------------------------------------
   var cssText = '';
   try { cssText = await (await fetch(chrome.runtime.getURL('src/panel.css'))).text(); } catch (e) { /* unstyled */ }
+  try { if (self.OpenOutlierBrand) await self.OpenOutlierBrand.load(); } catch (e) { /* text fallbacks */ }
 
   var panel = P.create({
     cssText: cssText,

@@ -1,11 +1,11 @@
-// ReelScope – content script for www.tiktok.com (isolated world).
+// OpenOutlier – content script for www.tiktok.com (isolated world).
 //
 // Read-only, from the user's own tab. Two ways in:
 //  1. TikTok's own API responses (/api/post/item_list, /api/item/detail,
 //     /api/recommend/item_list, /api/search/…), forwarded by hook.js.
 //  2. The SSR JSON TikTok embeds in the page
 //     (<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__">, older: SIGI_STATE).
-// ReelScope makes no TikTok API requests: they are signed (X-Bogus, msToken)
+// OpenOutlier makes no TikTok API requests: they are signed (X-Bogus, msToken)
 // and replayed requests break. Auto-scroll makes TikTok load more by itself.
 //
 // Storage: rs:p:tt/<username> = { posts: {id: post}, updatedAt, platform: 'tiktok', profile }.
@@ -65,7 +65,7 @@
     await chrome.storage.local.set(batch);
   }
   function saveNow() {
-    saving = saving.then(writeDirty).catch(function (e) { console.warn('[ReelScope] save failed', e); });
+    saving = saving.then(writeDirty).catch(function (e) { console.warn('[OpenOutlier] save failed', e); });
     return saving;
   }
   function scheduleSave() {
@@ -141,7 +141,7 @@
 
   window.addEventListener('message', function (e) {
     if (e.source !== window || !e.data || e.data.__reelscope !== 1 || e.data.type !== 'payload') return;
-    try { ingest(T.parseText(e.data.text)); } catch (err) { console.warn('[ReelScope] TikTok parse failed', err); }
+    try { ingest(T.parseText(e.data.text)); } catch (err) { console.warn('[OpenOutlier] TikTok parse failed', err); }
   });
 
   /** The SSR blob(s) in the page: items (video page, sometimes the first profile page) and profile facts. */
@@ -290,8 +290,8 @@
       ok: countFor(id) > 0, account: id, collected_now: got, saved_total: countFor(id),
       profile_videos: prof && prof.videos != null ? prof.videos : undefined,
       followers: prof && prof.followers != null ? prof.followers : undefined,
-      note: 'ReelScope scrolled tiktok.com/@' + name + ' in a small window and read the videos TikTok loaded (no API requests of its own).' +
-        (prof && prof.videos && countFor(id) < prof.videos * 0.8 ? ' TikTok loaded ' + countFor(id) + ' of about ' + prof.videos + ' videos; it may load fewer while that window is hidden. For the rest, open the profile in Chrome and press Auto-scroll in the ReelScope panel.' : '')
+      note: 'OpenOutlier scrolled tiktok.com/@' + name + ' in a small window and read the videos TikTok loaded (no API requests of its own).' +
+        (prof && prof.videos && countFor(id) < prof.videos * 0.8 ? ' TikTok loaded ' + countFor(id) + ' of about ' + prof.videos + ' videos; it may load fewer while that window is hidden. For the rest, open the profile in Chrome and press Auto-scroll in the OpenOutlier panel.' : '')
     };
   }
 
@@ -338,6 +338,7 @@
   // ---- UI -------------------------------------------------------------------
   var cssText = '';
   try { cssText = await (await fetch(chrome.runtime.getURL('src/panel.css'))).text(); } catch (e) { /* unstyled */ }
+  try { if (self.OpenOutlierBrand) await self.OpenOutlierBrand.load(); } catch (e) { /* text fallbacks */ }
 
   function downloadFile(filename, text, mime) {
     var url = URL.createObjectURL(new Blob([text], { type: mime }));
