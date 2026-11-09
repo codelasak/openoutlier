@@ -89,8 +89,13 @@ async function renderAgentStatus() {
   var r = await chrome.storage.local.get('rs:bridge');
   var b = r['rs:bridge'] || {};
   if (!agentsBox.checked) el.textContent = 'Off. Agents (Claude, Cursor…) cannot see your library.';
-  else if (b.connected) el.textContent = 'Connected to the ReelScope MCP server (port ' + b.port + ')' + (b.lastSyncAt ? ', synced ' + new Date(b.lastSyncAt).toLocaleTimeString() : '') + '.';
-  else el.textContent = 'MCP server not running. Add it to Claude to let agents use your library (see README).' + (b.lastError ? ' Last error: ' + b.lastError : '');
+  else if (b.connected) {
+    var backup = b.lastBackupAt
+      ? (b.lastBackupOk ? ' Last backup to Hayati: ' : ' ⚠️ Last backup FAILED: ') + new Date(b.lastBackupAt).toLocaleString() + '.'
+      : ' No backup yet.';
+    el.textContent = 'Saving to your Mac\'s ReelScope database (port ' + b.port + ')' + (b.lastSyncAt ? ', synced ' + new Date(b.lastSyncAt).toLocaleTimeString() : '') + '.' + backup;
+  }
+  else el.textContent = 'Not connected to the ReelScope database on this Mac, so nothing is being backed up. Install the bridge (see README: mcp/launchd/install.sh).' + (b.lastError ? ' Last error: ' + b.lastError : '');
 }
 chrome.runtime.sendMessage({ type: 'reelscope:bridge-check' }).catch(function () {});
 renderAgentStatus();

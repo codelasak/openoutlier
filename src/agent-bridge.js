@@ -108,9 +108,9 @@
       var snap = await snapshot();
       if (found.health.syncId !== state.syncId || found.health.accounts !== snap.count) {
         var r = await post(found.port, '/sync', { full: true, accounts: snap.accounts, org: snap.org, watches: snap.watches, mentions: snap.mentions });
-        await setState({ port: found.port, syncId: r.syncId, connected: true, lastSyncAt: Date.now(), lastError: null });
+        await setState({ port: found.port, syncId: r.syncId, connected: true, lastSyncAt: Date.now(), lastError: null, lastBackupAt: found.health.lastBackupAt || null, lastBackupOk: found.health.lastBackupOk });
       } else {
-        await setState({ port: found.port, connected: true, lastError: null });
+        await setState({ port: found.port, connected: true, lastError: null, lastBackupAt: found.health.lastBackupAt || null, lastBackupOk: found.health.lastBackupOk });
       }
       await pollCommands(found.port);
       await expireStale();

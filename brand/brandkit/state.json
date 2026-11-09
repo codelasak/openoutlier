@@ -1,0 +1,76 @@
+{
+  "brandbookElements": [],
+  "essentialKitApproved": true,
+  "logo": {
+    "approvalSummary": "User asked for variant A with a three-pixel lime trail: 'Sağ üst, A ama 3 pixel olsun yeşil kısmı'. Same ring as the Recraft Pixel O (job 44b9343f), lime trail redrawn on the mark's own 110-unit grid.",
+    "asset": {
+      "id": "44b9343f-ed4f-4032-bf13-98b46b9d2f12",
+      "path": "/Users/eshagh/web_code/reelscope/brand/v2/mark/openoutlier-pixel-o-trail3.svg"
+    },
+    "geometryFingerprint": "fdcac23f87697536dfefef84aa4943407108369f0b06be52dd28e71912272183",
+    "name": "OpenOutlier Pixel O, three-pixel trail",
+    "origin": "brandkit_generated",
+    "paletteRevision": 1,
+    "revision": 2
+  },
+  "palette": {
+    "approvalSummary": "User selected Signal Field, matching their reference: 'tam bu tarzı istiyorum, şu renk, typografi' (electric blue + acid lime + white).",
+    "colors": [
+      {
+        "hex": "#1e3bff",
+        "name": "Signal Blue",
+        "role": "primary"
+      },
+      {
+        "hex": "#c8ff2e",
+        "name": "Outlier Lime",
+        "role": "accent"
+      },
+      {
+        "hex": "#f6f7f2",
+        "name": "Paper",
+        "role": "background"
+      },
+      {
+        "hex": "#0b0e1a",
+        "name": "Ink",
+        "role": "text"
+      },
+      {
+        "hex": "#8fa0ff",
+        "name": "Haze",
+        "role": "support"
+      }
+    ],
+    "gradients": [],
+    "origin": "brandkit_generated",
+    "revision": 1
+  },
+  "typography": {
+    "approvalSummary": "User selected Soft Heavy: '1 Soft Heavy' (Fraunces Black display with Inter Tight body).",
+    "body": {
+      "family": "Inter Tight",
+      "source": "google:Inter Tight",
+      "style": "normal",
+      "weight": 400
+    },
+    "display": {
+      "family": "Fraunces",
+      "source": "google:Fraunces",
+      "style": "normal",
+      "weight": 900
+    },
+    "fontLinks": [
+      "https://fonts.google.com/specimen/Fraunces",
+      "https://fonts.google.com/specimen/Inter+Tight"
+    ],
+    "origin": "brandkit_generated",
+    "revision": 1
+  },
+  "version": 5,
+  "visualAxes": {
+    "familiarExperimental": 65,
+    "geometricOrganic": 15,
+    "restrainedExpressive": 80
+  }
+}

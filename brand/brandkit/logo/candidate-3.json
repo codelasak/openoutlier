@@ -1,0 +1,25 @@
+[
+  {
+    "created_at": "2026-11-09T18:37:29.080291Z",
+    "display_name": "Recraft V4.1",
+    "id": "44b9343f-ed4f-4032-bf13-98b46b9d2f12",
+    "job_type": "recraft_v4_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_35V8FF9Ycv8XZaTrLs5aqQOnpil/hf_20261109_183729_44b9343f-ed4f-4032-bf13-98b46b9d2f12_min.webp",
+    "params": {
+      "aspect_ratio": "1:1",
+      "background_color": "#1E3BFF",
+      "batch_size": 1,
+      "colors": [
+        "#F6F7F2",
+        "#C8FF2E"
+      ],
+      "height": 1024,
+      "model_type": "vector",
+      "prompt": "Lettermark monogram of the single initial O: a thick ring built from stepped square pixels on a strict grid, open with a deliberate two-pixel gap at its upper right, and one 2x2 square of the locked accent tone escaping outward through that gap, already one pixel clear of the ring, which is the distinctive element. Chunky 8-bit bitmap pixel-art construction with stair-stepped diagonals instead of curves, a square-ish pixel counter in the middle, bold even stroke thickness of three pixels, readable at favicon size with no detail smaller than one grid pixel. Strictly two mark colors on the locked background: the pixel ring in the locked primary tone, only the escaping square in the locked accent, flat solid fills, no outlines. Centered isolated symbol with generous margin on the locked background. Flat vector design, clean lines, no shadows, no texture, no text beyond the single letter O, no figures, no arrows, no cursors, no stars. Clean editable vector paths, SVG-friendly, minimal anchor points.",
+      "resolution": "2k",
+      "width": 1024
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_35V8FF9Ycv8XZaTrLs5aqQOnpil/hf_20261109_183729_44b9343f-ed4f-4032-bf13-98b46b9d2f12.svg",
+    "status": "completed"
+  }
+]

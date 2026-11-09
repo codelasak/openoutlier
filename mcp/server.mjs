@@ -12,7 +12,7 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { startBridge, PORTS } from './bridge.mjs';
 import {
-  M, MIN_POSTS, postCount, hiddenSmall, readLibrary, readStatus, selectAccounts, accountRow, accountSummary, topReels, searchReels,
+  M, MIN_POSTS, postCount, hiddenSmall, readLibrary, readStatus, postHistory, store, DB_FILE, selectAccounts, accountRow, accountSummary, topReels, searchReels,
   findReel, brief, normUser, normSubreddit, isRedditId, isTikTokId, platformOf, subredditSummary, topPosts, contentIdeas, mentionsQuery,
   comparePlatforms, queueCommand, waitForCommand, readCommandState, linkExpiry, T
 } from './library.mjs';
@@ -398,7 +398,36 @@ server.registerTool('bridge_status', {
 }, () => safe(() => {
   const lib = readLibrary();
   const all = Object.keys(lib.accounts);
-  return json({ ...bridgeInfo(), ports: PORTS, accounts: all.filter((u) => postCount(lib, u) >= MIN_POSTS).length, small_accounts_hidden: all.filter((u) => postCount(lib, u) < MIN_POSTS).length });
+  const st = readStatus();
+  const iso = (t) => (t ? new Date(t).toISOString() : null);
+  return json({
+    ...bridgeInfo(), ports: PORTS,
+    accounts: all.filter((u) => postCount(lib, u) >= MIN_POSTS).length,
+    small_accounts_hidden: all.filter((u) => postCount(lib, u) < MIN_POSTS).length,
+    database: { file: DB_FILE, ...store().stats() },
+    last_backup: st.lastBackupAt ? { at: iso(st.lastBackupAt), ok: !!st.lastBackupOk, file: st.lastBackupFile || null, remote: st.lastBackupRemote || null, error: st.lastBackupError || undefined } : null
+  });
+}));
+
+server.registerTool('reel_history', {
+  title: 'Reel history',
+  description: 'How one post\'s views, likes, comments, shares and saves changed over time. ReelScope records a dated snapshot every time it sees new numbers, so this shows growth (e.g. first 48 hours vs. later). Accepts a shortcode, TikTok video id or post URL.',
+  inputSchema: { code: z.string().describe('Shortcode, video id or URL') },
+  annotations: { readOnlyHint: true }
+}, ({ code }) => safe(() => {
+  const p = findReel(readLibrary(), code);
+  if (!p) return fail(`Post ${code} is not in the library.`);
+  const rows = postHistory(p.code);
+  const posted = p.takenAt || null;
+  return json({
+    reel: brief(p),
+    snapshots: rows.map((r) => ({
+      seen_at: new Date(r.seen_at).toISOString(),
+      hours_since_posted: posted ? Math.round((r.seen_at - posted) / 36e5 * 10) / 10 : null,
+      views: r.views, likes: r.likes, comments: r.comments, shares: r.shares, saves: r.saves
+    })),
+    note: rows.length < 2 ? 'Only one snapshot so far. History grows each time the extension sees this post again with new numbers.' : undefined
+  });
 }));
 
 // ---- start ----------------------------------------------------------------

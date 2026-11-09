@@ -1,0 +1,8 @@
+{
+  "approval_summary": "User asked for variant A with a three-pixel lime trail: 'Sağ üst, A ama 3 pixel olsun yeşil kısmı'. Same ring as the Recraft Pixel O (job 44b9343f), lime trail redrawn on the mark's own 110-unit grid.",
+  "logo": {
+    "name": "OpenOutlier Pixel O, three-pixel trail",
+    "asset": { "path": "/Users/eshagh/web_code/reelscope/brand/v2/mark/openoutlier-pixel-o-trail3.svg", "id": "44b9343f-ed4f-4032-bf13-98b46b9d2f12" },
+    "geometry_fingerprint": "fdcac23f87697536dfefef84aa4943407108369f0b06be52dd28e71912272183"
+  }
+}

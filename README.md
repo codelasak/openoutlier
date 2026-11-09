@@ -158,7 +158,35 @@ Claude Desktop: open *Settings → Developer → Edit Config* and add the follow
 
 Example prompts: *"Use ReelScope compare_platforms for handsonexcel: which Excel Bug episodes did better on TikTok than on Instagram, and what do they have in common?"* · *"Use ReelScope: compare the 10 most viral reels in my Excel folder from the last 90 days and summarize their hooks."* · *"Download @someone's top reel and describe its first 3 seconds."* · *"Collect @newcreator, then tell me their best posting time."* · *"Collect r/excel and r/spreadsheets, then use content_ideas on my Excel folder and give me 10 'Excel Bug' reel ideas that my competitors haven't covered yet."*
 
-**How the connection works.** The MCP server keeps a copy of your library in `~/.reelscope/` and opens a small bridge on `127.0.0.1`. It takes the first free port in 47811–47820, skipping ports that other programs use; if another ReelScope server (say, from Claude Desktop) already holds a port, it shares that one. The extension scans the same ports and only talks to a server that identifies itself as ReelScope. The bridge only accepts requests from the browser extension, never from websites (it checks the `Origin` and `Host` headers), and it pairs with the first ReelScope extension that connects. To re-pair, delete `~/.reelscope/config.json`. Agent commands run in an Instagram tab you already have open; if there is none, the extension opens one in the background and closes it again. Reddit and TikTok commands open the subreddit's / profile's / video's page in a small unfocused window (using your logged-in session) and close it when done.
+**How the connection works.** The MCP server keeps your library in `~/.reelscope/reelscope.db` (see below) and opens a small bridge on `127.0.0.1`. It takes the first free port in 47811–47820, skipping ports that other programs use; if another ReelScope server (say, from Claude Desktop) already holds a port, it shares that one. The extension scans the same ports and only talks to a server that identifies itself as ReelScope. The bridge only accepts requests from the browser extension, never from websites (it checks the `Origin` and `Host` headers), and it pairs with the first ReelScope extension that connects. To re-pair, delete `~/.reelscope/config.json`. Agent commands run in an Instagram tab you already have open; if there is none, the extension opens one in the background and closes it again. Reddit and TikTok commands open the subreddit's / profile's / video's page in a small unfocused window (using your logged-in session) and close it when done.
+
+## Your data: SQLite on your Mac + daily backup to your server
+
+The extension's storage disappears if you remove the extension, so ReelScope keeps a second, durable copy on your computer and backs it up every day.
+
+- **`~/.reelscope/reelscope.db` (SQLite):** written by the bridge whenever the extension's data changes. It holds every account, post, folder, tag, watch and mention, plus a **history table** with a dated row each time a post's views, likes, comments, shares or saves change. Agents see it through the `reel_history` MCP tool.
+- **Safety rules:**
+  - A full sync from the extension only adds and updates; it never deletes, so a reinstalled extension with empty storage can't wipe the database.
+  - An account is removed only when you delete it in the extension.
+- **Daily backup:** `mcp/backup.mjs` does the following:
+  1. Takes a consistent copy (`VACUUM INTO`) and checks its integrity.
+  2. Gzips it and keeps the last 7 copies in `~/.reelscope/backups/`.
+  3. Uploads it over SSH/Tailscale to `REELSCOPE_BACKUP_REMOTE` (default `hayati-ts:/mnt/storage/backups/reelscope`), verifies the checksum there, and keeps the last 30.
+  - It runs at 03:30, or at login or wake-up if the Mac was off. If today's backup already succeeded, it skips.
+- **Always on (macOS):** `sh mcp/launchd/install.sh` installs two LaunchAgents for your user:
+  - `dev.reelscope.bridge` keeps the bridge running even when Claude is closed.
+  - `dev.reelscope.backup` runs the daily backup.
+  - Logs are in `~/.reelscope/logs/`. Remove both with `sh mcp/launchd/uninstall.sh`; your data stays.
+- **Status:** the toolbar popup shows the last backup time, or a warning if it failed. The `bridge_status` MCP tool reports database counts and the last backup.
+- **Restore:** copy a backup back and unzip it, then start the bridge again:
+
+  ```bash
+  launchctl bootout gui/$(id -u)/dev.reelscope.bridge
+  scp hayati-ts:/mnt/storage/backups/reelscope/reelscope-YYYY-MM-DD.db.gz ~/.reelscope/
+  gunzip -f ~/.reelscope/reelscope-YYYY-MM-DD.db.gz && mv ~/.reelscope/reelscope-YYYY-MM-DD.db ~/.reelscope/reelscope.db
+  rm -f ~/.reelscope/reelscope.db-wal ~/.reelscope/reelscope.db-shm
+  launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.reelscope.bridge.plist
+  ```
 
 ## How it works
 
@@ -186,7 +214,8 @@ src/compare.js       matches the same video across Instagram and TikTok (pure; u
 src/agent-bridge.js  syncs the library (and Reddit watches + mentions) to the local MCP server and runs agent commands
 src/mentions.js      Reddit keyword matching, request plan, dedupe/merge (pure; same rules as reddit-watch)
 src/mentions-bg.js   the 15-minute Mentions checker, notifications, optional reddit-watch server link
-mcp/                 local MCP server (server.mjs = tools, bridge.mjs = 127.0.0.1 bridge, library.mjs = data + queries)
+mcp/                 local MCP server (server.mjs = tools, bridge.mjs = 127.0.0.1 bridge, store.mjs = SQLite, library.mjs = queries,
+                     bridge-daemon.mjs = always-on bridge, backup.mjs = daily backup, launchd/ = macOS install)
 dashboard/           the Library page: folders, tags, per-account view, cross-account Top reels
 popup/               toolbar popup: open the library or the panel, settings, saved profiles
 ```

@@ -1,0 +1,25 @@
+[
+  {
+    "created_at": "2026-11-09T18:37:28.639834Z",
+    "display_name": "Recraft V4.1",
+    "id": "03d8f2c9-04f8-41c4-83b9-1088ca0333bf",
+    "job_type": "recraft_v4_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_35V8FF9Ycv8XZaTrLs5aqQOnpil/hf_20261109_183728_03d8f2c9-04f8-41c4-83b9-1088ca0333bf_min.webp",
+    "params": {
+      "aspect_ratio": "1:1",
+      "background_color": "#1E3BFF",
+      "batch_size": 1,
+      "colors": [
+        "#F6F7F2",
+        "#C8FF2E"
+      ],
+      "height": 1024,
+      "model_type": "vector",
+      "prompt": "Abstract mark: a vertical box-and-whisker plot drawn in pixel art, with one data point that has broken away from it. Construction on a strict square pixel grid with chunky stepped edges and no curves: a wide rectangular box of solid locked primary tone pixels split horizontally by a one-pixel-row gap that reads as the median line, a one-pixel-wide whisker stem rising from the top of the box to a short horizontal cap and a matching stem and cap below the box, and a single isolated 2x2 square of the locked accent tone floating diagonally above and to the right of the top cap, clearly outside the whisker range, which is the distinctive element. 8-bit bitmap pixel-art style, bold, high contrast, graphic, scalable to favicon size with no detail smaller than one grid pixel. Strictly two mark colors on the locked background: the box plot in the locked primary tone, only the breakaway square in the locked accent, flat solid fills, no outlines. Centered isolated symbol with generous margin on the locked background. Flat vector design, clean lines, no shadows, no texture, no text, no letters, no figures, no arrows, no cursors, no stars. Clean editable vector paths, SVG-friendly, minimal anchor points.",
+      "resolution": "2k",
+      "width": 1024
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_35V8FF9Ycv8XZaTrLs5aqQOnpil/hf_20261109_183728_03d8f2c9-04f8-41c4-83b9-1088ca0333bf.svg",
+    "status": "completed"
+  }
+]

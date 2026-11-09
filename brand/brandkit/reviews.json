@@ -1,0 +1,64 @@
+{
+  "reviews": [
+    {
+      "stage": "palette",
+      "name": "Signal Field",
+      "premise": "Electric blue is the ground, white carries the words, and acid lime is reserved for the one post that broke away.",
+      "keywords": ["loud", "pixel", "confident"],
+      "palette": [
+        { "hex": "#1E3BFF", "name": "Signal Blue" },
+        { "hex": "#C8FF2E", "name": "Outlier Lime" },
+        { "hex": "#F6F7F2", "name": "Paper" },
+        { "hex": "#0B0E1A", "name": "Ink" },
+        { "hex": "#8FA0FF", "name": "Haze" }
+      ],
+      "logo_ideas": [
+        "A pixel box plot in white with one lime pixel jumping above the whisker",
+        "A heavy serif wordmark whose dotless ı gets a floating lime pixel instead of a dot",
+        "A pixel bar chart where one bar breaks out of the grid"
+      ],
+      "background_color": "#1E3BFF",
+      "text_color": "#F6F7F2"
+    },
+    {
+      "stage": "palette",
+      "name": "Night Shift",
+      "premise": "Dark-first, like a feed at 2 a.m.: deep navy ground, electric blue structure, lime as the only light that breaks away.",
+      "keywords": ["nocturnal", "screen-native", "focused"],
+      "palette": [
+        { "hex": "#0A0D24", "name": "Night" },
+        { "hex": "#3D5AFE", "name": "Electric" },
+        { "hex": "#B8FF3B", "name": "Lime Signal" },
+        { "hex": "#EDEFF7", "name": "Chalk" },
+        { "hex": "#262C5C", "name": "Grid" }
+      ],
+      "logo_ideas": [
+        "A scatter of blue pixels with one lime pixel far above the cluster",
+        "An upward arrow built from a box plot turned on its side",
+        "A monogram O whose counter is a pixel grid with one lit square outside"
+      ],
+      "background_color": "#0A0D24",
+      "text_color": "#EDEFF7"
+    },
+    {
+      "stage": "palette",
+      "name": "Paper Pixel",
+      "premise": "Print-first and editorial: warm paper and ink with ultramarine blocks; lime appears only on blue, like a highlighter on a chart.",
+      "keywords": ["editorial", "crafted", "data-literate"],
+      "palette": [
+        { "hex": "#F4F3EC", "name": "Newsprint" },
+        { "hex": "#2338E8", "name": "Ultramarine" },
+        { "hex": "#D4FF4F", "name": "Highlighter" },
+        { "hex": "#111318", "name": "Press Ink" },
+        { "hex": "#C9CCC2", "name": "Fold" }
+      ],
+      "logo_ideas": [
+        "A serif O with a pixel staircase climbing out of its counter",
+        "A pixel box plot printed in ultramarine with a highlighter-lime outlier",
+        "Stacked open / outlier set in serif, the outlier word lifted one pixel row"
+      ],
+      "background_color": "#F4F3EC",
+      "text_color": "#111318"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+[
+  {
+    "created_at": "2026-11-09T18:37:28.812109Z",
+    "display_name": "Recraft V4.1",
+    "id": "2a0614b4-3763-484c-9412-97f39a90ad88",
+    "job_type": "recraft_v4_1",
+    "min_result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_35V8FF9Ycv8XZaTrLs5aqQOnpil/hf_20261109_183728_2a0614b4-3763-484c-9412-97f39a90ad88_min.webp",
+    "params": {
+      "aspect_ratio": "1:1",
+      "background_color": "#1E3BFF",
+      "batch_size": 1,
+      "colors": [
+        "#F6F7F2",
+        "#C8FF2E"
+      ],
+      "height": 1024,
+      "model_type": "vector",
+      "prompt": "Abstract mark: a pixel-art bar chart in which one bar breaks out of the chart. Construction on a strict square pixel grid with chunky stepped edges and no curves: four short vertical bars of slightly different heights standing on one shared baseline row, all in the locked primary tone, and a fifth bar at the right that rises far above the others, two to three times their height, past an implied top edge, with only its top three pixel rows in the locked accent tone so the escaping tip glows, which is the distinctive element. 8-bit bitmap pixel-art style, bold, graphic, energetic upward rhythm, readable at favicon size with no detail smaller than one grid pixel. Strictly two mark colors on the locked background: bars in the locked primary tone, only the breakout tip in the locked accent, flat solid fills, no outlines, no axis labels. Centered isolated symbol with generous margin on the locked background. Flat vector design, clean lines, no shadows, no texture, no text, no numbers, no figures, no arrows, no cursors, no stars. Clean editable vector paths, SVG-friendly, minimal anchor points.",
+      "resolution": "2k",
+      "width": 1024
+    },
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_35V8FF9Ycv8XZaTrLs5aqQOnpil/hf_20261109_183728_2a0614b4-3763-484c-9412-97f39a90ad88.svg",
+    "status": "completed"
+  }
+]

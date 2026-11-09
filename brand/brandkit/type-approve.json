@@ -1,0 +1,8 @@
+{
+  "approval_summary": "User selected Soft Heavy: '1 Soft Heavy' (Fraunces Black display with Inter Tight body).",
+  "typography": {
+    "display": { "family": "Fraunces", "source": "google:Fraunces", "style": "normal", "weight": 900 },
+    "body": { "family": "Inter Tight", "source": "google:Inter Tight", "style": "normal", "weight": 400 },
+    "font_links": ["https://fonts.google.com/specimen/Fraunces", "https://fonts.google.com/specimen/Inter+Tight"]
+  }
+}

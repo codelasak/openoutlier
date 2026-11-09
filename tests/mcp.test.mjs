@@ -314,9 +314,11 @@ test('Reddit mentions: watches and the inbox sync, the mentions tool filters the
   assert.deepEqual((await call('mentions', { kind: 'comment' })).data.mentions.map((m) => m.id), ['t1_bb2']);
   assert.ok((await call('mentions', { watch: 'nothing like this' })).isError);
 
-  // A later full sync without watches/mentions (e.g. an older extension) keeps the inbox.
+  // A later full sync without watches/mentions (e.g. an older extension) keeps the inbox,
+  // and — the safety rule of the SQLite store — never deletes the other accounts.
+  const before = (await call('list_accounts')).data.accounts.map((a) => a.username).sort();
   await bridge('/sync', { method: 'POST', body: { full: true, accounts: { 'demo.kitchen': account('demo.kitchen', 1) } } });
-  assert.deepEqual((await call('list_accounts')).data.accounts.map((a) => a.username), ['demo.kitchen']);
+  assert.deepEqual((await call('list_accounts')).data.accounts.map((a) => a.username).sort(), before);
   assert.equal((await call('mentions')).data.total, 3);
 });
 

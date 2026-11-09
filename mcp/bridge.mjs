@@ -15,7 +15,7 @@ import http from 'node:http';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import {
-  HOME, ensureHome, readLibrary, applySync, writeStatus,
+  HOME, ensureHome, readLibrary, applySync, writeStatus, readStatus,
   takePendingCommands, saveCommandResult
 } from './library.mjs';
 
@@ -71,7 +71,9 @@ async function handle(req, res, port) {
   // Health is public (no data in it) so the extension can find us.
   if (req.method === 'GET' && url.pathname === '/health') {
     const lib = readLibrary();
-    return send(res, 200, { app: 'reelscope', version: VERSION, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length, syncedAt: lib.syncedAt },
+    const st = readStatus();
+    return send(res, 200, { app: 'reelscope', version: VERSION, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length, syncedAt: lib.syncedAt,
+      lastBackupAt: st.lastBackupAt || null, lastBackupOk: st.lastBackupAt ? !!st.lastBackupOk : null },
       origin.startsWith('chrome-extension://') ? origin : null);
   }
 

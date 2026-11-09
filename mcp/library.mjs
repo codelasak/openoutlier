@@ -2,10 +2,11 @@
 // The extension pushes its data here (see bridge.mjs); every MCP server
 // instance (Claude Desktop, Claude Code, …) reads the same files.
 import { createRequire } from 'node:module';
-import { promises as fs, existsSync, readFileSync, statSync } from 'node:fs';
+import { promises as fs, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { openStore } from './store.mjs';
 
 const require = createRequire(import.meta.url);
 export const M = require('../src/metrics.js');
@@ -14,7 +15,6 @@ export const T = require('../src/tiktok.js');
 export const C = require('../src/compare.js');
 
 export const HOME = process.env.REELSCOPE_HOME || join(homedir(), '.reelscope');
-export const LIBRARY_FILE = join(HOME, 'library.json');
 export const COMMANDS_DIR = join(HOME, 'commands');
 export const STATUS_FILE = join(HOME, 'status.json');
 
@@ -28,57 +28,38 @@ async function writeJsonAtomic(file, value) {
   await fs.rename(tmp, file);
 }
 
-// ---- library file -----------------------------------------------------------
+// ---- library (SQLite, see store.mjs) ------------------------------------------
 
-let cache = { mtimeMs: -1, lib: null };
+export const DB_FILE = join(HOME, 'reelscope.db');
+export function store() { return openStore(HOME); }
 
 export function emptyLibrary() {
   return { syncId: randomUUID(), syncedAt: null, accounts: {}, org: { folders: [], accounts: {} }, watches: [], mentions: { items: {}, read: {} } };
 }
 
-/** Read the library (cached until the file changes). */
+/** Read the library (cached until the database changes). */
 export function readLibrary() {
-  if (!existsSync(LIBRARY_FILE)) return emptyLibrary();
-  const { mtimeMs } = statSync(LIBRARY_FILE);
-  if (cache.lib && cache.mtimeMs === mtimeMs) return cache.lib;
   try {
-    const lib = JSON.parse(readFileSync(LIBRARY_FILE, 'utf8'));
-    lib.accounts = lib.accounts || {};
-    lib.org = lib.org || { folders: [], accounts: {} };
-    lib.watches = Array.isArray(lib.watches) ? lib.watches : [];
-    lib.mentions = lib.mentions && lib.mentions.items ? lib.mentions : { items: {}, read: {} };
-    cache = { mtimeMs, lib };
-    return lib;
-  } catch {
-    return cache.lib || emptyLibrary();
+    return store().readLibrary();
+  } catch (e) {
+    console.error('[reelscope] could not read the library:', e.message);
+    return emptyLibrary();
   }
 }
 
 /**
  * Apply a sync from the extension.
- * full: replace all accounts. Otherwise `accounts` maps username → record or null (deleted).
+ * full: the extension's whole library — adds and updates only, never deletes.
+ * Otherwise `accounts` maps id → record, or null to delete that account.
  */
 export async function applySync({ full, accounts, org, watches, mentions }) {
-  const prev = readLibrary();
-  const lib = full ? { ...emptyLibrary(), syncId: prev.syncId, watches: prev.watches, mentions: prev.mentions } : { ...prev };
-  if (full) lib.accounts = {};
-  else lib.accounts = { ...lib.accounts };
-  for (const [u, rec] of Object.entries(accounts || {})) {
-    if (rec && rec.posts) {
-      lib.accounts[u] = { posts: rec.posts, updatedAt: rec.updatedAt || Date.now() };
-      if (rec.platform) lib.accounts[u].platform = rec.platform;
-      if (rec.profile && typeof rec.profile === 'object') lib.accounts[u].profile = rec.profile; // TikTok: followers, video count
-    } else delete lib.accounts[u];
-  }
-  if (org) lib.org = org;
-  if (Array.isArray(watches)) lib.watches = watches;
-  if (mentions && typeof mentions === 'object') lib.mentions = { items: mentions.items || {}, read: mentions.read || {} };
-  lib.syncedAt = Date.now();
   await ensureHome();
-  await writeJsonAtomic(LIBRARY_FILE, lib);
-  cache = { mtimeMs: -1, lib: null };
-  return lib;
+  store().applySync({ full: !!full, accounts, org, watches, mentions });
+  return readLibrary();
 }
+
+/** Dated history of a post's counts. */
+export function postHistory(code) { return store().history(code); }
 
 export async function writeStatus(patch) {
   let cur = {};

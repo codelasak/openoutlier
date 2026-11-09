@@ -1,0 +1,13 @@
+{
+  "approval_summary": "User selected Signal Field, matching their reference: 'tam bu tarzı istiyorum, şu renk, typografi' (electric blue + acid lime + white).",
+  "palette": {
+    "colors": [
+      { "hex": "#1E3BFF", "name": "Signal Blue", "role": "primary" },
+      { "hex": "#C8FF2E", "name": "Outlier Lime", "role": "accent" },
+      { "hex": "#F6F7F2", "name": "Paper", "role": "background" },
+      { "hex": "#0B0E1A", "name": "Ink", "role": "text" },
+      { "hex": "#8FA0FF", "name": "Haze", "role": "support" }
+    ],
+    "gradients": []
+  }
+}

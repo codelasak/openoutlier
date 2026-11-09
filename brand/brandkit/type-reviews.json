@@ -1,0 +1,85 @@
+{
+  "reviews": [
+    {
+      "stage": "typography",
+      "name": "Soft Heavy",
+      "premise": "The closest to your reference: a black-weight serif with soft, rounded terminals that feels friendly next to the hard pixels, and a tight neutral sans for everything else.",
+      "keywords": [
+        "chunky",
+        "friendly",
+        "confident"
+      ],
+      "palette": [],
+      "logo_ideas": [],
+      "logo_svg": "/Users/eshagh/web_code/reelscope/brand/brandkit/logo/candidate-3.svg",
+      "display_font": {
+        "family": "Fraunces",
+        "source": "google:Fraunces",
+        "weight": 900
+      },
+      "body_font": {
+        "family": "Inter Tight",
+        "source": "google:Inter Tight",
+        "weight": 400
+      },
+      "headline": "OpenOutlier",
+      "body": "Find the posts that broke away. Sort any Instagram, TikTok or Reddit profile by views, spot the outliers at 9.0x the median, and keep every number on your own computer.",
+      "background_color": "#1E3BFF",
+      "text_color": "#F6F7F2"
+    },
+    {
+      "stage": "typography",
+      "name": "Sharp Contrast",
+      "premise": "A heavy high-contrast display serif with knife-sharp wedges, set against a calm geometric sans built for screens.",
+      "keywords": [
+        "editorial",
+        "sharp",
+        "bold"
+      ],
+      "palette": [],
+      "logo_ideas": [],
+      "logo_svg": "/Users/eshagh/web_code/reelscope/brand/brandkit/logo/candidate-3.svg",
+      "display_font": {
+        "family": "Gloock",
+        "source": "google:Gloock",
+        "weight": 400
+      },
+      "body_font": {
+        "family": "Geist",
+        "source": "google:Geist",
+        "weight": 400
+      },
+      "headline": "OpenOutlier",
+      "body": "Find the posts that broke away. Sort any Instagram, TikTok or Reddit profile by views, spot the outliers at 9.0x the median, and keep every number on your own computer.",
+      "background_color": "#1E3BFF",
+      "text_color": "#F6F7F2"
+    },
+    {
+      "stage": "typography",
+      "name": "Classic Poster",
+      "premise": "A fat, high-contrast poster serif with ball terminals and a friendly low-contrast sans from the same family of ideas.",
+      "keywords": [
+        "poster",
+        "punchy",
+        "warm"
+      ],
+      "palette": [],
+      "logo_ideas": [],
+      "logo_svg": "/Users/eshagh/web_code/reelscope/brand/brandkit/logo/candidate-3.svg",
+      "display_font": {
+        "family": "DM Serif Display",
+        "source": "google:DM Serif Display",
+        "weight": 400
+      },
+      "body_font": {
+        "family": "DM Sans",
+        "source": "google:DM Sans",
+        "weight": 400
+      },
+      "headline": "OpenOutlier",
+      "body": "Find the posts that broke away. Sort any Instagram, TikTok or Reddit profile by views, spot the outliers at 9.0x the median, and keep every number on your own computer.",
+      "background_color": "#1E3BFF",
+      "text_color": "#F6F7F2"
+    }
+  ]
+}
