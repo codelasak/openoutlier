@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReelScope</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon32.png" width="20" height="20" alt="">
+    <h1>ReelScope</h1>
+  </header>
+
+  <button id="library" class="btn btn-primary" type="button">Open library (all saved accounts)</button>
+  <button id="open" class="btn btn-wide" type="button">Open panel on this tab</button>
+  <button id="mentions" class="btn btn-wide" type="button">🔔 Reddit mentions</button>
+  <p id="hint" class="hint" hidden>Open <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> (a profile's <b>Reels</b> tab) or a subreddit on <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>, then scroll. Reload the tab if you just installed ReelScope.</p>
+
+  <label class="toggle">
+    <input id="details" type="checkbox" checked>
+    <span><b>Load missing views &amp; dates</b><br><span class="muted">Asks Instagram for each post's details, one at a time, the same way its own post page does. Turn off if Instagram shows "try again later".</span></span>
+  </label>
+
+  <label class="toggle">
+    <input id="agents" type="checkbox" checked>
+    <span><b>Connect to AI agents</b><br><span class="muted" id="agent-status">Checking…</span></span>
+  </label>
+
+  <h2>Saved accounts &amp; subreddits</h2>
+  <ul id="profiles"></ul>
+  <p id="none" class="muted" hidden>Nothing saved yet.</p>
+
+  <footer>
+    <button id="clear" class="btn btn-ghost" type="button">Delete all data</button>
+    <span class="muted">Free &amp; open source · MIT</span>
+  </footer>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReelScope Reddit demo</title>
+  <style>
+    body { margin: 0; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; color: #111; }
+    header { padding: 24px 32px; border-bottom: 1px solid #ddd; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; color: #666; max-width: 760px; }
+    nav { display: flex; gap: 8px; padding: 12px 32px; flex-wrap: wrap; }
+    nav a { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; color: inherit; text-decoration: none; }
+    main { padding: 12px 32px 40px; max-width: 760px; }
+    shreddit-post { display: block; border: 1px solid #e3e3e3; border-radius: 10px; padding: 12px 14px; margin: 0 0 10px; }
+    shreddit-post::before { content: attr(score) " · " attr(post-title); font-weight: 600; }
+    shreddit-post-flair { display: inline-block; margin-top: 6px; font-size: 12px; background: #eee; border-radius: 10px; padding: 1px 8px; }
+  </style>
+  <!-- Pretend to be www.reddit.com/r/excel/top/?t=year (all paths below are absolute for that reason). -->
+  <script>
+    (function () {
+      var mode = location.hash.replace('#', '') || 'json';
+      history.replaceState(null, '', '/r/excel/top/?t=year#' + mode);
+
+      // Stand-in for the chrome.* APIs so the content scripts run on a normal page.
+      var data = {};
+      var listeners = [];
+      window.chrome = {
+        storage: {
+          local: {
+            get: async function () { return JSON.parse(JSON.stringify(data)); },
+            set: async function (o) { Object.assign(data, JSON.parse(JSON.stringify(o))); },
+            remove: async function (k) { [].concat(k).forEach(function (x) { delete data[x]; }); }
+          },
+          onChanged: { addListener: function () {} }
+        },
+        runtime: {
+          getURL: function (p) { return '/' + p; },
+          onMessage: { addListener: function (fn) { listeners.push(fn); } },
+          sendMessage: async function (m) { console.log('[demo] message', m.type); return { ok: true }; }
+        }
+      };
+      window.__demoStore = data;
+      window.__demoOpenPanel = function () { listeners.forEach(function (fn) { fn({ type: 'reelscope:toggle' }, {}, function () {}); }); };
+
+      // Fake same-origin listing JSON from dev/reddit/listings.json.
+      //   #json (default) → pages served normally;  #blocked → 403 (DOM-only mode);  #rate → one 429 first.
+      var realFetch = window.fetch;
+      var listP = null;
+      var rateOnce = mode === 'rate';
+      window.__demoListingRequests = [];
+      window.fetch = function (input) {
+        var url = typeof input === 'string' ? input : input.url;
+        var m = url.match(/^\/r\/(\w+)\/(top|new|hot)\.json\?(.*)$/);
+        if (!m) return realFetch.apply(this, arguments);
+        window.__demoListingRequests.push(url);
+        if (mode === 'blocked') return Promise.resolve(new Response('<html>blocked</html>', { status: 403, headers: { 'content-type': 'text/html' } }));
+        if (rateOnce) { rateOnce = false; return Promise.resolve(new Response('{}', { status: 429 })); }
+        listP = listP || realFetch('/dev/reddit/listings.json').then(function (r) { return r.json(); });
+        return listP.then(function (all) {
+          var pages = all[m[1].toLowerCase()];
+          if (!pages) return new Response('{"error":404}', { status: 404 });
+          var after = (m[3].match(/after=([^&]+)/) || [])[1];
+          var page = after ? pages.filter(function (p, i) { return i > 0 && pages[i - 1].data.after === decodeURIComponent(after); })[0] : pages[0];
+          return new Response(JSON.stringify(page || { kind: 'Listing', data: { after: null, children: [] } }), { status: 200, headers: { 'content-type': 'application/json' } });
+        });
+      };
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <h1>ReelScope Reddit demo (r/excel)</h1>
+    <p>Stands in for reddit.com/r/excel/top. The posts below are fake <code>&lt;shreddit-post&gt;</code> elements. "Collect top posts" in the panel scrolls this page and reads them (Reddit refuses its listing JSON, so the page is the source). The fake listing JSON is only used by agent commands; <code>#blocked</code> makes it answer 403.</p>
+  </header>
+  <nav>
+    <a href="/dev/reddit-demo.html#json">JSON works</a>
+    <a href="/dev/reddit-demo.html#blocked">JSON blocked (403)</a>
+    <a href="/dev/dashboard-demo.html#/folder/f2">Library demo (Excel folder)</a>
+  </nav>
+  <main id="feed"></main>
+  <script>
+    // Insert the fake posts a moment after load, like reddit's lazy feed.
+    fetch('/dev/reddit/shreddit.html').then(function (r) { return r.text(); }).then(function (html) {
+      setTimeout(function () { document.getElementById('feed').insertAdjacentHTML('beforeend', html); }, 300);
+    });
+  </script>
+  <script src="/src/metrics.js"></script>
+  <script src="/src/reddit.js"></script>
+  <script src="/src/panel.js"></script>
+  <script src="/src/reddit-content.js"></script>
+  <script>setTimeout(function () { window.__demoOpenPanel(); }, 900);</script>
+</body>
+</html>

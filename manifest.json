@@ -1,0 +1,95 @@
+{
+  "manifest_version": 3,
+  "name": "ReelScope – open-source Reels & Reddit analytics",
+  "short_name": "ReelScope",
+  "version": "0.1.0",
+  "description": "Sort Instagram Reels by views and Reddit posts by score, spot outliers, find the best time to post, analyze titles and hashtags, export to CSV. Free and open source.",
+  "minimum_chrome_version": "111",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "downloads",
+    "alarms",
+    "notifications",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://www.instagram.com/*",
+    "https://*.cdninstagram.com/*",
+    "https://*.fbcdn.net/*",
+    "https://www.reddit.com/*",
+    "https://*.redd.it/*",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "ReelScope",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.instagram.com/*"
+      ],
+      "js": [
+        "src/hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.instagram.com/*"
+      ],
+      "js": [
+        "src/extract.js",
+        "src/metrics.js",
+        "src/panel.js",
+        "src/overlay.js",
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.reddit.com/*"
+      ],
+      "js": [
+        "src/metrics.js",
+        "src/reddit.js",
+        "src/panel.js",
+        "src/reddit-content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/panel.css"
+      ],
+      "matches": [
+        "https://www.instagram.com/*",
+        "https://www.reddit.com/*"
+      ],
+      "use_dynamic_url": true
+    }
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ]
+}

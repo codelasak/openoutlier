@@ -1,0 +1,4006 @@
+{
+ "excel": [
+  {
+   "kind": "Listing",
+   "data": {
+    "after": "t3_2smtt",
+    "dist": 45,
+    "children": [
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1v7p",
+       "name": "t3_1v7p",
+       "title": "How to remove duplicates but keep the latest date?",
+       "selftext": "I have a table with 100 rows and the formula works for some rows but not others.",
+       "author": "user_505",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 79,
+       "ups": 79,
+       "upvote_ratio": 0.87,
+       "num_comments": 52,
+       "num_crossposts": 0,
+       "created_utc": 1794069157,
+       "permalink": "/r/excel/comments/1v7p/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/excel/comments/1v7p/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "440u",
+       "name": "t3_440u",
+       "title": "Dates turned into numbers after importing a CSV, help (Excel 365)",
+       "selftext": "I have a table with 101 rows and the formula works for some rows but not others.",
+       "author": "user_214",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 120,
+       "ups": 120,
+       "upvote_ratio": 0.89,
+       "num_comments": 77,
+       "num_crossposts": 0,
+       "created_utc": 1793798171,
+       "permalink": "/r/excel/comments/440u/dates_turned_into_numbers_after_importin/",
+       "url": "https://www.reddit.com/r/excel/comments/440u/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "6ctz",
+       "name": "t3_6ctz",
+       "title": "Conditional formatting is slow on 50k rows, any fix in Excel?",
+       "selftext": "I have a table with 102 rows and the formula works for some rows but not others.",
+       "author": "user_979",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 32,
+       "ups": 32,
+       "upvote_ratio": 0.82,
+       "num_comments": 23,
+       "num_crossposts": 0,
+       "created_utc": 1793518649,
+       "permalink": "/r/excel/comments/6ctz/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/excel/comments/6ctz/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "8ln4",
+       "name": "t3_8ln4",
+       "title": "My monthly sales dashboard",
+       "selftext": "",
+       "author": "user_122",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 105,
+       "ups": 105,
+       "upvote_ratio": 0.77,
+       "num_comments": 11,
+       "num_crossposts": 0,
+       "created_utc": 1793290084,
+       "permalink": "/r/excel/comments/8ln4/my_monthly_sales_dashboard/",
+       "url": "https://i.redd.it/8ln4.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/8ln4.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "aug9",
+       "name": "t3_aug9",
+       "title": "How to remove duplicates but keep the latest date (Excel 365)?",
+       "selftext": "I have a table with 104 rows and the formula works for some rows but not others.",
+       "author": "user_671",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 62,
+       "ups": 62,
+       "upvote_ratio": 0.99,
+       "num_comments": 35,
+       "num_crossposts": 0,
+       "created_utc": 1793113509,
+       "permalink": "/r/excel/comments/aug9/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/excel/comments/aug9/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "d39e",
+       "name": "t3_d39e",
+       "title": "Is there a way to sum by color without VBA in Excel?",
+       "selftext": "I have a table with 105 rows and the formula works for some rows but not others.",
+       "author": "user_858",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 87,
+       "ups": 87,
+       "upvote_ratio": 0.79,
+       "num_comments": 46,
+       "num_crossposts": 0,
+       "created_utc": 1792838757,
+       "permalink": "/r/excel/comments/d39e/is_there_a_way_to_sum_by_color_without_v/",
+       "url": "https://www.reddit.com/r/excel/comments/d39e/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Waiting on OP",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "fc2j",
+       "name": "t3_fc2j",
+       "title": "A cheat sheet of the 20 functions I use daily",
+       "selftext": "",
+       "author": "user_926",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 101,
+       "ups": 101,
+       "upvote_ratio": 0.89,
+       "num_comments": 11,
+       "num_crossposts": 0,
+       "created_utc": 1792594597,
+       "permalink": "/r/excel/comments/fc2j/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/fc2j.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/fc2j.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "hkvo",
+       "name": "t3_hkvo",
+       "title": "How to remove duplicates but keep the latest date (Excel 365)?",
+       "selftext": "I have a table with 107 rows and the formula works for some rows but not others.",
+       "author": "user_590",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 42,
+       "ups": 42,
+       "upvote_ratio": 0.87,
+       "num_comments": 30,
+       "num_crossposts": 0,
+       "created_utc": 1792394654,
+       "permalink": "/r/excel/comments/hkvo/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/excel/comments/hkvo/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "jtot",
+       "name": "t3_jtot",
+       "title": "A cheat sheet of the 20 functions I use daily in Excel",
+       "selftext": "",
+       "author": "user_686",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 82,
+       "ups": 82,
+       "upvote_ratio": 0.91,
+       "num_comments": 5,
+       "num_crossposts": 0,
+       "created_utc": 1791988614,
+       "permalink": "/r/excel/comments/jtot/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/jtot.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/jtot.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "m2hy",
+       "name": "t3_m2hy",
+       "title": "I built a budget tracker with LAMBDA functions",
+       "selftext": "",
+       "author": "user_688",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 41,
+       "ups": 41,
+       "upvote_ratio": 0.77,
+       "num_comments": 7,
+       "num_crossposts": 0,
+       "created_utc": 1791933658,
+       "permalink": "/r/excel/comments/m2hy/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/m2hy.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/m2hy.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "obb3",
+       "name": "t3_obb3",
+       "title": "Excel World Championship highlights (Excel 365)",
+       "selftext": "",
+       "author": "user_262",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 41,
+       "ups": 41,
+       "upvote_ratio": 0.95,
+       "num_comments": 4,
+       "num_crossposts": 0,
+       "created_utc": 1791559136,
+       "permalink": "/r/excel/comments/obb3/excel_world_championship_highlights_exce/",
+       "url": "https://v.redd.it/obb3",
+       "domain": "v.redd.it",
+       "is_self": false,
+       "is_video": true,
+       "post_hint": "hosted:video",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "qk48",
+       "name": "t3_qk48",
+       "title": "I built a budget tracker with LAMBDA functions in Excel",
+       "selftext": "",
+       "author": "user_542",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 38,
+       "ups": 38,
+       "upvote_ratio": 0.79,
+       "num_comments": 5,
+       "num_crossposts": 0,
+       "created_utc": 1791294174,
+       "permalink": "/r/excel/comments/qk48/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/qk48.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/qk48.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "ssxd",
+       "name": "t3_ssxd",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A?",
+       "selftext": "I have a table with 112 rows and the formula works for some rows but not others.",
+       "author": "user_251",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 276,
+       "ups": 276,
+       "upvote_ratio": 0.89,
+       "num_comments": 104,
+       "num_crossposts": 0,
+       "created_utc": 1790959803,
+       "permalink": "/r/excel/comments/ssxd/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/excel/comments/ssxd/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "v1qi",
+       "name": "t3_v1qi",
+       "title": "How to remove duplicates but keep the latest date (Excel 365)?",
+       "selftext": "I have a table with 113 rows and the formula works for some rows but not others.",
+       "author": "user_404",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 161,
+       "ups": 161,
+       "upvote_ratio": 0.89,
+       "num_comments": 90,
+       "num_crossposts": 0,
+       "created_utc": 1790864183,
+       "permalink": "/r/excel/comments/v1qi/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/excel/comments/v1qi/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "xajn",
+       "name": "t3_xajn",
+       "title": "My monthly sales dashboard in Excel",
+       "selftext": "",
+       "author": "user_217",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 82,
+       "ups": 82,
+       "upvote_ratio": 0.79,
+       "num_comments": 4,
+       "num_crossposts": 0,
+       "created_utc": 1790608784,
+       "permalink": "/r/excel/comments/xajn/my_monthly_sales_dashboard_in_excel/",
+       "url": "https://i.redd.it/xajn.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/xajn.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "zjcs",
+       "name": "t3_zjcs",
+       "title": "Conditional formatting is slow on 50k rows, any fix?",
+       "selftext": "I have a table with 115 rows and the formula works for some rows but not others.",
+       "author": "user_769",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 34,
+       "ups": 34,
+       "upvote_ratio": 0.8,
+       "num_comments": 13,
+       "num_crossposts": 0,
+       "created_utc": 1790365446,
+       "permalink": "/r/excel/comments/zjcs/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/excel/comments/zjcs/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "11s5x",
+       "name": "t3_11s5x",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A (Excel 365)?",
+       "selftext": "I have a table with 116 rows and the formula works for some rows but not others.",
+       "author": "user_787",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 188,
+       "ups": 188,
+       "upvote_ratio": 0.8,
+       "num_comments": 102,
+       "num_crossposts": 0,
+       "created_utc": 1790012075,
+       "permalink": "/r/excel/comments/11s5x/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/excel/comments/11s5x/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "140z2",
+       "name": "t3_140z2",
+       "title": "Dates turned into numbers after importing a CSV, help in Excel",
+       "selftext": "I have a table with 117 rows and the formula works for some rows but not others.",
+       "author": "user_575",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 155,
+       "ups": 155,
+       "upvote_ratio": 0.93,
+       "num_comments": 59,
+       "num_crossposts": 0,
+       "created_utc": 1789923100,
+       "permalink": "/r/excel/comments/140z2/dates_turned_into_numbers_after_importin/",
+       "url": "https://www.reddit.com/r/excel/comments/140z2/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "169s7",
+       "name": "t3_169s7",
+       "title": "I built a budget tracker with LAMBDA functions",
+       "selftext": "",
+       "author": "user_188",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 72,
+       "ups": 72,
+       "upvote_ratio": 0.8,
+       "num_comments": 8,
+       "num_crossposts": 1,
+       "created_utc": 1789491592,
+       "permalink": "/r/excel/comments/169s7/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/169s7.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/169s7.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "18ilc",
+       "name": "t3_18ilc",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell (Excel 365)",
+       "selftext": "",
+       "author": "user_497",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 535,
+       "ups": 535,
+       "upvote_ratio": 0.84,
+       "num_comments": 204,
+       "num_crossposts": 0,
+       "created_utc": 1789307780,
+       "permalink": "/r/excel/comments/18ilc/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/18ilc.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/18ilc.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1areh",
+       "name": "t3_1areh",
+       "title": "XLOOKUP returns #N/A even though the value is clearly there in Excel",
+       "selftext": "I have a table with 120 rows and the formula works for some rows but not others.",
+       "author": "user_332",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 204,
+       "ups": 204,
+       "upvote_ratio": 0.87,
+       "num_comments": 127,
+       "num_crossposts": 0,
+       "created_utc": 1788965963,
+       "permalink": "/r/excel/comments/1areh/xlookup_returns_n_a_even_though_the_valu/",
+       "url": "https://www.reddit.com/r/excel/comments/1areh/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1d07m",
+       "name": "t3_1d07m",
+       "title": "Pivot table keeps losing its formatting on refresh",
+       "selftext": "I have a table with 121 rows and the formula works for some rows but not others.",
+       "author": "user_291",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 652,
+       "ups": 652,
+       "upvote_ratio": 0.85,
+       "num_comments": 280,
+       "num_crossposts": 0,
+       "created_utc": 1788788222,
+       "permalink": "/r/excel/comments/1d07m/pivot_table_keeps_losing_its_formatting_/",
+       "url": "https://www.reddit.com/r/excel/comments/1d07m/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1f90r",
+       "name": "t3_1f90r",
+       "title": "A cheat sheet of the 20 functions I use daily (Excel 365)",
+       "selftext": "",
+       "author": "user_217",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 73,
+       "ups": 73,
+       "upvote_ratio": 0.88,
+       "num_comments": 5,
+       "num_crossposts": 0,
+       "created_utc": 1788540944,
+       "permalink": "/r/excel/comments/1f90r/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/1f90r.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/1f90r.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1hhtw",
+       "name": "t3_1hhtw",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell in Excel",
+       "selftext": "",
+       "author": "user_969",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 176,
+       "ups": 176,
+       "upvote_ratio": 0.86,
+       "num_comments": 131,
+       "num_crossposts": 0,
+       "created_utc": 1788193366,
+       "permalink": "/r/excel/comments/1hhtw/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/1hhtw.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/1hhtw.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1jqn1",
+       "name": "t3_1jqn1",
+       "title": "What is the best way to learn Power Query?",
+       "selftext": "I have a table with 124 rows and the formula works for some rows but not others.",
+       "author": "user_954",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 93,
+       "ups": 93,
+       "upvote_ratio": 0.93,
+       "num_comments": 53,
+       "num_crossposts": 0,
+       "created_utc": 1788016038,
+       "permalink": "/r/excel/comments/1jqn1/what_is_the_best_way_to_learn_power_quer/",
+       "url": "https://www.reddit.com/r/excel/comments/1jqn1/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1lzg6",
+       "name": "t3_1lzg6",
+       "title": "XLOOKUP returns #N/A even though the value is clearly there (Excel 365)",
+       "selftext": "I have a table with 125 rows and the formula works for some rows but not others.",
+       "author": "user_779",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 93,
+       "ups": 93,
+       "upvote_ratio": 0.9,
+       "num_comments": 66,
+       "num_crossposts": 0,
+       "created_utc": 1787812749,
+       "permalink": "/r/excel/comments/1lzg6/xlookup_returns_n_a_even_though_the_valu/",
+       "url": "https://www.reddit.com/r/excel/comments/1lzg6/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1o89b",
+       "name": "t3_1o89b",
+       "title": "Microsoft announces new Copilot features in Excel in Excel",
+       "selftext": "",
+       "author": "user_704",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 54,
+       "ups": 54,
+       "upvote_ratio": 0.88,
+       "num_comments": 6,
+       "num_crossposts": 0,
+       "created_utc": 1787583224,
+       "permalink": "/r/excel/comments/1o89b/microsoft_announces_new_copilot_features/",
+       "url": "https://techcommunity.example.com/excel-news",
+       "domain": "techcommunity.example.com",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "link",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1qh2g",
+       "name": "t3_1qh2g",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours",
+       "selftext": "I have a table with 127 rows and the formula works for some rows but not others.",
+       "author": "user_280",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 77,
+       "ups": 77,
+       "upvote_ratio": 0.77,
+       "num_comments": 9,
+       "num_crossposts": 1,
+       "created_utc": 1787329435,
+       "permalink": "/r/excel/comments/1qh2g/pro_tip_ctrl_e_flash_fill_saves_hours/",
+       "url": "https://www.reddit.com/r/excel/comments/1qh2g/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1spvl",
+       "name": "t3_1spvl",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell (Excel 365)",
+       "selftext": "",
+       "author": "user_597",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 51,
+       "ups": 51,
+       "upvote_ratio": 0.94,
+       "num_comments": 27,
+       "num_crossposts": 0,
+       "created_utc": 1787041237,
+       "permalink": "/r/excel/comments/1spvl/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/1spvl.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/1spvl.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1uyoq",
+       "name": "t3_1uyoq",
+       "title": "Our team switched from Google Sheets back to Excel in Excel",
+       "selftext": "I have a table with 129 rows and the formula works for some rows but not others.",
+       "author": "user_217",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 44,
+       "ups": 44,
+       "upvote_ratio": 0.77,
+       "num_comments": 3,
+       "num_crossposts": 0,
+       "created_utc": 1786799269,
+       "permalink": "/r/excel/comments/1uyoq/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/1uyoq/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1x7hv",
+       "name": "t3_1x7hv",
+       "title": "I built a budget tracker with LAMBDA functions",
+       "selftext": "",
+       "author": "user_127",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 38,
+       "ups": 38,
+       "upvote_ratio": 0.84,
+       "num_comments": 2,
+       "num_crossposts": 0,
+       "created_utc": 1786542501,
+       "permalink": "/r/excel/comments/1x7hv/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/1x7hv.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/1x7hv.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1zgb0",
+       "name": "t3_1zgb0",
+       "title": "Conditional formatting is slow on 50k rows, any fix (Excel 365)?",
+       "selftext": "I have a table with 131 rows and the formula works for some rows but not others.",
+       "author": "user_782",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 31,
+       "ups": 31,
+       "upvote_ratio": 0.94,
+       "num_comments": 17,
+       "num_crossposts": 0,
+       "created_utc": 1786197965,
+       "permalink": "/r/excel/comments/1zgb0/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/excel/comments/1zgb0/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "21p45",
+       "name": "t3_21p45",
+       "title": "Excel World Championship highlights in Excel",
+       "selftext": "",
+       "author": "user_464",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 50,
+       "ups": 50,
+       "upvote_ratio": 0.85,
+       "num_comments": 6,
+       "num_crossposts": 0,
+       "created_utc": 1786117157,
+       "permalink": "/r/excel/comments/21p45/excel_world_championship_highlights_in_e/",
+       "url": "https://v.redd.it/21p45",
+       "domain": "v.redd.it",
+       "is_self": false,
+       "is_video": true,
+       "post_hint": "hosted:video",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "23xxa",
+       "name": "t3_23xxa",
+       "title": "Dates turned into numbers after importing a CSV, help",
+       "selftext": "I have a table with 133 rows and the formula works for some rows but not others.",
+       "author": "user_276",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 141,
+       "ups": 141,
+       "upvote_ratio": 0.98,
+       "num_comments": 101,
+       "num_crossposts": 0,
+       "created_utc": 1785814663,
+       "permalink": "/r/excel/comments/23xxa/dates_turned_into_numbers_after_importin/",
+       "url": "https://www.reddit.com/r/excel/comments/23xxa/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "266qf",
+       "name": "t3_266qf",
+       "title": "Why does my VLOOKUP break when I insert a column (Excel 365)?",
+       "selftext": "I have a table with 134 rows and the formula works for some rows but not others.",
+       "author": "user_915",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 166,
+       "ups": 166,
+       "upvote_ratio": 0.85,
+       "num_comments": 71,
+       "num_crossposts": 0,
+       "created_utc": 1785555002,
+       "permalink": "/r/excel/comments/266qf/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/excel/comments/266qf/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "28fjk",
+       "name": "t3_28fjk",
+       "title": "Is there a way to sum by color without VBA in Excel?",
+       "selftext": "I have a table with 135 rows and the formula works for some rows but not others.",
+       "author": "user_322",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 147,
+       "ups": 147,
+       "upvote_ratio": 0.88,
+       "num_comments": 86,
+       "num_crossposts": 0,
+       "created_utc": 1785333782,
+       "permalink": "/r/excel/comments/28fjk/is_there_a_way_to_sum_by_color_without_v/",
+       "url": "https://www.reddit.com/r/excel/comments/28fjk/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Waiting on OP",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2aocp",
+       "name": "t3_2aocp",
+       "title": "Our team switched from Google Sheets back to Excel",
+       "selftext": "I have a table with 136 rows and the formula works for some rows but not others.",
+       "author": "user_334",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 17,
+       "ups": 17,
+       "upvote_ratio": 0.79,
+       "num_comments": 2,
+       "num_crossposts": 0,
+       "created_utc": 1785073307,
+       "permalink": "/r/excel/comments/2aocp/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/2aocp/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2cx5u",
+       "name": "t3_2cx5u",
+       "title": "Why does my VLOOKUP break when I insert a column (Excel 365)?",
+       "selftext": "I have a table with 137 rows and the formula works for some rows but not others.",
+       "author": "user_972",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 155,
+       "ups": 155,
+       "upvote_ratio": 0.92,
+       "num_comments": 79,
+       "num_crossposts": 0,
+       "created_utc": 1784811836,
+       "permalink": "/r/excel/comments/2cx5u/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/excel/comments/2cx5u/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2f5yz",
+       "name": "t3_2f5yz",
+       "title": "Dates turned into numbers after importing a CSV, help in Excel",
+       "selftext": "I have a table with 138 rows and the formula works for some rows but not others.",
+       "author": "user_360",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 64,
+       "ups": 64,
+       "upvote_ratio": 0.77,
+       "num_comments": 52,
+       "num_crossposts": 0,
+       "created_utc": 1784540743,
+       "permalink": "/r/excel/comments/2f5yz/dates_turned_into_numbers_after_importin/",
+       "url": "https://www.reddit.com/r/excel/comments/2f5yz/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2hes4",
+       "name": "t3_2hes4",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours",
+       "selftext": "I have a table with 139 rows and the formula works for some rows but not others.",
+       "author": "user_572",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 94,
+       "ups": 94,
+       "upvote_ratio": 0.8,
+       "num_comments": 14,
+       "num_crossposts": 0,
+       "created_utc": 1784383329,
+       "permalink": "/r/excel/comments/2hes4/pro_tip_ctrl_e_flash_fill_saves_hours/",
+       "url": "https://www.reddit.com/r/excel/comments/2hes4/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2jnl9",
+       "name": "t3_2jnl9",
+       "title": "A cheat sheet of the 20 functions I use daily (Excel 365)",
+       "selftext": "",
+       "author": "user_348",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 158,
+       "ups": 158,
+       "upvote_ratio": 0.84,
+       "num_comments": 9,
+       "num_crossposts": 0,
+       "created_utc": 1784125828,
+       "permalink": "/r/excel/comments/2jnl9/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/2jnl9.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/2jnl9.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2lwee",
+       "name": "t3_2lwee",
+       "title": "Excel World Championship highlights in Excel",
+       "selftext": "",
+       "author": "user_229",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 36,
+       "ups": 36,
+       "upvote_ratio": 0.81,
+       "num_comments": 7,
+       "num_crossposts": 0,
+       "created_utc": 1783862674,
+       "permalink": "/r/excel/comments/2lwee/excel_world_championship_highlights_in_e/",
+       "url": "https://v.redd.it/2lwee",
+       "domain": "v.redd.it",
+       "is_self": false,
+       "is_video": true,
+       "post_hint": "hosted:video",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2o57j",
+       "name": "t3_2o57j",
+       "title": "My monthly sales dashboard",
+       "selftext": "",
+       "author": "user_492",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 50,
+       "ups": 50,
+       "upvote_ratio": 0.85,
+       "num_comments": 6,
+       "num_crossposts": 0,
+       "created_utc": 1783608636,
+       "permalink": "/r/excel/comments/2o57j/my_monthly_sales_dashboard/",
+       "url": "https://i.redd.it/2o57j.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/2o57j.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2qe0o",
+       "name": "t3_2qe0o",
+       "title": "I built a budget tracker with LAMBDA functions (Excel 365)",
+       "selftext": "",
+       "author": "user_843",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 304,
+       "ups": 304,
+       "upvote_ratio": 0.92,
+       "num_comments": 15,
+       "num_crossposts": 0,
+       "created_utc": 1783354157,
+       "permalink": "/r/excel/comments/2qe0o/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/2qe0o.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/2qe0o.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2smtt",
+       "name": "t3_2smtt",
+       "title": "I built a budget tracker with LAMBDA functions in Excel",
+       "selftext": "",
+       "author": "user_682",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 81,
+       "ups": 81,
+       "upvote_ratio": 0.89,
+       "num_comments": 13,
+       "num_crossposts": 0,
+       "created_utc": 1783083640,
+       "permalink": "/r/excel/comments/2smtt/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/2smtt.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/2smtt.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "kind": "Listing",
+   "data": {
+    "after": null,
+    "dist": 45,
+    "children": [
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2uvmy",
+       "name": "t3_2uvmy",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A?",
+       "selftext": "I have a table with 145 rows and the formula works for some rows but not others.",
+       "author": "user_530",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 130,
+       "ups": 130,
+       "upvote_ratio": 0.96,
+       "num_comments": 102,
+       "num_crossposts": 0,
+       "created_utc": 1782829482,
+       "permalink": "/r/excel/comments/2uvmy/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/excel/comments/2uvmy/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2x4g3",
+       "name": "t3_2x4g3",
+       "title": "How to remove duplicates but keep the latest date (Excel 365)?",
+       "selftext": "I have a table with 146 rows and the formula works for some rows but not others.",
+       "author": "user_499",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 64,
+       "ups": 64,
+       "upvote_ratio": 0.8,
+       "num_comments": 43,
+       "num_crossposts": 0,
+       "created_utc": 1782484947,
+       "permalink": "/r/excel/comments/2x4g3/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/excel/comments/2x4g3/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2zd98",
+       "name": "t3_2zd98",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours in Excel",
+       "selftext": "I have a table with 147 rows and the formula works for some rows but not others.",
+       "author": "user_430",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 211,
+       "ups": 211,
+       "upvote_ratio": 0.78,
+       "num_comments": 24,
+       "num_crossposts": 0,
+       "created_utc": 1782397128,
+       "permalink": "/r/excel/comments/2zd98/pro_tip_ctrl_e_flash_fill_saves_hours_in/",
+       "url": "https://www.reddit.com/r/excel/comments/2zd98/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "31m2d",
+       "name": "t3_31m2d",
+       "title": "Why does my VLOOKUP break when I insert a column?",
+       "selftext": "I have a table with 148 rows and the formula works for some rows but not others.",
+       "author": "user_859",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 126,
+       "ups": 126,
+       "upvote_ratio": 0.78,
+       "num_comments": 98,
+       "num_crossposts": 0,
+       "created_utc": 1782141096,
+       "permalink": "/r/excel/comments/31m2d/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/excel/comments/31m2d/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "33uvi",
+       "name": "t3_33uvi",
+       "title": "Why does my VLOOKUP break when I insert a column (Excel 365)?",
+       "selftext": "I have a table with 149 rows and the formula works for some rows but not others.",
+       "author": "user_758",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 99,
+       "ups": 99,
+       "upvote_ratio": 0.87,
+       "num_comments": 65,
+       "num_crossposts": 0,
+       "created_utc": 1781847291,
+       "permalink": "/r/excel/comments/33uvi/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/excel/comments/33uvi/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "363on",
+       "name": "t3_363on",
+       "title": "I built a budget tracker with LAMBDA functions in Excel",
+       "selftext": "",
+       "author": "user_112",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 77,
+       "ups": 77,
+       "upvote_ratio": 0.82,
+       "num_comments": 12,
+       "num_crossposts": 0,
+       "created_utc": 1781541411,
+       "permalink": "/r/excel/comments/363on/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/363on.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/363on.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "38chs",
+       "name": "t3_38chs",
+       "title": "My monthly sales dashboard",
+       "selftext": "",
+       "author": "user_623",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 428,
+       "ups": 428,
+       "upvote_ratio": 0.79,
+       "num_comments": 57,
+       "num_crossposts": 0,
+       "created_utc": 1781279384,
+       "permalink": "/r/excel/comments/38chs/my_monthly_sales_dashboard/",
+       "url": "https://i.redd.it/38chs.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/38chs.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3alax",
+       "name": "t3_3alax",
+       "title": "XLOOKUP returns #N/A even though the value is clearly there (Excel 365)",
+       "selftext": "I have a table with 152 rows and the formula works for some rows but not others.",
+       "author": "user_850",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 270,
+       "ups": 270,
+       "upvote_ratio": 0.78,
+       "num_comments": 183,
+       "num_crossposts": 0,
+       "created_utc": 1781010343,
+       "permalink": "/r/excel/comments/3alax/xlookup_returns_n_a_even_though_the_valu/",
+       "url": "https://www.reddit.com/r/excel/comments/3alax/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3cu42",
+       "name": "t3_3cu42",
+       "title": "How to remove duplicates but keep the latest date in Excel?",
+       "selftext": "I have a table with 153 rows and the formula works for some rows but not others.",
+       "author": "user_924",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 42,
+       "ups": 42,
+       "upvote_ratio": 0.87,
+       "num_comments": 25,
+       "num_crossposts": 0,
+       "created_utc": 1780633176,
+       "permalink": "/r/excel/comments/3cu42/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/excel/comments/3cu42/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3f2x7",
+       "name": "t3_3f2x7",
+       "title": "Dates turned into numbers after importing a CSV, help",
+       "selftext": "I have a table with 154 rows and the formula works for some rows but not others.",
+       "author": "user_282",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 97,
+       "ups": 97,
+       "upvote_ratio": 0.82,
+       "num_comments": 45,
+       "num_crossposts": 0,
+       "created_utc": 1780474153,
+       "permalink": "/r/excel/comments/3f2x7/dates_turned_into_numbers_after_importin/",
+       "url": "https://www.reddit.com/r/excel/comments/3f2x7/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3hbqc",
+       "name": "t3_3hbqc",
+       "title": "Our team switched from Google Sheets back to Excel (Excel 365)",
+       "selftext": "I have a table with 155 rows and the formula works for some rows but not others.",
+       "author": "user_414",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 43,
+       "ups": 43,
+       "upvote_ratio": 0.77,
+       "num_comments": 8,
+       "num_crossposts": 0,
+       "created_utc": 1780328156,
+       "permalink": "/r/excel/comments/3hbqc/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/3hbqc/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3jkjh",
+       "name": "t3_3jkjh",
+       "title": "I built a budget tracker with LAMBDA functions in Excel",
+       "selftext": "",
+       "author": "user_674",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 41,
+       "ups": 41,
+       "upvote_ratio": 0.91,
+       "num_comments": 6,
+       "num_crossposts": 0,
+       "created_utc": 1780065661,
+       "permalink": "/r/excel/comments/3jkjh/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/3jkjh.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/3jkjh.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3ltcm",
+       "name": "t3_3ltcm",
+       "title": "Conditional formatting is slow on 50k rows, any fix?",
+       "selftext": "I have a table with 157 rows and the formula works for some rows but not others.",
+       "author": "user_940",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 85,
+       "ups": 85,
+       "upvote_ratio": 0.93,
+       "num_comments": 44,
+       "num_crossposts": 0,
+       "created_utc": 1779814304,
+       "permalink": "/r/excel/comments/3ltcm/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/excel/comments/3ltcm/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3o25r",
+       "name": "t3_3o25r",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours (Excel 365)",
+       "selftext": "I have a table with 158 rows and the formula works for some rows but not others.",
+       "author": "user_281",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 75,
+       "ups": 75,
+       "upvote_ratio": 0.75,
+       "num_comments": 14,
+       "num_crossposts": 0,
+       "created_utc": 1779517668,
+       "permalink": "/r/excel/comments/3o25r/pro_tip_ctrl_e_flash_fill_saves_hours_ex/",
+       "url": "https://www.reddit.com/r/excel/comments/3o25r/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3qayw",
+       "name": "t3_3qayw",
+       "title": "A cheat sheet of the 20 functions I use daily in Excel",
+       "selftext": "",
+       "author": "user_750",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 60,
+       "ups": 60,
+       "upvote_ratio": 0.91,
+       "num_comments": 6,
+       "num_crossposts": 0,
+       "created_utc": 1779199185,
+       "permalink": "/r/excel/comments/3qayw/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/3qayw.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/3qayw.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3sjs1",
+       "name": "t3_3sjs1",
+       "title": "Is there a way to sum by color without VBA?",
+       "selftext": "I have a table with 160 rows and the formula works for some rows but not others.",
+       "author": "user_460",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 162,
+       "ups": 162,
+       "upvote_ratio": 0.78,
+       "num_comments": 118,
+       "num_crossposts": 0,
+       "created_utc": 1779116929,
+       "permalink": "/r/excel/comments/3sjs1/is_there_a_way_to_sum_by_color_without_v/",
+       "url": "https://www.reddit.com/r/excel/comments/3sjs1/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Waiting on OP",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3usl6",
+       "name": "t3_3usl6",
+       "title": "Microsoft announces new Copilot features in Excel (Excel 365)",
+       "selftext": "",
+       "author": "user_206",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 16,
+       "ups": 16,
+       "upvote_ratio": 0.89,
+       "num_comments": 2,
+       "num_crossposts": 0,
+       "created_utc": 1778851311,
+       "permalink": "/r/excel/comments/3usl6/microsoft_announces_new_copilot_features/",
+       "url": "https://techcommunity.example.com/excel-news",
+       "domain": "techcommunity.example.com",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "link",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3x1eb",
+       "name": "t3_3x1eb",
+       "title": "Our team switched from Google Sheets back to Excel in Excel",
+       "selftext": "I have a table with 162 rows and the formula works for some rows but not others.",
+       "author": "user_639",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 16,
+       "ups": 16,
+       "upvote_ratio": 0.95,
+       "num_comments": 3,
+       "num_crossposts": 0,
+       "created_utc": 1778588869,
+       "permalink": "/r/excel/comments/3x1eb/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/3x1eb/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3za7g",
+       "name": "t3_3za7g",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A?",
+       "selftext": "I have a table with 163 rows and the formula works for some rows but not others.",
+       "author": "user_609",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 134,
+       "ups": 134,
+       "upvote_ratio": 0.9,
+       "num_comments": 107,
+       "num_crossposts": 0,
+       "created_utc": 1778282401,
+       "permalink": "/r/excel/comments/3za7g/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/excel/comments/3za7g/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "41j0l",
+       "name": "t3_41j0l",
+       "title": "I built a budget tracker with LAMBDA functions (Excel 365)",
+       "selftext": "",
+       "author": "user_106",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 71,
+       "ups": 71,
+       "upvote_ratio": 0.83,
+       "num_comments": 5,
+       "num_crossposts": 0,
+       "created_utc": 1777987828,
+       "permalink": "/r/excel/comments/41j0l/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/41j0l.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/41j0l.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "43rtq",
+       "name": "t3_43rtq",
+       "title": "Microsoft announces new Copilot features in Excel in Excel",
+       "selftext": "",
+       "author": "user_247",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 23,
+       "ups": 23,
+       "upvote_ratio": 0.77,
+       "num_comments": 3,
+       "num_crossposts": 0,
+       "created_utc": 1777734206,
+       "permalink": "/r/excel/comments/43rtq/microsoft_announces_new_copilot_features/",
+       "url": "https://techcommunity.example.com/excel-news",
+       "domain": "techcommunity.example.com",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "link",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "460mv",
+       "name": "t3_460mv",
+       "title": "XLOOKUP returns #N/A even though the value is clearly there",
+       "selftext": "I have a table with 166 rows and the formula works for some rows but not others.",
+       "author": "user_733",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 127,
+       "ups": 127,
+       "upvote_ratio": 0.91,
+       "num_comments": 98,
+       "num_crossposts": 0,
+       "created_utc": 1777471187,
+       "permalink": "/r/excel/comments/460mv/xlookup_returns_n_a_even_though_the_valu/",
+       "url": "https://www.reddit.com/r/excel/comments/460mv/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "489g0",
+       "name": "t3_489g0",
+       "title": "Our team switched from Google Sheets back to Excel (Excel 365)",
+       "selftext": "I have a table with 167 rows and the formula works for some rows but not others.",
+       "author": "user_741",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 18,
+       "ups": 18,
+       "upvote_ratio": 0.86,
+       "num_comments": 1,
+       "num_crossposts": 0,
+       "created_utc": 1777213225,
+       "permalink": "/r/excel/comments/489g0/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/489g0/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4ai95",
+       "name": "t3_4ai95",
+       "title": "Pivot table keeps losing its formatting on refresh in Excel",
+       "selftext": "I have a table with 168 rows and the formula works for some rows but not others.",
+       "author": "user_230",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 376,
+       "ups": 376,
+       "upvote_ratio": 0.89,
+       "num_comments": 305,
+       "num_crossposts": 0,
+       "created_utc": 1776961586,
+       "permalink": "/r/excel/comments/4ai95/pivot_table_keeps_losing_its_formatting_/",
+       "url": "https://www.reddit.com/r/excel/comments/4ai95/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4cr2a",
+       "name": "t3_4cr2a",
+       "title": "Microsoft announces new Copilot features in Excel",
+       "selftext": "",
+       "author": "user_863",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 22,
+       "ups": 22,
+       "upvote_ratio": 0.87,
+       "num_comments": 1,
+       "num_crossposts": 0,
+       "created_utc": 1776817532,
+       "permalink": "/r/excel/comments/4cr2a/microsoft_announces_new_copilot_features/",
+       "url": "https://techcommunity.example.com/excel-news",
+       "domain": "techcommunity.example.com",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "link",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4ezvf",
+       "name": "t3_4ezvf",
+       "title": "A cheat sheet of the 20 functions I use daily (Excel 365)",
+       "selftext": "",
+       "author": "user_219",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 82,
+       "ups": 82,
+       "upvote_ratio": 0.8,
+       "num_comments": 16,
+       "num_crossposts": 0,
+       "created_utc": 1776531575,
+       "permalink": "/r/excel/comments/4ezvf/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/4ezvf.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/4ezvf.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4h8ok",
+       "name": "t3_4h8ok",
+       "title": "Conditional formatting is slow on 50k rows, any fix in Excel?",
+       "selftext": "I have a table with 171 rows and the formula works for some rows but not others.",
+       "author": "user_952",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 169,
+       "ups": 169,
+       "upvote_ratio": 0.76,
+       "num_comments": 100,
+       "num_crossposts": 1,
+       "created_utc": 1776263127,
+       "permalink": "/r/excel/comments/4h8ok/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/excel/comments/4h8ok/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4jhhp",
+       "name": "t3_4jhhp",
+       "title": "Is there a way to sum by color without VBA?",
+       "selftext": "I have a table with 172 rows and the formula works for some rows but not others.",
+       "author": "user_861",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 152,
+       "ups": 152,
+       "upvote_ratio": 0.76,
+       "num_comments": 87,
+       "num_crossposts": 0,
+       "created_utc": 1776001216,
+       "permalink": "/r/excel/comments/4jhhp/is_there_a_way_to_sum_by_color_without_v/",
+       "url": "https://www.reddit.com/r/excel/comments/4jhhp/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Waiting on OP",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4lqau",
+       "name": "t3_4lqau",
+       "title": "Why does my VLOOKUP break when I insert a column (Excel 365)?",
+       "selftext": "I have a table with 173 rows and the formula works for some rows but not others.",
+       "author": "user_868",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 165,
+       "ups": 165,
+       "upvote_ratio": 0.76,
+       "num_comments": 127,
+       "num_crossposts": 0,
+       "created_utc": 1775753564,
+       "permalink": "/r/excel/comments/4lqau/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/excel/comments/4lqau/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4nz3z",
+       "name": "t3_4nz3z",
+       "title": "My monthly sales dashboard in Excel",
+       "selftext": "",
+       "author": "user_298",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 34,
+       "ups": 34,
+       "upvote_ratio": 0.95,
+       "num_comments": 5,
+       "num_crossposts": 0,
+       "created_utc": 1775503128,
+       "permalink": "/r/excel/comments/4nz3z/my_monthly_sales_dashboard_in_excel/",
+       "url": "https://i.redd.it/4nz3z.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/4nz3z.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4q7x4",
+       "name": "t3_4q7x4",
+       "title": "I built a budget tracker with LAMBDA functions",
+       "selftext": "",
+       "author": "user_533",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 75,
+       "ups": 75,
+       "upvote_ratio": 0.96,
+       "num_comments": 14,
+       "num_crossposts": 0,
+       "created_utc": 1775310002,
+       "permalink": "/r/excel/comments/4q7x4/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/4q7x4.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/4q7x4.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4sgq9",
+       "name": "t3_4sgq9",
+       "title": "A cheat sheet of the 20 functions I use daily (Excel 365)",
+       "selftext": "",
+       "author": "user_355",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 120,
+       "ups": 120,
+       "upvote_ratio": 0.91,
+       "num_comments": 9,
+       "num_crossposts": 0,
+       "created_utc": 1775057334,
+       "permalink": "/r/excel/comments/4sgq9/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/4sgq9.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/4sgq9.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4upje",
+       "name": "t3_4upje",
+       "title": "Conditional formatting is slow on 50k rows, any fix in Excel?",
+       "selftext": "I have a table with 177 rows and the formula works for some rows but not others.",
+       "author": "user_220",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 36,
+       "ups": 36,
+       "upvote_ratio": 0.82,
+       "num_comments": 30,
+       "num_crossposts": 0,
+       "created_utc": 1774794394,
+       "permalink": "/r/excel/comments/4upje/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/excel/comments/4upje/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4wycj",
+       "name": "t3_4wycj",
+       "title": "Our team switched from Google Sheets back to Excel",
+       "selftext": "I have a table with 178 rows and the formula works for some rows but not others.",
+       "author": "user_427",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 29,
+       "ups": 29,
+       "upvote_ratio": 0.79,
+       "num_comments": 4,
+       "num_crossposts": 0,
+       "created_utc": 1774542923,
+       "permalink": "/r/excel/comments/4wycj/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/4wycj/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "4z75o",
+       "name": "t3_4z75o",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell (Excel 365)",
+       "selftext": "",
+       "author": "user_372",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 119,
+       "ups": 119,
+       "upvote_ratio": 0.96,
+       "num_comments": 71,
+       "num_crossposts": 0,
+       "created_utc": 1774277517,
+       "permalink": "/r/excel/comments/4z75o/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/4z75o.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/4z75o.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "51fyt",
+       "name": "t3_51fyt",
+       "title": "Is there a way to sum by color without VBA in Excel?",
+       "selftext": "I have a table with 180 rows and the formula works for some rows but not others.",
+       "author": "user_357",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 300,
+       "ups": 300,
+       "upvote_ratio": 0.9,
+       "num_comments": 172,
+       "num_crossposts": 0,
+       "created_utc": 1774013470,
+       "permalink": "/r/excel/comments/51fyt/is_there_a_way_to_sum_by_color_without_v/",
+       "url": "https://www.reddit.com/r/excel/comments/51fyt/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Waiting on OP",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "53ory",
+       "name": "t3_53ory",
+       "title": "Our team switched from Google Sheets back to Excel",
+       "selftext": "I have a table with 181 rows and the formula works for some rows but not others.",
+       "author": "user_663",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 34,
+       "ups": 34,
+       "upvote_ratio": 0.88,
+       "num_comments": 2,
+       "num_crossposts": 0,
+       "created_utc": 1773676596,
+       "permalink": "/r/excel/comments/53ory/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/53ory/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "55xl3",
+       "name": "t3_55xl3",
+       "title": "Is there a way to sum by color without VBA (Excel 365)?",
+       "selftext": "I have a table with 182 rows and the formula works for some rows but not others.",
+       "author": "user_484",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 41,
+       "ups": 41,
+       "upvote_ratio": 0.94,
+       "num_comments": 21,
+       "num_crossposts": 0,
+       "created_utc": 1773496052,
+       "permalink": "/r/excel/comments/55xl3/is_there_a_way_to_sum_by_color_without_v/",
+       "url": "https://www.reddit.com/r/excel/comments/55xl3/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Waiting on OP",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "586e8",
+       "name": "t3_586e8",
+       "title": "Microsoft announces new Copilot features in Excel in Excel",
+       "selftext": "",
+       "author": "user_161",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 30,
+       "ups": 30,
+       "upvote_ratio": 0.84,
+       "num_comments": 2,
+       "num_crossposts": 0,
+       "created_utc": 1773324764,
+       "permalink": "/r/excel/comments/586e8/microsoft_announces_new_copilot_features/",
+       "url": "https://techcommunity.example.com/excel-news",
+       "domain": "techcommunity.example.com",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "link",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "5af7d",
+       "name": "t3_5af7d",
+       "title": "I built a budget tracker with LAMBDA functions",
+       "selftext": "",
+       "author": "user_591",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 36,
+       "ups": 36,
+       "upvote_ratio": 0.83,
+       "num_comments": 5,
+       "num_crossposts": 0,
+       "created_utc": 1773036958,
+       "permalink": "/r/excel/comments/5af7d/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/5af7d.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/5af7d.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "5co0i",
+       "name": "t3_5co0i",
+       "title": "Our team switched from Google Sheets back to Excel (Excel 365)",
+       "selftext": "I have a table with 185 rows and the formula works for some rows but not others.",
+       "author": "user_875",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 108,
+       "ups": 108,
+       "upvote_ratio": 0.8,
+       "num_comments": 6,
+       "num_crossposts": 0,
+       "created_utc": 1772832879,
+       "permalink": "/r/excel/comments/5co0i/our_team_switched_from_google_sheets_bac/",
+       "url": "https://www.reddit.com/r/excel/comments/5co0i/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "5ewtn",
+       "name": "t3_5ewtn",
+       "title": "A cheat sheet of the 20 functions I use daily in Excel",
+       "selftext": "",
+       "author": "user_880",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 146,
+       "ups": 146,
+       "upvote_ratio": 0.98,
+       "num_comments": 12,
+       "num_crossposts": 0,
+       "created_utc": 1772467760,
+       "permalink": "/r/excel/comments/5ewtn/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/5ewtn.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/5ewtn.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "5h5ms",
+       "name": "t3_5h5ms",
+       "title": "Conditional formatting is slow on 50k rows, any fix?",
+       "selftext": "I have a table with 187 rows and the formula works for some rows but not others.",
+       "author": "user_883",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 37,
+       "ups": 37,
+       "upvote_ratio": 0.97,
+       "num_comments": 27,
+       "num_crossposts": 0,
+       "created_utc": 1772205813,
+       "permalink": "/r/excel/comments/5h5ms/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/excel/comments/5h5ms/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "5jefx",
+       "name": "t3_5jefx",
+       "title": "What is the best way to learn Power Query (Excel 365)?",
+       "selftext": "I have a table with 188 rows and the formula works for some rows but not others.",
+       "author": "user_272",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 38,
+       "ups": 38,
+       "upvote_ratio": 0.89,
+       "num_comments": 23,
+       "num_crossposts": 0,
+       "created_utc": 1771997137,
+       "permalink": "/r/excel/comments/5jefx/what_is_the_best_way_to_learn_power_quer/",
+       "url": "https://www.reddit.com/r/excel/comments/5jefx/",
+       "domain": "self.excel",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "5ln92",
+       "name": "t3_5ln92",
+       "title": "I built a budget tracker with LAMBDA functions in Excel",
+       "selftext": "",
+       "author": "user_657",
+       "subreddit": "excel",
+       "subreddit_name_prefixed": "r/excel",
+       "score": 24,
+       "ups": 24,
+       "upvote_ratio": 0.76,
+       "num_comments": 1,
+       "num_crossposts": 0,
+       "created_utc": 1771680257,
+       "permalink": "/r/excel/comments/5ln92/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/5ln92.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/5ln92.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "spreadsheets": [
+  {
+   "kind": "Listing",
+   "data": {
+    "after": "t3_1ajx0",
+    "dist": 20,
+    "children": [
+     {
+      "kind": "t3",
+      "data": {
+       "id": "3wjd",
+       "name": "t3_3wjd",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A?",
+       "selftext": "I have a table with 100 rows and the formula works for some rows but not others.",
+       "author": "user_108",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 79,
+       "ups": 79,
+       "upvote_ratio": 0.92,
+       "num_comments": 60,
+       "num_crossposts": 0,
+       "created_utc": 1794060751,
+       "permalink": "/r/spreadsheets/comments/3wjd/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/3wjd/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "65ci",
+       "name": "t3_65ci",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell (Excel 365)",
+       "selftext": "",
+       "author": "user_291",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 60,
+       "ups": 60,
+       "upvote_ratio": 0.95,
+       "num_comments": 51,
+       "num_crossposts": 0,
+       "created_utc": 1793718202,
+       "permalink": "/r/spreadsheets/comments/65ci/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/65ci.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/65ci.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "8e5n",
+       "name": "t3_8e5n",
+       "title": "What is the best way to learn Power Query in Excel?",
+       "selftext": "I have a table with 102 rows and the formula works for some rows but not others.",
+       "author": "user_921",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 28,
+       "ups": 28,
+       "upvote_ratio": 0.9,
+       "num_comments": 22,
+       "num_crossposts": 0,
+       "created_utc": 1793608216,
+       "permalink": "/r/spreadsheets/comments/8e5n/what_is_the_best_way_to_learn_power_quer/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/8e5n/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "amys",
+       "name": "t3_amys",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours",
+       "selftext": "I have a table with 103 rows and the formula works for some rows but not others.",
+       "author": "user_916",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 26,
+       "ups": 26,
+       "upvote_ratio": 0.8,
+       "num_comments": 3,
+       "num_crossposts": 0,
+       "created_utc": 1793379464,
+       "permalink": "/r/spreadsheets/comments/amys/pro_tip_ctrl_e_flash_fill_saves_hours/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/amys/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "cvrx",
+       "name": "t3_cvrx",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours (Excel 365)",
+       "selftext": "I have a table with 104 rows and the formula works for some rows but not others.",
+       "author": "user_425",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 22,
+       "ups": 22,
+       "upvote_ratio": 0.82,
+       "num_comments": 4,
+       "num_crossposts": 1,
+       "created_utc": 1793037635,
+       "permalink": "/r/spreadsheets/comments/cvrx/pro_tip_ctrl_e_flash_fill_saves_hours_ex/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/cvrx/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "f4l2",
+       "name": "t3_f4l2",
+       "title": "Why does my VLOOKUP break when I insert a column in Excel?",
+       "selftext": "I have a table with 105 rows and the formula works for some rows but not others.",
+       "author": "user_758",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 19,
+       "ups": 19,
+       "upvote_ratio": 0.88,
+       "num_comments": 8,
+       "num_crossposts": 0,
+       "created_utc": 1792770985,
+       "permalink": "/r/spreadsheets/comments/f4l2/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/f4l2/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "hde7",
+       "name": "t3_hde7",
+       "title": "Conditional formatting is slow on 50k rows, any fix?",
+       "selftext": "I have a table with 106 rows and the formula works for some rows but not others.",
+       "author": "user_296",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 35,
+       "ups": 35,
+       "upvote_ratio": 0.85,
+       "num_comments": 23,
+       "num_crossposts": 0,
+       "created_utc": 1792512073,
+       "permalink": "/r/spreadsheets/comments/hde7/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/hde7/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "jm7c",
+       "name": "t3_jm7c",
+       "title": "How to remove duplicates but keep the latest date (Excel 365)?",
+       "selftext": "I have a table with 107 rows and the formula works for some rows but not others.",
+       "author": "user_711",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 44,
+       "ups": 44,
+       "upvote_ratio": 0.98,
+       "num_comments": 28,
+       "num_crossposts": 0,
+       "created_utc": 1792250940,
+       "permalink": "/r/spreadsheets/comments/jm7c/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/jm7c/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "lv0h",
+       "name": "t3_lv0h",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours in Excel",
+       "selftext": "I have a table with 108 rows and the formula works for some rows but not others.",
+       "author": "user_634",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 28,
+       "ups": 28,
+       "upvote_ratio": 0.8,
+       "num_comments": 4,
+       "num_crossposts": 0,
+       "created_utc": 1792161346,
+       "permalink": "/r/spreadsheets/comments/lv0h/pro_tip_ctrl_e_flash_fill_saves_hours_in/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/lv0h/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "o3tm",
+       "name": "t3_o3tm",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell",
+       "selftext": "",
+       "author": "user_342",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 28,
+       "ups": 28,
+       "upvote_ratio": 0.75,
+       "num_comments": 11,
+       "num_crossposts": 0,
+       "created_utc": 1791726907,
+       "permalink": "/r/spreadsheets/comments/o3tm/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/o3tm.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/o3tm.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "qcmr",
+       "name": "t3_qcmr",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours (Excel 365)",
+       "selftext": "I have a table with 110 rows and the formula works for some rows but not others.",
+       "author": "user_543",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 12,
+       "ups": 12,
+       "upvote_ratio": 0.89,
+       "num_comments": 1,
+       "num_crossposts": 0,
+       "created_utc": 1791515675,
+       "permalink": "/r/spreadsheets/comments/qcmr/pro_tip_ctrl_e_flash_fill_saves_hours_ex/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/qcmr/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "slfw",
+       "name": "t3_slfw",
+       "title": "XLOOKUP returns #N/A even though the value is clearly there in Excel",
+       "selftext": "I have a table with 111 rows and the formula works for some rows but not others.",
+       "author": "user_321",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 87,
+       "ups": 87,
+       "upvote_ratio": 0.94,
+       "num_comments": 70,
+       "num_crossposts": 0,
+       "created_utc": 1791296985,
+       "permalink": "/r/spreadsheets/comments/slfw/xlookup_returns_n_a_even_though_the_valu/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/slfw/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "uu91",
+       "name": "t3_uu91",
+       "title": "Why does my VLOOKUP break when I insert a column?",
+       "selftext": "I have a table with 112 rows and the formula works for some rows but not others.",
+       "author": "user_366",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 18,
+       "ups": 18,
+       "upvote_ratio": 0.92,
+       "num_comments": 14,
+       "num_crossposts": 0,
+       "created_utc": 1791040298,
+       "permalink": "/r/spreadsheets/comments/uu91/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/uu91/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "x326",
+       "name": "t3_x326",
+       "title": "I built a budget tracker with LAMBDA functions (Excel 365)",
+       "selftext": "",
+       "author": "user_807",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 31,
+       "ups": 31,
+       "upvote_ratio": 0.94,
+       "num_comments": 2,
+       "num_crossposts": 0,
+       "created_utc": 1790783986,
+       "permalink": "/r/spreadsheets/comments/x326/i_built_a_budget_tracker_with_lambda_fun/",
+       "url": "https://i.redd.it/x326.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/x326.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "zbvb",
+       "name": "t3_zbvb",
+       "title": "Dates turned into numbers after importing a CSV, help in Excel",
+       "selftext": "I have a table with 114 rows and the formula works for some rows but not others.",
+       "author": "user_958",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 45,
+       "ups": 45,
+       "upvote_ratio": 0.8,
+       "num_comments": 31,
+       "num_crossposts": 0,
+       "created_utc": 1790488842,
+       "permalink": "/r/spreadsheets/comments/zbvb/dates_turned_into_numbers_after_importin/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/zbvb/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "11kog",
+       "name": "t3_11kog",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours",
+       "selftext": "I have a table with 115 rows and the formula works for some rows but not others.",
+       "author": "user_451",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 15,
+       "ups": 15,
+       "upvote_ratio": 0.77,
+       "num_comments": 3,
+       "num_crossposts": 0,
+       "created_utc": 1790348463,
+       "permalink": "/r/spreadsheets/comments/11kog/pro_tip_ctrl_e_flash_fill_saves_hours/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/11kog/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "13thl",
+       "name": "t3_13thl",
+       "title": "A cheat sheet of the 20 functions I use daily (Excel 365)",
+       "selftext": "",
+       "author": "user_528",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 39,
+       "ups": 39,
+       "upvote_ratio": 0.84,
+       "num_comments": 4,
+       "num_crossposts": 0,
+       "created_utc": 1790086759,
+       "permalink": "/r/spreadsheets/comments/13thl/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/13thl.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/13thl.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "162aq",
+       "name": "t3_162aq",
+       "title": "Is there a way to sum by color without VBA in Excel?",
+       "selftext": "I have a table with 117 rows and the formula works for some rows but not others.",
+       "author": "user_264",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 18,
+       "ups": 18,
+       "upvote_ratio": 0.84,
+       "num_comments": 15,
+       "num_crossposts": 1,
+       "created_utc": 1789744024,
+       "permalink": "/r/spreadsheets/comments/162aq/is_there_a_way_to_sum_by_color_without_v/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/162aq/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Waiting on OP",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "18b3v",
+       "name": "t3_18b3v",
+       "title": "My monthly sales dashboard",
+       "selftext": "",
+       "author": "user_453",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 11,
+       "ups": 11,
+       "upvote_ratio": 0.83,
+       "num_comments": 1,
+       "num_crossposts": 1,
+       "created_utc": 1789510331,
+       "permalink": "/r/spreadsheets/comments/18b3v/my_monthly_sales_dashboard/",
+       "url": "https://i.redd.it/18b3v.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Show and Tell",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/18b3v.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1ajx0",
+       "name": "t3_1ajx0",
+       "title": "XLOOKUP returns #N/A even though the value is clearly there (Excel 365)",
+       "selftext": "I have a table with 119 rows and the formula works for some rows but not others.",
+       "author": "user_536",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 67,
+       "ups": 67,
+       "upvote_ratio": 0.96,
+       "num_comments": 37,
+       "num_crossposts": 0,
+       "created_utc": 1789337460,
+       "permalink": "/r/spreadsheets/comments/1ajx0/xlookup_returns_n_a_even_though_the_valu/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1ajx0/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "kind": "Listing",
+   "data": {
+    "after": null,
+    "dist": 20,
+    "children": [
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1csq5",
+       "name": "t3_1csq5",
+       "title": "Pro tip: Ctrl + E (Flash Fill) saves hours in Excel",
+       "selftext": "I have a table with 120 rows and the formula works for some rows but not others.",
+       "author": "user_585",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 21,
+       "ups": 21,
+       "upvote_ratio": 0.81,
+       "num_comments": 3,
+       "num_crossposts": 0,
+       "created_utc": 1789137195,
+       "permalink": "/r/spreadsheets/comments/1csq5/pro_tip_ctrl_e_flash_fill_saves_hours_in/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1csq5/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1f1ja",
+       "name": "t3_1f1ja",
+       "title": "How to remove duplicates but keep the latest date?",
+       "selftext": "I have a table with 121 rows and the formula works for some rows but not others.",
+       "author": "user_557",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 107,
+       "ups": 107,
+       "upvote_ratio": 0.75,
+       "num_comments": 54,
+       "num_crossposts": 0,
+       "created_utc": 1788807180,
+       "permalink": "/r/spreadsheets/comments/1f1ja/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1f1ja/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1hacf",
+       "name": "t3_1hacf",
+       "title": "Excel World Championship highlights (Excel 365)",
+       "selftext": "",
+       "author": "user_530",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 10,
+       "ups": 10,
+       "upvote_ratio": 0.81,
+       "num_comments": 1,
+       "num_crossposts": 0,
+       "created_utc": 1788598809,
+       "permalink": "/r/spreadsheets/comments/1hacf/excel_world_championship_highlights_exce/",
+       "url": "https://v.redd.it/1hacf",
+       "domain": "v.redd.it",
+       "is_self": false,
+       "is_video": true,
+       "post_hint": "hosted:video",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1jj5k",
+       "name": "t3_1jj5k",
+       "title": "Microsoft announces new Copilot features in Excel in Excel",
+       "selftext": "",
+       "author": "user_893",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 17,
+       "ups": 17,
+       "upvote_ratio": 0.83,
+       "num_comments": 2,
+       "num_crossposts": 0,
+       "created_utc": 1788365330,
+       "permalink": "/r/spreadsheets/comments/1jj5k/microsoft_announces_new_copilot_features/",
+       "url": "https://techcommunity.example.com/excel-news",
+       "domain": "techcommunity.example.com",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "link",
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1lryp",
+       "name": "t3_1lryp",
+       "title": "Why does my VLOOKUP break when I insert a column?",
+       "selftext": "I have a table with 124 rows and the formula works for some rows but not others.",
+       "author": "user_591",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 37,
+       "ups": 37,
+       "upvote_ratio": 0.83,
+       "num_comments": 26,
+       "num_crossposts": 1,
+       "created_utc": 1788016802,
+       "permalink": "/r/spreadsheets/comments/1lryp/why_does_my_vlookup_break_when_i_insert_/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1lryp/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1o0ru",
+       "name": "t3_1o0ru",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A (Excel 365)?",
+       "selftext": "I have a table with 125 rows and the formula works for some rows but not others.",
+       "author": "user_350",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 23,
+       "ups": 23,
+       "upvote_ratio": 0.92,
+       "num_comments": 16,
+       "num_crossposts": 0,
+       "created_utc": 1787800350,
+       "permalink": "/r/spreadsheets/comments/1o0ru/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1o0ru/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1q9kz",
+       "name": "t3_1q9kz",
+       "title": "Dates turned into numbers after importing a CSV, help in Excel",
+       "selftext": "I have a table with 126 rows and the formula works for some rows but not others.",
+       "author": "user_632",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 53,
+       "ups": 53,
+       "upvote_ratio": 0.77,
+       "num_comments": 45,
+       "num_crossposts": 0,
+       "created_utc": 1787587555,
+       "permalink": "/r/spreadsheets/comments/1q9kz/dates_turned_into_numbers_after_importin/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1q9kz/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1sie4",
+       "name": "t3_1sie4",
+       "title": "How to remove duplicates but keep the latest date?",
+       "selftext": "I have a table with 127 rows and the formula works for some rows but not others.",
+       "author": "user_980",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 25,
+       "ups": 25,
+       "upvote_ratio": 0.98,
+       "num_comments": 17,
+       "num_crossposts": 0,
+       "created_utc": 1787318344,
+       "permalink": "/r/spreadsheets/comments/1sie4/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1sie4/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1ur79",
+       "name": "t3_1ur79",
+       "title": "What is the best way to learn Power Query (Excel 365)?",
+       "selftext": "I have a table with 128 rows and the formula works for some rows but not others.",
+       "author": "user_739",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 21,
+       "ups": 21,
+       "upvote_ratio": 0.9,
+       "num_comments": 10,
+       "num_crossposts": 0,
+       "created_utc": 1786977940,
+       "permalink": "/r/spreadsheets/comments/1ur79/what_is_the_best_way_to_learn_power_quer/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1ur79/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "Discussion",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1x00e",
+       "name": "t3_1x00e",
+       "title": "XLOOKUP returns #N/A even though the value is clearly there in Excel",
+       "selftext": "I have a table with 129 rows and the formula works for some rows but not others.",
+       "author": "user_268",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 52,
+       "ups": 52,
+       "upvote_ratio": 0.92,
+       "num_comments": 37,
+       "num_crossposts": 0,
+       "created_utc": 1786807747,
+       "permalink": "/r/spreadsheets/comments/1x00e/xlookup_returns_n_a_even_though_the_valu/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/1x00e/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "1z8tj",
+       "name": "t3_1z8tj",
+       "title": "A cheat sheet of the 20 functions I use daily",
+       "selftext": "",
+       "author": "user_911",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 40,
+       "ups": 40,
+       "upvote_ratio": 0.86,
+       "num_comments": 6,
+       "num_crossposts": 1,
+       "created_utc": 1786547937,
+       "permalink": "/r/spreadsheets/comments/1z8tj/a_cheat_sheet_of_the_20_functions_i_use_/",
+       "url": "https://i.redd.it/1z8tj.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "Pro Tip",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/1z8tj.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "21hmo",
+       "name": "t3_21hmo",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A (Excel 365)?",
+       "selftext": "I have a table with 131 rows and the formula works for some rows but not others.",
+       "author": "user_351",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 101,
+       "ups": 101,
+       "upvote_ratio": 0.84,
+       "num_comments": 58,
+       "num_crossposts": 0,
+       "created_utc": 1786374496,
+       "permalink": "/r/spreadsheets/comments/21hmo/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/21hmo/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "23qft",
+       "name": "t3_23qft",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell in Excel",
+       "selftext": "",
+       "author": "user_976",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 26,
+       "ups": 26,
+       "upvote_ratio": 0.87,
+       "num_comments": 16,
+       "num_crossposts": 0,
+       "created_utc": 1786076043,
+       "permalink": "/r/spreadsheets/comments/23qft/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/23qft.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/23qft.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "25z8y",
+       "name": "t3_25z8y",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A?",
+       "selftext": "I have a table with 133 rows and the formula works for some rows but not others.",
+       "author": "user_586",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 77,
+       "ups": 77,
+       "upvote_ratio": 0.98,
+       "num_comments": 64,
+       "num_crossposts": 0,
+       "created_utc": 1785761700,
+       "permalink": "/r/spreadsheets/comments/25z8y/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/25z8y/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "28823",
+       "name": "t3_28823",
+       "title": "How to remove duplicates but keep the latest date (Excel 365)?",
+       "selftext": "I have a table with 134 rows and the formula works for some rows but not others.",
+       "author": "user_852",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 44,
+       "ups": 44,
+       "upvote_ratio": 0.88,
+       "num_comments": 21,
+       "num_crossposts": 0,
+       "created_utc": 1785508762,
+       "permalink": "/r/spreadsheets/comments/28823/how_to_remove_duplicates_but_keep_the_la/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/28823/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2agv8",
+       "name": "t3_2agv8",
+       "title": "#SPILL! error when my FILTER formula hits a merged cell in Excel",
+       "selftext": "",
+       "author": "user_325",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 59,
+       "ups": 59,
+       "upvote_ratio": 0.95,
+       "num_comments": 41,
+       "num_crossposts": 1,
+       "created_utc": 1785361232,
+       "permalink": "/r/spreadsheets/comments/2agv8/_spill_error_when_my_filter_formula_hits/",
+       "url": "https://i.redd.it/2agv8.png",
+       "domain": "i.redd.it",
+       "is_self": false,
+       "is_video": false,
+       "post_hint": "image",
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "default",
+       "preview": {
+        "images": [
+         {
+          "source": {
+           "url": "https://preview.redd.it/2agv8.png?width=640&amp;format=png&amp;s=abc",
+           "width": 640,
+           "height": 480
+          }
+         }
+        ]
+       }
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2cpod",
+       "name": "t3_2cpod",
+       "title": "Pivot table keeps losing its formatting on refresh",
+       "selftext": "I have a table with 136 rows and the formula works for some rows but not others.",
+       "author": "user_584",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 22,
+       "ups": 22,
+       "upvote_ratio": 0.76,
+       "num_comments": 12,
+       "num_crossposts": 0,
+       "created_utc": 1785042907,
+       "permalink": "/r/spreadsheets/comments/2cpod/pivot_table_keeps_losing_its_formatting_/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/2cpod/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2eyhi",
+       "name": "t3_2eyhi",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A (Excel 365)?",
+       "selftext": "I have a table with 137 rows and the formula works for some rows but not others.",
+       "author": "user_242",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 61,
+       "ups": 61,
+       "upvote_ratio": 0.98,
+       "num_comments": 26,
+       "num_crossposts": 0,
+       "created_utc": 1784736613,
+       "permalink": "/r/spreadsheets/comments/2eyhi/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/2eyhi/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2h7an",
+       "name": "t3_2h7an",
+       "title": "How do I make XLOOKUP return a blank instead of #N/A in Excel?",
+       "selftext": "I have a table with 138 rows and the formula works for some rows but not others.",
+       "author": "user_528",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 78,
+       "ups": 78,
+       "upvote_ratio": 0.79,
+       "num_comments": 56,
+       "num_crossposts": 0,
+       "created_utc": 1784656660,
+       "permalink": "/r/spreadsheets/comments/2h7an/how_do_i_make_xlookup_return_a_blank_ins/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/2h7an/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "solved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     },
+     {
+      "kind": "t3",
+      "data": {
+       "id": "2jg3s",
+       "name": "t3_2jg3s",
+       "title": "Conditional formatting is slow on 50k rows, any fix?",
+       "selftext": "I have a table with 139 rows and the formula works for some rows but not others.",
+       "author": "user_722",
+       "subreddit": "spreadsheets",
+       "subreddit_name_prefixed": "r/spreadsheets",
+       "score": 119,
+       "ups": 119,
+       "upvote_ratio": 0.81,
+       "num_comments": 67,
+       "num_crossposts": 0,
+       "created_utc": 1784241956,
+       "permalink": "/r/spreadsheets/comments/2jg3s/conditional_formatting_is_slow_on_50k_ro/",
+       "url": "https://www.reddit.com/r/spreadsheets/comments/2jg3s/",
+       "domain": "self.spreadsheets",
+       "is_self": true,
+       "is_video": false,
+       "link_flair_text": "unsolved",
+       "over_18": false,
+       "stickied": false,
+       "thumbnail": "self"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReelScope Library demo</title>
+  <link rel="stylesheet" href="../dashboard/dashboard.css">
+</head>
+<body>
+  <!-- Loads the real dashboard/dashboard.html markup and scripts with a stubbed
+       chrome.* API, three fake Instagram accounts built from dev/graphql/query.json
+       and two fake subreddits from dev/reddit/listings.json. -->
+  <script src="../src/extract.js"></script>
+  <script src="../src/reddit.js"></script>
+  <script src="../src/mentions.js"></script>
+  <script>
+    (async function () {
+      var store = {};
+      var listeners = [];
+      function fire(changes) { listeners.forEach(function (fn) { fn(changes, 'local'); }); }
+      window.chrome = {
+        storage: {
+          local: {
+            get: async function (k) {
+              var all = JSON.parse(JSON.stringify(store));
+              if (typeof k === 'string') { var o = {}; if (k in all) o[k] = all[k]; return o; }
+              return all;
+            },
+            set: async function (o) { var c = {}; Object.keys(o).forEach(function (k) { c[k] = { oldValue: store[k], newValue: o[k] }; store[k] = JSON.parse(JSON.stringify(o[k])); }); fire(c); },
+            remove: async function (k) { var c = {}; [].concat(k).forEach(function (x) { c[x] = { oldValue: store[x] }; delete store[x]; }); fire(c); }
+          },
+          onChanged: { addListener: function (fn) { listeners.push(fn); } }
+        },
+        runtime: {
+          id: 'demo',
+          getURL: function (p) { return '/' + p; },
+          sendMessage: async function (m) {
+            console.log('[demo] message', m.type, m.what, (m.posts || []).length); window.__demoLast = m;
+            if (m.type === 'reelscope:mentions-check') {
+              // Pretend the background found one new comment.
+              var cur = store['rs:mentions'];
+              var add = ReelScopeMentions.mergeMentions(cur.items, [ReelScopeMentions.shape({ id: 't1_demo' + Date.now().toString(36), kind: 'comment', watchId: 'w1', query: '"excel formula"', title: 'Weird formula behaviour', excerpt: 'Your excel formula is volatile because of INDIRECT…', subreddit: 'excel', author: 'helper42', permalink: 'https://www.reddit.com/r/excel/', createdAt: Date.now(), score: 1, foundAt: Date.now() }, 'extension')]);
+              await chrome.storage.local.set({ 'rs:mentions': { items: add.items, read: cur.read }, 'rs:mentions-state': Object.assign({}, store['rs:mentions-state'], { lastRunAt: Date.now(), lastNew: 1 }) });
+              return { new: 1 };
+            }
+            if (m.type === 'reelscope:mentions-server-sync') {
+              await chrome.storage.local.set({ 'rs:mentions-state': Object.assign({}, store['rs:mentions-state'], { server: { lastFailAt: Date.now(), lastError: new Date().toISOString() + ' Failed to fetch (demo: no server)' } }) });
+              return { ok: true, added: 0 };
+            }
+            return { ok: true, queued: (m.posts || []).length, skipped: 0, failed: 0 };
+          }
+        },
+        permissions: { request: async function () { return true; }, contains: async function () { return true; } }
+      };
+
+      // Fake accounts.
+      var text = await (await fetch('/dev/graphql/query.json')).text();
+      var base = ReelScopeExtract.parseText(text);
+      [['demo.kitchen', 1, 'Demo Kitchen'], ['spreadsheet.tips', 3.2, 'Spreadsheet Tips'], ['tiny.cafe', 0.2, 'Tiny Cafe']].forEach(function (a, ai) {
+        var posts = {};
+        base.forEach(function (p, i) {
+          if (ai === 2 && i > 20) return;
+          var q = JSON.parse(JSON.stringify(p));
+          q.owner = a[0]; q.ownerName = a[2]; q.code = p.code + ai;
+          q.views = Math.round(p.views * a[1] * (0.6 + ((i * 37) % 10) / 10));
+          q.likes = Math.round(p.likes * a[1]);
+          if (i % 9 === 0) q.shares = Math.round(q.likes / 4);
+          posts[q.code] = q;
+        });
+        store['rs:p:' + a[0]] = { posts: posts, updatedAt: Date.now() - ai * 86400000 * 2 };
+      });
+      var listings = await (await fetch('/dev/reddit/listings.json')).json();
+      Object.keys(listings).forEach(function (sub) {
+        var posts = {};
+        ReelScopeReddit.parseListing(listings[sub]).posts.forEach(function (p) { posts[p.code] = p; });
+        store['rs:p:r/' + sub] = { posts: posts, updatedAt: Date.now() - 3600000, platform: 'reddit', kind: 'subreddit' };
+      });
+      store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] } } };
+
+      // Fake Reddit keyword watches and mentions.
+      var now = Date.now();
+      store['rs:watches'] = [
+        { id: 'w1', query: '"excel formula"', subreddits: ['excel', 'spreadsheets'], exclude: ['hiring'], kinds: ['posts', 'comments'], enabled: true },
+        { id: 'w2', query: 'handsonexcel', subreddits: [], exclude: [], kinds: ['posts', 'comments'], enabled: true },
+        { id: 'w3', query: 'xlookup #n/a', subreddits: ['excel'], exclude: [], kinds: ['posts'], enabled: false }
+      ];
+      var demoM = [
+        ['t3_m1', 'post', 'w1', 'Excel formula to split names into first and last?', 'I have a column with full names and need an excel formula that splits them…', 'excel', 'newbie_99', 3600e3, 14, 'extension'],
+        ['t1_m2', 'comment', 'w1', 'Best way to learn formulas', '…honestly the best excel formula course I found was free on YouTube, look for…', 'spreadsheets', 'sheetfan', 5 * 3600e3, 3, 'hayati'],
+        ['t3_m3', 'post', 'w2', 'Has anyone used handsonexcel.com?', 'Saw their Excel Bug reels, are the practice files any good?', 'learnexcel', 'curious_cat', 26 * 3600e3, 22, 'extension'],
+        ['t3_m4', 'post', 'w1', 'Excel formula returns 0 instead of blank', 'Dragging the formula down shows 0 for empty rows…', 'excel', 'zero_hero', 50 * 3600e3, 41, 'hayati']
+      ].map(function (a) { return ReelScopeMentions.shape({ id: a[0], kind: a[1], watchId: a[2], query: a[2] === 'w1' ? '"excel formula"' : 'handsonexcel', title: a[3], excerpt: a[4], subreddit: a[5], author: a[6], permalink: 'https://www.reddit.com/r/' + a[5] + '/', createdAt: now - a[7], score: a[8], foundAt: now - a[7] + 600e3 }, a[9]); });
+      store['rs:mentions'] = { items: ReelScopeMentions.mergeMentions({}, demoM).items, read: { t3_m4: 1 } };
+      store['rs:mentions-state'] = { lastRunAt: now - 6 * 60e3, lastNew: 1, via: 'tab', warnings: ['"handsonexcel": comments need a subreddit list (Reddit has no comment search), so only posts are checked.'] };
+
+      var html = await (await fetch('/dashboard/dashboard.html')).text();
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.body.querySelectorAll('script').forEach(function (s) { s.remove(); });
+      document.body.insertAdjacentHTML('beforeend', doc.body.innerHTML.replace(/\.\.\/icons\//g, '/icons/'));
+      // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
+      var realFetch = window.fetch;
+      window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
+      for (var src of ['/src/metrics.js', '/src/panel.js', '/dashboard/mentions-view.js', '/dashboard/dashboard.js']) {
+        await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
+      }
+    })();
+  </script>
+</body>
+</html>
