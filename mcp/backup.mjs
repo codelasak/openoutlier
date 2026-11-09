@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenOutlier – daily backup of ~/.reelscope/reelscope.db to the home server.
+// OpenOutlier – daily backup of ~/.reelscope/reelscope.db (locally, and to your own server if set).
 //
 //   node mcp/backup.mjs            once a day (skips if today's backup already succeeded)
 //   node mcp/backup.mjs --force    run again anyway
@@ -8,8 +8,8 @@
 // Steps: consistent copy with SQLite's VACUUM INTO (safe while the bridge is
 // writing) → integrity check → gzip → keep the last 7 locally in
 // ~/.reelscope/backups → upload over SSH/Tailscale to
-// REELSCOPE_BACKUP_REMOTE (default hayati-ts:/mnt/storage/backups/reelscope),
-// verify the checksum there, keep the last 30 remotely.
+// REELSCOPE_BACKUP_REMOTE (host:/path, e.g. myserver:/backups/openoutlier; unset = local
+// copies only), verify the checksum there, keep the last 30 remotely.
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createReadStream, createWriteStream, promises as fs } from 'node:fs';
@@ -22,7 +22,7 @@ import { HOME, store, writeStatus, readStatus } from './library.mjs';
 
 const run = promisify(execFile);
 const args = new Set(process.argv.slice(2));
-const REMOTE = process.env.REELSCOPE_BACKUP_REMOTE ?? 'hayati-ts:/mnt/storage/backups/reelscope';
+const REMOTE = (process.env.REELSCOPE_BACKUP_REMOTE || '').trim();
 const KEEP_LOCAL = Number(process.env.REELSCOPE_BACKUP_KEEP_LOCAL || 7);
 const KEEP_REMOTE = Number(process.env.REELSCOPE_BACKUP_KEEP_REMOTE || 30);
 const SSH_OPTS = ['-o', 'BatchMode=yes', '-o', 'ConnectTimeout=20'];
@@ -81,6 +81,7 @@ async function main() {
 
   // 5. upload + verify + prune remotely
   let remote = null;
+  if (!args.has('--no-upload') && !REMOTE) log('REELSCOPE_BACKUP_REMOTE is not set: kept the local copy only');
   if (!args.has('--no-upload') && REMOTE) {
     const i = REMOTE.indexOf(':');
     if (i < 1) throw new Error('REELSCOPE_BACKUP_REMOTE must look like host:/path');
