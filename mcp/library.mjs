@@ -10,6 +10,8 @@ import { randomUUID } from 'node:crypto';
 const require = createRequire(import.meta.url);
 export const M = require('../src/metrics.js');
 export const MN = require('../src/mentions.js');
+export const T = require('../src/tiktok.js');
+export const C = require('../src/compare.js');
 
 export const HOME = process.env.REELSCOPE_HOME || join(homedir(), '.reelscope');
 export const LIBRARY_FILE = join(HOME, 'library.json');
@@ -62,8 +64,11 @@ export async function applySync({ full, accounts, org, watches, mentions }) {
   if (full) lib.accounts = {};
   else lib.accounts = { ...lib.accounts };
   for (const [u, rec] of Object.entries(accounts || {})) {
-    if (rec && rec.posts) lib.accounts[u] = { posts: rec.posts, updatedAt: rec.updatedAt || Date.now() };
-    else delete lib.accounts[u];
+    if (rec && rec.posts) {
+      lib.accounts[u] = { posts: rec.posts, updatedAt: rec.updatedAt || Date.now() };
+      if (rec.platform) lib.accounts[u].platform = rec.platform;
+      if (rec.profile && typeof rec.profile === 'object') lib.accounts[u].profile = rec.profile; // TikTok: followers, video count
+    } else delete lib.accounts[u];
   }
   if (org) lib.org = org;
   if (Array.isArray(watches)) lib.watches = watches;
@@ -144,10 +149,15 @@ export async function waitForCommand(id, seconds) {
 const isVideo = (p) => p.type === 'reel' || p.type === 'video';
 const isRedditPost = (p) => p.platform === 'reddit';
 
-/** Reddit accounts are stored as "r/<sub>" and "u/<user>"; Instagram usernames never contain "/". */
+/** Reddit accounts are stored as "r/<sub>" and "u/<user>", TikTok as "tt/<user>"; Instagram usernames never contain "/". */
 export function isRedditId(id) { return /^(r|u)\/[a-z0-9_-]{2,30}$/.test(String(id || '')); }
-export function platformOf(lib, id) { return lib.accounts[id]?.platform === 'reddit' || isRedditId(id) ? 'reddit' : 'instagram'; }
-export function labelOf(id) { return isRedditId(id) ? id : '@' + id; }
+export const isTikTokId = (id) => T.isTikTokId(id);
+export function platformOf(lib, id) {
+  if (lib.accounts[id]?.platform === 'reddit' || isRedditId(id)) return 'reddit';
+  if (lib.accounts[id]?.platform === 'tiktok' || isTikTokId(id)) return 'tiktok';
+  return 'instagram';
+}
+export function labelOf(id) { return isRedditId(id) ? id : isTikTokId(id) ? '@' + id.slice(3) + ' (TikTok)' : '@' + id; }
 
 export function folderOf(lib, u) {
   const f = lib.org.accounts?.[u]?.folder;
@@ -166,8 +176,13 @@ function folderByName(lib, name) {
  */
 export function normUser(u) {
   const s = String(u || '').trim();
+  // TikTok: "tt/name", "tiktok:@name", "tiktok.com/@name", "https://www.tiktok.com/@name/video/…"
+  const t = s.match(/^(?:tt\/|tiktok:\s*@?)([A-Za-z0-9._]{1,30})$/i) || s.match(/^(?:https?:\/\/)?(?:(?:www|m)\.)?tiktok\.com\/@([A-Za-z0-9._]{1,30})/i);
+  if (t) return 'tt/' + t[1].toLowerCase();
   const m = s.match(/^(?:https?:\/\/)?(?:(?:www|old|new)\.)?(?:reddit\.com)?\/?(r|u|user)\/([A-Za-z0-9_-]{2,30})/i);
   if (m) return (m[1].toLowerCase() === 'r' ? 'r/' : 'u/') + m[2].toLowerCase();
+  const ig = s.match(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([A-Za-z0-9._]{1,30})/i);
+  if (ig) return ig[1].toLowerCase();
   return s.replace(/^@/, '').toLowerCase();
 }
 
@@ -189,7 +204,9 @@ export function postCount(lib, u) { return Object.keys(lib.accounts[u]?.posts ||
 
 export function selectAccounts(lib, { folder, tag, usernames, includeSmall = false, platform } = {}) {
   let list = Object.keys(lib.accounts);
-  if (platform && platform !== 'all') list = list.filter((u) => platformOf(lib, u) === platform);
+  // platform: 'instagram' | 'tiktok' | 'reddit' | 'video' (Instagram + TikTok) | 'all'
+  if (platform === 'video') list = list.filter((u) => platformOf(lib, u) !== 'reddit');
+  else if (platform && platform !== 'all') list = list.filter((u) => platformOf(lib, u) === platform);
   const explicit = (usernames && usernames.length) || folder || tag;
   if (!explicit && !includeSmall) list = list.filter((u) => postCount(lib, u) >= MIN_POSTS);
   if (usernames && usernames.length) {
@@ -213,11 +230,13 @@ export function enrichedPosts(lib, u) {
   return M.enrich(Object.values(lib.accounts[u]?.posts || {}));
 }
 
+/** When a CDN link stops working: Instagram's "oe" (hex seconds), TikTok's "x-expires" / "expire" (seconds). */
 export function linkExpiry(url) {
   try {
     const oe = new URL(url).searchParams.get('oe');
-    return oe ? parseInt(oe, 16) * 1000 : null;
+    if (oe) return parseInt(oe, 16) * 1000;
   } catch { return null; }
+  return T.linkExpiry(url);
 }
 
 const round = (n, d = 2) => (n == null ? null : Math.round(n * 10 ** d) / 10 ** d);
@@ -251,8 +270,10 @@ export function redditBrief(p, { full = false } = {}) {
 /** Compact reel record for agents (Reddit posts get redditBrief). */
 export function brief(p, { full = false } = {}) {
   if (isRedditPost(p)) return redditBrief(p, { full });
+  const tt = p.platform === 'tiktok';
   const out = {
     code: p.code,
+    platform: tt ? 'tiktok' : 'instagram',
     url: p.url,
     account: p.owner,
     type: p.type,
@@ -261,12 +282,13 @@ export function brief(p, { full = false } = {}) {
     likes: p.likes ?? null,
     comments: p.comments ?? null,
     shares: p.shares ?? null,
+    saves: tt ? (p.saves ?? null) : undefined,
     duration_s: p.duration ?? null,
     engagement_pct: round(p.engagement),
     x_account_median: round(p.ratio),
     viral_score: p.viralScore ?? null,
     pinned: p.pinned || undefined,
-    audio: p.audio ? (p.audio.kind === 'music' ? `music: ${p.audio.title}${p.audio.artist ? ' – ' + p.audio.artist : ''}` : 'original audio') : null,
+    audio: p.audio ? (p.audio.kind === 'music' ? `music: ${p.audio.title}${p.audio.artist ? ' – ' + p.audio.artist : ''}` : tt ? `original sound: ${p.audio.title}` : 'original audio') : null,
     hashtags: p.hashtags?.length ? p.hashtags : undefined,
     caption: full ? p.caption : (p.caption || '').replace(/\s+/g, ' ').slice(0, 220) || undefined
   };
@@ -279,6 +301,7 @@ export function brief(p, { full = false } = {}) {
     out.link_expires_at = iso(exp);
     out.link_expired = exp ? exp < Date.now() : null;
     out.saves = p.saves ?? null;
+    if (tt) out.download_note = 'TikTok video links need the browser session: download_reel tries directly, then asks the extension to fetch it in a tiktok.com tab.';
     out.last_seen_at = iso(p.seenAt);
   }
   return out;
@@ -304,6 +327,28 @@ export function accountRow(lib, u) {
   const vids = posts.filter(isVideo);
   const withViews = vids.filter((p) => p.views > 0);
   const name = posts.find((p) => p.ownerName)?.ownerName || null;
+  if (platformOf(lib, u) === 'tiktok') {
+    const prof = lib.accounts[u]?.profile || {};
+    const rate = (k) => round(M.mean(withViews.filter((p) => p[k] != null).map((p) => p[k] / p.views * 100)));
+    return {
+      username: u,
+      platform: 'tiktok',
+      handle: '@' + u.slice(3),
+      name: prof.nickname || name,
+      followers: prof.followers ?? undefined,
+      videos_on_profile: prof.videos ?? undefined,
+      folder: folderOf(lib, u)?.name || null,
+      tags: tagsOf(lib, u),
+      posts_saved: posts.length,
+      videos: vids.length,
+      median_views: M.median(withViews.map((p) => p.views)),
+      median_engagement_pct: round(M.median(vids.map((p) => p.engagement))),
+      shares_per_100_views: rate('shares'),
+      saves_per_100_views: rate('saves'),
+      outliers: vids.filter((p) => p.outlier).length,
+      updated_at: iso(lib.accounts[u]?.updatedAt)
+    };
+  }
   return {
     username: u,
     platform: 'instagram',
@@ -426,7 +471,8 @@ export function contentIdeas(lib, { folder, tag, subreddits, since_days = 365, l
 
 export function accountSummary(lib, u) {
   if (platformOf(lib, u) === 'reddit') return subredditSummary(lib, u);
-  if (!lib.accounts[u]) throw new Error(`@${u} is not in the library. Use collect_profile to collect it.`);
+  if (!lib.accounts[u]) throw new Error(`${labelOf(u)} is not in the library. Use collect_profile ${isTikTokId(u) ? 'with ' + u + ' ' : ''}to collect it.`);
+  const tt = platformOf(lib, u) === 'tiktok';
   const posts = enrichedPosts(lib, u);
   const reels = posts.filter(isVideo);
   const a = M.analyze(reels);
@@ -434,7 +480,8 @@ export function accountSummary(lib, u) {
   return {
     account: accountRow(lib, u),
     summary: {
-      reels_analyzed: a.summary.count,
+      ...(tt ? { videos_analyzed: a.summary.count, shares_per_100_views: round(a.summary.avgShareRate), saves_per_100_views: round(a.summary.avgSaveRate),
+        engagement_note: 'TikTok engagement = (likes + comments + shares + saves) ÷ views; Instagram only counts likes + comments.' } : { reels_analyzed: a.summary.count }),
       median_views: a.summary.medianViews,
       avg_views: round(a.summary.avgViews, 0),
       total_views: a.summary.totalViews,
@@ -448,25 +495,29 @@ export function accountSummary(lib, u) {
     timezone_note: 'Times use the computer\'s local time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone,
     top_hashtags: a.hashtags.slice(0, 15).map((h) => ({ hashtag: '#' + h.key, posts: h.count, median_views: h.medianViews, x_account_median: round(h.lift) })),
     video_length: a.durations.map((d) => ({ bucket: d.key, posts: d.count, median_views: d.medianViews, x_account_median: round(d.lift) })),
-    audio: a.audio.kinds.map((k) => ({ kind: k.key, posts: k.count, median_views: k.medianViews })),
+    audio: a.audio.kinds.map((k) => ({ kind: tt ? (k.key === 'Licensed music' ? 'Music' : 'Original sound') : k.key, posts: k.count, median_views: k.medianViews })),
+    top_music: tt ? a.audio.topTracks.map((t) => ({ track: t.key, posts: t.count, median_views: t.medianViews })) : undefined,
     top_reels: M.sortBy(reels, 'views').slice(0, 10).map((p) => brief(p))
   };
 }
 
-const SORT_KEYS = { viral_score: 'viralScore', views: 'views', likes: 'likes', comments: 'comments', shares: 'shares', engagement: 'engagement', date: 'date', duration: 'duration' };
+const SORT_KEYS = { viral_score: 'viralScore', views: 'views', likes: 'likes', comments: 'comments', shares: 'shares', saves: 'saves', engagement: 'engagement', date: 'date', duration: 'duration' };
 
 export function hiddenSmall(lib, scope) {
   return selectAccounts(lib, { ...scope, includeSmall: true }).length - selectAccounts(lib, scope).length;
 }
 
-export function topReels(lib, { folder, tag, usernames, sort = 'viral_score', since_days, limit = 20, min_views = 0, include_photos = false, include_small_accounts = false } = {}) {
-  const accounts = selectAccounts(lib, { folder, tag, usernames, includeSmall: include_small_accounts, platform: 'instagram' });
+/** Rank Instagram reels and TikTok videos (platform: 'all' = both, default). Reddit has top_posts. */
+export function topReels(lib, { folder, tag, usernames, sort = 'viral_score', since_days, limit = 20, min_views = 0, include_photos = false, include_small_accounts = false, platform = 'all' } = {}) {
+  const plat = platform === 'instagram' || platform === 'tiktok' ? platform : 'video';
+  const accounts = selectAccounts(lib, { folder, tag, usernames, includeSmall: include_small_accounts, platform: plat });
   const since = since_days ? Date.now() - since_days * 864e5 : null;
   let posts = accounts.flatMap((u) => enrichedPosts(lib, u));
   posts = posts.filter((p) => (include_photos || isVideo(p)) && (p.views || 0) >= min_views && (!since || (p.takenAt && p.takenAt >= since)));
   const sorted = M.sortBy(posts, SORT_KEYS[sort] || 'viralScore');
-  const hidden = include_small_accounts ? 0 : hiddenSmall(lib, { folder, tag, usernames, platform: 'instagram' });
-  return { accounts: accounts.length, hidden_small_accounts: hidden || undefined, matched: posts.length, reels: sorted.slice(0, limit).map((p) => brief(p)) };
+  const hidden = include_small_accounts ? 0 : hiddenSmall(lib, { folder, tag, usernames, platform: plat });
+  const platforms = [...new Set(accounts.map((u) => platformOf(lib, u)))];
+  return { accounts: accounts.length, platforms, hidden_small_accounts: hidden || undefined, matched: posts.length, reels: sorted.slice(0, limit).map((p) => brief(p)) };
 }
 
 export function searchReels(lib, { query, folder, tag, usernames, limit = 20, include_small_accounts = false, platform = 'all' } = {}) {
@@ -482,6 +533,13 @@ export function searchReels(lib, { query, folder, tag, usernames, limit = 20, in
 }
 
 export function findReel(lib, code) {
+  const tid = T.videoIdOf(code);
+  if (tid) {
+    for (const u of Object.keys(lib.accounts)) {
+      if (lib.accounts[u].posts?.[tid]) return enrichedPosts(lib, u).find((p) => p.code === tid);
+    }
+    return null;
+  }
   const c = String(code || '').trim()
     .replace(/^.*\/comments\/([a-z0-9]+).*$/i, '$1') // reddit.com/r/x/comments/<id>/…
     .replace(/^t3_/, '')
@@ -493,6 +551,63 @@ export function findReel(lib, code) {
     }
   }
   return null;
+}
+
+// ---- cross-platform comparison -------------------------------------------------
+
+/**
+ * Match the same videos on an Instagram account and a TikTok account (caption
+ * similarity, hashtags, duration, posting date ±3 days, episode numbers) and
+ * compare views, engagement and × each account's own median.
+ * account_ig: Instagram username; account_tt: TikTok username (tt/ optional). If one is missing, the same handle is used.
+ */
+export function comparePlatforms(lib, { account_ig, account_tt, since_days, min_score, limit = 50 } = {}) {
+  let ig = account_ig ? normUser(account_ig) : null;
+  let tt = account_tt ? normUser(account_tt) : null;
+  if (ig && isTikTokId(ig) && !tt) { tt = ig; ig = null; }
+  if (tt && !isTikTokId(tt)) tt = 'tt/' + tt.replace(/^@/, '');
+  if (!ig && tt) ig = tt.slice(3);
+  if (!tt && ig) tt = 'tt/' + ig;
+  if (!ig || !tt) throw new Error('Give account_ig and/or account_tt.');
+  const igIds = Object.keys(lib.accounts).filter((u) => platformOf(lib, u) === 'instagram');
+  const ttIds = Object.keys(lib.accounts).filter((u) => platformOf(lib, u) === 'tiktok');
+  if (!lib.accounts[ig] || platformOf(lib, ig) !== 'instagram') throw new Error(`Instagram account @${ig} is not in the library. Saved Instagram accounts: ${igIds.slice(0, 15).join(', ') || 'none'}.`);
+  if (!lib.accounts[tt]) throw new Error(`TikTok account ${labelOf(tt)} is not in the library. Saved TikTok accounts: ${ttIds.map((u) => u.slice(3)).slice(0, 15).join(', ') || 'none'}. Use collect_profile with tt/<name>.`);
+  const since = since_days ? Date.now() - since_days * 864e5 : null;
+  const keep = (p) => !since || (p.takenAt && p.takenAt >= since);
+  const r = C.match(enrichedPosts(lib, ig).filter(keep), enrichedPosts(lib, tt).filter(keep), { minScore: min_score });
+  const sideOut = (x) => ({
+    code: x.code, url: x.url, posted_at: iso(x.posted_at), views: x.views, likes: x.likes, comments: x.comments,
+    shares: x.shares, saves: x.platform === 'tiktok' ? x.saves : undefined, duration_s: x.duration,
+    engagement_pct: round(x.engagement), x_account_median: round(x.ratio), viral_score: x.viralScore,
+    caption: (x.caption || '').replace(/\s+/g, ' ').slice(0, 160)
+  });
+  const s = r.summary;
+  return {
+    instagram: ig,
+    tiktok: tt,
+    how_matched: `Same video = similar caption (Turkish letters, emoji, hashtags ignored), shared hashtags, length within ~1.5 s and posted within ±${C.MAX_DAYS} days; different episode numbers ("Bug #12" vs "#13") never match. Each video is matched once. x_account_median compares each side with its own account's median views, so the platform with the bigger audience doesn't win automatically.`,
+    summary: {
+      instagram_videos: s.videosA,
+      tiktok_videos: s.videosB,
+      matched: s.matched,
+      typical_tiktok_to_instagram_views: round(s.typicalViewsRatio),
+      median_views: { instagram: s.medianViewsA, tiktok: s.medianViewsB },
+      median_x_account_median: { instagram: round(s.medianRatioA), tiktok: round(s.medianRatioB) },
+      median_engagement_pct: { instagram: round(s.medianEngagementA), tiktok: round(s.medianEngagementB) },
+      better_relative_to_own_median: { instagram: s.winsA, tiktok: s.winsB },
+      hits_on_both: s.hitsOnBoth,
+      engagement_note: 'TikTok engagement counts likes + comments + shares + saves; Instagram counts likes + comments (shares/saves are rarely public there).'
+    },
+    pairs: r.pairs.slice(0, limit).map((p) => ({
+      match_score: p.score, confidence: p.confidence, days_apart: p.days,
+      better_on: p.winner === 'a' ? 'instagram' : p.winner === 'b' ? 'tiktok' : null,
+      tiktok_to_instagram_views: round(p.viewsRatio),
+      instagram: sideOut(p.a), tiktok: sideOut(p.b)
+    })),
+    only_on_instagram: { count: r.onlyA.length, examples: r.onlyA.slice(0, 10).map((x) => ({ code: x.code, url: x.url, posted_at: iso(x.posted_at), views: x.views, caption: (x.caption || '').slice(0, 100) })) },
+    only_on_tiktok: { count: r.onlyB.length, examples: r.onlyB.slice(0, 10).map((x) => ({ code: x.code, url: x.url, posted_at: iso(x.posted_at), views: x.views, caption: (x.caption || '').slice(0, 100) })) }
+  };
 }
 
 // ---- Reddit mentions --------------------------------------------------------

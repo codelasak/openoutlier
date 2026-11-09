@@ -25,7 +25,12 @@ const squatter = http.createServer((req, res) => { res.end('hello from another a
 await new Promise((r) => squatter.listen(FIRST, '127.0.0.1', r));
 
 // A tiny "CDN" for download_reel.
-const cdn = http.createServer((req, res) => { res.writeHead(200, { 'content-type': 'video/mp4' }); res.end(Buffer.alloc(2048, 7)); });
+const cdnSeen = [];
+const cdn = http.createServer((req, res) => {
+  cdnSeen.push({ url: req.url, referer: req.headers.referer || null });
+  if (req.url.includes('forbidden')) { res.writeHead(403); res.end('no'); return; } // TikTok without the browser session
+  res.writeHead(200, { 'content-type': 'video/mp4' }); res.end(Buffer.alloc(2048, 7));
+});
 await new Promise((r) => cdn.listen(0, '127.0.0.1', r));
 const cdnUrl = `http://127.0.0.1:${cdn.address().port}/v/clip.mp4?oe=${(Math.floor(Date.now() / 1000) + 86400).toString(16)}`;
 
@@ -313,4 +318,123 @@ test('Reddit mentions: watches and the inbox sync, the mentions tool filters the
   await bridge('/sync', { method: 'POST', body: { full: true, accounts: { 'demo.kitchen': account('demo.kitchen', 1) } } });
   assert.deepEqual((await call('list_accounts')).data.accounts.map((a) => a.username), ['demo.kitchen']);
   assert.equal((await call('mentions')).data.total, 3);
+});
+
+test('TikTok: accounts next to Instagram, top_reels across platforms, compare_platforms, collect and download', async () => {
+  const T = createRequire(import.meta.url)('../src/tiktok.js');
+  const pages = JSON.parse(readFileSync(join(here, '..', 'dev', 'tiktok', 'item_list.json'), 'utf8'));
+  const igTwin = JSON.parse(readFileSync(join(here, '..', 'dev', 'tiktok', 'ig-twin.json'), 'utf8'));
+  const items = T.parseText(JSON.stringify(pages)).filter((p) => p.owner === 'tt/excel.bugs.demo');
+  const exp = (Math.floor(Date.now() / 1000) + 86400).toString();
+  const ok = items.find((p) => p.type === 'video');
+  const blocked = items.filter((p) => p.type === 'video')[1];
+  ok.files = [{ kind: 'video', url: `http://127.0.0.1:${cdn.address().port}/tt/ok.mp4?expire=${exp}` }];
+  blocked.files = [{ kind: 'video', url: `http://127.0.0.1:${cdn.address().port}/tt/forbidden.mp4?expire=${exp}` }];
+  const ttPosts = {};
+  items.forEach((p) => { ttPosts[p.code] = p; });
+  const igPosts = {};
+  igTwin.forEach((p) => { igPosts[p.code] = p; });
+  const org = { folders: [{ id: 'fb', name: 'Excel Bug' }], accounts: { 'excel.bugs.demo': { folder: 'fb', tags: [] }, 'tt/excel.bugs.demo': { folder: 'fb', tags: ['tiktok'] } } };
+  const r = await bridge('/sync', { method: 'POST', body: { full: false, org, accounts: {
+    'tt/excel.bugs.demo': { posts: ttPosts, updatedAt: Date.now(), platform: 'tiktok', profile: { username: 'excel.bugs.demo', nickname: 'Excel Bugs (demo)', followers: 48213, videos: 40 } },
+    'excel.bugs.demo': { posts: igPosts, updatedAt: Date.now() }
+  } } });
+  assert.equal(r.status, 200);
+
+  const tt = await call('list_accounts', { platform: 'tiktok' });
+  assert.equal(tt.data.count, 1);
+  const row = tt.data.accounts[0];
+  assert.equal(row.username, 'tt/excel.bugs.demo');
+  assert.equal(row.platform, 'tiktok');
+  assert.equal(row.handle, '@excel.bugs.demo');
+  assert.equal(row.followers, 48213);
+  assert.equal(row.videos, 39);
+  assert.ok(row.median_views > 0 && row.saves_per_100_views > 0 && row.shares_per_100_views > 0);
+  const ig = await call('list_accounts', { platform: 'instagram', folder: 'Excel Bug' });
+  assert.deepEqual(ig.data.accounts.map((a) => a.username), ['excel.bugs.demo']);
+  const ft = await call('list_folders_and_tags');
+  assert.deepEqual(ft.data.folders.find((f) => f.name === 'Excel Bug'), { name: 'Excel Bug', accounts: 2, instagram: 1, tiktok: 1 });
+
+  const sum = await call('account_summary', { username: 'https://www.tiktok.com/@Excel.Bugs.Demo' });
+  assert.equal(sum.isError, false, sum.text);
+  assert.equal(sum.data.account.platform, 'tiktok');
+  assert.equal(sum.data.summary.videos_analyzed, 39);
+  assert.ok(sum.data.summary.saves_per_100_views > 0);
+  assert.ok(sum.data.audio.some((a) => a.kind === 'Original sound'));
+  assert.ok(sum.data.top_reels.every((p) => p.platform === 'tiktok' && p.saves != null));
+  // The same handle on Instagram is a different account.
+  assert.equal((await call('account_summary', { username: 'excel.bugs.demo' })).data.account.platform, 'instagram');
+
+  const both = await call('top_reels', { folder: 'Excel Bug', limit: 200 });
+  assert.deepEqual(both.data.platforms.sort(), ['instagram', 'tiktok']);
+  assert.ok(both.data.reels.some((p) => p.platform === 'tiktok') && both.data.reels.some((p) => p.platform === 'instagram'));
+  const onlyTT = await call('top_reels', { folder: 'Excel Bug', platform: 'tiktok', sort: 'saves', limit: 3 });
+  assert.ok(onlyTT.data.reels.every((p) => p.platform === 'tiktok'));
+  assert.ok(onlyTT.data.reels[0].saves >= onlyTT.data.reels[1].saves);
+  assert.ok((await call('search_reels', { query: 'düşeyara', platform: 'tiktok' })).data.reels.every((p) => p.platform === 'tiktok'));
+
+  const one = await call('get_reel', { code: ok.url + '?is_from_webapp=1' });
+  assert.equal(one.isError, false, one.text);
+  assert.equal(one.data.platform, 'tiktok');
+  assert.equal(one.data.video_url, ok.files[0].url);
+  assert.equal(one.data.link_expired, false);
+  assert.ok(one.data.link_expires_at);
+
+  // Download: works directly when the CDN allows it (sent with a tiktok.com referer) …
+  const dir = join(home, 'tt-dl');
+  const dl = await call('download_reel', { code: ok.code, directory: dir });
+  assert.equal(dl.isError, false, dl.text);
+  assert.match(dl.data.saved[0].path, /views_.*likes_.*comments_.*shares_.*saves_.*pct_tiktok_\d+\.mp4$/);
+  assert.equal(dl.data.saved[0].via, 'direct');
+  assert.ok(existsSync(dl.data.saved[0].path));
+  assert.equal(cdnSeen.find((x) => x.url.includes('/tt/ok.mp4')).referer, 'https://www.tiktok.com/');
+  // … and otherwise asks the extension to download it in the browser.
+  const pendingDl = call('download_reel', { code: blocked.url });
+  let cmds = [];
+  for (let i = 0; i < 40 && !cmds.length; i++) {
+    cmds = (await (await bridge('/commands')).json()).commands;
+    if (!cmds.length) await new Promise((res) => setTimeout(res, 200));
+  }
+  assert.equal(cmds[0].type, 'download_tiktok');
+  assert.deepEqual(cmds[0].args, { id: blocked.code, username: 'excel.bugs.demo', what: 'video' });
+  await bridge('/commands/result', { method: 'POST', body: { id: cmds[0].id, result: { ok: true, files: [{ filename: '/Users/x/Downloads/ReelScope/tt_excel.bugs.demo/a_tiktok_1.mp4', state: 'complete' }] } } });
+  const viaBrowser = await pendingDl;
+  assert.equal(viaBrowser.isError, false, viaBrowser.text);
+  assert.equal(viaBrowser.data.saved[0].via, 'browser');
+  assert.match(viaBrowser.data.saved[0].path, /tt_excel\.bugs\.demo/);
+
+  // Same videos on both platforms.
+  const cmp = await call('compare_platforms', { account_ig: '@excel.bugs.demo' });
+  assert.equal(cmp.isError, false, cmp.text);
+  assert.equal(cmp.data.tiktok, 'tt/excel.bugs.demo');
+  assert.equal(cmp.data.summary.matched, 35);
+  assert.equal(cmp.data.only_on_instagram.count, 5);
+  assert.equal(cmp.data.only_on_tiktok.count, 4);
+  for (const p of cmp.data.pairs) {
+    assert.equal(p.instagram.caption.match(/Bug (\d+)/)[1], p.tiktok.caption.match(/Bug #(\d+)/)[1]);
+    assert.ok(p.days_apart <= 3 && ['instagram', 'tiktok'].includes(p.better_on));
+  }
+  assert.ok(cmp.data.summary.typical_tiktok_to_instagram_views > 1);
+  assert.ok((await call('compare_platforms', { account_tt: 'tt/excel.bugs.demo', account_ig: 'nobody.here' })).isError);
+  assert.equal((await call('compare_platforms', { account_tt: 'https://www.tiktok.com/@excel.bugs.demo' })).data.instagram, 'excel.bugs.demo');
+
+  // Collect / refresh go to the extension as TikTok commands.
+  const pendingCollect = call('collect_profile', { username: 'https://www.tiktok.com/@SomeOne.New', wait_seconds: 3 });
+  cmds = [];
+  for (let i = 0; i < 20 && !cmds.length; i++) {
+    cmds = (await (await bridge('/commands')).json()).commands;
+    if (!cmds.length) await new Promise((res) => setTimeout(res, 200));
+  }
+  assert.equal(cmds[0].type, 'collect_tiktok');
+  assert.deepEqual(cmds[0].args, { username: 'someone.new', maxPosts: 300 });
+  await pendingCollect;
+  const pendingRefresh = call('refresh_reel', { code: ok.code, wait_seconds: 2 });
+  cmds = [];
+  for (let i = 0; i < 20 && !cmds.length; i++) {
+    cmds = (await (await bridge('/commands')).json()).commands;
+    if (!cmds.length) await new Promise((res) => setTimeout(res, 200));
+  }
+  assert.equal(cmds[0].type, 'refresh_tiktok');
+  assert.deepEqual(cmds[0].args, { id: ok.code, username: 'excel.bugs.demo' });
+  await pendingRefresh;
 });

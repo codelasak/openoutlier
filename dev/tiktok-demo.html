@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReelScope TikTok demo</title>
+  <style>
+    body { margin: 0; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; color: #111; }
+    header { padding: 24px 32px; border-bottom: 1px solid #ddd; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; color: #666; max-width: 760px; }
+    nav { display: flex; gap: 8px; padding: 12px 32px; }
+    nav button { font: inherit; padding: 6px 10px; }
+    main { padding: 12px 32px 40px; }
+    [hidden] { display: none !important; }
+    video { display: block; width: 340px; height: 600px; background: #222; border-radius: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(5, 140px); gap: 6px; }
+    .grid div { aspect-ratio: 3 / 4; background: #eee; border-radius: 4px; font-size: 11px; padding: 6px; color: #555; overflow: hidden; }
+    #more { color: #666; margin-top: 12px; }
+  </style>
+  <!-- Stand-in for the chrome.* APIs so the content scripts run on a normal page. -->
+  <script>
+    (function () {
+      var data = {};
+      var listeners = [];
+      window.chrome = {
+        storage: {
+          local: {
+            get: async function (k) {
+              var all = JSON.parse(JSON.stringify(data));
+              if (k == null) return all;
+              var o = {};
+              [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; });
+              return o;
+            },
+            set: async function (o) { Object.assign(data, JSON.parse(JSON.stringify(o))); },
+            remove: async function (k) { [].concat(k).forEach(function (x) { delete data[x]; }); }
+          },
+          onChanged: { addListener: function () {} }
+        },
+        runtime: {
+          getURL: function (p) { return '/' + p; },
+          onMessage: { addListener: function (fn) { listeners.push(fn); } },
+          sendMessage: async function (m) {
+            if (m.type !== 'reelscope:download') return { ok: true };
+            // Mirror what background.js would save, so the demo shows real file names.
+            var names = [];
+            (m.posts || []).forEach(function (p) {
+              var base = ReelScopeMetrics.fileBaseName(p);
+              var dir = 'ReelScope/' + String(p.owner).replace('/', '_') + '/';
+              if (m.what === 'cover') { if (p.cover) names.push(dir + base + '_cover.jpg'); }
+              else (p.files || []).forEach(function (f, i, all) { names.push(dir + base + (all.length > 1 ? '_' + (i + 1) : '') + (f.kind === 'video' ? '.mp4' : '.jpg')); });
+            });
+            console.log('[demo] would download:\n' + names.join('\n'));
+            window.__demoDownloads = names;
+            return { ok: true, queued: names.length, skipped: 0, failed: 0, files: names.map(function (n) { return { filename: '~/Downloads/' + n, state: 'complete' }; }), via: 'demo' };
+          }
+        }
+      };
+      window.__reelscopeSite = 'tiktok'; // hook.js: forward TikTok-style /api/ responses on localhost
+      window.__demoOpenPanel = function () { listeners.forEach(function (fn) { fn({ type: 'reelscope:toggle' }, {}, function () {}); }); };
+
+      // Fake TikTok web API: /api/post/item_list/ pages from dev/tiktok/item_list.json.
+      // Installed before hook.js, so the hook wraps it exactly like TikTok's real fetch.
+      var realFetch = window.fetch;
+      var pagesP = null;
+      window.__demoApiCalls = 0;
+      window.fetch = function (input) {
+        var url = typeof input === 'string' ? input : input.url;
+        if (url.indexOf('/api/post/item_list/') === -1) return realFetch.apply(this, arguments);
+        window.__demoApiCalls++;
+        var page = Number(new URL(url, location.href).searchParams.get('page') || 0);
+        pagesP = pagesP || realFetch('/dev/tiktok/item_list.json').then(function (r) { return r.json(); });
+        return pagesP.then(function (pages) {
+          return new Response(JSON.stringify(pages[page] || { itemList: [], hasMore: false }), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } });
+        });
+      };
+    })();
+  </script>
+  <script src="../src/hook.js"></script>
+</head>
+<body>
+  <header>
+    <h1>ReelScope TikTok demo page</h1>
+    <p>Stands in for tiktok.com/@excel.bugs.demo. The page "loads" a fake <code>/api/post/item_list/</code> response through the same hook the extension uses, and the next page when you scroll to the bottom (or press Auto-scroll). The video view shows the on-video overlay. All data is made up (dev/make-tiktok-fixture.mjs).</p>
+  </header>
+  <nav>
+    <button type="button" id="go-profile">Profile view</button>
+    <button type="button" id="go-video">Video view (overlay)</button>
+  </nav>
+  <main>
+    <video id="video" muted playsinline hidden></video>
+    <div class="grid" id="grid" data-e2e="user-post-item-list"></div>
+    <p id="more">Scroll down to load more…</p>
+  </main>
+  <script src="../src/metrics.js"></script>
+  <script src="../src/tiktok.js"></script>
+  <script src="../src/panel.js"></script>
+  <script src="../src/overlay.js"></script>
+  <script src="../src/tiktok-content.js"></script>
+  <script>
+    var wantVideo = location.hash === '#video';
+    var firstId = null;
+    var nextPage = 0;
+    var loading = false;
+    function loadPage() {
+      if (loading || nextPage === null) return;
+      loading = true;
+      // Like TikTok's own app: a fetch to the item_list API (the hook sees the response).
+      fetch('/api/post/item_list/?aid=1988&count=25&page=' + nextPage).then(function (r) { return r.json(); }).then(function (j) {
+        (j.itemList || []).forEach(function (it) {
+          if (!firstId && it.author && it.author.uniqueId === 'excel.bugs.demo' && it.video && it.video.duration) firstId = it.id;
+          var d = document.createElement('div');
+          d.textContent = (it.desc || '').slice(0, 60);
+          document.getElementById('grid').appendChild(d);
+        });
+        nextPage = j.hasMore ? nextPage + 1 : null;
+        document.getElementById('more').textContent = j.hasMore ? 'Scroll down to load more…' : 'No more videos.';
+        loading = false;
+      });
+    }
+    window.addEventListener('scroll', function () {
+      if (window.innerHeight + window.scrollY > document.documentElement.scrollHeight - 200) loadPage();
+    });
+    document.getElementById('go-video').onclick = function () {
+      document.getElementById('grid').hidden = true;
+      document.getElementById('more').hidden = true;
+      document.getElementById('video').hidden = false;
+      history.pushState(null, '', '/@excel.bugs.demo/video/' + firstId);
+    };
+    document.getElementById('go-profile').onclick = function () {
+      document.getElementById('grid').hidden = false;
+      document.getElementById('more').hidden = false;
+      document.getElementById('video').hidden = true;
+      history.pushState(null, '', '/@excel.bugs.demo');
+    };
+    // The profile's SSR blob (profile facts) as TikTok embeds it, then the first API page.
+    fetch('/dev/tiktok/video.html').then(function (r) { return r.text(); }).then(function (html) {
+      var m = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]*?)<\/script>/);
+      var j = JSON.parse(m[1]);
+      delete j.__DEFAULT_SCOPE__['webapp.video-detail']; // a profile page has no video detail
+      var s = document.createElement('script');
+      s.id = '__UNIVERSAL_DATA_FOR_REHYDRATION__';
+      s.type = 'application/json';
+      s.textContent = JSON.stringify(j);
+      document.head.appendChild(s);
+      history.replaceState(null, '', '/@excel.bugs.demo');
+      setTimeout(function () {
+        loadPage();
+        setTimeout(function () {
+          if (wantVideo) document.getElementById('go-video').click();
+          else window.__demoOpenPanel();
+        }, 700);
+      }, 600);
+    });
+  </script>
+</body>
+</html>

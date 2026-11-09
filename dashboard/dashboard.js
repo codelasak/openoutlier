@@ -1,12 +1,14 @@
 // ReelScope Library – full-page view of every saved account (Instagram
-// profiles, subreddits and Reddit users side by side), with folders, tags,
-// per-account analytics and a cross-account "Top posts" ranking.
+// profiles, TikTok profiles, subreddits and Reddit users side by side), with
+// folders, tags, per-account analytics, a cross-account "Top posts" ranking and
+// an Instagram ↔ TikTok comparison of the same videos.
 // Reads the same chrome.storage.local data the content scripts write.
-// Account ids: "name" = Instagram, "r/excel" / "u/name" = Reddit.
+// Account ids: "name" = Instagram, "tt/name" = TikTok, "r/excel" / "u/name" = Reddit.
 (async function () {
   'use strict';
   var M = self.ReelScopeMetrics;
   var P = self.ReelScopePanel;
+  var CMP = self.ReelScopeCompare;
   var KEY_PREFIX = 'rs:p:';
   var ORG_KEY = 'rs:org';
   var SMALL = 5;
@@ -52,9 +54,12 @@
 
   function isVideo(p) { return p.type === 'reel' || p.type === 'video'; }
   function isRedditId(id) { return /^(r|u)\//.test(String(id || '')); }
-  function label(id) { return isRedditId(id) ? id : '@' + id; }
-  function platformOf(id) { return isRedditId(id) ? 'reddit' : 'instagram'; }
-  /** Posts that count for an account: reels/videos on Instagram, every post on Reddit. */
+  function isTikTokId(id) { return /^tt\//.test(String(id || '')); }
+  function handle(id) { return isTikTokId(id) ? '@' + id.slice(3) : '@' + id; }
+  function label(id) { return isRedditId(id) ? id : handle(id); }
+  function platformOf(id) { return isRedditId(id) ? 'reddit' : isTikTokId(id) ? 'tiktok' : 'instagram'; }
+  var PLATFORM_NAMES = { instagram: 'Instagram', tiktok: 'TikTok', reddit: 'Reddit' };
+  /** Posts that count for an account: reels/videos on Instagram and TikTok, every post on Reddit. */
   function counts(p) { return p.platform === 'reddit' || isVideo(p); }
 
   function summarize(username, rec) {
@@ -69,6 +74,7 @@
     return {
       username: username,
       platform: platformOf(username),
+      profile: rec.profile || null, // TikTok: followers, video count from the profile page
       updatedAt: rec.updatedAt || latest.seenAt || null,
       posts: posts,
       enriched: enriched,
@@ -121,9 +127,10 @@
     var kind = parts[0] || 'all';
     if (kind === 'account') return { kind: 'account', id: parts[1] };
     if (kind === 'mentions') return { kind: 'mentions' };
+    if (kind === 'compare') return { kind: 'compare', ig: parts[1] || null, tt: parts[2] || null };
     if (kind === 'folder' || kind === 'tag') return { kind: kind, id: parts[1], tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
     if (kind === 'unsorted') return { kind: 'unsorted', tab: parts[1] === 'reels' ? 'reels' : 'accounts' };
-    if (kind === 'platform') return { kind: 'platform', id: parts[1] === 'reddit' ? 'reddit' : 'instagram', tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
+    if (kind === 'platform') return { kind: 'platform', id: parts[1] === 'reddit' || parts[1] === 'tiktok' ? parts[1] : 'instagram', tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
     return { kind: 'all', tab: parts[1] === 'reels' ? 'reels' : 'accounts' };
   }
   function scopeHash(r, tab) {
@@ -137,7 +144,7 @@
     if (!a) return false;
     if (!showSmall && a.count < SMALL && r.kind !== 'folder' && r.kind !== 'tag') return false;
     if (search) {
-      var q = search.toLowerCase().replace(/^@/, '').replace(/^\/?(r|u)\//, '');
+      var q = search.toLowerCase().replace(/^@/, '').replace(/^\/?(r|u|tt)\//, '');
       if (u.indexOf(q) === -1 && String(a.name || '').toLowerCase().indexOf(q) === -1) return false;
     }
     if (r.kind === 'platform') return a.platform === r.id;
@@ -154,7 +161,7 @@
     if (r.kind === 'unsorted') return 'Unsorted';
     if (r.kind === 'folder') return folderName(r.id) || 'Folder';
     if (r.kind === 'tag') return '#' + r.id;
-    if (r.kind === 'platform') return r.id === 'reddit' ? 'Reddit' : 'Instagram';
+    if (r.kind === 'platform') return PLATFORM_NAMES[r.id] || 'Instagram';
     return 'All accounts';
   }
 
@@ -235,7 +242,7 @@
       type: 'reelscope:download',
       what: what,
       posts: posts.map(function (p) {
-        return { code: p.code, owner: p.owner, views: p.views, likes: p.likes, comments: p.comments, files: p.files, cover: p.thumb };
+        return { code: p.code, owner: p.owner, platform: p.platform, views: p.views, likes: p.likes, comments: p.comments, shares: p.shares, saves: p.saves, files: p.files, cover: p.thumb };
       })
     });
   }
@@ -289,10 +296,14 @@
     lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all'));
     lib.appendChild(navItem('Unsorted', all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null }));
     var nReddit = all.filter(isRedditId).length;
-    if (nReddit) {
-      lib.appendChild(navItem('Instagram', all.length - nReddit, '#/platform/instagram', r.kind === 'platform' && r.id === 'instagram'));
-      lib.appendChild(navItem('Reddit', nReddit, '#/platform/reddit', r.kind === 'platform' && r.id === 'reddit'));
+    var nTikTok = all.filter(isTikTokId).length;
+    var nIg = all.length - nReddit - nTikTok;
+    if (nReddit || nTikTok) {
+      [['instagram', nIg], ['tiktok', nTikTok], ['reddit', nReddit]].forEach(function (x) {
+        if (x[1]) lib.appendChild(navItem(PLATFORM_NAMES[x[0]], x[1], '#/platform/' + x[0], r.kind === 'platform' && r.id === x[0]));
+      });
     }
+    if (nTikTok && nIg) lib.appendChild(navItem('⇄ Compare IG ↔ TikTok', null, '#/compare', r.kind === 'compare'));
 
     var nf_ = document.getElementById('nav-folders');
     nf_.textContent = '';
@@ -330,9 +341,14 @@
   // ---- main views -----------------------------------------------------------
   var main = document.getElementById('main');
 
+  function platformChip(platform) {
+    return h('span', { class: 'chip chip-platform chip-' + platform, text: PLATFORM_NAMES[platform] });
+  }
+
   function accountCard(a) {
     var u = a.username;
     var reddit = a.platform === 'reddit';
+    var tiktok = a.platform === 'tiktok';
     var card = h('div', { class: 'card' + (reddit ? ' card-reddit' : ''), role: 'button', tabindex: '0', draggable: 'true', 'aria-label': label(u),
       onclick: function () { go('#/account/' + encodeURIComponent(u)); },
       onkeydown: function (e) { if (e.key === 'Enter') go('#/account/' + encodeURIComponent(u)); },
@@ -345,10 +361,11 @@
         ? h('ol', { class: 'top-titles' }, a.top.map(function (p) { return h('li', null, h('b', { text: fmt(p.score) }), ' ', p.title || ''); }))
         : h('div', { class: 'covers' }, [0, 1, 2].map(function (i) { return a.top[i] ? img(a.top[i].thumb, 'cover') : h('div', { class: 'thumb-empty' }); })),
       h('div', { class: 'card-stats' },
-        h('div', null, h('b', { text: nfFull.format(a.reels) }), h('span', { text: reddit ? 'posts' : 'reels' })),
+        h('div', null, h('b', { text: nfFull.format(a.reels) }), h('span', { text: reddit ? 'posts' : tiktok ? 'videos' : 'reels' })),
         h('div', null, h('b', { text: fmt(a.medianViews) }), h('span', { text: reddit ? 'median score' : 'median views' })),
         h('div', null, h('b', { text: nfFull.format(a.outliers) }), h('span', { text: 'outliers' }))),
       h('div', { class: 'chips' },
+        platformChip(a.platform),
         folderOf(u) ? h('span', { class: 'chip folder', text: '📁 ' + folderName(folderOf(u)) }) : null,
         tagsOf(u).map(function (t) { return h('span', { class: 'chip', text: '#' + t }); })));
     return card;
@@ -362,18 +379,20 @@
     var seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'View' },
       h('button', { type: 'button', 'aria-pressed': r.tab !== 'reels' ? 'true' : 'false', onclick: function () { go(scopeHash(r, 'accounts')); } }, 'Accounts'),
       h('button', { type: 'button', 'aria-pressed': r.tab === 'reels' ? 'true' : 'false', onclick: function () { go(scopeHash(r, 'reels')); } }, 'Top posts'));
-    var reelCount = list.reduce(function (s, u) { return s + (isRedditId(u) ? 0 : accounts[u].reels); }, 0);
-    var redditCount = list.reduce(function (s, u) { return s + (isRedditId(u) ? accounts[u].reels : 0); }, 0);
+    var by = { instagram: 0, tiktok: 0, reddit: 0 };
+    list.forEach(function (u) { by[accounts[u].platform] += accounts[u].reels; });
     main.appendChild(h('div', { class: 'view-head' },
       h('h1', { text: scopeTitle(r) }),
       h('span', { class: 'sub', text: list.length + ' account' + (list.length === 1 ? '' : 's') +
-        (reelCount || !redditCount ? ' · ' + nfFull.format(reelCount) + ' reels' : '') + (redditCount ? ' · ' + nfFull.format(redditCount) + ' Reddit posts' : '') }),
+        (by.instagram || (!by.reddit && !by.tiktok) ? ' · ' + nfFull.format(by.instagram) + ' reels' : '') +
+        (by.tiktok ? ' · ' + nfFull.format(by.tiktok) + ' TikTok videos' : '') +
+        (by.reddit ? ' · ' + nfFull.format(by.reddit) + ' Reddit posts' : '') }),
       seg));
 
     if (!Object.keys(accounts).length) {
       main.appendChild(h('div', { class: 'empty' },
         h('h2', { text: 'No saved accounts yet' }),
-        h('p', null, 'Open a profile\'s Reels tab on instagram.com, or a subreddit on reddit.com (e.g. r/excel/top), and scroll or press Auto-scroll / Collect top posts in the ReelScope panel. Every account you collect is saved here automatically.')));
+        h('p', null, 'Open a profile\'s Reels tab on instagram.com, a profile on tiktok.com, or a subreddit on reddit.com (e.g. r/excel/top), and scroll or press Auto-scroll / Collect top posts in the ReelScope panel. Every account you collect is saved here automatically.')));
       return;
     }
     if (!list.length) {
@@ -385,7 +404,7 @@
       // Score each reel against its own account's median, then rank them together.
       var posts = [];
       list.forEach(function (u) { posts = posts.concat(accounts[u].enriched); });
-      main.appendChild(h('p', { class: 'sub', style: 'margin:-6px 0 12px', text: 'Every reel and Reddit post in this view, scored against its own account\'s median (views on Instagram, score on Reddit), so small and big accounts compare fairly.' }));
+      main.appendChild(h('p', { class: 'sub', style: 'margin:-6px 0 12px', text: 'Every reel, TikTok video and Reddit post in this view, scored against its own account\'s median (views on Instagram and TikTok, score on Reddit), so small and big accounts compare fairly.' }));
       main.appendChild(h('div', { class: 'panel-slot' }, reelsPanel.host));
       reelsPanel.update({ posts: posts, selected: scopeTitle(r).replace(/[^\w.-]+/g, '-'), profiles: [], platform: null });
       return;
@@ -426,14 +445,22 @@
     });
 
     main.appendChild(h('button', { class: 'btn btn-ghost back', type: 'button', onclick: function () { go(lastScopeHash); } }, '← ' + 'Back'));
+    var twin = a.platform === 'tiktok' ? (accounts[u.slice(3)] ? u.slice(3) : null) : a.platform === 'instagram' ? (accounts['tt/' + u] ? 'tt/' + u : null) : null;
+    var prof = a.profile || {};
     main.appendChild(h('div', { class: 'acct-head' },
-      a.platform === 'reddit' ? h('div', { class: 'avatar big thumb-empty avatar-reddit', text: u.charAt(0) }) : img(a.pic, 'avatar big', u.charAt(0).toUpperCase()),
+      a.platform === 'reddit' ? h('div', { class: 'avatar big thumb-empty avatar-reddit', text: u.charAt(0) }) : img(a.pic, 'avatar big', handle(u).charAt(1).toUpperCase()),
       h('div', { class: 'acct-title' },
-        h('h1', { text: label(u) }),
-        h('p', { text: (a.platform === 'reddit' ? 'Reddit · ' : (a.name ? a.name + ' · ' : '')) + nfFull.format(a.count) + ' posts saved · updated ' + ago(a.updatedAt) }),
+        h('h1', null, label(u), ' ', platformChip(a.platform)),
+        h('p', { text: (a.platform === 'reddit' ? 'Reddit · ' : (a.name ? a.name + ' · ' : '')) +
+          (prof.followers != null ? fmt(prof.followers) + ' followers · ' : '') +
+          nfFull.format(a.count) + ' posts saved' + (prof.videos ? ' of ~' + nfFull.format(prof.videos) : '') + ' · updated ' + ago(a.updatedAt) }),
         h('p', null, a.platform === 'reddit'
           ? h('a', { href: 'https://www.reddit.com/' + (u.charAt(0) === 'u' ? 'user/' + encodeURIComponent(u.slice(2)) + '/submitted/' : 'r/' + encodeURIComponent(u.slice(2)) + '/top/?t=year'), target: '_blank', rel: 'noopener', text: 'Open on Reddit to refresh ↗' })
-          : h('a', { href: 'https://www.instagram.com/' + encodeURIComponent(u) + '/reels/', target: '_blank', rel: 'noopener', text: 'Open on Instagram to refresh ↗' }))),
+          : a.platform === 'tiktok'
+            ? h('a', { href: 'https://www.tiktok.com/@' + encodeURIComponent(u.slice(3)), target: '_blank', rel: 'noopener', text: 'Open on TikTok to refresh ↗' })
+            : h('a', { href: 'https://www.instagram.com/' + encodeURIComponent(u) + '/reels/', target: '_blank', rel: 'noopener', text: 'Open on Instagram to refresh ↗' }),
+          twin ? ' · ' : null,
+          twin ? h('a', { href: '#/compare/' + encodeURIComponent(a.platform === 'tiktok' ? twin : u) + '/' + encodeURIComponent(a.platform === 'tiktok' ? u : twin), text: '⇄ Compare with ' + (a.platform === 'tiktok' ? 'Instagram' : 'TikTok') }) : null)),
       h('div', { class: 'organize' },
         h('label', null, 'Folder', folderSel),
         h('div', { class: 'chips' }, o.tags.map(function (t) {
@@ -461,13 +488,128 @@
     return f;
   }
 
+  // ---- compare: the same videos on Instagram and TikTok ------------------------
+  var cmpUi = { sort: 'date' };
+  function pct(n) { return n == null ? '–' : n.toFixed(n < 10 ? 1 : 0) + '%'; }
+  function times(n) { return n == null ? '–' : n.toFixed(n < 10 ? 1 : 0) + '×'; }
+  function shortDate(t) { return t ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '–'; }
+
+  function defaultPair(r) {
+    var igs = Object.keys(accounts).filter(function (u) { return accounts[u].platform === 'instagram'; });
+    var tts = Object.keys(accounts).filter(function (u) { return accounts[u].platform === 'tiktok'; });
+    var ig = r.ig && accounts[r.ig] ? r.ig : null;
+    var tt = r.tt && accounts[r.tt] ? r.tt : null;
+    if (!ig && tt && accounts[tt.slice(3)]) ig = tt.slice(3);
+    if (!tt && ig && accounts['tt/' + ig]) tt = 'tt/' + ig;
+    if (!ig && !tt) {
+      var same = tts.filter(function (t) { return accounts[t.slice(3)]; })[0];
+      if (same) { tt = same; ig = same.slice(3); }
+    }
+    var bySize = function (a, b) { return accounts[b].reels - accounts[a].reels; };
+    return { ig: ig || igs.sort(bySize)[0] || null, tt: tt || tts.sort(bySize)[0] || null, igs: igs.sort(), tts: tts.sort() };
+  }
+
+  function renderCompare(r) {
+    main.classList.remove('has-panel');
+    main.textContent = '';
+    var pair = defaultPair(r);
+    main.appendChild(h('div', { class: 'view-head' }, h('h1', { text: 'Compare Instagram ↔ TikTok' }),
+      h('span', { class: 'sub', text: 'The same video on both platforms, side by side' })));
+    if (!pair.ig || !pair.tt) {
+      main.appendChild(h('div', { class: 'empty' }, h('h2', { text: 'Needs one Instagram and one TikTok account' }),
+        h('p', null, 'Collect your Instagram profile (Reels tab) and your TikTok profile (tiktok.com/@name, Auto-scroll), then come back.')));
+      return;
+    }
+    function sel(list, cur, which) {
+      var s = h('select', { 'aria-label': which === 'ig' ? 'Instagram account' : 'TikTok account', onchange: function () {
+        go('#/compare/' + encodeURIComponent(which === 'ig' ? s.value : pair.ig) + '/' + encodeURIComponent(which === 'tt' ? s.value : pair.tt));
+      } }, list.map(function (u) { return h('option', { value: u, selected: u === cur, text: handle(u) + ' (' + accounts[u].reels + ')' }); }));
+      return s;
+    }
+    var res = CMP.match(accounts[pair.ig].enriched, accounts[pair.tt].enriched);
+    var sm = res.summary;
+    main.appendChild(h('div', { class: 'cmp-pick' },
+      h('label', null, platformChip('instagram'), sel(pair.igs, pair.ig, 'ig')),
+      h('span', { class: 'cmp-arrow', text: '⇄' }),
+      h('label', null, platformChip('tiktok'), sel(pair.tts, pair.tt, 'tt'))));
+    main.appendChild(h('p', { class: 'sub cmp-how', text: 'Matched by caption (Turkish letters, emoji and hashtags ignored), shared hashtags, video length (±1.5 s) and posting date (within ±' + CMP.MAX_DAYS + ' days). Different episode numbers ("Bug #12" vs "#13") never match. "× median" compares each video with its own account\'s median views, so the platform with the bigger audience doesn\'t win automatically. Engagement: TikTok counts likes + comments + shares + saves, Instagram likes + comments.' }));
+
+    function tile(label, a, b, tip) {
+      return h('div', { class: 'cmp-tile', title: tip || '' }, h('span', { class: 'cmp-tile-label', text: label }),
+        b === undefined ? h('b', { text: a }) : h('div', { class: 'cmp-two' }, h('span', null, h('small', { text: 'IG ' }), h('b', { text: a })), h('span', null, h('small', { text: 'TT ' }), h('b', { text: b }))));
+    }
+    main.appendChild(h('div', { class: 'cmp-tiles' },
+      tile('Matched videos', sm.matched + ' / ' + sm.videosA + ' IG · ' + sm.videosB + ' TT'),
+      tile('TikTok ÷ Instagram views', times(sm.typicalViewsRatio), undefined, 'Typical ratio for the same video (geometric mean, so one viral hit doesn\'t dominate)'),
+      tile('Median views', fmt(sm.medianViewsA), fmt(sm.medianViewsB)),
+      tile('Median × own median', times(sm.medianRatioA), times(sm.medianRatioB)),
+      tile('Median engagement', pct(sm.medianEngagementA), pct(sm.medianEngagementB)),
+      tile('Did better (vs own median)', String(sm.winsA), String(sm.winsB)),
+      tile('Hit on both (≥ 2×)', String(sm.hitsOnBoth))));
+
+    var sortSel = h('select', { 'aria-label': 'Sort pairs', onchange: function () { cmpUi.sort = sortSel.value; render(); } },
+      [['date', 'Newest'], ['tt', 'TikTok did best (TT ÷ IG views)'], ['ig', 'Instagram did best'], ['score', 'Match confidence']].map(function (o) { return h('option', { value: o[0], selected: cmpUi.sort === o[0], text: o[1] }); }));
+    var pairs = res.pairs.slice();
+    var vr = function (p) { return p.viewsRatio == null ? -Infinity : p.viewsRatio; };
+    if (cmpUi.sort === 'tt') pairs.sort(function (a, b) { return vr(b) - vr(a); });
+    else if (cmpUi.sort === 'ig') pairs.sort(function (a, b) { return (a.viewsRatio == null ? Infinity : a.viewsRatio) - (b.viewsRatio == null ? Infinity : b.viewsRatio); });
+    else if (cmpUi.sort === 'score') pairs.sort(function (a, b) { return b.score - a.score; });
+    main.appendChild(h('div', { class: 'cmp-bar' }, h('h2', { text: res.pairs.length + ' matched videos' }), h('label', null, 'Sort ', sortSel),
+      h('button', { class: 'btn', type: 'button', onclick: function () { downloadFile('reelscope-compare-' + handle(pair.ig).slice(1) + '-' + new Date().toISOString().slice(0, 10) + '.csv', '\ufeff' + compareCsv(res.pairs), 'text/csv;charset=utf-8'); } }, 'Download CSV')));
+
+    function sideCell(x, tt) {
+      return h('td', { class: 'cmp-side' },
+        h('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer', class: 'cmp-views', text: fmt(x.views) }), h('span', { class: 'muted', text: ' views' }),
+        h('div', { class: 'cmp-meta' },
+          h('span', { class: 'cmp-x' + (x.ratio >= M.OUTLIER_RATIO ? ' is-hit' : ''), text: times(x.ratio) + ' median' }),
+          h('span', { text: pct(x.engagement) + ' eng.' }),
+          tt && x.saves != null ? h('span', { text: fmt(x.saves) + ' saves' }) : null,
+          x.shares != null ? h('span', { text: fmt(x.shares) + ' shares' }) : null),
+        h('div', { class: 'muted small', text: shortDate(x.posted_at) + (x.duration ? ' · ' + Math.round(x.duration) + 's' : '') }));
+    }
+    var table = h('table', { class: 'cmp-table' },
+      h('thead', null, h('tr', null, h('th', { text: 'Video' }), h('th', null, platformChip('instagram')), h('th', null, platformChip('tiktok')), h('th', { text: 'TT ÷ IG' }), h('th', { text: 'Match' }))),
+      h('tbody', null, pairs.map(function (p) {
+        return h('tr', null,
+          h('td', { class: 'cmp-video' }, img(p.b.thumb || p.a.thumb, 'cmp-thumb'), h('span', { class: 'cmp-cap', text: (p.b.caption || p.a.caption).replace(/\s+/g, ' ').slice(0, 140) })),
+          sideCell(p.a, false),
+          sideCell(p.b, true),
+          h('td', { class: 'cmp-ratio' }, h('b', { text: times(p.viewsRatio) }), p.winner ? h('div', { class: 'chip chip-' + (p.winner === 'a' ? 'instagram' : 'tiktok'), text: (p.winner === 'a' ? 'IG' : 'TikTok') + ' better', title: 'Relative to each account\'s own median' }) : null),
+          h('td', { class: 'cmp-score', title: 'caption ' + Math.round((p.parts.text || 0) * 100) + '%, hashtags ' + (p.parts.tags == null ? '–' : Math.round(p.parts.tags * 100) + '%') + ', length ' + (p.parts.duration == null ? '–' : Math.round(p.parts.duration * 100) + '%') + ', date ' + (p.parts.date == null ? '–' : Math.round(p.parts.date * 100) + '%') },
+            h('span', { class: 'cmp-conf cmp-' + p.confidence, text: p.confidence }), h('div', { class: 'muted small', text: p.days == null ? '' : p.days + ' d apart' })));
+      })));
+    main.appendChild(res.pairs.length ? h('div', { class: 'cmp-wrap' }, table) : h('p', { class: 'empty', text: 'No video matched. Are these the same creator? Collect more videos on both sides (dates are needed: open the reels on Instagram so ReelScope can load them).' }));
+
+    function onlyList(title, list) {
+      if (!list.length) return null;
+      return h('details', { class: 'cmp-only' }, h('summary', { text: title + ' (' + list.length + ')' }),
+        h('ul', null, list.slice().sort(function (a, b) { return (b.posted_at || 0) - (a.posted_at || 0); }).map(function (x) {
+          return h('li', null, h('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer', text: (x.caption || x.code).replace(/\s+/g, ' ').slice(0, 90) }), h('span', { class: 'muted', text: ' · ' + fmt(x.views) + ' views · ' + shortDate(x.posted_at) }));
+        })));
+    }
+    main.appendChild(onlyList('Only on Instagram', res.onlyA));
+    main.appendChild(onlyList('Only on TikTok', res.onlyB));
+  }
+
+  function compareCsv(pairs) {
+    var cols = ['ig_url', 'tt_url', 'ig_posted', 'tt_posted', 'ig_views', 'tt_views', 'tt_div_ig_views', 'ig_x_median', 'tt_x_median', 'ig_engagement_pct', 'tt_engagement_pct', 'tt_shares', 'tt_saves', 'better_on', 'match_score', 'days_apart', 'caption'];
+    function c(v) { if (v == null) return ''; var s = String(v); if (/^[=+\-@]/.test(s) && typeof v !== 'number') s = "'" + s; return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+    var r2 = function (n) { return n == null ? null : Math.round(n * 100) / 100; };
+    return [cols.join(',')].concat(pairs.map(function (p) {
+      return [p.a.url, p.b.url, p.a.posted_at ? new Date(p.a.posted_at).toISOString() : '', p.b.posted_at ? new Date(p.b.posted_at).toISOString() : '',
+        p.a.views, p.b.views, r2(p.viewsRatio), r2(p.a.ratio), r2(p.b.ratio), r2(p.a.engagement), r2(p.b.engagement), p.b.shares, p.b.saves,
+        p.winner === 'a' ? 'instagram' : p.winner === 'b' ? 'tiktok' : '', p.score, p.days, (p.b.caption || p.a.caption).replace(/\s+/g, ' ')].map(c).join(',');
+    })).join('\r\n');
+  }
+
   function render() {
     var r = route();
     renderSidebar(r);
     if (r.kind === 'account') renderAccount(r.id);
     else if (r.kind === 'mentions') mentionsView.render(main);
+    else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? label(r.id) : r.kind === 'mentions' ? 'Mentions' : scopeTitle(r)) + ' · ReelScope';
+    document.title = (r.kind === 'account' ? label(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · ReelScope';
   }
 
   // ---- wiring ---------------------------------------------------------------
@@ -477,7 +619,7 @@
   });
   document.getElementById('search').addEventListener('input', function (e) {
     search = e.target.value.trim();
-    if (route().kind === 'account' || route().kind === 'mentions') go(lastScopeHash); else render();
+    if (route().kind === 'account' || route().kind === 'mentions' || route().kind === 'compare') go(lastScopeHash); else render();
   });
   document.getElementById('show-small').addEventListener('change', function (e) {
     showSmall = e.target.checked;

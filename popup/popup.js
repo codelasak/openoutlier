@@ -45,7 +45,8 @@ async function renderProfiles() {
     a.href = '#';
     a.title = 'Open in the library';
     a.addEventListener('click', function (e) { e.preventDefault(); openLibrary('#/account/' + encodeURIComponent(p.username)); });
-    a.textContent = /^(r|u)\//.test(p.username) ? p.username : '@' + p.username; // Reddit: r/excel, u/name
+    // Reddit: r/excel, u/name · TikTok: tt/name → "@name (TikTok)"
+    a.textContent = /^(r|u)\//.test(p.username) ? p.username : /^tt\//.test(p.username) ? '@' + p.username.slice(3) + ' (TikTok)' : '@' + p.username;
     var n = document.createElement('span');
     n.className = 'muted';
     n.textContent = nf.format(p.count) + ' posts';

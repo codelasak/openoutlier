@@ -8,9 +8,12 @@
 </head>
 <body>
   <!-- Loads the real dashboard/dashboard.html markup and scripts with a stubbed
-       chrome.* API, three fake Instagram accounts built from dev/graphql/query.json
-       and two fake subreddits from dev/reddit/listings.json. -->
+       chrome.* API, three fake Instagram accounts built from dev/graphql/query.json,
+       two fake subreddits from dev/reddit/listings.json, and a fake "Excel Bug"
+       creator on TikTok (dev/tiktok/item_list.json) + the same videos on Instagram
+       (dev/tiktok/ig-twin.json) for the Compare view. -->
   <script src="../src/extract.js"></script>
+  <script src="../src/tiktok.js"></script>
   <script src="../src/reddit.js"></script>
   <script src="../src/mentions.js"></script>
   <script>
@@ -75,7 +78,19 @@
         ReelScopeReddit.parseListing(listings[sub]).posts.forEach(function (p) { posts[p.code] = p; });
         store['rs:p:r/' + sub] = { posts: posts, updatedAt: Date.now() - 3600000, platform: 'reddit', kind: 'subreddit' };
       });
-      store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] } } };
+      // TikTok + the same series on Instagram.
+      var ttPages = await (await fetch('/dev/tiktok/item_list.json')).json();
+      var ttPosts = {};
+      ReelScopeTikTok.parseText(JSON.stringify(ttPages)).forEach(function (p) {
+        var id = p.owner;
+        var rec = store['rs:p:' + id] || (store['rs:p:' + id] = { posts: {}, updatedAt: Date.now() - 1800e3, platform: 'tiktok' });
+        rec.posts[p.code] = p;
+      });
+      store['rs:p:tt/excel.bugs.demo'].profile = { username: 'excel.bugs.demo', nickname: 'Excel Bugs (demo)', followers: 48213, videos: 40 };
+      var twin = await (await fetch('/dev/tiktok/ig-twin.json')).json();
+      store['rs:p:excel.bugs.demo'] = { posts: {}, updatedAt: Date.now() - 7200e3 };
+      twin.forEach(function (p) { store['rs:p:excel.bugs.demo'].posts[p.code] = p; });
+      store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] }, 'excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'tt/excel.bugs.demo': { folder: 'f2', tags: ['mine'] } } };
 
       // Fake Reddit keyword watches and mentions.
       var now = Date.now();
@@ -100,7 +115,7 @@
       // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
       var realFetch = window.fetch;
       window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
-      for (var src of ['/src/metrics.js', '/src/panel.js', '/dashboard/mentions-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

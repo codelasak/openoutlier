@@ -1,5 +1,5 @@
 // ReelScope – toolbar + stats card shown on top of the reel/post you're viewing
-// (instagram.com/reel/…, /reels/…, /p/…). It lives in its own Shadow DOM host
+// (instagram.com/reel/…, /reels/…, /p/…; tiktok.com/@user/video/…). It lives in its own Shadow DOM host
 // and is positioned over the video with position:fixed, so it never touches
 // Instagram's own markup.
 (function (root) {
@@ -117,7 +117,7 @@
       status = 'Starting download…';
       render();
       opts.onDownloadMedia([p], what).then(function (r) {
-        status = r && r.queued ? 'Saved to Downloads/ReelScope/' + (p.owner || '') : 'Download failed. Reload the page and try again.';
+        status = r && r.queued ? 'Saved to Downloads/ReelScope/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the page and try again.';
         render();
         setTimeout(function () { status = ''; render(); }, 3500);
       }, function () { status = 'Download failed.'; render(); });
@@ -139,17 +139,20 @@
         if (status) card.appendChild(h('p', { class: 'ov-status', text: status }));
         return;
       }
-      var eng = p.views > 0 ? (((p.likes || 0) + (p.comments || 0)) / p.views) * 100 : null;
+      var tt = p.platform === 'tiktok';
+      var handle = p.owner ? '@' + String(p.owner).replace(/^tt\//, '') : '';
+      var eng = p.views > 0 ? (M.interactions(p) / p.views) * 100 : null;
       card.appendChild(h('div', { class: 'ov-head' },
-        h('span', { class: 'ov-owner', text: p.owner ? '@' + p.owner : '' }),
+        h('span', { class: 'ov-owner', text: handle }),
         h('span', { class: 'ov-muted', text: p.takenAt ? df.format(new Date(p.takenAt)) : '' })));
       card.appendChild(h('div', { class: 'ov-grid' },
         stat('Views', fmt(p.views), p.views != null ? nfFull.format(p.views) : null),
         stat('Likes', fmt(p.likes), p.likes != null ? nfFull.format(p.likes) : null),
         stat('Comments', fmt(p.comments), p.comments != null ? nfFull.format(p.comments) : null),
         stat('Shares', fmt(p.shares), p.shares != null ? nfFull.format(p.shares) : 'Instagram only shares this for some posts'),
+        tt ? stat('Saves', fmt(p.saves), p.saves != null ? nfFull.format(p.saves) : null) : null,
         stat('Duration', dur(p.duration)),
-        stat('Engagement', eng === null ? '–' : eng.toFixed(2) + '%', '(likes + comments) ÷ views')));
+        stat('Engagement', eng === null ? '–' : eng.toFixed(2) + '%', tt ? '(likes + comments + shares + saves) ÷ views' : '(likes + comments) ÷ views')));
 
       // Compare with the creator's other posts we know about.
       var others = opts.getProfilePosts(p.owner).filter(function (x) { return x.views > 0 && (x.type === 'reel' || x.type === 'video'); });
@@ -157,9 +160,9 @@
         var med = M.median(others.map(function (x) { return x.views; }));
         var ratio = p.views / med;
         card.appendChild(h('p', { class: 'ov-compare' + (ratio >= M.OUTLIER_RATIO ? ' is-outlier' : '') },
-          ratio.toFixed(1) + '× @' + p.owner + '\'s median · Viral Score ' + M.viralScore(p.views, med)));
+          ratio.toFixed(1) + '× ' + handle + '\'s median · Viral Score ' + M.viralScore(p.views, med)));
       }
-      var audio = p.audio ? (p.audio.kind === 'music' ? '♪ ' + p.audio.title + (p.audio.artist ? ' · ' + p.audio.artist : '') : '♪ Original audio') : '';
+      var audio = p.audio ? (p.audio.kind === 'music' || tt ? '♪ ' + p.audio.title + (p.audio.artist && p.audio.kind === 'music' ? ' · ' + p.audio.artist : '') : '♪ Original audio') : '';
       if (audio) card.appendChild(h('p', { class: 'ov-muted ov-audio', text: audio }));
       if (opts.isLoading(code)) card.appendChild(h('p', { class: 'ov-muted', text: 'Loading more details…' }));
       if (status) card.appendChild(h('p', { class: 'ov-status', text: status }));

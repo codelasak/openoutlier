@@ -204,3 +204,54 @@ main.has-panel { display: flex; flex-direction: column; overflow: hidden; paddin
 .m-title:hover { color: var(--accent); }
 .m-excerpt { margin: 2px 0 6px; font-size: 13px; color: var(--text-2); line-height: 1.45; overflow-wrap: anywhere; }
 .m-item-actions { display: flex; gap: 6px; }
+
+/* ---- platforms & Instagram ↔ TikTok compare ---------------------------------- */
+.chip-platform { font-weight: 600; font-size: 11px; }
+.chip-instagram { background: #fbe3f1; color: #8a1460; }
+.chip-tiktok { background: #dff6f7; color: #0d6468; }
+.chip-reddit { background: #ffe5d9; color: #a33000; }
+@media (prefers-color-scheme: dark) {
+  .chip-instagram { background: #4a1636; color: #f6b8dc; }
+  .chip-tiktok { background: #123c3e; color: #9de6ea; }
+  .chip-reddit { background: #4a2210; color: #ffb894; }
+}
+.acct-title h1 .chip { vertical-align: middle; }
+.cmp-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; }
+.cmp-pick label { display: inline-flex; align-items: center; gap: 6px; }
+.cmp-arrow { font-size: 18px; color: var(--muted); }
+.cmp-how { margin: 0 0 14px; font-size: 12.5px; max-width: 900px; }
+.cmp-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.cmp-tile { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.cmp-tile-label { font-size: 12px; color: var(--muted); }
+.cmp-tile b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.cmp-two { display: flex; gap: 14px; }
+.cmp-two small { color: var(--muted); font-size: 11px; }
+.cmp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 8px; }
+.cmp-bar h2 { margin: 0 auto 0 0; font-size: 16px; }
+.cmp-bar label { font-size: 13px; color: var(--text-2); display: inline-flex; align-items: center; gap: 6px; }
+.cmp-wrap { overflow-x: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; }
+.cmp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cmp-table th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); }
+.cmp-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.cmp-table tr:last-child td { border-bottom: 0; }
+.cmp-video { display: flex; gap: 10px; min-width: 240px; max-width: 360px; }
+.cmp-thumb { width: 42px; height: 56px; flex: none; object-fit: cover; border-radius: 6px; background: var(--surface); display: block; }
+.cmp-cap { font-size: 12.5px; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.cmp-side { min-width: 150px; }
+.cmp-views { font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums; text-decoration: none; color: var(--text); }
+.cmp-views:hover { color: var(--accent); }
+.cmp-meta { display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: 12px; color: var(--text-2); }
+.cmp-x { font-weight: 600; }
+.cmp-x.is-hit { color: var(--accent); }
+.cmp-ratio b { font-variant-numeric: tabular-nums; font-size: 14px; }
+.cmp-ratio .chip { margin-top: 4px; }
+.cmp-conf { font-size: 12px; font-weight: 600; text-transform: capitalize; }
+.cmp-high { color: #2f8a4c; }
+.cmp-medium { color: var(--text-2); }
+.cmp-low { color: var(--danger); }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.cmp-only { margin-top: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; }
+.cmp-only summary { cursor: pointer; font-weight: 600; }
+.cmp-only ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+.cmp-only li { margin: 3px 0; }

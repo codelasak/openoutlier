@@ -33,8 +33,20 @@
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-  /** The number a post is ranked by: views on Instagram, score (upvotes) on Reddit. */
+  /** The number a post is ranked by: views on Instagram and TikTok, score (upvotes) on Reddit. */
   function val(p) { return p && p.platform === 'reddit' ? p.score : p.views; }
+
+  /**
+   * Interactions that count toward engagement. TikTok shows shares and saves
+   * publicly, so they count there; Instagram only reliably shows likes and
+   * comments; Reddit uses comments (÷ score).
+   */
+  function interactions(p) {
+    if (p.platform === 'reddit') return p.comments || 0;
+    if (p.platform === 'tiktok') return (p.likes || 0) + (p.comments || 0) + (p.shares || 0) + (p.saves || 0);
+    return (p.likes || 0) + (p.comments || 0);
+  }
+  function isTikTok(p) { return !!p && p.platform === 'tiktok'; }
 
   /**
    * Viral Score (0–100) compares a post's views to the profile's own median:
@@ -55,11 +67,10 @@
     return posts.map(function (p) {
       var v = val(p);
       var ratio = v > 0 && med > 0 ? v / med : null;
-      var interactions = p.platform === 'reddit' ? (p.comments || 0) : (p.likes || 0) + (p.comments || 0);
       return Object.assign({}, p, {
         ratio: ratio,
         viralScore: viralScore(v, med),
-        engagement: v > 0 ? (interactions / v) * 100 : null,
+        engagement: v > 0 ? (interactions(p) / v) * 100 : null,
         outlier: ratio !== null && ratio >= OUTLIER_RATIO
       });
     });
@@ -74,6 +85,7 @@
     likes: function (p) { return p.likes; },
     comments: function (p) { return p.comments; },
     shares: function (p) { return p.shares; },
+    saves: function (p) { return p.saves; },
     engagement: function (p) { return p.engagement; },
     date: function (p) { return p.takenAt; },
     duration: function (p) { return p.duration; }
@@ -196,6 +208,9 @@
       medianComments: median(posts.map(function (p) { return p.comments; })),
       avgUpvoteRatio: mean(posts.map(function (p) { return p.upvoteRatio; })),
       avgEngagement: mean(posts.map(function (p) { return p.engagement; })),
+      // Per 100 views; only posts that show the counter (TikTok always does).
+      avgShareRate: mean(withViews.filter(function (p) { return p.shares != null; }).map(function (p) { return p.shares / val(p) * 100; })),
+      avgSaveRate: mean(withViews.filter(function (p) { return p.saves != null; }).map(function (p) { return p.saves / val(p) * 100; })),
       outliers: posts.filter(function (p) { return p.outlier; }).length,
       postsPerWeek: weeks ? dated.length / weeks : null,
       firstPost: dated[0] || null,
@@ -357,19 +372,26 @@
     return String(Math.round(n));
   }
 
-  /** e.g. "1.2Mviews_11.1Klikes_13Kcomments_2.0pct_post_DZPcVltsTAa" (missing stats are left out). */
+  /**
+   * e.g. "1.2Mviews_11.1Klikes_13Kcomments_2.0pct_post_DZPcVltsTAa" (missing stats are left out).
+   * TikTok adds shares and saves and counts them in the engagement:
+   * "250Kviews_12Klikes_300comments_1.1Kshares_2.4Ksaves_6.3pct_tiktok_7412345678901234567".
+   */
   function fileBaseName(p) {
     var parts = [];
+    var tt = isTikTok(p);
     var v = compactNumber(p.views);
     var l = compactNumber(p.likes);
     var c = compactNumber(p.comments);
     if (v) parts.push(v + 'views');
     if (l) parts.push(l + 'likes');
     if (c) parts.push(c + 'comments');
+    if (tt && compactNumber(p.shares)) parts.push(compactNumber(p.shares) + 'shares');
+    if (tt && compactNumber(p.saves)) parts.push(compactNumber(p.saves) + 'saves');
     if (p.views > 0 && (p.likes != null || p.comments != null)) {
-      parts.push((((p.likes || 0) + (p.comments || 0)) / p.views * 100).toFixed(1) + 'pct');
+      parts.push((interactions(p) / p.views * 100).toFixed(1) + 'pct');
     }
-    parts.push('post', String(p.code || 'unknown').replace(/[^A-Za-z0-9_-]/g, ''));
+    parts.push(tt ? 'tiktok' : 'post', String(p.code || 'unknown').replace(/[^A-Za-z0-9_-]/g, ''));
     return parts.join('_');
   }
 
@@ -420,6 +442,34 @@
     ['selftext', function (p) { return (p.selftext || '').replace(/\s+/g, ' ').trim().slice(0, 500); }]
   ];
 
+  var TIKTOK_COLUMNS = [
+    ['rank', function (p, i) { return i + 1; }],
+    ['platform', function (p) { return p.platform || 'instagram'; }],
+    ['url', function (p) { return p.url; }],
+    ['id', function (p) { return p.code; }],
+    ['account', function (p) { return p.owner ? '@' + String(p.owner).replace(/^tt\//, '') : ''; }],
+    ['type', function (p) { return p.type; }],
+    ['posted_at', function (p) { return p.takenAt ? new Date(p.takenAt).toISOString() : ''; }],
+    ['weekday', function (p) { return p.takenAt ? DAY_LABELS[dayIndex(new Date(p.takenAt))] : ''; }],
+    ['hour_local', function (p) { return p.takenAt ? new Date(p.takenAt).getHours() : ''; }],
+    ['views', function (p) { return p.views; }],
+    ['likes', function (p) { return p.likes; }],
+    ['comments', function (p) { return p.comments; }],
+    ['shares', function (p) { return p.shares; }],
+    ['saves', function (p) { return p.saves; }],
+    ['engagement_rate_pct', function (p) { return p.engagement == null ? '' : p.engagement.toFixed(2); }],
+    ['viral_score', function (p) { return p.viralScore; }],
+    ['x_median', function (p) { return p.ratio == null ? '' : p.ratio.toFixed(2); }],
+    ['duration_s', function (p) { return p.duration; }],
+    ['pinned', function (p) { return p.pinned ? 'yes' : ''; }],
+    ['sound', function (p) { return p.audio ? (p.audio.kind === 'music' ? 'music: ' : 'original: ') + p.audio.title + (p.audio.artist ? ' – ' + p.audio.artist : '') : ''; }],
+    ['hashtags', function (p) { return (p.hashtags || []).map(function (t) { return '#' + t; }).join(' '); }],
+    ['caption', function (p) { return (p.caption || '').replace(/\s+/g, ' ').trim(); }]
+  ];
+
+  /** Any TikTok post in a list without Reddit posts → TikTok columns (they add platform, saves). */
+  function hasTikTok(posts) { return posts.some(isTikTok); }
+
   function cell(value, delimiter) {
     if (value === null || value === undefined) return '';
     var s = String(value);
@@ -433,7 +483,7 @@
   /** delimiter ',' → CSV (for files), '\t' → TSV (for pasting into Sheets/Excel). */
   function toTable(posts, delimiter) {
     delimiter = delimiter || ',';
-    var cols = isRedditList(posts) ? REDDIT_COLUMNS : COLUMNS;
+    var cols = isRedditList(posts) ? REDDIT_COLUMNS : hasTikTok(posts) ? TIKTOK_COLUMNS : COLUMNS;
     var lines = [cols.map(function (c) { return c[0]; }).join(delimiter)];
     posts.forEach(function (p, i) {
       lines.push(cols.map(function (c) { return cell(c[1](p, i), delimiter); }).join(delimiter));
@@ -445,7 +495,11 @@
     OUTLIER_RATIO: OUTLIER_RATIO,
     COLUMN_NAMES: COLUMNS.map(function (c) { return c[0]; }),
     REDDIT_COLUMN_NAMES: REDDIT_COLUMNS.map(function (c) { return c[0]; }),
+    TIKTOK_COLUMN_NAMES: TIKTOK_COLUMNS.map(function (c) { return c[0]; }),
     val: val,
+    interactions: interactions,
+    isTikTok: isTikTok,
+    hasTikTok: hasTikTok,
     titleWords: titleWords,
     isQuestion: isQuestion,
     needKind: needKind,

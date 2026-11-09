@@ -9,6 +9,9 @@
 //   tab it opens and closes again. Reddit commands (collect_reddit) always get
 //   their own small, unfocused window on the subreddit's / user's page, since
 //   Reddit is read by scrolling the page (it refuses its listing JSON).
+//   TikTok commands (collect_tiktok, refresh_tiktok, download_tiktok) do the
+//   same on the profile / video page: TikTok's API is signed, so ReelScope
+//   only reads what the page loads.
 // Turn it off in the popup ("Connect to AI agents").
 'use strict';
 
@@ -208,30 +211,40 @@
     return 'https://www.reddit.com/r/' + name + '/' + sort + '/' + (sort === 'top' ? '?t=' + (/^(hour|day|week|month|year|all)$/.test(a.t || '') ? a.t : 'year') : '');
   }
 
+  function tiktokUrl(type, a) {
+    var name = encodeURIComponent(String(a.username || '').replace(/^\/?(tt\/|@)/i, '').toLowerCase());
+    if (type === 'collect_tiktok') return 'https://www.tiktok.com/@' + name;
+    return 'https://www.tiktok.com/@' + (name || 'i') + '/video/' + encodeURIComponent(String(a.id || ''));
+  }
+
   async function startCommand(port, command) {
     var map = await getRunning();
     if (map[command.id]) return;
     var reddit = command.type === 'collect_reddit';
-    var tab = reddit ? null : await instagramTab();
+    var tiktok = /^(collect|refresh|download)_tiktok$/.test(command.type);
+    var pageUrl = reddit ? redditUrl(command.args || {}) : tiktok ? tiktokUrl(command.type, command.args || {}) : null;
+    var tab = pageUrl ? null : await instagramTab();
     var opened = false;
-    if (!tab && reddit) {
-      // Reddit is read from the page itself (it refuses its listing JSON), and its
-      // infinite scroll may not load in a background tab: use a small unfocused
-      // window of its own, closed again when the command finishes.
+    if (!tab && pageUrl) {
+      // Reddit and TikTok are read from the page itself, and their infinite
+      // scroll may not load in a background tab: use a small unfocused window of
+      // its own, closed again when the command finishes.
       try {
-        var win = await chrome.windows.create({ url: redditUrl(command.args || {}), focused: false, type: 'normal', width: 520, height: 900 });
+        var win = await chrome.windows.create({ url: pageUrl, focused: false, type: 'normal', width: 520, height: 900 });
         tab = win.tabs && win.tabs[0];
       } catch (e) { tab = null; }
       opened = !!tab;
     }
     if (!tab) {
-      tab = await chrome.tabs.create({ url: reddit ? redditUrl(command.args || {}) : 'https://www.instagram.com/', active: false });
+      tab = await chrome.tabs.create({ url: pageUrl || 'https://www.instagram.com/', active: false });
       opened = true;
     }
     map[command.id] = { port: port, tabId: tab.id, openedTab: opened, startedAt: Date.now() };
     await putRunning(map);
     var ok = await sendCommand(tab.id, command);
-    if (!ok) finish(command.id, { ok: false, error: reddit ? 'Could not reach Reddit in the browser. Is www.reddit.com loading and are you logged in?' : 'Could not reach Instagram in the browser. Is instagram.com loading and are you logged in?' });
+    var site = reddit ? 'Reddit' : tiktok ? 'TikTok' : 'Instagram';
+    var host = reddit ? 'www.reddit.com' : tiktok ? 'www.tiktok.com' : 'instagram.com';
+    if (!ok) finish(command.id, { ok: false, error: 'Could not reach ' + site + ' in the browser. Is ' + host + ' loading and are you logged in?' });
   }
 
   chrome.runtime.onMessage.addListener(function (msg, sender) {

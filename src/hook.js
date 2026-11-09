@@ -1,24 +1,38 @@
 // ReelScope – page hook (runs in the page's MAIN world at document_start).
 //
-// Instagram loads profile reels through its own GraphQL / REST calls. This
+// Instagram and TikTok load profile videos through their own API calls. This
 // script listens to those responses as they arrive and forwards the raw JSON
 // text to the extension's content script via window.postMessage.
 //
 // It never makes requests of its own, never changes a request or response,
-// and only forwards responses from Instagram's data endpoints that look like
+// and only forwards responses from the site's data endpoints that look like
 // they contain posts. All parsing happens in the isolated content script.
+//
+// TikTok: /api/post/item_list, /api/item/detail, /api/repost/item_list,
+// /api/recommend/item_list, /api/search/…, /api/related/item_list … (any
+// /api/ response that carries video items). TikTok signs these requests, so
+// ReelScope never replays them; it only reads what the page already got.
 (function () {
   'use strict';
   if (window.__reelscopeHooked) return;
   window.__reelscopeHooked = true;
 
-  var URL_RE = /\/graphql|\/api\/v1\//;
+  // window.__reelscopeSite lets dev/tiktok-demo.html (served from localhost) use TikTok mode.
+  var TIKTOK = /(^|\.)tiktok\.com$/.test(location.hostname) || window.__reelscopeSite === 'tiktok';
+  var URL_RE = TIKTOK
+    ? /\/api\/(?!comment\/|im\/|user\/(?!detail)|notice\/|upload\/|report|ba\/|v1\/web\/report)/
+    : /\/graphql|\/api\/v1\//;
   var MAX_BYTES = 15 * 1024 * 1024;
 
+  function looksUseful(text) {
+    // Cheap pre-filter. Instagram media objects always carry a shortcode ("code");
+    // TikTok video items always carry createTime and a stats block.
+    if (TIKTOK) return text.indexOf('"createTime"') !== -1 && (text.indexOf('"stats"') !== -1 || text.indexOf('"statsV2"') !== -1);
+    return text.indexOf('"code"') !== -1 || text.indexOf('"shortcode"') !== -1;
+  }
+
   function forward(url, text) {
-    if (typeof text !== 'string' || text.length > MAX_BYTES) return;
-    // Cheap pre-filter: media objects always carry a shortcode ("code").
-    if (text.indexOf('"code"') === -1 && text.indexOf('"shortcode"') === -1) return;
+    if (typeof text !== 'string' || text.length > MAX_BYTES || !looksUseful(text)) return;
     window.postMessage({ __reelscope: 1, type: 'payload', url: String(url), text: text }, window.location.origin);
   }
 

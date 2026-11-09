@@ -89,6 +89,8 @@
     ['engagement', 'Comments per score'],
     ['date', 'Newest']
   ];
+  // Instagram + TikTok lists (TikTok shows saves publicly).
+  var VIDEO_SORT_OPTIONS = SORT_OPTIONS.slice(0, 5).concat([['saves', 'Saves']], SORT_OPTIONS.slice(5));
   var MIXED_SORT_OPTIONS = [
     ['viralScore', 'Viral Score'],
     ['views', 'Views / score'],
@@ -98,15 +100,29 @@
   var REDDIT_TYPES = [['all', 'All posts'], ['text', 'Text'], ['image', 'Image'], ['video', 'Video'], ['link', 'Link'], ['gallery', 'Gallery']];
   var PAGE = 150;
 
-  /** 'instagram' | 'reddit' | 'mixed' for a list of posts. */
+  /**
+   * 'instagram' | 'tiktok' | 'reddit' | 'mixed' for a list of posts.
+   * Instagram + TikTok counts as 'instagram' (both ranked by views); 'mixed' = Reddit with others.
+   */
   function platformOf(posts) {
     var r = 0;
-    for (var i = 0; i < posts.length; i++) if (posts[i].platform === 'reddit') r++;
-    return !r ? 'instagram' : r === posts.length ? 'reddit' : 'mixed';
+    var t = 0;
+    for (var i = 0; i < posts.length; i++) { if (posts[i].platform === 'reddit') r++; else if (posts[i].platform === 'tiktok') t++; }
+    if (r) return r === posts.length ? 'reddit' : 'mixed';
+    return t && t === posts.length ? 'tiktok' : 'instagram';
   }
-  /** Account id as shown: "@name" for Instagram, "r/excel" / "u/name" for Reddit. */
-  function accountLabel(id) { return /^(r|u)\//.test(String(id || '')) ? String(id) : '@' + id; }
+  /** Account id as shown: "@name" for Instagram, "@name (TikTok)" for TikTok, "r/excel" / "u/name" for Reddit. */
+  function accountLabel(id) {
+    var s = String(id || '');
+    if (/^(r|u)\//.test(s)) return s;
+    if (/^tt\//.test(s)) return '@' + s.slice(3) + ' (TikTok)';
+    return '@' + s;
+  }
+  function ownerHandle(p) { return p && p.owner ? '@' + String(p.owner).replace(/^tt\//, '') : ''; }
   function isReddit(p) { return p && p.platform === 'reddit'; }
+  function isTT(p) { return p && p.platform === 'tiktok'; }
+  function siteName(p) { return isReddit(p) ? 'Reddit' : isTT(p) ? 'TikTok' : 'Instagram'; }
+  function engagementTip(p) { return isTT(p) ? '(likes + comments + shares + saves) ÷ views' : '(likes + comments) ÷ views'; }
   function unitOf(p) { return isReddit(p) ? 'score' : 'views'; }
   var TYPE_NAMES = { reel: 'Reel', video: 'Video', photo: 'Photo', carousel: 'Carousel', text: 'Text post', image: 'Image', link: 'Link', gallery: 'Gallery', poll: 'Poll', crosspost: 'Crosspost', unknown: 'Post' };
 
@@ -147,8 +163,10 @@
     };
     var state = { profiles: [], selected: null, posts: [], auto: { running: false, label: '' }, collect: null };
     var plat = 'instagram'; // platform of the current list, set in render()
-    function sortOptions() { return plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : SORT_OPTIONS; }
-    function listTab() { return opts.listTabLabel || (plat === 'instagram' ? 'Reels' : 'Posts'); }
+    var hasTT = false;      // the list has TikTok videos (adds the Saves sort)
+    var multiPlat = false;  // the list mixes platforms (rows get a platform badge)
+    function sortOptions() { return plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : hasTT ? VIDEO_SORT_OPTIONS : SORT_OPTIONS; }
+    function listTab() { return opts.listTabLabel || (plat === 'instagram' ? 'Reels' : plat === 'tiktok' ? 'Videos' : 'Posts'); }
     function unit() { return plat === 'reddit' ? 'score' : plat === 'mixed' ? 'views / score' : 'views'; }
 
     // ---- skeleton -----------------------------------------------------------
@@ -258,11 +276,13 @@
       applyTheme();
       var total = state.posts.length;
       plat = state.platform || platformOf(state.posts);
+      hasTT = state.posts.some(isTT);
+      multiPlat = state.posts.some(isTT) + state.posts.some(isReddit) + state.posts.some(function (p) { return !isTT(p) && !isReddit(p); }) > 1;
       if (plat === 'reddit' && !sortOptions().some(function (o) { return o[0] === ui.sort; })) ui.sort = 'views';
       if (plat !== 'instagram' && !sortOptions().some(function (o) { return o[0] === ui.sort; })) ui.sort = 'viralScore';
       tabs.reels.textContent = listTab();
-      // The dashboard reuses one panel for both platforms: drop a Reddit-only type filter on Instagram lists.
-      if (plat === 'instagram' && ui.typeFilter !== 'reels' && ui.typeFilter !== 'all') ui.typeFilter = 'reels';
+      // The dashboard reuses one panel for every platform: drop a Reddit-only type filter on video lists.
+      if ((plat === 'instagram' || plat === 'tiktok') && ui.typeFilter !== 'reels' && ui.typeFilter !== 'all') ui.typeFilter = 'reels';
       launcherCount.textContent = fmtFull(total);
 
       // profile select
@@ -316,6 +336,15 @@
     }
 
     function emptyState() {
+      if (opts.platform === 'tiktok') {
+        return h('div', { class: 'empty' },
+          h('p', { class: 'empty-title', text: 'No TikTok videos collected yet' }),
+          h('ol', null,
+            h('li', null, 'Open a profile, e.g. ', h('code', { text: 'tiktok.com/@name' })),
+            h('li', { text: 'Scroll down, or press Auto-scroll. Videos are collected as TikTok loads them.' }),
+            h('li', { text: 'Come back here to sort, analyze and export.' })),
+          h('p', { class: 'muted', text: 'Everything stays in this browser. ReelScope only reads what TikTok already loaded; it never likes, follows, comments or posts.' }));
+      }
       if (opts.platform === 'reddit') {
         return h('div', { class: 'empty' },
           h('p', { class: 'empty-title', text: 'No Reddit posts collected yet' }),
@@ -341,8 +370,8 @@
       var typeSel = h('select', { 'aria-label': 'Post type', onchange: function () { ui.typeFilter = typeSel.value; ui.shown = PAGE; render(); } },
         plat === 'reddit'
           ? REDDIT_TYPES.map(function (t) { return h('option', { value: t[0], selected: ui.typeFilter === t[0] || (t[0] === 'all' && ui.typeFilter === 'reels'), text: t[1] }); })
-          : [h('option', { value: 'reels', selected: ui.typeFilter === 'reels', text: plat === 'mixed' ? 'Reels, videos & Reddit posts' : 'Reels & videos' }),
-            h('option', { value: 'all', selected: ui.typeFilter === 'all', text: 'All posts' })]);
+          : [h('option', { value: 'reels', selected: ui.typeFilter === 'reels', text: plat === 'mixed' ? 'Reels, videos & Reddit posts' : plat === 'tiktok' ? 'Videos' : 'Reels & videos' }),
+            h('option', { value: 'all', selected: ui.typeFilter === 'all', text: plat === 'tiktok' ? 'Videos & photo posts' : 'All posts' })]);
       var search = h('input', { type: 'search', placeholder: plat === 'reddit' ? 'Search titles or flair' : 'Search captions or #tags', value: ui.query, 'aria-label': 'Search captions' });
       search.addEventListener('input', function () {
         ui.query = search.value; ui.shown = PAGE;
@@ -407,7 +436,8 @@
         var b = h('button', { class: what === 'media' ? 'btn btn-primary' : 'btn', type: 'button', disabled: !enabled, onclick: function () {
           b.disabled = true;
           opts.onDownloadMedia([p], what).then(function (r) {
-            msg.textContent = r && r.queued ? 'Saved to Downloads/ReelScope/' + (p.owner || '') + '/' : 'Download failed. Open the post on Instagram once, then try again.';
+            msg.textContent = r && r.queued ? 'Saved to Downloads/ReelScope/' + String(p.owner || '').replace('/', '_') + '/'
+              : (r && r.errors && r.errors[0]) || 'Download failed. Open the post on ' + siteName(p) + ' once, then try again.';
           }, function () { msg.textContent = 'Download failed.'; }).then(function () { b.disabled = false; });
         } }, label);
         return b;
@@ -415,12 +445,12 @@
 
       detailEl.appendChild(h('div', { class: 'd-top' },
         h('button', { class: 'btn btn-ghost d-back', type: 'button', onclick: closeDetail }, '← Back'),
-        h('a', { class: 'd-open', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Open on Instagram ↗')));
+        h('a', { class: 'd-open', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Open on ' + siteName(p) + ' ↗')));
 
       detailEl.appendChild(h('div', { class: 'd-hero' },
         image(p.thumb, 'd-cover'),
         h('div', { class: 'd-side' },
-          h('p', { class: 'd-owner', text: p.owner ? '@' + p.owner : '' }),
+          h('p', { class: 'd-owner', text: ownerHandle(p) + (multiPlat || isTT(p) ? ' · ' + siteName(p) : '') }),
           h('p', { class: 'muted small d-when', text: when ? when.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date not loaded yet' }),
           h('div', { class: 'badges' },
             p.outlier ? h('span', { class: 'badge badge-outlier' }, p.ratio.toFixed(1) + '× median') : null,
@@ -441,12 +471,12 @@
         big('Comments', fmt(p.comments), p.comments != null ? fmtFull(p.comments) : null),
         big('Shares', fmt(p.shares), p.shares != null ? fmtFull(p.shares) : 'Instagram only shares this for some posts'),
         big('Duration', p.duration ? dur(p.duration) : '–'),
-        big('Engagement', pct(p.engagement), '(likes + comments) ÷ views'),
+        big('Engagement', pct(p.engagement), engagementTip(p)),
         big('× median', p.ratio ? p.ratio.toFixed(1) + '×' : '–', 'Views compared with this account\'s median'),
-        p.saves != null ? big('Saves', fmt(p.saves)) : big('Type', p.type === 'reel' ? 'Reel' : p.type.charAt(0).toUpperCase() + p.type.slice(1))));
+        p.saves != null ? big('Saves', fmt(p.saves), fmtFull(p.saves)) : big('Type', p.type === 'reel' ? 'Reel' : p.type.charAt(0).toUpperCase() + p.type.slice(1))));
 
       if (p.audio) {
-        detailEl.appendChild(h('p', { class: 'd-audio' }, '♪ ' + (p.audio.kind === 'music' ? p.audio.title + (p.audio.artist ? ' · ' + p.audio.artist : '') : (p.audio.title || 'Original audio'))));
+        detailEl.appendChild(h('p', { class: 'd-audio' }, '♪ ' + (p.audio.kind === 'music' || isTT(p) ? p.audio.title + (p.audio.artist ? ' · ' + p.audio.artist : '') : (p.audio.title || 'Original audio'))));
       }
       if (p.caption) detailEl.appendChild(h('p', { class: 'd-caption', text: p.caption }));
       if ((p.hashtags || []).length) {
@@ -545,11 +575,13 @@
       if (p.outlier) badges.appendChild(h('span', { class: 'badge badge-outlier', 'data-tip': 'This post got ' + p.ratio.toFixed(1) + '× the profile\'s median views' }, p.ratio.toFixed(1) + '×'));
       if (p.viralScore !== null) badges.appendChild(h('span', { class: 'badge badge-score', 'data-tip': 'Viral Score: 50 = median views, 75 = 2×, 100 = 4× or more' }, 'Score ' + p.viralScore));
       if (p.pinned) badges.appendChild(h('span', { class: 'badge', 'data-tip': 'Pinned to the profile' }, 'Pinned'));
+      if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform badge-' + (isTT(p) ? 'tiktok' : 'instagram'), 'data-tip': siteName(p) }, isTT(p) ? 'TikTok' : 'IG'));
 
       var meta = [];
       if (p.likes !== null && p.likes !== undefined) meta.push(fmt(p.likes) + ' likes');
       if (p.comments !== null && p.comments !== undefined) meta.push(fmt(p.comments) + ' comments');
       if (p.shares !== null && p.shares !== undefined) meta.push(fmt(p.shares) + ' shares');
+      if (p.saves !== null && p.saves !== undefined) meta.push(fmt(p.saves) + ' saves');
       if (p.engagement !== null) meta.push(pct(p.engagement) + ' eng.');
       if (p.duration) meta.push(dur(p.duration));
       if (p.takenAt) meta.push(df.format(new Date(p.takenAt)));
@@ -557,12 +589,12 @@
       var nFiles = (p.files || []).length;
       var dl = downloadButton(p, 'media', DL_PATH, nFiles,
         nFiles > 1 ? 'Download all ' + nFiles + ' files' : 'Download ' + (nFiles && p.files[0].kind === 'video' ? 'video' : 'photo'),
-        'No video link captured yet. It loads with the post details.');
+        isTT(p) ? 'No video link captured yet. Open the video on TikTok once.' : 'No video link captured yet. It loads with the post details.');
       var cov = downloadButton(p, 'cover', IMG_PATH, p.thumb ? 1 : 0, 'Download cover image', 'No cover image captured yet.');
 
-      if (opts.showOwner && p.owner) meta.unshift('@' + p.owner);
+      if (opts.showOwner && p.owner) meta.unshift(ownerHandle(p));
       return h('li', { class: 'row' + (p.outlier ? ' is-outlier' : '') + (ui.detail === p.code ? ' is-active' : '') },
-        h('button', { class: 'row-link', type: 'button', title: 'Details (⌘/Ctrl-click opens Instagram)', onclick: function (e) {
+        h('button', { class: 'row-link', type: 'button', title: 'Details (⌘/Ctrl-click opens ' + siteName(p) + ')', onclick: function (e) {
           if (e.metaKey || e.ctrlKey) { window.open(p.url, '_blank', 'noopener'); return; }
           openDetail(p);
         } },
@@ -582,7 +614,7 @@
       var b = h('button', { class: 'icon-btn dl-btn', type: 'button', 'aria-label': tip, 'data-tip': tip, onclick: function () {
         b.disabled = true;
         opts.onDownloadMedia([p], what).then(function (r) {
-          b.setAttribute('data-tip', r && r.queued ? 'Saved to Downloads/ReelScope/' + (p.owner || '') : 'Download failed. Reload the profile and try again.');
+          b.setAttribute('data-tip', r && r.queued ? 'Saved to Downloads/ReelScope/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the profile and try again.');
         }, function () { b.setAttribute('data-tip', 'Download failed. Reload the profile and try again.'); })
           .then(function () { setTimeout(function () { b.disabled = false; }, 1500); });
       } }, icon(path, 17));
@@ -595,16 +627,20 @@
       var a = M.analyze(posts);
       var s = a.summary;
       var wrap = h('div', { class: 'analytics' });
+      var tt = plat === 'tiktok';
       if (plat === 'mixed') wrap.appendChild(h('p', { class: 'note', text: 'This list mixes Instagram and Reddit. Views and scores are added together below; open one account for clean analytics.' }));
+      else if (multiPlat) wrap.appendChild(h('p', { class: 'note', text: 'This list mixes Instagram and TikTok. Open one account for clean analytics, or use Compare in the Library.' }));
       if (posts.length < 12) wrap.appendChild(h('p', { class: 'note', text: 'Only ' + posts.length + ' posts so far. Collect more (Auto-scroll) for reliable patterns.' }));
 
       wrap.appendChild(h('div', { class: 'tiles' },
         tile('Posts analyzed', fmtFull(s.count)),
         tile('Median views', fmt(s.medianViews), fmtFull(s.medianViews)),
         tile('Outliers', fmtFull(s.outliers), 'Posts with ≥ ' + M.OUTLIER_RATIO + '× median views'),
-        tile('Avg. engagement', pct(s.avgEngagement), '(likes + comments) ÷ views'),
+        tile('Avg. engagement', pct(s.avgEngagement), tt ? '(likes + comments + shares + saves) ÷ views' : '(likes + comments) ÷ views'),
         tile('Posts / week', s.postsPerWeek ? s.postsPerWeek.toFixed(1) : '–'),
-        tile('Total views', fmt(s.totalViews), fmtFull(s.totalViews))));
+        tile('Total views', fmt(s.totalViews), fmtFull(s.totalViews)),
+        tt && s.avgShareRate != null ? tile('Shares / 100 views', s.avgShareRate.toFixed(2), 'Average shares per 100 views. Shares push a video to new viewers.') : null,
+        tt && s.avgSaveRate != null ? tile('Saves / 100 views', s.avgSaveRate.toFixed(2), 'Average saves per 100 views. Tutorials people come back to get saved.') : null));
 
       wrap.appendChild(section('Best time to post',
         a.heatmap.best
@@ -616,17 +652,18 @@
         'Median views of posts using each hashtag' + (a.hashtags.length && a.hashtags[a.hashtags.length - 1].count >= 2 ? ' (used 2+ times).' : '.'),
         a.hashtags.length ? bars(a.hashtags.slice(0, 12), function (g) { return '#' + g.key; }) : h('p', { class: 'muted small', text: 'No hashtags in these captions.' })));
 
-      wrap.appendChild(section('Video length', 'Median views by reel duration.',
+      wrap.appendChild(section('Video length', 'Median views by ' + (tt ? 'video' : 'reel') + ' duration.',
         a.durations.length ? bars(a.durations, function (g) { return g.key; }) : h('p', { class: 'muted small', text: 'No duration data yet.' })));
 
       var audioBody = h('div');
-      if (a.audio.kinds.length) audioBody.appendChild(bars(a.audio.kinds, function (g) { return g.key; }));
+      var kindLabel = function (g) { return tt ? (g.key === 'Licensed music' ? 'Music' : 'Original sound') : g.key; };
+      if (a.audio.kinds.length) audioBody.appendChild(bars(a.audio.kinds, kindLabel));
       if (a.audio.topTracks.length) {
-        audioBody.appendChild(h('p', { class: 'subhead', text: 'Top music tracks' }));
+        audioBody.appendChild(h('p', { class: 'subhead', text: tt ? 'Top music' : 'Top music tracks' }));
         audioBody.appendChild(bars(a.audio.topTracks, function (g) { return g.key; }));
       }
       if (!a.audio.kinds.length) audioBody.appendChild(h('p', { class: 'muted small', text: 'No audio data yet.' }));
-      wrap.appendChild(section('Audio', 'Original audio vs. licensed music, by median views.', audioBody));
+      wrap.appendChild(section(tt ? 'Sounds' : 'Audio', tt ? 'Original sound vs. music, by median views.' : 'Original audio vs. licensed music, by median views.', audioBody));
       return wrap;
     }
 
@@ -747,7 +784,7 @@
         plat === 'reddit' ? null : downloadCard(list.filter(function (p) { return !isReddit(p); })),
         h('section', { class: 'card' },
           h('h3', { text: 'Columns' }),
-          h('p', { class: 'muted small mono', text: (M.isRedditList(list) ? M.REDDIT_COLUMN_NAMES : M.COLUMN_NAMES).join(', ') })));
+          h('p', { class: 'muted small mono', text: (M.isRedditList(list) ? M.REDDIT_COLUMN_NAMES : M.hasTikTok(list) ? M.TIKTOK_COLUMN_NAMES : M.COLUMN_NAMES).join(', ') })));
     }
 
     function downloadCard(list) {
@@ -760,14 +797,18 @@
           btn.disabled = true;
           msg.textContent = 'Starting ' + count + ' downloads…';
           opts.onDownloadMedia(posts, what).then(function (r) {
-            msg.textContent = 'Started ' + r.queued + ' downloads' + (r.failed ? ', ' + r.failed + ' failed' : '') + '. Saved to Downloads/ReelScope/' + (state.selected || '') + '/';
+            msg.textContent = 'Started ' + r.queued + ' downloads' + (r.failed ? ', ' + r.failed + ' failed' : '') + '. Saved to Downloads/ReelScope/' + String(state.selected || '').replace('/', '_') + '/' +
+              (r.errors && r.errors[0] ? ' ' + r.errors[0] : '');
           }, function () { msg.textContent = 'Downloads could not start.'; }).then(function () { btn.disabled = false; });
         } }, label.replace('{n}', fmtFull(count)));
         return btn;
       }
+      var tt = list.length && list.every(isTT);
       return h('section', { class: 'card' },
         h('h3', { text: 'Download videos, photos & covers' }),
-        h('p', { class: 'muted small', text: 'Downloads the posts in the current list. Files are named with their stats, e.g. 1.2Mviews_11.1Klikes_13Kcomments_2.0pct_post_CODE.mp4. Instagram\'s file links expire after a few days, so reload the profile if downloads fail. Only download content you have the right to use.' }),
+        h('p', { class: 'muted small', text: tt
+          ? 'Downloads the videos in the current list, one after another. Files are named with their stats, e.g. 250Kviews_12Klikes_300comments_1.1Kshares_2.4Ksaves_6.3pct_tiktok_ID.mp4. TikTok\'s video links need this site\'s session and expire after a few hours to days: keep a tiktok.com tab open, and reload the profile if downloads fail. Only download content you have the right to use.'
+          : 'Downloads the posts in the current list. Files are named with their stats, e.g. 1.2Mviews_11.1Klikes_13Kcomments_2.0pct_post_CODE.mp4. Instagram\'s file links expire after a few days, so reload the profile if downloads fail. Only download content you have the right to use.' }),
         h('div', { class: 'export-actions' }, bulk('media', 'Download {n} videos & photos'), bulk('cover', 'Download {n} covers')),
         msg);
     }
