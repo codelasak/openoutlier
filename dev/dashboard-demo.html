@@ -109,6 +109,10 @@
       store['rs:mentions'] = { items: ReelScopeMentions.mergeMentions({}, demoM).items, read: { t3_m4: 1 } };
       store['rs:mentions-state'] = { lastRunAt: now - 6 * 60e3, lastNew: 1, via: 'tab', warnings: ['"handsonexcel": comments need a subreddit list (Reddit has no comment search), so only posts are checked.'] };
 
+      // "My account": open with ?studio=<address of a chatmany worker or a local stand-in> to link it.
+      var studio = new URLSearchParams(location.search).get('studio');
+      if (studio) store['rs:studio'] = { baseUrl: studio, token: 'demo' };
+
       var html = await (await fetch('/dashboard/dashboard.html')).text();
       var doc = new DOMParser().parseFromString(html, 'text/html');
       doc.body.querySelectorAll('script').forEach(function (s) { s.remove(); });
@@ -116,7 +120,7 @@
       // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
       var realFetch = window.fetch;
       window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

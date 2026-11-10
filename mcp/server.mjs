@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // OpenOutlier MCP server (stdio). Gives AI agents read access to your OpenOutlier
 // library, video files for analysis, and a way to ask the extension to
-// collect or refresh profiles. Everything stays on this computer.
+// collect or refresh profiles. That part stays on this computer. The optional
+// "My account" tools (mcp/studio.mjs) talk to your own chatmany worker instead.
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
@@ -16,6 +17,7 @@ import {
   findReel, brief, normUser, normSubreddit, isRedditId, isTikTokId, platformOf, subredditSummary, topPosts, contentIdeas, mentionsQuery,
   comparePlatforms, queueCommand, waitForCommand, readCommandState, linkExpiry, T
 } from './library.mjs';
+import { registerStudioTools, INSTRUCTIONS as STUDIO_INSTRUCTIONS } from './studio.mjs';
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
@@ -54,7 +56,8 @@ const server = new McpServer(
       'Reddit tools: subreddit_summary (one subreddit: best times, title analysis, flair, post types), top_posts (rank posts across subreddits), content_ideas (most-upvoted questions and pain points in a folder of subreddits, with how much Instagram competitors in that folder already cover each theme — use it to turn Reddit demand into new reel ideas).',
       'To analyze a video itself, use download_reel to save the mp4 locally and work with the returned file path. Instagram CDN links expire after a few days; refresh_reel gets fresh ones.',
       'mentions: Reddit posts and comments that matched the user\'s keyword watches (checked every ~15 min by the extension, and 24/7 by the optional reddit-watch home server; source tells which).',
-      'collect_profile / collect_subreddit ask the extension to collect an Instagram profile, a TikTok profile (tt/name) or a subreddit in a background Chrome tab or small window (logged-in session); they need Chrome running.'
+      'collect_profile / collect_subreddit ask the extension to collect an Instagram profile, a TikTok profile (tt/name) or a subreddit in a background Chrome tab or small window (logged-in session); they need Chrome running.',
+      STUDIO_INSTRUCTIONS
     ].join('\n')
   }
 );
@@ -429,6 +432,8 @@ server.registerTool('reel_history', {
     note: rows.length < 2 ? 'Only one snapshot so far. History grows each time the extension sees this post again with new numbers.' : undefined
   });
 }));
+
+registerStudioTools(server, { z, json, safe });
 
 // ---- start ----------------------------------------------------------------
 let bridge = await startBridge();

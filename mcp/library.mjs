@@ -263,7 +263,12 @@ export function brief(p, { full = false } = {}) {
     likes: p.likes ?? null,
     comments: p.comments ?? null,
     shares: p.shares ?? null,
-    saves: tt ? (p.saves ?? null) : undefined,
+    // Instagram shows saves, reach and watch time only to the owner: present on the user's own
+    // posts, which My account copies in from the official API (source "api").
+    saves: tt || p.saves != null ? (p.saves ?? null) : undefined,
+    reach: p.reach ?? undefined,
+    avg_watch_s: p.avgWatchMs != null ? Math.round(p.avgWatchMs / 100) / 10 : undefined,
+    skip_rate_pct: p.skipRate ?? undefined,
     duration_s: p.duration ?? null,
     engagement_pct: round(p.engagement),
     x_account_median: round(p.ratio),

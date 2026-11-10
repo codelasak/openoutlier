@@ -99,6 +99,7 @@
     var o = all[ORG_KEY];
     org = { folders: (o && Array.isArray(o.folders)) ? o.folders : [], accounts: (o && o.accounts) || {} };
     await mentionsView.load();
+    await studioView.load();
   }
 
   function saveOrg() {
@@ -127,6 +128,7 @@
     var kind = parts[0] || 'all';
     if (kind === 'account') return { kind: 'account', id: parts[1] };
     if (kind === 'mentions') return { kind: 'mentions' };
+    if (kind === 'studio') return { kind: 'studio' };
     if (kind === 'compare') return { kind: 'compare', ig: parts[1] || null, tt: parts[2] || null };
     if (kind === 'folder' || kind === 'tag') return { kind: kind, id: parts[1], tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
     if (kind === 'unsorted') return { kind: 'unsorted', tab: parts[1] === 'reels' ? 'reels' : 'accounts' };
@@ -266,11 +268,13 @@
   };
   var accountPanel = P.create(Object.assign({}, common));
   var mentionsView = self.ReelScopeMentionsView.create({ h: h, ago: ago, rerender: function () { if (route().kind === 'mentions') { renderSidebar(route()); mentionsView.render(main); } } });
+  var studioView = self.ReelScopeStudioView.create({ h: h, ago: ago, fmt: fmt, rerender: function () { if (route().kind === 'studio') { renderSidebar(route()); studioView.render(main); document.title = studioView.title() + ' · OpenOutlier'; } } });
   var reelsPanel = P.create(Object.assign({}, common, { preEnriched: true, showOwner: true, defaultSort: 'viralScore', listTabLabel: 'Posts' }));
 
   // ---- pixel icons (16-unit grid, crisp edges) -------------------------------
   var PX = {
     bell: 'M7 1h2v2H7zM5 3h6v2H5zM4 5h8v5H4zM3 10h10v2H3zM6 13h4v2H6z',
+    user: 'M6 2h4v5H6zM4 9h8v2H4zM2 11h12v3H2z',
     all: 'M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z',
     top: 'M2 12h3v3H2zM6 8h3v7H6zM10 3h3v12h-3z',
     folder: 'M1 3h6v2h8v9H1z',
@@ -324,6 +328,7 @@
     lib.textContent = '';
     var unreadMentions = mentionsView.unread();
     lib.appendChild(navItem('Mentions', unreadMentions ? unreadMentions + ' new' : null, '#/mentions', r.kind === 'mentions', { icon: 'bell', badge: !!unreadMentions }));
+    lib.appendChild(navItem('My account', null, '#/studio', r.kind === 'studio', { icon: 'user' }));
     lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all' && r.tab !== 'reels', { icon: 'all' }));
     lib.appendChild(navItem('Top posts', null, '#/all/reels', r.kind === 'all' && r.tab === 'reels', { icon: 'top' }));
     lib.appendChild(navItem('Unsorted', all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null, icon: 'inbox' }));
@@ -652,9 +657,10 @@
     renderSidebar(r);
     if (r.kind === 'account') renderAccount(r.id);
     else if (r.kind === 'mentions') mentionsView.render(main);
+    else if (r.kind === 'studio') studioView.render(main);
     else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? label(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
+    document.title = (r.kind === 'account' ? label(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
   }
 
   // ---- wiring ---------------------------------------------------------------
@@ -664,7 +670,7 @@
   });
   document.getElementById('search').addEventListener('input', function (e) {
     search = e.target.value.trim();
-    if (route().kind === 'account' || route().kind === 'mentions' || route().kind === 'compare') go(lastScopeHash); else render();
+    if (route().kind === 'account' || route().kind === 'mentions' || route().kind === 'studio' || route().kind === 'compare') go(lastScopeHash); else render();
   });
   document.getElementById('show-small').addEventListener('change', function (e) {
     showSmall = e.target.checked;
@@ -679,6 +685,8 @@
     if (out.data['rs:mention-server']) out.data['rs:mention-server'] = Object.assign({}, out.data['rs:mention-server'], { token: '' });
     delete out.data['rs:mentions-state'];
     delete out.data['rs:bridge'];
+    // Nor the chatmany owner token: it controls the Instagram account.
+    if (out.data['rs:studio']) out.data['rs:studio'] = Object.assign({}, out.data['rs:studio'], { token: '' });
     downloadFile('openoutlier-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(out), 'application/json');
   });
   document.getElementById('restore').addEventListener('change', async function (e) {

@@ -141,6 +141,17 @@ Watch Reddit for keywords without a server: **Library → Mentions** (or the pop
 - **Home server (optional, off by default)**: link the companion reddit-watch service (a separate project) for 24/7 watching while Chrome is closed. OpenOutlier pushes its watch list (`PUT /watches`) and pulls `GET /mentions?since=…` into the same inbox. The token is never written to backup files.
 </details>
 
+<details>
+<summary><b>My account (your own Instagram, official API)</b></summary>
+
+**Library → My account** shows the numbers Instagram only gives the owner, and manages comment → DM automations, through a [chatmany](https://github.com/ryanlaiyanip-ctrl/chatmany) worker you host yourself. The worker holds the Instagram login; OpenOutlier only talks to that worker.
+
+- **Connect**: enter the worker address and its `OWNER_TOKEN`. Chrome asks for access to that one host. The token stays in this browser and is never written to backup files.
+- **Insights**: per post views, reach, average watch time, skip rate, likes, comments, saves and shares, plus 7-day account totals. They need a worker that serves `/api/insights` and `/api/insights/account`, and the `instagram_business_manage_insights` permission on its Instagram login. The posts are also saved to the library under your username, so your account sits next to the ones you track.
+- **Publishing**: queue reels, photo and carousel posts, and stories to go out now or at a set time, and optionally attach an automation to the post once it is live. Files are uploaded to the worker, which publishes on schedule, so Chrome can be closed. PNG and WebP images are converted to JPEG first. This needs a worker with the `/api/posts` and `/api/uploads` endpoints, an R2 bucket for the files, and the `instagram_business_content_publish` permission.
+- **Automations**: create, edit, pause, archive and delete them, on a published post or on one you have not posted yet (it attaches itself by caption). Each shows its funnel: comments → DMs → clicks → delivered.
+</details>
+
 ## Connect AI agents (MCP)
 
 OpenOutlier ships a local [MCP](https://modelcontextprotocol.io) server, so Claude (Desktop or Code), Cursor or any MCP client can use your library. Everything stays on your computer.
@@ -195,6 +206,14 @@ Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. 
 | `content_ideas` | the most-upvoted questions and pain points in a set of subreddits, and how many reels your folder already made about each |
 | `collect_subreddit` | the extension collects a subreddit / user with your logged-in Chrome |
 | `mentions` | the Mentions inbox and watch list |
+| `my_account` | your own Instagram account: 7-day totals, whether automations run, publishing quota |
+| `my_post_insights` | official insights for your posts: views, reach, watch time, skip rate, saves, shares |
+| `list_automations` | your comment → DM automations with their funnels |
+| `save_automation` | create or change an automation |
+| `set_automation_state` | pause, resume, archive, restore or delete an automation |
+| `list_scheduled_posts` | the publishing queue and its results |
+| `schedule_post` | publish or schedule a reel, post or story from local files |
+| `cancel_scheduled_post` | remove a post from the queue |
 | `command_status`, `bridge_status` | check a running command / the connection and backups |
 
 Example prompts: *"Use compare_platforms for my account: which episodes did better on TikTok, and what do they have in common?"* · *"Compare the 10 most viral reels in my Excel folder from the last 90 days and summarize their hooks."* · *"Collect r/excel and r/spreadsheets, then use content_ideas on my Excel folder and give me 10 reel ideas my competitors haven't covered."*
@@ -205,6 +224,8 @@ Example prompts: *"Use compare_platforms for my account: which episodes did bett
 
 The MCP server keeps your library in `~/.openoutlier/openoutlier.db` and opens a small bridge on `127.0.0.1`, on the first free port in 47811–47820. The extension scans the same ports and only talks to a server that identifies itself as OpenOutlier. The bridge accepts requests only from the browser extension, never from websites (it checks the `Origin` and `Host` headers), and pairs with the first extension that connects; to re-pair, delete `~/.openoutlier/config.json`. Agent commands for Instagram run in a tab you already have open (or a background tab); Reddit and TikTok commands use a small unfocused window with your logged-in session and close it when done.
 </details>
+
+The `my_*`, automation and publishing tools are the one part that leaves your computer: they call your own chatmany worker (see *My account* above) and can post to your Instagram account. They are off until you create `~/.openoutlier/chatmany.json` with `{"baseUrl": "https://<your worker>", "token": "<its OWNER_TOKEN>"}` (or set `OPENOUTLIER_CHATMANY_URL` and `OPENOUTLIER_CHATMANY_TOKEN`). `schedule_post` publishes nothing unless a time or `publish_now` is given.
 
 ## Your data: SQLite on your Mac, backed up daily
 
@@ -289,7 +310,7 @@ npm test                          # unit + MCP end-to-end tests (Node 20+; run `
 python3 -m http.server 8791       # then open http://127.0.0.1:8791/dev/demo.html
 ```
 
-The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare` and `#/mentions`), `popup-demo.html` (add `?empty` for the first-run state) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`.
+The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare`, `#/mentions` and `#/studio`; add `?studio=<worker address>` to link My account), `popup-demo.html` (add `?empty` for the first-run state) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`.
 
 **Design.** The identity ("Signal Field": Signal Blue `#1E3BFF`, Outlier Lime `#C8FF2E`, Fraunces Black + Inter Tight, the Pixel O) and its rules live in [`brand/README.md`](brand/README.md). In short: the colour logo sits only on blue or ink, and lime is reserved for outliers and never sits on light paper.
 
