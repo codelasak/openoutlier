@@ -1,6 +1,6 @@
 # OpenOutlier brand (v2, approved 2026-11-09)
 
-The source of truth for the OpenOutlier identity. Approved step by step by the owner: palette → logo → typography → wordmark. `archive-v1/` holds the first (cobalt + saffron, box plot) direction, which is retired.
+The source of truth for the OpenOutlier identity. Browsable brand guide (tokens, logos, rules): https://claude.ai/artifact/1HB3aY1QkH9PCFrsBXZaHU Approved step by step by the owner: palette → logo → typography → wordmark. `archive-v1/` holds the first (cobalt + saffron, box plot) direction, which is retired.
 
 ## Idea
 
