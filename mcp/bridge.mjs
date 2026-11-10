@@ -1,9 +1,9 @@
 // OpenOutlier MCP – localhost bridge the browser extension talks to.
 //
-// Port: the first free port in 47811–47820 (or REELSCOPE_PORT). If a port is
+// Port: the first free port in 47811–47820 (or OPENOUTLIER_PORT). If a port is
 // taken by another OpenOutlier instance (e.g. Claude Desktop and Claude Code
 // both started one) we share it: all instances use the same files in
-// ~/.reelscope. If it's taken by some other program, we try the next port.
+// ~/.openoutlier. If it's taken by some other program, we try the next port.
 // The extension scans the same range and only talks to a server whose
 // /health answers {"app":"reelscope"}.
 //
@@ -11,6 +11,7 @@
 // 127.0.0.1/localhost (DNS rebinding) and whose Origin isn't a
 // chrome-extension:// origin (so websites can't read or write your library).
 // The first extension that connects is remembered; others are refused.
+import { setting } from './env.mjs';
 import http from 'node:http';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
@@ -19,14 +20,14 @@ import {
   takePendingCommands, saveCommandResult
 } from './library.mjs';
 
-// REELSCOPE_PORT moves the start of the range (the extension scans 47811–47820).
-const FIRST_PORT = Number(process.env.REELSCOPE_PORT) || 47811;
+// OPENOUTLIER_PORT (or the former REELSCOPE_PORT) moves the start of the range (the extension scans 47811–47820).
+const FIRST_PORT = Number(setting('PORT')) || 47811;
 export const PORTS = Array.from({ length: 10 }, (_, i) => FIRST_PORT + i);
 const CONFIG_FILE = join(HOME, 'config.json');
 const MAX_BODY = 200 * 1024 * 1024;
 const VERSION = '0.1.0';
 
-const log = (...a) => console.error('[reelscope-mcp]', ...a); // stdout belongs to MCP
+const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
 async function readConfig() {
   try { return JSON.parse(await fs.readFile(CONFIG_FILE, 'utf8')); } catch { return {}; }

@@ -1,11 +1,11 @@
 {
-  "name": "reelscope-mcp",
+  "name": "openoutlier-mcp",
   "version": "0.1.0",
   "private": true,
   "description": "Local MCP server that lets AI agents read your OpenOutlier library, rank reels, fetch video files and ask the extension to collect profiles",
   "license": "MIT",
   "type": "module",
-  "bin": { "reelscope-mcp": "server.mjs" },
+  "bin": { "openoutlier-mcp": "server.mjs" },
   "engines": { "node": ">=20" },
   "scripts": { "start": "node server.mjs" },
   "dependencies": {

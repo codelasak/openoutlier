@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { Store } from '../mcp/store.mjs';
 
-const home = () => mkdtempSync(join(tmpdir(), 'reelscope-store-'));
+const home = () => mkdtempSync(join(tmpdir(), 'openoutlier-store-'));
 const post = (code, views, extra = {}) => ({ code, owner: 'demo', type: 'reel', views, likes: Math.round(views / 20), comments: 3, takenAt: 1700000000000, seenAt: 1700000500000, ...extra });
 const rec = (posts) => ({ posts: Object.fromEntries(posts.map((p) => [p.code, p])), updatedAt: Date.now() });
 
@@ -97,7 +97,7 @@ test('backup.mjs: verified gzip copy, once a day unless --force', async () => {
   s.applySync({ accounts: { a: rec([post('AAAAA1', 1)]) } });
   s.close();
   const script = new URL('../mcp/backup.mjs', import.meta.url).pathname;
-  const env = { ...process.env, REELSCOPE_HOME: h };
+  const env = { ...process.env, OPENOUTLIER_HOME: h };
   execFileSync(process.execPath, [script, '--no-upload'], { env, stdio: 'pipe' });
   const files = readdirSync(join(h, 'backups')).filter((f) => f.endsWith('.db.gz'));
   assert.equal(files.length, 1);

@@ -1,4 +1,5 @@
-// OpenOutlier – the library on disk: one SQLite file, ~/.reelscope/reelscope.db.
+// OpenOutlier – the library on disk: one SQLite file, ~/.openoutlier/openoutlier.db
+// (~/.reelscope/reelscope.db on installs not yet moved from the ReelScope name).
 //
 // The extension pushes its data through the bridge; this module stores it.
 // Every MCP server instance reads the same file (WAL mode, so readers never
@@ -11,6 +12,7 @@
 //   (incremental sync with `null`, i.e. you pressed Clear/Delete).
 // • Every time a post's numbers change, a dated row goes into `snapshots`,
 //   so growth over time is kept even though posts only store the latest values.
+import { dbFile } from './env.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { existsSync, readFileSync, renameSync, mkdirSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
@@ -53,7 +55,7 @@ const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) 
 export class Store {
   constructor(home) {
     this.home = home;
-    this.file = join(home, 'reelscope.db');
+    this.file = dbFile(home);
     mkdirSync(home, { recursive: true });
     const fresh = !existsSync(this.file);
     this.db = new DatabaseSync(this.file);
@@ -78,7 +80,7 @@ export class Store {
   revision() { return this.getMeta('revision', 0); }
 
   /**
-   * Import ~/.reelscope/library.json (written by older OpenOutlier versions) and
+   * Import <home>/library.json (written by older OpenOutlier versions) and
    * rename it. Safe to run any number of times: it only adds and updates, so
    * a file written by an old MCP server that's still running gets merged in
    * the next time this runs (daemon takeover, a new MCP server, …).
@@ -92,7 +94,7 @@ export class Store {
       this.applySync({ full: true, accounts: lib.accounts || {}, org: lib.org, watches: lib.watches, mentions: lib.mentions });
       if (firstImport && lib.syncId) this.setMeta('syncId', lib.syncId); // keep the extension's sync id
     } catch (e) {
-      console.error('[reelscope] could not import library.json:', e.message);
+      console.error('[openoutlier] could not import library.json:', e.message);
       return; // keep the JSON file, try again next time
     }
     try { renameSync(old, old + '.migrated'); } catch { /* ignore */ }

@@ -18,7 +18,7 @@ const X = createRequire(import.meta.url)('../src/extract.js');
 
 const FIRST = 47911; // test range, away from the real one
 const EXT_ORIGIN = 'chrome-extension://' + 'a'.repeat(32);
-const home = mkdtempSync(join(tmpdir(), 'reelscope-test-'));
+const home = mkdtempSync(join(tmpdir(), 'openoutlier-test-'));
 
 // A program that is NOT OpenOutlier sitting on the first port: the server must skip it.
 const squatter = http.createServer((req, res) => { res.end('hello from another app'); });
@@ -37,7 +37,7 @@ const cdnUrl = `http://127.0.0.1:${cdn.address().port}/v/clip.mp4?oe=${(Math.flo
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: [join(here, '..', 'mcp', 'server.mjs')],
-  env: { ...process.env, REELSCOPE_HOME: home, REELSCOPE_PORT: String(FIRST) },
+  env: { ...process.env, OPENOUTLIER_HOME: home, OPENOUTLIER_PORT: String(FIRST) },
   stderr: 'pipe'
 });
 const client = new Client({ name: 'test', version: '1.0.0' });

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // OpenOutlier – always-on bridge (no MCP). Run by launchd so the extension's data
-// reaches ~/.reelscope/reelscope.db even when Claude Desktop / Claude Code are
+// reaches ~/.openoutlier/openoutlier.db even when Claude Desktop / Claude Code are
 // closed. MCP server instances share this bridge; if one of them already holds
 // the port, this daemon waits and takes over when it goes away.
 import { startBridge } from './bridge.mjs';
 import { store, DB_FILE } from './library.mjs';
 
-const log = (...a) => console.error(new Date().toISOString(), '[reelscope-bridge]', ...a);
+const log = (...a) => console.error(new Date().toISOString(), '[openoutlier-bridge]', ...a);
 
 store(); // open (and migrate) the database right away
 log('database', DB_FILE, JSON.stringify(store().stats()));

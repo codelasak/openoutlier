@@ -1,10 +1,10 @@
 // OpenOutlier MCP – the on-disk copy of the library and the queries agents run on it.
 // The extension pushes its data here (see bridge.mjs); every MCP server
 // instance (Claude Desktop, Claude Code, …) reads the same files.
+import { resolveHome, dbFile } from './env.mjs';
 import { createRequire } from 'node:module';
 import { promises as fs, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { openStore } from './store.mjs';
 
@@ -14,7 +14,7 @@ export const MN = require('../src/mentions.js');
 export const T = require('../src/tiktok.js');
 export const C = require('../src/compare.js');
 
-export const HOME = process.env.REELSCOPE_HOME || join(homedir(), '.reelscope');
+export const HOME = resolveHome();
 export const COMMANDS_DIR = join(HOME, 'commands');
 export const STATUS_FILE = join(HOME, 'status.json');
 
@@ -30,7 +30,7 @@ async function writeJsonAtomic(file, value) {
 
 // ---- library (SQLite, see store.mjs) ------------------------------------------
 
-export const DB_FILE = join(HOME, 'reelscope.db');
+export const DB_FILE = dbFile(HOME);
 export function store() { return openStore(HOME); }
 
 export function emptyLibrary() {
@@ -42,7 +42,7 @@ export function readLibrary() {
   try {
     return store().readLibrary();
   } catch (e) {
-    console.error('[reelscope] could not read the library:', e.message);
+    console.error('[openoutlier] could not read the library:', e.message);
     return emptyLibrary();
   }
 }

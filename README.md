@@ -151,12 +151,12 @@ OpenOutlier ships a local [MCP](https://modelcontextprotocol.io) server, so Clau
 cd mcp && npm install
 ```
 
-**2. Add it to your agent.** The server id is `reelscope` (OpenOutlier's former name, kept so existing setups keep working).
+**2. Add it to your agent.** The server id is `openoutlier`, so its tools show up as `mcp__openoutlier__…`. If you added it as `reelscope` (the former name), remove that entry and add it again under the new id (see *Moving from ReelScope* below).
 
 Claude Code:
 
 ```bash
-claude mcp add reelscope -- node /absolute/path/to/this/repo/mcp/server.mjs
+claude mcp add -s user openoutlier -- node /absolute/path/to/this/repo/mcp/server.mjs
 ```
 
 Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. Use the full path to `node` (`which node`); desktop apps don't see your shell's PATH.
@@ -164,7 +164,7 @@ Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. 
 ```json
 {
   "mcpServers": {
-    "reelscope": {
+    "openoutlier": {
       "command": "/full/path/to/node",
       "args": ["/absolute/path/to/this/repo/mcp/server.mjs"]
     }
@@ -203,32 +203,51 @@ Example prompts: *"Use compare_platforms for my account: which episodes did bett
 <details>
 <summary><b>How the connection works</b></summary>
 
-The MCP server keeps your library in `~/.reelscope/reelscope.db` and opens a small bridge on `127.0.0.1`, on the first free port in 47811–47820. The extension scans the same ports and only talks to a server that identifies itself as OpenOutlier. The bridge accepts requests only from the browser extension, never from websites (it checks the `Origin` and `Host` headers), and pairs with the first extension that connects; to re-pair, delete `~/.reelscope/config.json`. Agent commands for Instagram run in a tab you already have open (or a background tab); Reddit and TikTok commands use a small unfocused window with your logged-in session and close it when done.
+The MCP server keeps your library in `~/.openoutlier/openoutlier.db` and opens a small bridge on `127.0.0.1`, on the first free port in 47811–47820. The extension scans the same ports and only talks to a server that identifies itself as OpenOutlier. The bridge accepts requests only from the browser extension, never from websites (it checks the `Origin` and `Host` headers), and pairs with the first extension that connects; to re-pair, delete `~/.openoutlier/config.json`. Agent commands for Instagram run in a tab you already have open (or a background tab); Reddit and TikTok commands use a small unfocused window with your logged-in session and close it when done.
 </details>
 
 ## Your data: SQLite on your Mac, backed up daily
 
 The extension's storage disappears if you remove the extension, so OpenOutlier can keep a durable copy on your computer.
 
-- **`~/.reelscope/reelscope.db` (SQLite)**, written by the bridge whenever the extension's data changes: every account, post, folder, tag, watch and mention, plus a **history table** with a dated row each time a post's numbers change (the `reel_history` tool).
+- **`~/.openoutlier/openoutlier.db` (SQLite)**, written by the bridge whenever the extension's data changes: every account, post, folder, tag, watch and mention, plus a **history table** with a dated row each time a post's numbers change (the `reel_history` tool).
 - **Safe by design.** A full sync only adds and updates, so a reinstalled extension with empty storage can't wipe the database. An account is removed only when you delete it in the extension.
-- **Daily backup** (`mcp/backup.mjs`): a consistent copy (`VACUUM INTO`) with an integrity check, gzipped, the last 7 kept in `~/.reelscope/backups/`, then uploaded over SSH to `REELSCOPE_BACKUP_REMOTE` (`host:/path`), checksum-verified there, the last 30 kept. Runs at 03:30, or at login/wake if missed.
-- **Always on (macOS)**: `sh mcp/launchd/install.sh` installs `dev.reelscope.bridge` (keeps the bridge running) and `dev.reelscope.backup` (the daily backup). Logs: `~/.reelscope/logs/`. Remove with `sh mcp/launchd/uninstall.sh`; your data stays.
+- **Daily backup** (`mcp/backup.mjs`): a consistent copy (`VACUUM INTO`) with an integrity check, gzipped, the last 7 kept in `~/.openoutlier/backups/`, then uploaded over SSH to `OPENOUTLIER_BACKUP_REMOTE` (`host:/path`), checksum-verified there, the last 30 kept. Runs at 03:30, or at login/wake if missed.
+- **Always on (macOS)**: `sh mcp/launchd/install.sh` installs `dev.openoutlier.bridge` (keeps the bridge running) and `dev.openoutlier.backup` (the daily backup). Logs: `~/.openoutlier/logs/`. Remove with `sh mcp/launchd/uninstall.sh`; your data stays.
 - **Status**: the popup shows the last backup (or a warning); `bridge_status` reports database counts.
 
 <details>
 <summary><b>Restore a backup</b></summary>
 
 ```bash
-launchctl bootout gui/$(id -u)/dev.reelscope.bridge
-scp <host>:<path>/reelscope-YYYY-MM-DD.db.gz ~/.reelscope/
-gunzip -f ~/.reelscope/reelscope-YYYY-MM-DD.db.gz && mv ~/.reelscope/reelscope-YYYY-MM-DD.db ~/.reelscope/reelscope.db
-rm -f ~/.reelscope/reelscope.db-wal ~/.reelscope/reelscope.db-shm
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.reelscope.bridge.plist
+launchctl bootout gui/$(id -u)/dev.openoutlier.bridge
+scp <host>:<path>/openoutlier-YYYY-MM-DD.db.gz ~/.openoutlier/
+gunzip -f ~/.openoutlier/openoutlier-YYYY-MM-DD.db.gz && mv ~/.openoutlier/openoutlier-YYYY-MM-DD.db ~/.openoutlier/openoutlier.db
+rm -f ~/.openoutlier/openoutlier.db-wal ~/.openoutlier/openoutlier.db-shm
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.openoutlier.bridge.plist
 ```
+
+Backups from before the rename are named `reelscope-YYYY-MM-DD.db.gz`; restore them the same way.
 </details>
 
-> **Why `reelscope` in paths?** OpenOutlier was called ReelScope. Storage keys (`rs:*`), `~/.reelscope/`, the launchd labels `dev.reelscope.*` and the MCP server id `reelscope` keep the old name so existing installs and agent configs keep working.
+<details>
+<summary><b>Moving from ReelScope</b></summary>
+
+OpenOutlier was called ReelScope. An install that still has `~/.reelscope/reelscope.db`, the `REELSCOPE_*` variables or the `dev.reelscope.*` agents keeps working as is: the server uses `~/.reelscope` while `~/.openoutlier` doesn't exist, and every `OPENOUTLIER_*` variable falls back to its `REELSCOPE_*` name. To move over:
+
+```bash
+claude mcp remove reelscope -s user
+claude mcp add -s user openoutlier -- "$(which node)" /absolute/path/to/this/repo/mcp/server.mjs
+launchctl bootout gui/$(id -u)/dev.reelscope.bridge
+pkill -f mcp/server.mjs   # every running MCP server still has the old path; their agents restart them
+mv ~/.reelscope ~/.openoutlier && mv ~/.openoutlier/reelscope.db ~/.openoutlier/openoutlier.db
+sh mcp/launchd/install.sh  # replaces dev.reelscope.* and keeps your backup target
+```
+
+Then start a new agent session so it picks up the `openoutlier` tools.
+</details>
+
+> **Why `reelscope` inside the extension?** The extension's own storage (`rs:*` keys, the `reelscope` IndexedDB), its message names and the bridge handshake (`{"app":"reelscope"}`) keep the former name: renaming them would empty the library stored in the extension and break an older extension talking to a newer server.
 
 ## Privacy
 
