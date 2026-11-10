@@ -129,7 +129,7 @@ test('Reddit analytics: heatmap, questions, title words, flair and type', () => 
   assert.equal(a.summary.count, 90);
   assert.ok(a.summary.medianViews > 0, 'median score');
   assert.ok(a.summary.avgUpvoteRatio > 0.7);
-  assert.ok(a.heatmap.best && a.heatmap.best.count >= 2);
+  assert.ok(a.heatmap.bestDay && a.heatmap.bestDay.count >= a.heatmap.minPosts);
   assert.ok(a.reddit, 'reddit section only for Reddit lists');
   assert.deepEqual(a.reddit.questions.map((q) => q.key).sort(), ['Question', 'Statement']);
   assert.ok(a.reddit.titleLength.length >= 2);

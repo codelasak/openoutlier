@@ -116,7 +116,13 @@ test('extension can sync and agents can read it', async () => {
 
   const sum = await call('account_summary', { username: '@demo.kitchen' });
   assert.equal(sum.data.account.folder, 'Food');
-  assert.ok(sum.data.best_posting_slots.length > 0);
+  assert.ok(Array.isArray(sum.data.best_posting_slots));
+  assert.ok(sum.data.best_posting_slots.every((s) => s.posts >= 8 && s.x_account_median > 0));
+  assert.equal(sum.data.best_days.length, 7);
+  assert.equal(sum.data.best_hours.length, 8);
+  assert.ok(sum.data.best_days[0].posts >= 8, 'ranked days come first');
+  assert.equal(typeof sum.data.enough_variety_to_compare, 'boolean');
+  assert.match(sum.data.timing_note, /median of the ~30 posts around it/);
   assert.ok(sum.data.top_hashtags[0].hashtag.startsWith('#'));
 
   const top = await call('top_reels', { folder: 'Food', limit: 5 });
@@ -220,7 +226,7 @@ test('Reddit: subreddits sit next to Instagram accounts and get their own tools'
   assert.equal(sum.isError, false, sum.text);
   assert.equal(sum.data.account.username, 'r/excel');
   assert.equal(sum.data.summary.posts_analyzed, 90);
-  assert.ok(sum.data.best_posting_slots.length > 0);
+  assert.ok(sum.data.best_days.some((d) => d.median_score > 0));
   assert.ok(sum.data.question_vs_statement.length === 2);
   assert.ok(sum.data.words_that_perform.length > 0);
   assert.ok(sum.data.flairs.some((f) => f.flair === 'solved'));

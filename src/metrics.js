@@ -108,31 +108,131 @@
 
   function dayIndex(date) { return (date.getDay() + 6) % 7; } // Mon = 0
 
+  // ---- best time to post ----------------------------------------------------
+  //
+  // Raw median views per slot mixes up *when* a post went out with *how big the
+  // account was then* (old slots look bad because the account was small). So:
+  //  1. each post is scored against the median of the posts around it in time
+  //     (its era), not the all-time median, then centred so the account's
+  //     average post is 1×;
+  //  2. a slot's lift is the mean log2 of those ratios, shrunk toward 1× by
+  //     SLOT_PRIOR pseudo-posts, so a slot with 4 lucky posts can't beat one
+  //     with 50;
+  //  3. slots need SLOT_MIN_POSTS to be ranked; days and hours are also scored
+  //     on their own (7 + 8 groups instead of 56 cells, much more data each);
+  //  4. we report each slot's share of posts and flag accounts that post in
+  //     too few slots to compare ("they always post then" ≠ "it works then").
+  var SLOT_MIN_POSTS = 8;
+  var SLOT_PRIOR = 8;          // pseudo-posts at 1× pulling small slots toward neutral
+  var ERA_WINDOW = 15;         // posts on each side used for the era median
+  var LOG_CLIP = 3;            // cap one post's pull at 8× / ⅛× so a single viral hit can't own a slot
+  var CONCENTRATED_SHARE = 0.7;
+
+  /** For each post (with a date and views), views ÷ median views of the ±ERA_WINDOW posts around it. */
+  function eraRatios(posts) {
+    var dated = posts.filter(function (p) { return p.takenAt && val(p) > 0; })
+      .sort(function (a, b) { return a.takenAt - b.takenAt; });
+    var overall = median(dated.map(val));
+    return dated.map(function (p, i) {
+      var ref = dated.length > 2 * ERA_WINDOW
+        ? median(dated.slice(Math.max(0, i - ERA_WINDOW), i + ERA_WINDOW + 1).map(val))
+        : overall;
+      return { post: p, ratio: ref > 0 ? val(p) / ref : null };
+    }).filter(function (r) { return r.ratio > 0; });
+  }
+
+  function confidenceOf(n) { return n >= 20 ? 'high' : n >= SLOT_MIN_POSTS ? 'medium' : 'low'; }
+
+  /** Turn collected { views, logs } into the public slot stats. */
+  function slotStats(c, total) {
+    var n = c.logs.length;
+    var sum = c.logs.reduce(function (s, v) { return s + v; }, 0);
+    c.count = n;
+    c.share = total ? n / total : 0;
+    c.avgViews = mean(c.views);
+    c.medianViews = median(c.views);
+    c.rawLift = n ? Math.pow(2, sum / n) : null;           // geometric mean of era ratios
+    c.lift = n ? Math.pow(2, sum / (n + SLOT_PRIOR)) : null; // shrunk toward 1×
+    c.confidence = confidenceOf(n);
+    delete c.views;
+    delete c.logs;
+    return c;
+  }
+
+  function addTo(c, r) {
+    c.views.push(val(r.post));
+    c.logs.push(r.log);
+  }
+
+  function bestOf(list) {
+    var best = null;
+    list.forEach(function (c) {
+      if (c.count >= SLOT_MIN_POSTS && (!best || c.lift > best.lift)) best = c;
+    });
+    return best;
+  }
+
   function heatmap(posts) {
     var blocks = 24 / BLOCK_HOURS;
     var cells = [];
+    var days = [];
+    var hours = [];
     for (var d = 0; d < 7; d++) {
       cells.push([]);
-      for (var b = 0; b < blocks; b++) cells[d].push({ day: d, block: b, views: [] });
+      days.push({ day: d, views: [], logs: [] });
+      for (var b = 0; b < blocks; b++) cells[d].push({ day: d, block: b, views: [], logs: [] });
     }
-    posts.forEach(function (p) {
-      if (!p.takenAt || !(val(p) > 0)) return;
-      var dt = new Date(p.takenAt);
-      cells[dayIndex(dt)][Math.floor(dt.getHours() / BLOCK_HOURS)].views.push(val(p));
+    for (var hb = 0; hb < blocks; hb++) hours.push({ block: hb, views: [], logs: [] });
+
+    // Centre the (clipped) log ratios so the account's average post is exactly
+    // 1×: views are skewed, so the mean log ratio is rarely 0 on its own.
+    var rated = eraRatios(posts);
+    rated.forEach(function (r) { r.log = clamp(Math.log2(r.ratio), -LOG_CLIP, LOG_CLIP); });
+    var centre = mean(rated.map(function (r) { return r.log; })) || 0;
+    rated.forEach(function (r) {
+      r.log -= centre;
+      var dt = new Date(r.post.takenAt);
+      var di = dayIndex(dt);
+      var bi = Math.floor(dt.getHours() / BLOCK_HOURS);
+      addTo(cells[di][bi], r);
+      addTo(days[di], r);
+      addTo(hours[bi], r);
     });
-    var best = null;
+    var total = rated.length;
     var flat = [];
-    cells.forEach(function (row) {
-      row.forEach(function (c) {
-        c.count = c.views.length;
-        c.avgViews = mean(c.views);
-        c.medianViews = median(c.views);
-        delete c.views;
-        flat.push(c);
-        if (c.count >= 2 && (!best || c.medianViews > best.medianViews)) best = c;
-      });
-    });
-    return { dayLabels: DAY_LABELS, blockHours: BLOCK_HOURS, cells: cells, best: best, maxMedian: Math.max.apply(null, flat.map(function (c) { return c.medianViews || 0; })) };
+    cells.forEach(function (row) { row.forEach(function (c) { flat.push(slotStats(c, total)); }); });
+    days.forEach(function (c) { slotStats(c, total); });
+    hours.forEach(function (c) { slotStats(c, total); });
+
+    var ranked = flat.filter(function (c) { return c.count >= SLOT_MIN_POSTS; });
+    var topTwoShare = flat.map(function (c) { return c.share; }).sort(function (a, b) { return b - a; })
+      .slice(0, 2).reduce(function (s, v) { return s + v; }, 0);
+    // Too few distinct times to compare: most posts sit in two slots, or there
+    // aren't enough well-filled slots *and* not even two well-filled hour blocks.
+    var rankedHours = hours.filter(function (c) { return c.count >= SLOT_MIN_POSTS; }).length;
+    var varietyIssue = !total ? null
+      : topTwoShare >= CONCENTRATED_SHARE ? 'concentrated'
+      : ranked.length < 3 && rankedHours < 2 ? 'thin'
+      : null;
+
+    return {
+      dayLabels: DAY_LABELS,
+      blockHours: BLOCK_HOURS,
+      minPosts: SLOT_MIN_POSTS,
+      postsWithTime: total,
+      cells: cells,
+      days: days,
+      hours: hours,
+      best: bestOf(flat),
+      bestDay: bestOf(days),
+      bestHours: bestOf(hours),
+      rankedSlots: ranked.length,
+      rankedHours: rankedHours,
+      topTwoShare: topTwoShare,
+      concentrated: !!varietyIssue,
+      varietyIssue: varietyIssue, // 'concentrated' (always posts at the same times) | 'thin' (too few posts per slot) | null
+      maxMedian: Math.max.apply(null, flat.map(function (c) { return c.medianViews || 0; }))
+    };
   }
 
   function groupStats(groups, med) {

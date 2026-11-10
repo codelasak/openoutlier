@@ -695,8 +695,8 @@
         tt && s.avgShareRate != null ? tile('Shares / 100 views', s.avgShareRate.toFixed(2), 'Average shares per 100 views. Shares push a video to new viewers.') : null,
         tt && s.avgSaveRate != null ? tile('Saves / 100 views', s.avgSaveRate.toFixed(2), 'Average saves per 100 views. Tutorials people come back to get saved.') : null));
 
-      wrap.appendChild(section('Best time to post', 'Median views by day and time, in your local time.',
-        [bestSlot(a.heatmap, s.medianViews), heatmapEl(a.heatmap)]));
+      wrap.appendChild(section('Best time to post', 'Views vs. what the account was getting at the time, by day and time, in your local time. Slots with few posts are pulled toward 1×.',
+        bestSlot(a.heatmap).concat(heatmapEl(a.heatmap))));
 
       wrap.appendChild(section('Hashtags that bring views',
         'Median views of posts using each hashtag' + (a.hashtags.length && a.hashtags[a.hashtags.length - 1].count >= 2 ? ' (used 2+ times).' : '.'),
@@ -731,8 +731,8 @@
         tile('Posts / week', s.postsPerWeek ? s.postsPerWeek.toFixed(1) : '–', 'Among the posts collected (top posts are a sample, not every post)'),
         tile('Avg. upvote ratio', s.avgUpvoteRatio != null ? Math.round(s.avgUpvoteRatio * 100) + '%' : '–')));
       wrap.appendChild(section('Best time to post',
-        'Median score by day and time, in your local time. Collect "new" posts too for a fuller picture: top posts only show what won.',
-        [bestSlot(a.heatmap, s.medianViews), heatmapEl(a.heatmap, 'score')]));
+        'Score vs. what the subreddit was getting at the time, by day and time, in your local time. Collect "new" posts too for a fuller picture: top posts only show what won.',
+        bestSlot(a.heatmap, 'score').concat(heatmapEl(a.heatmap, 'score'))));
       wrap.appendChild(section('Question vs. statement', 'Median score of titles that ask a question (contain "?" or start with how / why / is there…) vs. the rest.',
         r.questions.length ? bars(r.questions, function (g) { return g.key; }, 'score') : h('p', { class: 'muted small', text: 'No titles yet.' })));
       wrap.appendChild(section('Title length', 'Median score by number of words in the title.',
@@ -751,13 +751,37 @@
       return h('div', { class: 'tile' + (hot ? ' hot' : ''), 'data-tip': tip || null }, h('span', { class: 'tile-value', text: value }), h('span', { class: 'tile-label', text: label }));
     }
 
-    /** The strongest slot, called out on blue (the one highlighted number is lime). */
-    function bestSlot(hm, overall) {
-      if (!hm.best) return null;
-      var lift = overall > 0 ? hm.best.medianViews / overall : null;
-      return h('p', { class: 'callout' }, stair(),
-        h('span', null, 'Strongest slot: ', h('b', { text: hm.dayLabels[hm.best.day] + ' ' + hourRange(hm.best.block, hm.blockHours) }),
-          ' · ' + hm.best.count + ' post' + (hm.best.count === 1 ? '' : 's') + ', median ' + fmt(hm.best.medianViews) + (lift ? ' (' + lift.toFixed(1) + '× overall)' : '')));
+    function liftText(c) { return c && c.lift ? c.lift.toFixed(2) + '×' : '–'; }
+
+    /**
+     * The strongest slot, called out on blue (the one highlighted number is lime).
+     * Ranked by era-adjusted lift; falls back to best day / best hours when no
+     * single day × time cell has enough posts.
+     */
+    function bestSlot(hm, u) {
+      u = u || 'views';
+      // A "best" that is no better than the account's average isn't worth naming.
+      var STANDS_OUT = 1.05;
+      var out = [];
+      if (hm.best && hm.best.lift >= STANDS_OUT) {
+        out.push(h('p', { class: 'callout' }, stair(),
+          h('span', null, 'Strongest slot: ', h('b', { text: hm.dayLabels[hm.best.day] + ' ' + hourRange(hm.best.block, hm.blockHours) }),
+            ' · ' + liftText(hm.best) + ' the account\'s usual ' + u + ' · ' + hm.best.count + ' posts (' + Math.round(hm.best.share * 100) + '% of all)')));
+      }
+      var parts = [];
+      if (hm.bestDay && hm.bestDay.lift >= STANDS_OUT) parts.push('best day ' + hm.dayLabels[hm.bestDay.day] + ' (' + liftText(hm.bestDay) + ', ' + hm.bestDay.count + ' posts)');
+      if (hm.bestHours && hm.bestHours.lift >= STANDS_OUT) parts.push('best time ' + hourRange(hm.bestHours.block, hm.blockHours) + ' (' + liftText(hm.bestHours) + ', ' + hm.bestHours.count + ' posts)');
+      if (parts.length) out.push(h('p', { class: 'muted small', text: parts.join(' · ').replace(/^b/, 'B') + '.' }));
+      else if (hm.bestDay) out.push(h('p', { class: 'muted small', text: 'No day or time stands out yet: the best ones are within 5% of the account\'s average.' }));
+      if (hm.varietyIssue === 'concentrated') {
+        out.push(h('p', { class: 'note', text: 'Not enough variety to compare times: the two busiest slots hold ' + Math.round(hm.topTwoShare * 100) + '% of ' + hm.postsWithTime +
+          ' posts. This shows when the account posts, not that other times would do worse.' }));
+      } else if (hm.varietyIssue === 'thin') {
+        out.push(h('p', { class: 'note', text: 'Too few posts per slot to compare times (' + hm.postsWithTime + ' with a date). Collect more posts before trusting this.' }));
+      } else if (!hm.best && hm.postsWithTime) {
+        out.push(h('p', { class: 'muted small', text: 'No day × time slot has ' + hm.minPosts + '+ posts yet, so no single slot is called out.' }));
+      }
+      return out;
     }
 
     function section(title, sub, content) {
@@ -780,16 +804,11 @@
     function heatmapEl(hm, u) {
       u = u || 'views';
       var blocks = 24 / hm.blockHours;
-      // Shade by rank (quantile), not by share of the max: one viral post would
-      // otherwise push every other cell to the bottom of the scale.
-      var medians = [];
-      hm.cells.forEach(function (r) { r.forEach(function (c) { if (c.count) medians.push(c.medianViews); }); });
-      medians.sort(function (a, b) { return a - b; });
-      function stepOf(v) {
-        if (medians.length < 2) return 3;
-        var below = 0;
-        while (below < medians.length && medians[below] < v) below++;
-        return Math.min(5, Math.floor((below / (medians.length - 1)) * 6));
+      // Shade by lift (era-adjusted, shrunk toward 1×) on a log scale centred on
+      // 1×: s0 ≤ ½×, s5 ≥ 2×. Slots with few posts are pulled toward the middle.
+      function stepOf(lift) {
+        var l = Math.log2(lift || 1);
+        return Math.max(0, Math.min(5, Math.floor((l + 1) / 2 * 6)));
       }
       var grid = h('div', { class: 'heatmap', role: 'table', style: { 'grid-template-columns': '34px repeat(' + blocks + ', 1fr)' } });
       grid.appendChild(h('span', { class: 'hm-corner' }));
@@ -802,15 +821,17 @@
             grid.appendChild(h('span', { class: 'hm-cell hm-empty', role: 'cell', 'data-tip': label + ': no posts', 'aria-label': label + ': no posts' }));
             return;
           }
-          var step = stepOf(c.medianViews); // 0..5
-          var tip = label + ': ' + c.count + ' post' + (c.count === 1 ? '' : 's') + ', median ' + fmtFull(c.medianViews) + ' ' + u;
+          var step = stepOf(c.lift); // 0..5
+          var tip = label + ': ' + liftText(c) + ' usual ' + u + ' · ' + c.count + ' post' + (c.count === 1 ? '' : 's') + ' (' + Math.round(c.share * 100) + '%)' +
+            ', median ' + fmtFull(c.medianViews) + ' ' + u + (c.count < hm.minPosts ? ' · too few posts to rank' : '');
           var isBest = hm.best && hm.best.day === c.day && hm.best.block === c.block;
-          grid.appendChild(h('span', { class: 'hm-cell hm-s' + step + (isBest ? ' hm-best' : ''), role: 'cell', 'data-tip': tip, 'aria-label': tip }));
+          grid.appendChild(h('span', { class: 'hm-cell hm-s' + step + (c.count < hm.minPosts ? ' hm-thin' : '') + (isBest ? ' hm-best' : ''), role: 'cell', 'data-tip': tip, 'aria-label': tip }));
         });
       });
-      var legend = h('div', { class: 'hm-legend' }, h('span', { text: u === 'score' ? 'Lower score' : 'Fewer views' }),
+      var legend = h('div', { class: 'hm-legend' }, h('span', { text: '½× or less' }),
         [0, 1, 2, 3, 4, 5].map(function (s) { return h('span', { class: 'hm-key hm-s' + s }); }),
-        h('span', { text: u === 'score' ? 'Higher score' : 'More views' }),
+        h('span', { text: '2× or more' }),
+        h('span', { class: 'hm-key hm-s3 hm-thin hm-gap' }), h('span', { text: 'Under ' + hm.minPosts + ' posts' }),
         h('span', { class: 'hm-key hm-empty hm-gap' }), h('span', { text: 'No posts' }));
       return h('div', null, grid, legend);
     }

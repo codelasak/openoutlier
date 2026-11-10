@@ -346,14 +346,45 @@ export function accountRow(lib, u) {
 
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-function bestSlots(heatmap) {
-  return heatmap.cells.flat().filter((c) => c.count >= 2)
-    .sort((x, y) => y.medianViews - x.medianViews).slice(0, 5)
-    .map((c) => ({
-      day: DAY[c.day],
-      hours_local: `${String(c.block * heatmap.blockHours).padStart(2, '0')}:00–${String((c.block + 1) * heatmap.blockHours % 24).padStart(2, '0')}:00`,
-      posts: c.count, median: c.medianViews
-    }));
+const hourRange = (block, size) => `${String(block * size).padStart(2, '0')}:00–${String((block + 1) * size % 24).padStart(2, '0')}:00`;
+
+/** One slot / day / hour group as the MCP tools report it. `unit` is views or score. */
+const slotRow = (unit) => (c) => ({
+  posts: c.count,
+  share_of_posts_pct: round(c.share * 100, 1),
+  x_account_median: round(c.lift),
+  raw_x_account_median: round(c.rawLift),
+  [`median_${unit}`]: c.medianViews,
+  confidence: c.confidence
+});
+
+/**
+ * Best posting times. Slots are ranked by lift (era-adjusted, shrunk toward 1×),
+ * not raw median views, and only slots with enough posts are ranked.
+ */
+function postingTimes(hm, unit) {
+  const row = slotRow(unit);
+  const slots = hm.cells.flat().filter((c) => c.count >= hm.minPosts)
+    .sort((x, y) => y.lift - x.lift).slice(0, 5)
+    .map((c) => ({ day: DAY[c.day], hours_local: hourRange(c.block, hm.blockHours), ...row(c) }));
+  const byLift = (x, y) => (y.count >= hm.minPosts) - (x.count >= hm.minPosts) || y.lift - x.lift;
+  const notes = [
+    `x_account_median here = each post's ${unit} ÷ the median of the ~30 posts around it in time (so account growth doesn't skew old vs. new slots), averaged per slot (geometric mean) and scaled so the account's average post = 1×, then pulled toward 1× when a slot has few posts. raw_x_account_median is the same without that pull. Only slots with ${hm.minPosts}+ posts are ranked.`
+  ];
+  if (!hm.postsWithTime) notes.push('No posts with a posting time yet.');
+  else if (hm.varietyIssue === 'concentrated') {
+    notes.push(`Not enough variety to compare times: the two busiest slots hold ${Math.round(hm.topTwoShare * 100)}% of ${hm.postsWithTime} dated posts. This shows when the account posts, not that other times would do worse.`);
+  } else if (hm.varietyIssue === 'thin') {
+    notes.push(`Too few posts per slot to compare times: ${hm.postsWithTime} dated posts, ${hm.rankedSlots} day × time slot(s) and ${hm.rankedHours} time block(s) with ${hm.minPosts}+ posts. Collect more posts before trusting these.`);
+  }
+  return {
+    posts_with_time: hm.postsWithTime,
+    best_posting_slots: slots,
+    best_days: hm.days.slice().sort(byLift).map((c) => ({ day: DAY[c.day], ...row(c) })),
+    best_hours: hm.hours.slice().sort(byLift).map((c) => ({ hours_local: hourRange(c.block, hm.blockHours), ...row(c) })),
+    enough_variety_to_compare: !hm.concentrated,
+    timing_note: notes.join(' ')
+  };
 }
 
 const groupRow = (label) => (g) => ({ [label]: g.key, posts: g.count, median_score: g.medianViews, x_median: round(g.lift) });
@@ -379,7 +410,7 @@ export function subredditSummary(lib, id) {
       first_post: iso(a.summary.firstPost),
       last_post: iso(a.summary.lastPost)
     },
-    best_posting_slots: bestSlots(a.heatmap).map(({ median, ...s }) => ({ ...s, median_score: median })),
+    ...postingTimes(a.heatmap, 'score'),
     timezone_note: 'Times use the computer\'s local time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone + '. Collected "top" posts only show what won; collect "new" too for a fairer time picture.',
     question_vs_statement: r.questions.map(groupRow('title')),
     title_length: r.titleLength.map(groupRow('words')),
@@ -457,7 +488,6 @@ export function accountSummary(lib, u) {
   const posts = enrichedPosts(lib, u);
   const reels = posts.filter(isVideo);
   const a = M.analyze(reels);
-  const slots = bestSlots(a.heatmap).map(({ median, ...s }) => ({ ...s, median_views: median }));
   return {
     account: accountRow(lib, u),
     summary: {
@@ -472,7 +502,7 @@ export function accountSummary(lib, u) {
       first_post: iso(a.summary.firstPost),
       last_post: iso(a.summary.lastPost)
     },
-    best_posting_slots: slots,
+    ...postingTimes(a.heatmap, 'views'),
     timezone_note: 'Times use the computer\'s local time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone,
     top_hashtags: a.hashtags.slice(0, 15).map((h) => ({ hashtag: '#' + h.key, posts: h.count, median_views: h.medianViews, x_account_median: round(h.lift) })),
     video_length: a.durations.map((d) => ({ bucket: d.key, posts: d.count, median_views: d.medianViews, x_account_median: round(d.lift) })),

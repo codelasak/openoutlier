@@ -261,6 +261,8 @@ select:hover, input[type="search"]:hover { border-color: var(--text-2); }
 .hm-best::after { content: ""; position: absolute; top: 2px; right: 2px; width: 5px; height: 5px; background: var(--lime); }
 .hm-s0 { background: var(--s0); } .hm-s1 { background: var(--s1); } .hm-s2 { background: var(--s2); }
 .hm-s3 { background: var(--s3); } .hm-s4 { background: var(--s4); } .hm-s5 { background: var(--s5); }
+/* Under the minimum posts to rank: shown, but faded and hatched so it doesn't read as a result. */
+.hm-thin { opacity: .45; background-image: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, var(--bg, #000) 35%, transparent) 3px 4px); }
 .hm-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-top: 8px; font-size: 11.5px; color: var(--muted); }
 .hm-legend > span:first-child { margin-right: 4px; }
 .hm-key { width: 14px; height: 10px; display: inline-block; }

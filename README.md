@@ -24,7 +24,7 @@ Most posts land near an account's median. A few get **2×, 5×, 10× that**. Tho
 - **Outliers, in one number.** Every post gets `views ÷ account median`. At 2× or more it gets a lime outlier badge (`9.0×`), and you can filter to outliers only.
 - **Viral Score (0–100).** `50 + 25 × log2(views ÷ median)`: 50 is a typical post, 75 is 2×, 100 is 4× or more.
 - **Sort what the apps won't sort.** Reels and TikTok videos by views, Viral Score, likes, comments, shares, saves, engagement, date or length. Reddit posts by score, comments, upvote ratio or comments per point.
-- **Best time to post.** A day × time heatmap of median views (or score) in your local time, with the strongest slot called out.
+- **Best time to post.** A day × time heatmap in your local time. Each post is compared with what the account was getting at the time (so growth doesn't make old slots look bad), slots with few posts are pulled toward 1×, and only slots with 8+ posts are ranked. It also scores days and times separately, shows each slot's share of posts, and warns when an account posts at too few times to compare.
 - **What works.** Hashtags, video length and sound (original vs. music) ranked by median views. On Reddit: questions vs. statements, title length, words and phrases, flair and post type.
 - **Compare Instagram ↔ TikTok.** Post the same videos on both? OpenOutlier pairs them and shows which platform did better relative to each account's own median.
 - **Library.** Every account you collect, in folders and tags, with a cross-account *Top posts* ranking, account pages and a Reddit *Mentions* inbox for keyword alerts.
@@ -76,7 +76,7 @@ Data is saved per account in `chrome.storage.local`. Delete it with **Clear** in
 |---|---|
 | **Sort reels** | by views, Viral Score, likes, comments, shares, engagement rate, date or length. Instagram itself can't sort a profile by views. |
 | **Outliers** | posts with ≥ 2× the profile's median views get a `2.4×` badge; filter to outliers only. |
-| **Best time to post** | day × time heatmap of median views, in your local time; the strongest slot is called out. |
+| **Best time to post** | day × time heatmap of era-adjusted lift (views ÷ the account's median at the time), in your local time; thin slots are faded and pulled toward 1×, best day and best time are scored separately, and a note says when there isn't enough variety to compare. |
 | **Hashtags** | ranked by the median views of the posts that use them. |
 | **Video length & audio** | median views by duration bucket; original audio vs. licensed music; top tracks. |
 | **Export** | CSV download, copy as a table for Google Sheets / Excel, or JSON. |
@@ -119,7 +119,7 @@ Instagram has renamed its view counter several times. `src/extract.js` checks `p
 |---|---|
 | Sort reels by views | Sort a subreddit's or user's posts by **score**, comments, upvote ratio, comments per score or date; filter by post type and flair. |
 | Outliers (× median) | How many times the subreddit's (or user's) **median score** a post got; same Viral Score formula. |
-| Best time to post | Day × time heatmap of median score. |
+| Best time to post | Day × time heatmap of era-adjusted score lift (same method as Instagram). |
 | Hashtags | **Title analysis**: question vs. statement, title length, words and two-word phrases that perform; **flair** and **post type** performance. |
 | Library | Subreddits and Reddit users sit in the same folders as Instagram and TikTok accounts. |
 
