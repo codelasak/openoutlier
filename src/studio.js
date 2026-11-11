@@ -231,6 +231,9 @@
         permalink: m.permalink || null,
         caption: str(m.caption),
         thumb: m.thumbnail_url || (m.media_type === 'IMAGE' ? m.media_url : null) || null,
+        // What the viewer plays or shows. Instagram's links expire after a few days; a refresh renews them.
+        mediaUrl: m.media_url || null,
+        video: m.media_type === 'VIDEO',
         takenAt: timeOf(m.timestamp),
         type: reel ? 'reel' : m.media_type === 'VIDEO' ? 'video' : m.media_type === 'CAROUSEL_ALBUM' ? 'carousel' : 'photo',
         views: n(ins.views),

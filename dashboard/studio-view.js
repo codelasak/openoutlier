@@ -17,12 +17,16 @@
 
     var server = {}; // { baseUrl, token }
     var data = null; // last snapshot from the worker
-    var ui = { loading: false, error: '', msg: '', formMsg: '', connMsg: '', showArchived: false, editing: null, busy: false, postMsg: '', postFormMsg: '', progress: '', showPublished: false };
+    var ui = { loading: false, error: '', msg: '', formMsg: '', connMsg: '', showArchived: false, editing: null, busy: false, postMsg: '', postFormMsg: '', progress: '', showPublished: false, postsAs: 'covers' };
     var draft = null; // automation form values while it is open
     var base = null;  // the campaign being edited (fields the form does not show)
     var connDraft = null;
     var postDraft = null; // publishing form values while it is open (holds the chosen File objects)
     var pollTimer = null;
+    var urlByKey = {}; // media key on the worker -> the public address it is served from
+    var mediaBase = ''; // "<worker>/media/", learned from the first file the worker lists
+    var blobUrls = []; // [{ file, url }] previews of files chosen in the form, freed when it closes
+    var viewer = null; // the open <dialog>, kept outside <main> so a re-render does not stop the video
 
     async function load() {
       var r = await chrome.storage.local.get(SERVER_KEY);
@@ -62,6 +66,7 @@
       var json = null;
       try { json = await res.json(); } catch (e) { /* not JSON */ }
       if (!res.ok || !json || !json.key) throw new Error((json && json.error) || 'The upload failed (HTTP ' + res.status + ').');
+      if (json.url) urlByKey[json.key] = json.url;
       return json.key;
     }
 
@@ -90,6 +95,13 @@
     async function loadPosts() {
       var r = await api('/api/posts');
       data.publish = { posts: r.posts || [], storage: r.storage !== false, limit: r.limit || null };
+      data.publish.posts.forEach(function (p) {
+        (p.media || []).forEach(function (m) {
+          if (!m.url) return;
+          urlByKey[m.key] = m.url;
+          if (!mediaBase && m.url.slice(-m.key.length) === m.key) mediaBase = m.url.slice(0, -m.key.length);
+        });
+      });
       watchPosts();
     }
 
@@ -274,25 +286,191 @@
           tile('Profile link taps', t.profile_links_taps)));
     }
 
+    // ---- covers, the rail and the viewer ---------------------------------------------
+    function keyUrl(key) { return urlByKey[key] || (mediaBase || server.baseUrl + '/media/') + key; }
+
+    function fileUrl(file) {
+      var hit = blobUrls.filter(function (b) { return b.file === file; })[0];
+      if (!hit) { hit = { file: file, url: URL.createObjectURL(file) }; blobUrls.push(hit); }
+      return hit.url;
+    }
+    function dropBlobUrls() {
+      blobUrls.forEach(function (b) { URL.revokeObjectURL(b.url); });
+      blobUrls = [];
+    }
+    function closePostForm() { postDraft = null; ui.postFormMsg = ''; dropBlobUrls(); }
+
+    /** The files of a queued post as slides: { type: 'image' | 'video', src, poster }. */
+    function queueSlides(p) {
+      var cover = p.kind === 'reel' && p.options && p.options.cover_key ? keyUrl(p.options.cover_key) : null;
+      return (p.media || []).map(function (m, i) { return { type: m.type, src: m.url || keyUrl(m.key), poster: i === 0 ? cover : null }; });
+    }
+
+    /** A published post as slides. The API gives one file per post (a carousel's first item). */
+    function rowSlides(r) {
+      if (r.video && r.mediaUrl) return [{ type: 'video', src: r.mediaUrl, poster: r.thumb }];
+      var src = r.thumb || r.mediaUrl;
+      return src ? [{ type: 'image', src: src, poster: null }] : [];
+    }
+
+    function blank(label) { return h('span', { class: 's-blank', text: label || 'No preview' }); }
+
+    /** A still for one slide: the cover or image, or the video's first frame. */
+    function still(slide) {
+      if (!slide || !slide.src) return blank();
+      var el;
+      if (slide.type === 'video' && !slide.poster) {
+        el = h('video', { src: slide.src + '#t=0.1', preload: 'metadata', playsinline: true, tabindex: '-1', 'aria-hidden': 'true' });
+        el.muted = true;
+      } else {
+        el = h('img', { src: slide.poster || slide.src, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' });
+      }
+      el.addEventListener('error', function () { el.replaceWith(blank('Preview unavailable')); });
+      return el;
+    }
+
+    /**
+     * Watch or page through the files of a post. item = { slides, label, title, caption, lines, link }.
+     * A <dialog> on <body>: it survives re-renders of the page, traps focus and closes on Esc.
+     */
+    function openViewer(item, start) {
+      if (viewer) viewer.close();
+      var at = Math.min(Math.max(start || 0, 0), item.slides.length - 1);
+      var many = item.slides.length > 1;
+      var stage = h('div', { class: 's-v-media' });
+      var count = h('span', { class: 's-v-count', 'aria-live': 'polite' });
+      var prev = h('button', { class: 's-v-nav s-v-prev', type: 'button', 'aria-label': 'Previous', onclick: function () { show(at - 1); } }, '‹');
+      var next = h('button', { class: 's-v-nav s-v-next', type: 'button', 'aria-label': 'Next', onclick: function () { show(at + 1); } }, '›');
+
+      function show(i) {
+        at = (i + item.slides.length) % item.slides.length;
+        var s = item.slides[at];
+        var el;
+        if (s.type === 'video') {
+          el = h('video', { src: s.src, poster: s.poster || null, controls: true, autoplay: true, playsinline: true });
+        } else {
+          el = h('img', { src: s.src, alt: item.title || '', referrerpolicy: 'no-referrer' });
+        }
+        el.addEventListener('error', function () {
+          stage.textContent = '';
+          stage.appendChild(h('p', { class: 's-v-gone' },
+            item.link ? 'This file could not be loaded here. Refresh the page for a new link, or open it on Instagram.' : 'This file is no longer stored on the worker.'));
+        });
+        stage.textContent = '';
+        stage.appendChild(el);
+        count.textContent = many ? (at + 1) + ' / ' + item.slides.length : '';
+      }
+
+      var d = h('dialog', { class: 's-viewer', 'aria-label': item.title || 'Preview' },
+        h('div', { class: 's-v-stage' }, stage, many ? [prev, next, count] : null),
+        h('div', { class: 's-v-side' },
+          h('div', { class: 's-v-top' },
+            h('span', { class: 'chip s-kind', text: item.label }),
+            h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', onclick: function () { d.close(); } }, '×')),
+          h('h2', { text: item.title }),
+          (item.lines || []).map(function (t) { return h('p', { class: 's-v-line', text: t }); }),
+          item.stats ? h('dl', { class: 's-stats' }, item.stats) : null,
+          item.caption ? h('p', { class: 's-v-cap', text: item.caption }) : null,
+          item.link ? h('a', { class: 'btn', href: item.link, target: '_blank', rel: 'noopener', text: 'Open on Instagram ↗' }) : null));
+      d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+      d.addEventListener('keydown', function (e) {
+        if (!many || /^(VIDEO|INPUT)$/.test(e.target.tagName)) return;
+        if (e.key === 'ArrowLeft') show(at - 1);
+        if (e.key === 'ArrowRight') show(at + 1);
+      });
+      d.addEventListener('close', function () { d.remove(); if (viewer === d) viewer = null; });
+      document.body.appendChild(d);
+      viewer = d;
+      show(at);
+      d.showModal();
+    }
+
+    /** The button that carries a cover. `over` = elements laid on top of the picture. */
+    function coverButton(item, over) {
+      var slides = item.slides;
+      var first = slides[0];
+      return h('button', {
+        class: 's-cover', type: 'button',
+        'aria-label': (first && first.type === 'video' ? 'Watch: ' : 'View: ') + item.title,
+        onclick: function () {
+          if (slides.length) openViewer(item, 0);
+          else if (item.link) window.open(item.link, '_blank', 'noopener');
+        }
+      },
+        still(first),
+        first && first.type === 'video' ? h('span', { class: 's-play', 'aria-hidden': 'true' }) : null,
+        over);
+    }
+
+    /** One row of cards that scrolls sideways, with arrows when it does not fit. */
+    function rail(id, label, cards) {
+      var track = h('ul', { class: 's-rail', 'data-rail': id, 'aria-label': label }, cards);
+      var smooth = !(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      function step(dir) { track.scrollBy({ left: dir * Math.max(200, track.clientWidth * 0.8), behavior: smooth ? 'smooth' : 'auto' }); }
+      var prev = h('button', { class: 's-rail-nav s-rail-prev', type: 'button', 'aria-label': 'Scroll back', onclick: function () { step(-1); } }, '‹');
+      var next = h('button', { class: 's-rail-nav s-rail-next', type: 'button', 'aria-label': 'Scroll forward', onclick: function () { step(1); } }, '›');
+      function sync() {
+        prev.hidden = track.scrollLeft <= 2;
+        next.hidden = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+      }
+      track.addEventListener('scroll', sync, { passive: true });
+      track.sync = sync;
+      if (root.ResizeObserver) new ResizeObserver(sync).observe(track);
+      prev.hidden = next.hidden = true;
+      return h('div', { class: 's-railwrap' }, track, prev, next);
+    }
+
     // ---- posts ---------------------------------------------------------------------
     function automationOn(mediaId) {
       return data.campaigns.filter(function (c) { return c.media_id === mediaId; })[0] || null;
     }
 
-    function postsCard() {
-      var card = h('section', { class: 'm-card' },
-        h('h2', { text: 'Posts (' + data.rows.length + ')' }),
-        h('p', { class: 'muted', text: 'Official numbers from Instagram, also saved to the library under @' + data.status.username + '. Skip rate: viewers who swiped away in the first seconds.' }));
-      if (!data.rows.length) {
-        card.appendChild(h('p', { class: 'muted', text: 'No posts yet.' }));
-        return card;
-      }
+    function automationControl(p) {
+      var c = automationOn(p.id);
+      return c
+        ? h('button', { class: 'chip s-chip' + (c.active ? '' : ' off'), type: 'button', title: 'Edit this automation' + (c.active ? '' : ' (paused)'), onclick: function () { edit(c); } }, (c.keywords || []).join(', '))
+        : h('button', { class: 'btn btn-ghost s-add', type: 'button', onclick: function () { create_(p.id); } }, '+ Automation');
+    }
+
+    function stat(label, value) { return h('div', null, h('dt', { text: label }), h('dd', { text: value })); }
+    function count(v) { return v === null || v === undefined ? '–' : fmt(v); }
+
+    function postStats(p) {
+      return [
+        stat('Reach', count(p.reach)), stat('Avg watch', S.seconds(p.avgWatchMs)),
+        stat('Skip rate', S.percent(p.skipRate)), stat('Likes', count(p.likes)),
+        stat('Comments', count(p.comments)), stat('Saves', count(p.saves)),
+        stat('Shares', count(p.shares))
+      ];
+    }
+
+    function postCard(p) {
+      var first = p.caption.split('\n')[0] || '(no caption)';
+      var day = p.takenAt ? new Date(p.takenAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
+      var kind = p.type.charAt(0).toUpperCase() + p.type.slice(1);
+      var item = {
+        slides: rowSlides(p), label: kind, title: first, caption: p.caption, link: p.permalink,
+        lines: [p.takenAt ? 'Posted ' + new Date(p.takenAt).toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : null].filter(Boolean),
+        stats: [stat('Views', count(p.views))].concat(postStats(p))
+      };
+      return h('li', { class: 's-card s-card-post' },
+        coverButton(item, [
+          h('span', { class: 's-tag', text: kind + (day ? ' · ' + day : '') }),
+          h('span', { class: 's-stamp' }, h('b', { text: count(p.views) }), h('small', { text: 'views' }))
+        ]),
+        h('div', { class: 's-card-body' },
+          p.permalink ? h('a', { class: 's-card-title', href: p.permalink, target: '_blank', rel: 'noopener', title: p.takenAt ? new Date(p.takenAt).toLocaleString() : null, text: first }) : h('b', { class: 's-card-title', text: first }),
+          p.error ? h('small', { class: 'm-warn', text: 'No insights: ' + p.error }) : null,
+          h('dl', { class: 's-stats' }, postStats(p))),
+        h('div', { class: 's-card-actions' }, automationControl(p)));
+    }
+
+    function postsTable() {
       var cols = ['Posted', 'Post', 'Views', 'Reach', 'Avg watch', 'Skip rate', 'Likes', 'Comments', 'Saves', 'Shares', 'Automation'];
-      card.appendChild(h('div', { class: 's-scroll' }, h('table', { class: 'cmp-table s-table' },
+      return h('div', { class: 's-scroll' }, h('table', { class: 'cmp-table s-table' },
         h('thead', null, h('tr', null, cols.map(function (c, i) { return h('th', { class: i > 1 && i < 10 ? 'num' : null, text: c }); }))),
         h('tbody', null, data.rows.map(function (p) {
-          var c = automationOn(p.id);
-          function num(v) { return h('td', { class: 'num', text: v === null ? '–' : fmt(v) }); }
+          function num(v) { return h('td', { class: 'num', text: count(v) }); }
           return h('tr', null,
             h('td', { class: 's-date', title: p.takenAt ? new Date(p.takenAt).toLocaleString() : null, text: p.takenAt ? new Date(p.takenAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '–' }),
             h('td', { class: 's-cap' },
@@ -302,16 +480,27 @@
             h('td', { class: 'num', text: S.seconds(p.avgWatchMs) }),
             h('td', { class: 'num', text: S.percent(p.skipRate) }),
             num(p.likes), num(p.comments), num(p.saves), num(p.shares),
-            h('td', null, c
-              ? h('button', { class: 'chip s-chip' + (c.active ? '' : ' off'), type: 'button', title: 'Edit this automation' + (c.active ? '' : ' (paused)'), onclick: function () { edit(c); } }, (c.keywords || []).join(', '))
-              : h('button', { class: 'btn btn-ghost s-add', type: 'button', onclick: function () { create_(p.id); } }, '+ Automation')));
-        })))));
+            h('td', null, automationControl(p)));
+        }))));
+    }
+
+    function postsCard() {
+      function seg(value, label) {
+        return h('button', { type: 'button', 'aria-pressed': ui.postsAs === value ? 'true' : 'false', onclick: function () { ui.postsAs = value; env.rerender(); } }, label);
+      }
+      var card = h('section', { class: 'm-card' },
+        h('div', { class: 'm-inbox-head' },
+          h('h2', { text: 'Posts (' + data.rows.length + ')' }),
+          data.rows.length ? h('div', { class: 's-seg', role: 'group', 'aria-label': 'Show posts as' }, seg('covers', 'Covers'), seg('table', 'Table')) : null),
+        h('p', { class: 'muted', text: 'Official numbers from Instagram, also saved to the library under @' + data.status.username + '. Skip rate: viewers who swiped away in the first seconds.' }));
+      if (!data.rows.length) card.appendChild(h('p', { class: 'muted', text: 'No posts yet.' }));
+      else card.appendChild(ui.postsAs === 'table' ? postsTable() : rail('posts', 'Your posts, newest first', data.rows.map(postCard)));
       return card;
     }
 
     // ---- automations -------------------------------------------------------------------
     function edit(c) {
-      postDraft = null;
+      closePostForm();
       draft = S.draftFromCampaign(c);
       base = c;
       ui.editing = c.campaign_id;
@@ -320,7 +509,7 @@
       window.scrollTo(0, 0);
     }
     function create_(mediaId) {
-      postDraft = null;
+      closePostForm();
       draft = S.defaultDraft(mediaId);
       if (!mediaId && data.media.length) draft.attach = 'post';
       base = null;
@@ -496,6 +685,7 @@
     function openPostForm(post) {
       draft = null; base = null; ui.editing = null;
       ui.postMsg = '';
+      dropBlobUrls();
       postDraft = post ? S.postDraftFromPost(post, Date.now()) : S.defaultPostDraft();
       ui.postFormMsg = '';
       ui.progress = '';
@@ -527,32 +717,41 @@
       return c ? (c.name || c.campaign_id) : null;
     }
 
-    function postRow(p) {
+    function queueCard(p) {
       var first = String(p.caption || '').split('\n')[0];
+      var title = first || (p.kind === 'story' ? 'Story' : '(no caption)');
       var auto = p.options && p.options.campaign_id ? campaignName(p.options.campaign_id) : null;
-      var line;
-      if (p.status === 'working') line = 'Publishing now…';
-      else if (p.status === 'scheduled') line = p.scheduled_at * 1000 <= Date.now() ? 'Going out within a minute' : when(p.scheduled_at) + ' · ' + ago(p.scheduled_at * 1000);
-      else if (p.status === 'published') line = 'Published ' + when(p.published_at || p.scheduled_at);
-      else line = 'Failed · was due ' + when(p.scheduled_at);
+      var due = p.scheduled_at * 1000 <= Date.now();
+      var stamp, sub = null;
+      if (p.status === 'working') stamp = ['Publishing', 'right now…'];
+      else if (p.status === 'scheduled') { stamp = due ? ['Going out', 'within a minute'] : ['Scheduled', when(p.scheduled_at)]; if (!due) sub = ago(p.scheduled_at * 1000); }
+      else if (p.status === 'published') stamp = ['Published', when(p.published_at || p.scheduled_at)];
+      else stamp = ['Failed', 'was due ' + when(p.scheduled_at)];
       var body = { id: p.id, kind: p.kind, caption: p.caption, media: p.media.map(function (m) { return { key: m.key }; }), options: p.options, scheduled_at: 0 };
-      return h('li', { class: p.status === 'published' ? 'off' : null },
-        h('span', { class: 'chip s-kind', text: S.postLabel(p) }),
-        h('div', { class: 'm-w-main' },
-          h('b', { text: first || (p.kind === 'story' ? 'Story' : '(no caption)') }),
-          h('span', { class: p.status === 'failed' ? 'm-error' : 'muted', text: line }),
+      var item = {
+        slides: queueSlides(p), label: S.postLabel(p), title: title, caption: p.caption, link: p.permalink,
+        lines: [stamp.join(' ') + (sub ? ' · ' + sub : ''), auto ? 'Then attaches: ' + auto : null, p.error].filter(Boolean)
+      };
+      return h('li', { class: 's-card is-' + p.status },
+        coverButton(item, [
+          h('span', { class: 's-tag', text: S.postLabel(p) }),
+          h('span', { class: 's-stamp' }, h('small', { text: stamp[0] }), h('b', { text: stamp[1] }))
+        ]),
+        h('div', { class: 's-card-body' },
+          h('b', { class: 's-card-title', text: title }),
+          sub ? h('span', { class: 'muted', text: sub }) : null,
           auto ? h('span', { class: 'muted', text: 'Then attaches: ' + auto }) : null,
           p.error ? h('span', { class: p.status === 'failed' ? 'm-error' : 'm-warn', text: p.error }) : null),
-        h('div', { class: 'm-w-actions s-flat' },
+        h('div', { class: 's-card-actions' },
           p.permalink ? h('a', { class: 'btn btn-ghost', href: p.permalink, target: '_blank', rel: 'noopener', text: 'Open ↗' }) : null,
           p.status === 'scheduled' || p.status === 'failed' ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () { openPostForm(p); } }, p.status === 'failed' ? 'Edit & retry' : 'Edit') : null,
-          p.status === 'scheduled' && p.scheduled_at * 1000 > Date.now() ? h('button', { class: 'btn btn-ghost', type: 'button', disabled: ui.busy, onclick: function () {
+          p.status === 'scheduled' && !due ? h('button', { class: 'btn btn-ghost', type: 'button', disabled: ui.busy, onclick: function () {
             if (!confirm('Publish this ' + S.postLabel(p).toLowerCase() + ' to Instagram now?')) return;
             changePost(function () { return api('/api/posts', body); }, 'Going out within a minute.');
           } }, 'Publish now') : null,
           p.status !== 'working' ? h('button', { class: 'btn btn-ghost' + (p.status === 'published' ? '' : ' btn-danger'), type: 'button', disabled: ui.busy, onclick: function () {
             if (p.status !== 'published' && !confirm('Remove this ' + S.postLabel(p).toLowerCase() + ' from the queue? It will not be published.')) return;
-            if (postDraft && postDraft.id === p.id) postDraft = null;
+            if (postDraft && postDraft.id === p.id) closePostForm();
             changePost(function () { return api('/api/posts/delete', { id: p.id }); }, p.status === 'published' ? '' : 'Removed.');
           } }, p.status === 'published' ? 'Hide' : 'Delete') : null));
     }
@@ -570,12 +769,12 @@
       if (pub.error) card.appendChild(h('p', { class: 'm-warn', text: 'This worker cannot publish yet: ' + pub.error }));
       else if (!pub.storage) card.appendChild(h('p', { class: 'm-warn', text: 'Publishing needs file storage on the worker: enable R2 on the Cloudflare account, create the bucket and deploy (see wrangler.toml).' }));
       card.appendChild(h('p', { class: 'm-msg', 'aria-live': 'polite', text: ui.postMsg }));
-      if (queue.length) card.appendChild(h('ul', { class: 'm-watches' }, queue.map(postRow)));
+      if (queue.length) card.appendChild(rail('queue', 'Queued posts, next to go out first', queue.map(queueCard)));
       else if (pub.storage) card.appendChild(h('p', { class: 'muted', text: 'Nothing queued.' }));
       if (done.length) {
         card.appendChild(h('button', { class: 'btn btn-ghost', type: 'button', 'aria-expanded': ui.showPublished ? 'true' : 'false', onclick: function () { ui.showPublished = !ui.showPublished; env.rerender(); } },
           (ui.showPublished ? 'Hide' : 'Show') + ' published from here (' + done.length + ')'));
-        if (ui.showPublished) card.appendChild(h('ul', { class: 'm-watches' }, done.map(postRow)));
+        if (ui.showPublished) card.appendChild(rail('done', 'Published from here', done.map(queueCard)));
       }
       return card;
     }
@@ -596,9 +795,29 @@
       var files = h('input', { type: 'file', name: 'p-files', accept: accept, multiple: multiple });
       files.addEventListener('change', function () { d.files = Array.prototype.slice.call(files.files); ui.postFormMsg = ''; env.rerender(); });
       var chosen = S.postItems(d);
-      var fileList = chosen.length ? h('ol', { class: 's-files' }, chosen.map(function (i) {
-        return h('li', { class: i.error ? 'm-error' : null, text: i.file ? i.file.name + ' · ' + sizeText(i.file.size) + (i.error ? ' · cannot be published' : '') : 'Already uploaded ' + i.type });
+      var coverUrl = d.kind !== 'reel' ? null : d.cover ? fileUrl(d.cover) : d.cover_key ? keyUrl(d.cover_key) : null;
+      // Only what can be shown: a file of a type Instagram does not take has no slide.
+      var shown = chosen.filter(function (i) { return !i.error; });
+      var preview = {
+        label: S.postLabel({ kind: d.kind, media: shown }), title: isNew ? 'New post' : 'Edit post', caption: d.kind === 'story' ? '' : d.caption,
+        slides: shown.map(function (i, n) { return { type: i.type, src: i.file ? fileUrl(i.file) : keyUrl(i.key), poster: n === 0 ? coverUrl : null }; })
+      };
+      var fileList = chosen.length ? h('ol', { class: 's-attach' }, chosen.map(function (i, n) {
+        var name = i.file ? i.file.name : 'Uploaded ' + i.type;
+        var note = i.error ? 'Cannot be published' : i.file ? sizeText(i.file.size) : 'On the worker';
+        var at = shown.indexOf(i);
+        return h('li', { class: i.error ? 'bad' : null, title: name },
+          i.error ? h('span', { class: 's-attach-pic' }, blank('?'))
+            : h('button', { class: 's-attach-pic', type: 'button', 'aria-label': (i.type === 'video' ? 'Watch ' : 'View ') + name, onclick: function () { openViewer(preview, at); } },
+              still(preview.slides[at]),
+              i.type === 'video' ? h('span', { class: 's-play', 'aria-hidden': 'true' }) : null,
+              chosen.length > 1 ? h('span', { class: 's-attach-n', text: String(n + 1) }) : null),
+          h('span', { class: 's-attach-name', text: name }),
+          h('small', { class: i.error ? 'm-error' : null, text: note }));
       })) : null;
+      var coverPic = coverUrl ? h('button', { class: 's-attach-pic s-attach-cover', type: 'button', 'aria-label': 'View the cover', onclick: function () {
+        openViewer({ label: 'Cover', title: 'Reel cover', slides: [{ type: 'image', src: coverUrl }] }, 0);
+      } }, still({ type: 'image', src: coverUrl })) : null;
 
       var cover = h('input', { type: 'file', name: 'p-cover', accept: 'image/jpeg,image/png,image/webp' });
       cover.addEventListener('change', function () { d.cover = cover.files[0] || null; env.rerender(); });
@@ -652,7 +871,7 @@
           await api('/api/posts', S.postPayload(d, keys, coverKey));
           await loadPosts();
           ui.postMsg = d.when === 'now' ? 'Queued. It goes out within a minute.' : 'Scheduled for ' + when(Date.parse(d.at) / 1000) + '.';
-          postDraft = null;
+          closePostForm();
         } catch (e) {
           ui.postFormMsg = e.message;
         }
@@ -671,8 +890,10 @@
               : 'Up to 20, in the order chosen; all are cropped to the first one’s shape. PNG and WebP are converted to JPEG.' })),
           fileList,
           !isNew && !d.files.length ? h('small', { class: 'muted', text: 'Choose files only to replace the uploaded ones.' }) : null,
-          d.kind === 'reel' ? h('label', { class: 'm-field' }, h('span', { text: 'Cover image (optional)' }), cover,
-            h('small', { text: d.cover ? d.cover.name : d.cover_key ? 'A cover is already uploaded.' : 'Without one Instagram uses the first frame.' })) : null,
+          d.kind === 'reel' ? h('div', { class: 's-cover-field' },
+            coverPic,
+            h('label', { class: 'm-field' }, h('span', { text: 'Cover image (optional)' }), cover,
+              h('small', { text: d.cover ? d.cover.name : d.cover_key ? 'A cover is already uploaded. Choose a file to replace it.' : 'Without one Instagram uses the first frame.' }))) : null,
           d.kind !== 'story' ? h('label', { class: 'm-field' }, h('span', { text: 'Caption' }), caption, counter) : null,
           d.kind === 'reel' ? h('label', { class: 'm-check' }, feed, 'Also show it in the profile grid') : null,
           d.kind !== 'story' ? h('label', { class: 'm-field' }, h('span', { text: 'Attach an automation' }), auto,
@@ -681,7 +902,7 @@
           d.when === 'later' ? h('label', { class: 'm-field' }, h('span', { text: 'Date and time' }), at, h('small', { text: 'Your local time. The worker publishes within a minute of it.' })) : null,
           h('div', { class: 'm-actions' },
             h('button', { class: 'btn btn-primary', type: 'button', disabled: ui.busy, onclick: save }, ui.busy ? (ui.progress || 'Working…') : d.when === 'later' ? 'Schedule' : 'Publish now'),
-            h('button', { class: 'btn btn-ghost', type: 'button', disabled: ui.busy, onclick: function () { postDraft = null; ui.postFormMsg = ''; env.rerender(); } }, 'Cancel'))),
+            h('button', { class: 'btn btn-ghost', type: 'button', disabled: ui.busy, onclick: function () { closePostForm(); env.rerender(); } }, 'Cancel'))),
         h('p', { class: 'm-msg m-error', 'aria-live': 'polite', text: ui.postFormMsg }));
     }
 
@@ -691,6 +912,8 @@
       var focusName = active && main.contains(active) ? active.getAttribute('name') : null;
       var caret = null;
       try { caret = focusName && active.selectionStart != null ? active.selectionStart : null; } catch (e) { /* checkbox, select */ }
+      var scrolled = {};
+      Array.prototype.forEach.call(main.querySelectorAll('[data-rail]'), function (el) { scrolled[el.getAttribute('data-rail')] = el.scrollLeft; });
       main.classList.remove('has-panel');
       main.textContent = '';
 
@@ -720,6 +943,13 @@
         var form = postDraft ? postFormCard() : draft ? formCard() : null;
         main.appendChild(form ? h('div', { class: 'm-grid s-grid' }, lists, h('div', { class: 'm-col m-side' }, form)) : lists);
       }
+
+      // A re-render (the queue is re-read every 15 s while something goes out) keeps each rail where it was.
+      Array.prototype.forEach.call(main.querySelectorAll('[data-rail]'), function (el) {
+        var x = scrolled[el.getAttribute('data-rail')];
+        if (x) el.scrollLeft = x;
+        el.sync();
+      });
 
       if (focusName) {
         var again = main.querySelector('[name="' + focusName + '"]');
