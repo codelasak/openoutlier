@@ -217,6 +217,18 @@ test('post payload: now is 0, a schedule is the local time as unix seconds, opti
   assert.deepEqual(S.postPayload(Object.assign({}, d, { kind: 'story' }), ['k1'], 'cover1'), { kind: 'story', caption: '', media: [{ key: 'k1' }], options: {}, scheduled_at: 0 });
 });
 
+test('a TikTok draft is one video sent with platform "tiktok", and edits round-trip', () => {
+  const d = Object.assign(S.defaultPostDraft(), { kind: 'tiktok', caption: ' Hook ', campaign_id: 'ignored', media: [{ key: 'v1', type: 'video' }] });
+  assert.equal(S.postProblem(d, NOW_MS), null);
+  assert.deepEqual(S.postPayload(d, ['v1'], 'cover1'), {
+    platform: 'tiktok', kind: 'reel', caption: 'Hook', media: [{ key: 'v1' }], options: { tiktok_mode: 'inbox' }, scheduled_at: 0
+  });
+  assert.equal(S.postProblem(Object.assign({}, d, { media: [{ key: 'i1', type: 'image' }] }), NOW_MS), 'A TikTok post is exactly one video.');
+  const stored = { id: 't1', platform: 'tiktok', kind: 'reel', caption: 'Hook', media: [{ key: 'v1', type: 'video' }], options: { tiktok_mode: 'inbox' }, scheduled_at: NOW_MS / 1000 + 600 };
+  assert.equal(S.postDraftFromPost(stored, NOW_MS).kind, 'tiktok');
+  assert.equal(S.postLabel(stored), 'TikTok');
+});
+
 test('editing a queued post keeps its stored files until new ones are chosen', () => {
   const post = { id: 'p1', kind: 'post', caption: 'Slides', media: [{ key: 'k1', type: 'image', url: 'u' }, { key: 'k2', type: 'video', url: 'u' }], options: { campaign_id: 'c' }, scheduled_at: NOW_MS / 1000 + 600 };
   const d = S.postDraftFromPost(post, NOW_MS);

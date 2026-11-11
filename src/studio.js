@@ -312,7 +312,8 @@
   var MAX_CAROUSEL = 20;
   var MAX_IMAGE_BYTES = 8 * 1024 * 1024;
   var MAX_VIDEO_BYTES = 95 * 1024 * 1024;
-  var KIND_NAMES = { reel: 'Reel', post: 'Post', story: 'Story' };
+  // 'tiktok' is a draft-only kind: one video sent to TikTok (platform "tiktok" on the worker).
+  var KIND_NAMES = { reel: 'Reel', post: 'Post', story: 'Story', tiktok: 'TikTok' };
 
   /**
    * What a chosen file is to the publisher: { type: 'image' | 'video', convert } or { error }.
@@ -346,7 +347,7 @@
     var d = defaultPostDraft();
     var o = post.options || {};
     d.id = post.id;
-    d.kind = KIND_NAMES[post.kind] ? post.kind : 'reel';
+    d.kind = post.platform === 'tiktok' ? 'tiktok' : KIND_NAMES[post.kind] ? post.kind : 'reel';
     d.caption = str(post.caption);
     d.media = (post.media || []).map(function (m) { return { key: m.key, type: m.type }; });
     d.cover_key = str(o.cover_key);
@@ -374,8 +375,9 @@
     var items = postItems(d);
     var bad = items.filter(function (i) { return i.error; })[0];
     if (bad) return bad.error;
-    if (!items.length) return 'Choose the ' + (d.kind === 'reel' ? 'video' : d.kind === 'story' ? 'image or video' : 'images') + ' to publish.';
+    if (!items.length) return 'Choose the ' + (d.kind === 'reel' || d.kind === 'tiktok' ? 'video' : d.kind === 'story' ? 'image or video' : 'images') + ' to publish.';
     if (d.kind === 'reel' && (items.length !== 1 || items[0].type !== 'video')) return 'A reel is exactly one video.';
+    if (d.kind === 'tiktok' && (items.length !== 1 || items[0].type !== 'video')) return 'A TikTok post is exactly one video.';
     if (d.kind === 'story' && items.length !== 1) return 'A story is exactly one image or video. Schedule several stories one by one.';
     if (d.kind === 'post') {
       if (items.length > MAX_CAROUSEL) return 'A carousel holds at most ' + MAX_CAROUSEL + ' items.';
@@ -385,7 +387,7 @@
       var c = fileInfo(d.cover);
       if (c.error || c.type !== 'image') return 'The cover must be an image.';
     }
-    if (d.kind !== 'story' && str(d.caption).trim().length > MAX_CAPTION) return 'The caption is ' + str(d.caption).trim().length + ' characters; Instagram allows ' + MAX_CAPTION + '.';
+    if (d.kind !== 'story' && str(d.caption).trim().length > MAX_CAPTION) return 'The caption is ' + str(d.caption).trim().length + ' characters; ' + (d.kind === 'tiktok' ? 'TikTok' : 'Instagram') + ' allows ' + MAX_CAPTION + '.';
     if (d.when === 'later') {
       var t = Date.parse(str(d.at));
       if (!isFinite(t)) return 'Choose the date and time to publish.';
@@ -396,6 +398,18 @@
 
   /** The body for POST /api/posts once every file has a key on the worker. */
   function postPayload(d, mediaKeys, coverKey) {
+    if (d.kind === 'tiktok') {
+      var tt = {
+        platform: 'tiktok',
+        kind: 'reel',
+        caption: str(d.caption).trim(),
+        media: mediaKeys.slice(0, 1).map(function (k) { return { key: k }; }),
+        options: { tiktok_mode: 'inbox' },
+        scheduled_at: d.when === 'later' ? Math.floor(Date.parse(d.at) / 1000) : 0
+      };
+      if (d.id) tt.id = d.id;
+      return tt;
+    }
     var body = {
       kind: d.kind,
       caption: d.kind === 'story' ? '' : str(d.caption).trim(),
@@ -414,6 +428,7 @@
 
   /** "Reel", "Carousel (3)", "Photo", "Story". */
   function postLabel(post) {
+    if (post.platform === 'tiktok' || post.kind === 'tiktok') return 'TikTok';
     var n = (post.media || []).length;
     if (post.kind === 'post') return n > 1 ? 'Carousel (' + n + ')' : 'Photo';
     return KIND_NAMES[post.kind] || post.kind;

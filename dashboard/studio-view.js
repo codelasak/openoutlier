@@ -94,7 +94,7 @@
 
     async function loadPosts() {
       var r = await api('/api/posts');
-      data.publish = { posts: r.posts || [], storage: r.storage !== false, limit: r.limit || null };
+      data.publish = { posts: r.posts || [], storage: r.storage !== false, limit: r.limit || null, tiktok: r.tiktok || null };
       data.publish.posts.forEach(function (p) {
         (p.media || []).forEach(function (m) {
           if (!m.url) return;
@@ -725,9 +725,9 @@
       var stamp, sub = null;
       if (p.status === 'working') stamp = ['Publishing', 'right now…'];
       else if (p.status === 'scheduled') { stamp = due ? ['Going out', 'within a minute'] : ['Scheduled', when(p.scheduled_at)]; if (!due) sub = ago(p.scheduled_at * 1000); }
-      else if (p.status === 'published') stamp = ['Published', when(p.published_at || p.scheduled_at)];
+      else if (p.status === 'published') stamp = [p.platform === 'tiktok' && !p.permalink ? 'In TikTok inbox' : 'Published', when(p.published_at || p.scheduled_at)];
       else stamp = ['Failed', 'was due ' + when(p.scheduled_at)];
-      var body = { id: p.id, kind: p.kind, caption: p.caption, media: p.media.map(function (m) { return { key: m.key }; }), options: p.options, scheduled_at: 0 };
+      var body = { id: p.id, platform: p.platform || 'instagram', kind: p.kind, caption: p.caption, media: p.media.map(function (m) { return { key: m.key }; }), options: p.options, scheduled_at: 0 };
       var item = {
         slides: queueSlides(p), label: S.postLabel(p), title: title, caption: p.caption, link: p.permalink,
         lines: [stamp.join(' ') + (sub ? ' · ' + sub : ''), auto ? 'Then attaches: ' + auto : null, p.error].filter(Boolean)
@@ -746,7 +746,7 @@
           p.permalink ? h('a', { class: 'btn btn-ghost', href: p.permalink, target: '_blank', rel: 'noopener', text: 'Open ↗' }) : null,
           p.status === 'scheduled' || p.status === 'failed' ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () { openPostForm(p); } }, p.status === 'failed' ? 'Edit & retry' : 'Edit') : null,
           p.status === 'scheduled' && !due ? h('button', { class: 'btn btn-ghost', type: 'button', disabled: ui.busy, onclick: function () {
-            if (!confirm('Publish this ' + S.postLabel(p).toLowerCase() + ' to Instagram now?')) return;
+            if (!confirm(p.platform === 'tiktok' ? 'Send this video to your TikTok inbox now?' : 'Publish this ' + S.postLabel(p).toLowerCase() + ' to Instagram now?')) return;
             changePost(function () { return api('/api/posts', body); }, 'Going out within a minute.');
           } }, 'Publish now') : null,
           p.status !== 'working' ? h('button', { class: 'btn btn-ghost' + (p.status === 'published' ? '' : ' btn-danger'), type: 'button', disabled: ui.busy, onclick: function () {
@@ -785,10 +785,12 @@
       var d = postDraft;
       var isNew = !d.id;
       var multiple = d.kind === 'post';
-      var accept = d.kind === 'reel' ? 'video/mp4,video/quicktime' : 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime';
+      var isTikTok = d.kind === 'tiktok';
+      var accept = d.kind === 'reel' || isTikTok ? 'video/mp4,video/quicktime' : 'image/jpeg,image/png,image/webp,video/mp4,video/quicktime';
 
       function pd(key, el, rerender) { return function () { d[key] = el.type === 'checkbox' ? el.checked : el.value; if (rerender) env.rerender(); }; }
       var kind = h('select', { name: 'p-kind' }, [['reel', 'Reel (one video)'], ['post', 'Post (a photo, or a carousel of photos and videos)'], ['story', 'Story (one photo or video, gone after 24 hours)']]
+        .concat(data.publish && data.publish.tiktok && data.publish.tiktok.connected ? [['tiktok', 'TikTok (one video, lands in your TikTok inbox as a draft)']] : [])
         .map(function (o) { return h('option', { value: o[0], text: o[1], selected: d.kind === o[0] }); }));
       kind.addEventListener('change', pd('kind', kind, true));
 
@@ -843,7 +845,7 @@
       async function save() {
         var problem = S.postProblem(d, Date.now());
         if (problem) { ui.postFormMsg = problem; env.rerender(); return; }
-        if (d.when === 'now' && !confirm('Publish this to Instagram now?')) return;
+        if (d.when === 'now' && !confirm(isTikTok ? 'Send this video to your TikTok inbox now?' : 'Publish this to Instagram now?')) return;
         ui.busy = true;
         ui.postFormMsg = '';
         try {
@@ -870,7 +872,9 @@
           env.rerender();
           await api('/api/posts', S.postPayload(d, keys, coverKey));
           await loadPosts();
-          ui.postMsg = d.when === 'now' ? 'Queued. It goes out within a minute.' : 'Scheduled for ' + when(Date.parse(d.at) / 1000) + '.';
+          ui.postMsg = isTikTok
+            ? (d.when === 'now' ? 'Queued. It reaches your TikTok inbox within a few minutes; post it from the TikTok app.' : 'Scheduled for ' + when(Date.parse(d.at) / 1000) + '. It lands in your TikTok inbox then; post it from the app.')
+            : d.when === 'now' ? 'Queued. It goes out within a minute.' : 'Scheduled for ' + when(Date.parse(d.at) / 1000) + '.';
           closePostForm();
         } catch (e) {
           ui.postFormMsg = e.message;
@@ -884,8 +888,9 @@
         h('h2', { text: isNew ? 'New post' : 'Edit post' }),
         h('div', { class: 'm-form' },
           h('label', { class: 'm-field' }, h('span', { text: 'Type' }), kind),
-          h('label', { class: 'm-field' }, h('span', { text: d.kind === 'reel' ? 'Video' : multiple ? 'Photos and videos' : 'Photo or video' }), files,
-            h('small', { text: d.kind === 'reel' ? 'MP4 or MOV, up to 95 MB. Vertical 9:16 works best.'
+          h('label', { class: 'm-field' }, h('span', { text: d.kind === 'reel' || isTikTok ? 'Video' : multiple ? 'Photos and videos' : 'Photo or video' }), files,
+            h('small', { text: isTikTok ? 'MP4 or MOV, up to 95 MB. TikTok keeps it as a draft in your inbox: open the notification in the TikTok app to post it.'
+              : d.kind === 'reel' ? 'MP4 or MOV, up to 95 MB. Vertical 9:16 works best.'
               : d.kind === 'story' ? 'One file, 9:16. PNG and WebP are converted to JPEG.'
               : 'Up to 20, in the order chosen; all are cropped to the first one’s shape. PNG and WebP are converted to JPEG.' })),
           fileList,
@@ -894,9 +899,10 @@
             coverPic,
             h('label', { class: 'm-field' }, h('span', { text: 'Cover image (optional)' }), cover,
               h('small', { text: d.cover ? d.cover.name : d.cover_key ? 'A cover is already uploaded. Choose a file to replace it.' : 'Without one Instagram uses the first frame.' }))) : null,
-          d.kind !== 'story' ? h('label', { class: 'm-field' }, h('span', { text: 'Caption' }), caption, counter) : null,
+          d.kind !== 'story' ? h('label', { class: 'm-field' }, h('span', { text: 'Caption' }), caption, counter,
+            isTikTok ? h('small', { text: 'Kept here for you to copy: TikTok drafts arrive without a caption.' }) : null) : null,
           d.kind === 'reel' ? h('label', { class: 'm-check' }, feed, 'Also show it in the profile grid') : null,
-          d.kind !== 'story' ? h('label', { class: 'm-field' }, h('span', { text: 'Attach an automation' }), auto,
+          d.kind !== 'story' && !isTikTok ? h('label', { class: 'm-field' }, h('span', { text: 'Attach an automation' }), auto,
             h('small', { text: 'Once it is published, that automation runs on this post.' })) : null,
           h('label', { class: 'm-field' }, h('span', { text: 'Publish' }), whenSel),
           d.when === 'later' ? h('label', { class: 'm-field' }, h('span', { text: 'Date and time' }), at, h('small', { text: 'Your local time. The worker publishes within a minute of it.' })) : null,

@@ -151,8 +151,9 @@ export async function automations(cfg, { include_archived = false, details = fal
 function queuedOut(p) {
   return {
     post_id: p.id,
+    platform: p.platform || 'instagram',
     type: S.postLabel(p),
-    status: p.status === 'working' ? 'publishing now' : p.status,
+    status: p.status === 'working' ? 'publishing now' : p.platform === 'tiktok' && p.status === 'published' && !p.permalink ? 'in TikTok inbox' : p.status,
     publish_at: iso(p.scheduled_at),
     published_at: iso(p.published_at) || undefined,
     url: p.permalink || undefined,
@@ -170,6 +171,7 @@ export async function scheduledPosts(cfg, { include_published = false } = {}) {
     publishing_ready: r.storage !== false,
     api_posts_used_today: r.limit ? r.limit.used : null,
     api_posts_allowed: r.limit ? r.limit.total : null,
+    tiktok_connected: Boolean(r.tiktok && r.tiktok.connected),
     count: posts.length,
     posts: posts.map(queuedOut)
   };
@@ -285,7 +287,11 @@ export async function schedulePost(cfg, input, nowMs = Date.now()) {
     d = S.postDraftFromPost(current, nowMs);
   } else {
     d = S.defaultPostDraft();
-    if (!input.kind) throw new Error('Say what to publish: kind = reel, post or story.');
+    if (!input.kind) throw new Error('Say what to publish: kind = reel, post, story or tiktok.');
+    if (input.kind === 'tiktok') {
+      const r = await get(cfg, '/api/posts');
+      if (!(r.tiktok && r.tiktok.connected)) throw new Error('TikTok is not connected to the worker. Connect it from the worker (/auth/tiktok/authorize) first.');
+    }
   }
   if (input.kind) d.kind = input.kind;
   if (input.caption !== undefined) d.caption = input.caption;
@@ -322,7 +328,9 @@ export async function schedulePost(cfg, input, nowMs = Date.now()) {
   return {
     ok: true,
     ...(saved ? queuedOut(saved) : { post_id: r.id }),
-    note: d.when === 'now' ? 'Queued to publish now: the worker posts it within a minute (videos take longer while Instagram processes them). Check list_scheduled_posts for the result.' : 'Scheduled. The worker publishes it at that time even if this computer is off.'
+    note: d.kind === 'tiktok'
+      ? `${d.when === 'now' ? 'Queued' : 'Scheduled'}. At that time the worker sends the video to the user's TikTok inbox as a draft; they post it from the TikTok app with one tap (paste the caption there: TikTok drafts arrive without one).`
+      : d.when === 'now' ? 'Queued to publish now: the worker posts it within a minute (videos take longer while Instagram processes them). Check list_scheduled_posts for the result.' : 'Scheduled. The worker publishes it at that time even if this computer is off.'
   };
 }
 
@@ -408,11 +416,11 @@ export function registerStudioTools(server, { z, json, safe }) {
   }, withConfig(setAutomationState));
 
   server.registerTool('schedule_post', {
-    title: 'Publish or schedule a reel, post or story',
-    description: 'Publish to the user\'s Instagram account: a reel (one MP4/MOV video), a post (one image, or a carousel of up to 20 images and videos) or a story (one image or video). Files are local paths on this computer; they are uploaded to the worker, which publishes at publish_at even if this computer is off. Nothing is published unless publish_at is given or publish_now is true. To change a post that is still waiting, give post_id and only what changes. No music can be added; videos up to 95 MB; PNG/WebP are converted to JPEG.',
+    title: 'Publish or schedule a reel, post, story or TikTok draft',
+    description: 'Publish to the user\'s Instagram account: a reel (one MP4/MOV video), a post (one image, or a carousel of up to 20 images and videos) or a story (one image or video). kind "tiktok" sends one video to the user\'s TikTok inbox as a draft at that time instead (TikTok does not let this app post publicly; the user posts the draft from the TikTok app). Files are local paths on this computer; they are uploaded to the worker, which publishes at publish_at even if this computer is off. Nothing is published unless publish_at is given or publish_now is true. To change a post that is still waiting, give post_id and only what changes. No music can be added; videos up to 95 MB; PNG/WebP are converted to JPEG.',
     inputSchema: {
       post_id: z.string().optional().describe('Change this queued post (from list_scheduled_posts). Omit for a new one.'),
-      kind: z.enum(['reel', 'post', 'story']).optional().describe('Required for a new post'),
+      kind: z.enum(['reel', 'post', 'story', 'tiktok']).optional().describe('Required for a new post. tiktok = one video to the TikTok inbox as a draft.'),
       files: z.array(z.string()).optional().describe('Full local paths, in order. Required for a new post.'),
       caption: z.string().optional().describe('Up to 2200 characters. Stories have none.'),
       cover_file: z.string().optional().describe('Reels: full path of a cover image'),
