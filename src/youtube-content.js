@@ -617,15 +617,49 @@
   /** The page's main player: the watch page's, or the Short that is on screen. */
   function mainVideo() {
     var c = ctx();
-    var sel = c.kind === 'short'
-      ? ['ytd-reel-video-renderer[is-active] video', 'ytd-shorts video', '#shorts-player video']
-      : ['#movie_player video', 'ytd-watch-flexy video', 'ytd-player video'];
+    // Shorts keep several players in the DOM (previous / next); the one on screen is the biggest visible one.
+    if (c.kind === 'short') return mostVisible(document.querySelectorAll('ytd-shorts video, #shorts-player video')) || mostVisible(document.querySelectorAll('video'));
+    var sel = ['#movie_player video', 'ytd-watch-flexy video', 'ytd-player video'];
     for (var i = 0; i < sel.length; i++) { var v = document.querySelector(sel[i]); if (v) return v; }
     return document.querySelector('video');
   }
 
+  function mostVisible(list) {
+    var best = null;
+    var bestArea = 0;
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i].getBoundingClientRect();
+      var w = Math.min(r.right, window.innerWidth) - Math.max(r.left, 0);
+      var hgt = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0);
+      var area = Math.max(0, w) * Math.max(0, hgt);
+      if (area > bestArea) { bestArea = area; best = list[i]; }
+    }
+    return bestArea > 20000 ? best : null;
+  }
+
+  /** Where the toolbar goes: never on top of YouTube's player (it has its own controls there). */
+  function overlayPlacement() {
+    var c = ctx();
+    if (c.kind === 'watch') {
+      // The like / share row under the video; YouTube lays it out, so nothing is covered.
+      var rows = document.querySelectorAll('ytd-watch-metadata #top-level-buttons-computed');
+      for (var i = 0; i < rows.length; i++) if (rows[i].getBoundingClientRect().width > 0) return { inline: rows[i] };
+      return null;
+    }
+    if (c.kind === 'short') {
+      var v = mainVideo();
+      var r = v && v.getBoundingClientRect();
+      // Right of the Short, above YouTube's like / comment column; over the video only on very narrow windows.
+      if (r && r.width > 100 && window.innerWidth - r.right >= 60) return { rail: r };
+    }
+    return null;
+  }
+
   var overlay = O.create({
     cssText: cssText,
+    placement: overlayPlacement,
+    openKey: 'reelscope:yt-card-open',
+    defaultOpen: false,
     getPost: function (id) { return findPost(id); },
     getProfilePosts: function (owner) { return owner && accounts[owner] ? Object.values(accounts[owner]) : []; },
     isLoading: function () { return false; },
@@ -679,6 +713,9 @@
     var c = ctx();
     var code = (c.kind === 'watch' || c.kind === 'short') && c.video ? c.video : null;
     if (code !== overlayCode) { overlayCode = code; overlay.setCode(code); }
+    // On a watch page the floating button would cover the player's fullscreen / settings
+    // controls; the toolbar under the video opens the panel there instead.
+    panel.setLauncherHidden(c.kind === 'watch');
   }
 
   mount();

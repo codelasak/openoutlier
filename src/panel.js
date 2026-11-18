@@ -339,8 +339,14 @@
       if (embedded) return;
       ui.open = open === undefined ? !ui.open : open;
       drawer.hidden = !ui.open;
-      launcher.hidden = ui.open;
+      launcher.hidden = ui.open || !!ui.launcherOff;
       if (ui.open) render();
+    }
+
+    /** Hide the floating button where it would sit on a video player (YouTube watch pages and Shorts). */
+    function setLauncherHidden(off) {
+      ui.launcherOff = !!off;
+      if (!embedded) launcher.hidden = ui.open || ui.launcherOff;
     }
 
     function applyTheme() {
@@ -1180,6 +1186,7 @@
     return {
       host: host,
       toggle: toggle,
+      setLauncherHidden: setLauncherHidden,
       isOpen: function () { return ui.open; },
       update: function (next) {
         for (var k in next) state[k] = next[k];

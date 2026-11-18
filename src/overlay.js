@@ -106,8 +106,10 @@
     return h('div', { class: 'ov-heat-wrap' }, svg, peaks.length ? label : h('p', { class: 'ov-muted ov-replay', text: 'Most replayed: no clear peak' }));
   }
 
-  function readOpen() { try { return localStorage.getItem(OPEN_KEY) !== '0'; } catch (e) { return true; } }
-  function writeOpen(v) { try { localStorage.setItem(OPEN_KEY, v ? '1' : '0'); } catch (e) { /* ignore */ } }
+  function readOpen(key, dflt) {
+    try { var v = localStorage.getItem(key); return v === null ? dflt : v !== '0'; } catch (e) { return dflt; }
+  }
+  function writeOpen(key, v) { try { localStorage.setItem(key, v ? '1' : '0'); } catch (e) { /* ignore */ } }
 
   /** The <video> (or big image) that is most visible right now. */
   function findMedia() {
@@ -147,11 +149,13 @@
     }
 
     var code = null;
-    var open = readOpen();
+    // opts.openKey / opts.defaultOpen: YouTube keeps the card closed until asked, since it sits beside the player.
+    var openKey = opts.openKey || OPEN_KEY;
+    var open = readOpen(openKey, opts.defaultOpen !== false);
     var timer = null;
     var status = '';
 
-    var statsBtn = h('button', { class: 'ov-btn ov-logo', type: 'button', title: 'OpenOutlier stats', 'aria-label': 'Show OpenOutlier stats', onclick: function () { open = !open; writeOpen(open); render(); } },
+    var statsBtn = h('button', { class: 'ov-btn ov-logo', type: 'button', title: 'OpenOutlier stats', 'aria-label': 'Show OpenOutlier stats', onclick: function () { open = !open; writeOpen(openKey, open); render(); position(); } },
       brandLogo('markInk', 'mark mark-on-ink'), brandLogo('mark', 'mark mark-on-blue'));
     var dlBtn = h('button', { class: 'ov-btn', type: 'button', title: 'Download video', 'aria-label': 'Download video', onclick: function () { download('media'); } }, icon(I_DOWN));
     var coverBtn = h('button', { class: 'ov-btn', type: 'button', title: 'Download cover image', 'aria-label': 'Download cover image', onclick: function () { download('cover'); } }, icon(I_IMAGE));
@@ -165,7 +169,9 @@
       if (!p) { status = 'Still loading this post…'; render(); return; }
       // YouTube video files come from yt-dlp through the bridge (the callback finds it and says when it isn't running).
       var has = what === 'cover' ? !!p.thumb : (p.platform === 'youtube' || (p.files || []).length > 0);
-      if (!has) { status = 'No file link yet. Wait a second and try again.'; render(); return; }
+      if (!has) { status = 'No file link yet. Wait a second and try again.'; open = true; render(); return; }
+      // Progress and the saved path show in the card, so open it (without changing the saved preference).
+      open = true;
       status = 'Starting download…';
       render();
       var startedFor = code;
@@ -265,8 +271,62 @@
       card.appendChild(h('button', { class: 'ov-link', type: 'button', onclick: opts.onOpenPanel }, 'Open the OpenOutlier panel'));
     }
 
+    function clearPos() {
+      ['width', 'left', 'top'].forEach(function (k) { wrap.style.removeProperty(k); });
+    }
+
+    function setMode(mode, flip) {
+      wrap.classList.toggle('is-inline', mode === 'inline');
+      wrap.classList.toggle('is-rail', mode === 'rail');
+      wrap.classList.toggle('is-flip', !!flip);
+    }
+
+    /** Back on <body> (fixed positioning) after being placed inside the page's own markup. */
+    function toBody() {
+      var body = document.body || document.documentElement;
+      if (host.parentNode !== body) body.appendChild(host);
+      host.style.removeProperty('display');
+      host.style.removeProperty('vertical-align');
+    }
+
+    // opts.placement() lets a site put the toolbar somewhere other than over the video:
+    //   { inline: element } → inside that element, first child (YouTube's like/share row)
+    //   { rail: DOMRect }   → a vertical toolbar right of that rect (YouTube Shorts' action column)
+    //   null                → over the video, as on Instagram and TikTok
     function position() {
       if (!code) { wrap.hidden = true; return; }
+      var pl = opts.placement ? opts.placement() : null;
+      if (pl && pl.inline) {
+        if (host.parentNode !== pl.inline || pl.inline.firstChild !== host) pl.inline.insertBefore(host, pl.inline.firstChild);
+        host.style.setProperty('display', 'inline-flex');
+        host.style.setProperty('vertical-align', 'middle');
+        setMode('inline');
+        clearPos();
+        wrap.hidden = false;
+        if (open) {
+          var br = bar.getBoundingClientRect();
+          card.style.setProperty('left', Math.round(Math.min(Math.max(8, br.left), window.innerWidth - 308)) + 'px');
+          card.style.setProperty('top', Math.round(br.bottom + 8) + 'px');
+        }
+        return;
+      }
+      card.style.removeProperty('left');
+      card.style.removeProperty('top');
+      toBody();
+      if (pl && pl.rail) {
+        var rr = pl.rail;
+        var x = Math.round(rr.right + 12);
+        var barW = 40;
+        var cardW = 300;
+        var flip = open && window.innerWidth - x < barW + 6 + cardW + 8;
+        setMode('rail', flip);
+        wrap.style.removeProperty('width');
+        wrap.style.setProperty('left', (flip ? x + barW - (barW + 6 + cardW) : x) + 'px');
+        wrap.style.setProperty('top', Math.round(Math.max(8, rr.top)) + 'px');
+        wrap.hidden = false;
+        return;
+      }
+      setMode(null);
       var r = findMedia();
       if (!r) { wrap.hidden = true; return; }
       wrap.hidden = false;
@@ -275,6 +335,11 @@
       wrap.style.setProperty('left', Math.round(r.left + r.width / 2 - width / 2) + 'px');
       wrap.style.setProperty('top', Math.round(Math.max(8, r.top + 10)) + 'px');
     }
+
+    // The inline card is position:fixed, so it has to follow the toolbar while the page scrolls.
+    window.addEventListener('scroll', function () {
+      if (code && open && wrap.classList.contains('is-inline')) position();
+    }, { passive: true, capture: true });
 
     return {
       host: host,

@@ -329,6 +329,16 @@ select:hover, input[type="search"]:hover { border-color: var(--text-2); }
   width: 100%; padding: 11px 12px 10px; border-radius: 6px;
   background: var(--ink); box-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.65);
 }
+/* YouTube watch page: inside the like/share row, card drops down below it. */
+.ov-wrap.is-inline { position: relative; z-index: 2147482999; flex-direction: row; margin-right: 8px; }
+.ov-wrap.is-inline .ov-bar { height: 36px; align-items: center; padding: 0 4px; border-radius: 18px; box-shadow: none; }
+/* fixed, not absolute: YouTube's button row clips its overflow; overlay.js sets left/top from the toolbar. */
+.ov-wrap.is-inline .ov-card { position: fixed; width: 300px; }
+/* YouTube Shorts: a vertical toolbar in the action column right of the video; card beside it. */
+.ov-wrap.is-rail { flex-direction: row; align-items: flex-start; }
+.ov-wrap.is-rail.is-flip { flex-direction: row-reverse; }
+.ov-wrap.is-rail .ov-bar { flex-direction: column; }
+.ov-wrap.is-rail .ov-card { width: 300px; }
 .ov-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .ov-owner { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ov-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #262F50; border-radius: 4px; overflow: hidden; }
