@@ -19,6 +19,8 @@ import {
   HOME, ensureHome, readLibrary, applySync, writeStatus, readStatus,
   takePendingCommands, saveCommandResult
 } from './library.mjs';
+import { startJob, jobStatus, isVideoId, isAccountId } from './youtube-dl.mjs';
+import * as YA from './youtube-analytics.mjs';
 
 // OPENOUTLIER_PORT (or the former REELSCOPE_PORT) moves the start of the range (the extension scans 47811–47820).
 const FIRST_PORT = Number(setting('PORT')) || 47811;
@@ -26,6 +28,8 @@ export const PORTS = Array.from({ length: 10 }, (_, i) => FIRST_PORT + i);
 const CONFIG_FILE = join(HOME, 'config.json');
 const MAX_BODY = 200 * 1024 * 1024;
 const VERSION = '0.1.0';
+// What this bridge can do beyond sync + commands (the extension checks before offering YouTube video downloads).
+const FEATURES = ['youtube-download', 'youtube-analytics'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
@@ -73,9 +77,17 @@ async function handle(req, res, port) {
   if (req.method === 'GET' && url.pathname === '/health') {
     const lib = readLibrary();
     const st = readStatus();
-    return send(res, 200, { app: 'reelscope', version: VERSION, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length, syncedAt: lib.syncedAt,
+    return send(res, 200, { app: 'reelscope', version: VERSION, features: FEATURES, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length, syncedAt: lib.syncedAt,
       lastBackupAt: st.lastBackupAt || null, lastBackupOk: st.lastBackupAt ? !!st.lastBackupOk : null },
       origin.startsWith('chrome-extension://') ? origin : null);
+  }
+
+  // Google's sign-in redirect for "My YouTube channel" (a browser navigation: no extension Origin).
+  // Only accepted with the one-time state that this computer created (mcp/youtube-analytics.mjs).
+  if (req.method === 'GET' && url.pathname === YA.CALLBACK_PATH) {
+    const page = await YA.callbackPage(url);
+    res.writeHead(page.status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'", 'referrer-policy': 'no-referrer' });
+    return res.end(page.html);
   }
 
   const m = origin.match(/^chrome-extension:\/\/([a-p]{32})$/);
@@ -107,6 +119,28 @@ async function handle(req, res, port) {
     const body = await readBody(req);
     await saveCommandResult(String(body.id || ''), body.result || {});
     return send(res, 200, { ok: true }, origin);
+  }
+  // YouTube video files: yt-dlp on this computer (mcp/youtube-dl.mjs). Returns a job to poll.
+  if (req.method === 'POST' && url.pathname === '/youtube/download') {
+    const body = await readBody(req);
+    const id = String(body.id || '');
+    const what = body.what || 'video';
+    if (!isVideoId(id)) return send(res, 400, { error: 'not a YouTube video id' }, origin);
+    if (!['video', 'cover', 'both'].includes(what)) return send(res, 400, { error: 'what must be video, cover or both' }, origin);
+    // Only the owner and format are taken from the extension (for the folder name until yt-dlp answers).
+    const p = body.post && typeof body.post === 'object' ? body.post : {};
+    const prev = isAccountId(String(p.owner || '')) ? { code: id, platform: 'youtube', owner: String(p.owner), type: ['short', 'live', 'video'].includes(p.type) ? p.type : undefined } : undefined;
+    return send(res, 200, { ok: true, ...startJob({ id, what, prev }) }, origin);
+  }
+  const jm = url.pathname.match(/^\/youtube\/download\/([0-9a-f-]{36})$/);
+  if (req.method === 'GET' && jm) {
+    const st = jobStatus(jm[1]);
+    return st ? send(res, 200, { ok: true, ...st }, origin) : send(res, 404, { error: 'unknown job (the bridge may have restarted)' }, origin);
+  }
+  // My YouTube channel (YouTube Analytics API, the user's own OAuth client).
+  if (url.pathname.startsWith('/youtube/analytics/')) {
+    const r = await YA.handleRoute(req.method, url, { port });
+    if (r) return send(res, r[0], r[1], origin);
   }
   return send(res, 404, { error: 'not found' }, origin);
 }

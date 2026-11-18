@@ -4,7 +4,7 @@
 
 <p align="center">
   <b>Find the posts that broke away from an account's normal.</b><br>
-  Free, open-source analytics for Instagram Reels, TikTok and Reddit, right inside the page you're on.
+  Free, open-source analytics for Instagram Reels, TikTok, YouTube and Reddit, right inside the page you're on.
 </p>
 
 <p align="center">
@@ -13,7 +13,7 @@
 
 ---
 
-Most posts land near an account's median. A few get **2×, 5×, 10× that**. Those outliers tell you which hooks, topics, lengths and posting times work, for you and for the accounts you learn from. OpenOutlier collects the posts your browser already loads on instagram.com, tiktok.com and reddit.com, scores each one against its own account's median, and shows you the ones that broke away.
+Most posts land near an account's median. A few get **2×, 5×, 10× that**. Those outliers tell you which hooks, topics, lengths and posting times work, for you and for the accounts you learn from. OpenOutlier collects the posts your browser already loads on instagram.com, tiktok.com, youtube.com and reddit.com, scores each one against its own account's median (on YouTube: Shorts and long-form videos each against their own), and shows you the ones that broke away.
 
 <p align="center">
   <img src="docs/screenshots/panel-instagram.png" alt="The OpenOutlier panel on an Instagram profile: reels sorted by views with ×median outlier badges and Viral Score" width="860">
@@ -23,17 +23,17 @@ Most posts land near an account's median. A few get **2×, 5×, 10× that**. Tho
 
 - **Outliers, in one number.** Every post gets `views ÷ account median`. At 2× or more it gets a lime outlier badge (`9.0×`), and you can filter to outliers only.
 - **Viral Score (0–100).** `50 + 25 × log2(views ÷ median)`: 50 is a typical post, 75 is 2×, 100 is 4× or more.
-- **Sort what the apps won't sort.** Reels and TikTok videos by views, Viral Score, likes, comments, shares, saves, engagement, date or length. Reddit posts by score, comments, upvote ratio or comments per point.
+- **Sort what the apps won't sort.** Reels, TikTok videos and YouTube videos and Shorts by views, Viral Score, likes, comments, shares, saves, engagement, date or length. Reddit posts by score, comments, upvote ratio or comments per point.
 - **Best time to post.** A day × time heatmap in your local time. Each post is compared with what the account was getting at the time (so growth doesn't make old slots look bad), slots with few posts are pulled toward 1×, and only slots with 8+ posts are ranked. It also scores days and times separately, shows each slot's share of posts, and warns when an account posts at too few times to compare.
-- **What works.** Hashtags, video length and sound (original vs. music) ranked by median views. On Reddit: questions vs. statements, title length, words and phrases, flair and post type.
-- **Compare Instagram ↔ TikTok.** Post the same videos on both? OpenOutlier pairs them and shows which platform did better relative to each account's own median.
+- **What works.** Hashtags, video length and sound (original vs. music) ranked by median views. On YouTube: Shorts vs. long-form, title words and phrases, chapters and the "most replayed" moments. On Reddit: questions vs. statements, title length, words and phrases, flair and post type.
+- **Compare platforms.** Post the same videos on Instagram, TikTok and YouTube Shorts? OpenOutlier pairs them and shows which platform did better relative to each account's own median.
 - **Library.** Every account you collect, in folders and tags, with a cross-account *Top posts* ranking, account pages and a Reddit *Mentions* inbox for keyword alerts.
-- **Export & download.** CSV, copy-for-Sheets/Excel or JSON. Videos, photos and covers saved with their stats in the file name.
+- **Export & download.** CSV, copy-for-Sheets/Excel or JSON. Videos, photos and covers saved with their stats in the file name (YouTube videos through yt-dlp on your Mac).
 - **AI agents.** A local MCP server lets Claude, Cursor or any MCP client query your library, rank posts, pull mp4s and turn Reddit questions into content ideas.
 
 Everything runs and stays in your browser (plus an optional SQLite copy on your own Mac). OpenOutlier only reads; it never posts, likes, follows, votes, comments or sends messages.
 
-> OpenOutlier is an independent project. It is not affiliated with Instagram, Meta, TikTok, ByteDance, Reddit, or any commercial analytics tool.
+> OpenOutlier is an independent project. It is not affiliated with Instagram, Meta, TikTok, ByteDance, YouTube, Google, Reddit, or any commercial analytics tool.
 
 ## A look around
 
@@ -53,7 +53,8 @@ OpenOutlier isn't in the Chrome Web Store yet. Load it in developer mode:
 1. Download this repository (`git clone`, or **Code → Download ZIP** and unzip).
 2. Open `chrome://extensions` (Edge: `edge://extensions`) and turn on **Developer mode**.
 3. Click **Load unpacked** and pick the folder that contains `manifest.json`.
-4. Reload any open Instagram, TikTok and Reddit tabs.
+4. Reload any open Instagram, TikTok, YouTube and Reddit tabs.
+5. Optional, for YouTube video files: `brew install yt-dlp ffmpeg deno` and the bridge (see [YouTube video downloads](#youtube-video-downloads-yt-dlp)). Everything else works without them.
 
 ## Use
 
@@ -61,9 +62,11 @@ OpenOutlier isn't in the Chrome Web Store yet. Load it in developer mode:
 
 **TikTok.** Open a profile (`tiktok.com/@name`), scroll or press **Auto-scroll** until the panel says it has all videos, then use **Videos**, **Analytics** and **Export**. TikTok shows shares and saves publicly, so engagement counts likes + comments + shares + saves, and Analytics adds shares and saves per 100 views. Saved as `tt/name` in the Library.
 
+**YouTube.** Open a channel's **Videos** or **Shorts** tab (`youtube.com/@name/videos`, `/@name/shorts`), scroll or press **Auto-scroll**, then use the **Videos / Shorts** switch, **Analytics** and **Export**. Shorts and long-form videos each get their own median, so Shorts don't make every video look like an outlier. Channel tabs show rounded views ("63K") and relative dates ("3 weeks ago", none at all on the Shorts tab): those are marked `≈`. Open a video (or press **Get exact stats** for the top outliers) to replace them with exact views, likes, comments and the publish date. On a video or Short a toolbar shows its × median, Viral Score and the "most replayed" moments. Saved as `yt/name` in the Library.
+
 **Reddit.** Open a subreddit or a user while logged in (`reddit.com/r/excel/`), press **Collect top posts** (it opens the top posts of the year and scrolls them) or scroll yourself, then use **Posts**, **Analytics** and **Export**. Saved as `r/excel` / `u/name`.
 
-**Library.** Toolbar popup → **Open the Library**, or the grid button in the panel. Drag account cards onto folders, add tags on an account page, rank **Top posts** across a folder, and open **Compare IG ↔ TikTok** when you have both.
+**Library.** Toolbar popup → **Open the Library**, or the grid button in the panel. Drag account cards onto folders, add tags on an account page, filter by platform (IG, TT, YT, Reddit), rank **Top posts** across a folder (every platform together, each post against its own account's median), and open **Compare IG ↔ TikTok** when you have both.
 
 Data is saved per account in `chrome.storage.local`. Delete it with **Clear** in the panel or **Delete all data** in the popup.
 
@@ -109,7 +112,43 @@ Instagram has renamed its view counter several times. `src/extract.js` checks `p
 
 **Video downloads.** TikTok's video links only work with the site's session and referer. OpenOutlier first tries a normal download; if TikTok refuses, it fetches the file inside an open tiktok.com tab and saves those bytes. From the Library, keep a tiktok.com tab open for video downloads. Links expire after hours to days; open the profile again to refresh them.
 
-**Compare Instagram ↔ TikTok.** A pair needs a similar caption (Turkish letters, emoji and hashtags ignored), shared hashtags, the same length (±1.5 s) and dates within ±3 days; different episode numbers ("Bug #12" vs "#13") never match. You see views, engagement and × each account's own median, which side did better, the typical TikTok ÷ Instagram ratio, hits on both, and videos posted on only one side. Download the pairs as CSV.
+**Compare platforms** (Instagram ↔ TikTok, or a YouTube channel's Shorts ↔ Instagram or TikTok). A pair needs a similar caption (Turkish letters, emoji and hashtags ignored), shared hashtags, the same length (±1.5 s) and dates within ±3 days; different episode numbers ("Bug #12" vs "#13") never match. You see views, engagement and × each account's own median, which side did better, the typical TikTok ÷ Instagram ratio, hits on both, and videos posted on only one side. Download the pairs as CSV. On YouTube only Shorts take part (scored against the channel's Shorts median), and a Short's date only counts when it is exact or a calendar day: the Shorts tab shows no dates, so undated Shorts match only on clearly similar titles; **Exact stats via API** or **Get exact stats** fill the dates in.
+</details>
+
+<details>
+<summary><b>YouTube</b></summary>
+
+| | |
+|---|---|
+| **Two medians per channel** | Shorts are scored against the channel's Shorts median, long-form videos and past live streams against its long-form median. One Library account, a **Videos / Shorts** switch in the panel. |
+| **Sort videos** | by views, Viral Score, length, date, likes, comments, engagement; outlier filter. |
+| **Analytics** | Shorts vs. long-form, best time (exact publish dates only), length buckets in minutes, title words and phrases, hashtags. |
+| **Exact stats** | channel tabs give rounded views and relative dates; opening a video, **Get exact stats** (the top 10 outliers, one background tab at a time, throttled), a yt-dlp download or, with your own key, **Exact stats via API** fill in exact views, likes, comments and date. |
+| **Watch-page details** | description, category, tags, chapters, captions (auto-generated or not) and the **most replayed** heatmap with its peaks ("most replayed at 0:42"; click to jump there). |
+| **Export** | CSV / Sheets / JSON with YouTube columns (`format`, `date_approx`, `views_approx`, …). |
+| **Downloads** | covers from `i.ytimg.com` (the largest size that exists); video files with yt-dlp, see below. `Downloads/OpenOutlier/yt_<name>/801.4Kviews_13.4Klikes_234comments_1.7pct_youtube_<id>.mp4`. |
+
+**Where the data comes from: only what youtube.com already loads in your tab.** No API key needed, no requests of its own (unless you add your own Data API key, below): `src/hook.js` reads YouTube's own `/youtubei/v1/browse`, `get_watch`, `player`, `next` and `reel/*` responses, and `src/youtube-content.js` reads the `ytInitialData` / `ytInitialPlayerResponse` the first page inlines. Auto-scroll makes YouTube load the next page of the grid by itself. Labels are read in English and Turkish; in other YouTube languages channel-tab views and dates are skipped (switch YouTube to English), while exact numbers from opened videos still work.
+
+**View counts changed.** YouTube changed how Shorts views are counted in March 2025 (every start or replay counts) and changed view counting for all formats in August 2026, so newer videos can show more views than older ones would have. The best-time analysis compares each video with the ~30 around it in time, which absorbs most of that; keep it in mind when comparing old and new videos directly.
+
+<a id="youtube-video-downloads-yt-dlp"></a>
+**YouTube video downloads (yt-dlp).** YouTube streams video in pieces with short-lived tokens, so the extension can't save a plain mp4. Instead the OpenOutlier bridge on your Mac runs [yt-dlp](https://github.com/yt-dlp/yt-dlp) when you press download (panel, video toolbar or Library) or when an agent calls `download_reel`:
+
+- Install once: `brew install yt-dlp ffmpeg deno` (recent yt-dlp versions need a JavaScript runtime such as Deno for YouTube), and keep yt-dlp current (`brew upgrade yt-dlp`): YouTube changes often and old versions get refused. `bridge_status` says whether both are found.
+- The bridge must run: `sh mcp/launchd/install.sh`, or an MCP server added to Claude (see *Connect AI agents*). Without it the download button says so; covers work without it.
+- yt-dlp also writes its `.info.json`, and OpenOutlier copies its exact views, likes, comments, upload time, tags, chapters and heatmap into the Library.
+- Settings (environment variables of the bridge / MCP server): `OPENOUTLIER_YTDLP` = path to the yt-dlp binary (default: `PATH`, then `/opt/homebrew/bin`, `/usr/local/bin`); `OPENOUTLIER_YTDLP_COOKIES` = a browser name for yt-dlp's `--cookies-from-browser` (e.g. `chrome`; off by default because macOS asks for Keychain access, needed only for members-only or age-restricted videos); `OPENOUTLIER_DOWNLOADS` = save somewhere other than `~/Downloads/OpenOutlier`.
+
+<a id="youtube-data-api-key"></a>
+**YouTube Data API key (optional, off by default).** With your own key the panel (and a YouTube account page in the Library) gets **Exact stats via API** (exact views, likes, comments, publish time, length, tags and category for every saved video, 50 videos per quota unit, no pages opened) and **All uploads via API** (the channel's newest 500 uploads, including ones the tabs never loaded; Shorts are told apart by the channel's Shorts playlist). It uses `videos.list`, `channels.list` and `playlistItems.list` only, never `search.list` (100 units a call). The free quota is 10,000 units a day; the popup and the panel show how many units were used today (Google resets them at midnight Pacific time). Without a key nothing changes and no request is made.
+1. Google Cloud console → create a project → *APIs & Services → Library* → enable **YouTube Data API v3**.
+2. *Credentials → Create credentials → API key*. Restrict it to *YouTube Data API v3* (website restrictions don't fit an extension).
+3. Extension: popup → **YouTube Data API key** → paste → Save (Chrome asks for access to `www.googleapis.com`). The key stays in this browser and is left out of backup files. MCP: set `OPENOUTLIER_YOUTUBE_API_KEY` for the MCP server and use `youtube_api_stats`; it counts its own quota (`bridge_status` shows it).
+
+**Transcripts (`get_transcript`, MCP).** An agent can ask for a video's captions as plain text with `[m:ss]` timestamps, plus `hook`: what is said in the first ~30 seconds. yt-dlp on your Mac fetches only the captions (no video): uploaded captions first, else YouTube's auto-generated ones, in the language you ask for, else the video's own language, else English. The Library only records that a transcript exists (`hasTranscript`), never the text. Errors name the cause: `no_captions`, `too_old` (`brew upgrade yt-dlp`), `missing` (install yt-dlp).
+
+**YouTube's terms.** YouTube's Terms of Service don't allow downloading videos except through YouTube's own features. The yt-dlp download is a local convenience for personal research and analysis of your own videos or videos you have permission to use; OpenOutlier never uploads or shares them. You are responsible for how you use it.
 </details>
 
 <details>
@@ -121,7 +160,7 @@ Instagram has renamed its view counter several times. `src/extract.js` checks `p
 | Outliers (× median) | How many times the subreddit's (or user's) **median score** a post got; same Viral Score formula. |
 | Best time to post | Day × time heatmap of era-adjusted score lift (same method as Instagram). |
 | Hashtags | **Title analysis**: question vs. statement, title length, words and two-word phrases that perform; **flair** and **post type** performance. |
-| Library | Subreddits and Reddit users sit in the same folders as Instagram and TikTok accounts. |
+| Library | Subreddits and Reddit users sit in the same folders as Instagram, TikTok and YouTube accounts. |
 
 Read-only, from your own logged-in tab, never the official API:
 
@@ -150,6 +189,21 @@ Watch Reddit for keywords without a server: **Library → Mentions** (or the pop
 - **Insights**: per post views, reach, average watch time, skip rate, likes, comments, saves and shares, plus 7-day account totals. They need a worker that serves `/api/insights` and `/api/insights/account`, and the `instagram_business_manage_insights` permission on its Instagram login. The posts are also saved to the library under your username, so your account sits next to the ones you track.
 - **Publishing**: queue reels, photo and carousel posts, and stories to go out now or at a set time, and optionally attach an automation to the post once it is live. Files are uploaded to the worker, which publishes on schedule, so Chrome can be closed. PNG and WebP images are converted to JPEG first. This needs a worker with the `/api/posts` and `/api/uploads` endpoints, an R2 bucket for the files, and the `instagram_business_content_publish` permission.
 - **Automations**: create, edit, pause, archive and delete them, on a published post or on one you have not posted yet (it attaches itself by caption). Each shows its funnel: comments → DMs → clicks → delivered.
+</details>
+
+<details>
+<summary><b>My YouTube channel (YouTube Analytics, optional)</b></summary>
+
+**Library → My YouTube channel** shows what only a channel's owner can see, from the official YouTube Analytics API: per video **average view percentage** and duration (retention), **engaged views**, **thumbnail impressions and click-through rate**, watch time, likes, comments, shares and subscribers gained, channel totals for 7 / 28 / 90 / 365 days, and each video's **retention curve** (share of viewers still watching across the video, where they drop off, what gets rewatched). Agents get the same through `my_youtube_channel`, `my_youtube_videos` and `my_youtube_retention`.
+
+It needs a Google OAuth client you create yourself (free); OpenOutlier never sees your Google password:
+1. [Google Cloud console](https://console.cloud.google.com/): create a project (or reuse the API-key one) → *APIs & Services → Library* → enable **YouTube Analytics API** and **YouTube Data API v3**.
+2. *OAuth consent screen*: User type **External**, fill in the app name and your email, publishing status **Testing**, and add the Google account that owns the channel under **Test users**. (Google limits sign-ins of apps in Testing to 7 days; OpenOutlier then asks you to connect again. Publishing the app to "In production" removes that limit, after Google's checks for the scopes.)
+3. *Credentials → Create credentials → OAuth client ID* → Application type **Desktop app** → Create → **Download JSON**.
+4. Save that file as `~/.openoutlier/youtube-oauth.json`, or set `OPENOUTLIER_YOUTUBE_CLIENT_ID` and `OPENOUTLIER_YOUTUBE_CLIENT_SECRET` for the bridge / MCP server. (Google says a Desktop app's client secret isn't secret; keep the file private anyway.)
+5. The bridge must run (`sh mcp/launchd/install.sh` or the MCP server in Claude; restart an older bridge with `launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge`). Open **Library → My YouTube channel → Connect YouTube** (or ask an agent to run `connect_youtube_channel`), sign in with the channel's Google account and approve read-only access.
+
+How it works: the sign-in uses PKCE and a one-time state; Google sends you back to the bridge on `http://127.0.0.1:<port>/youtube/oauth/callback`, which trades the code for a refresh token kept in `~/.openoutlier/youtube-token.json` (readable only by you). The scopes are read-only (`yt-analytics.readonly`, `youtube.readonly`). Requests go only to Google. **Disconnect** deletes the token and asks Google to revoke it. Analytics data lags 2–3 days behind YouTube Studio.
 </details>
 
 ## Connect AI agents (MCP)
@@ -190,17 +244,19 @@ Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. 
 
 | Tool | What it does |
 |---|---|
-| `list_accounts` | saved accounts with platform, folder, tags, post counts, median views, outliers |
+| `list_accounts` | saved accounts with platform, folder, tags, post counts, median views (YouTube: long-form and Shorts), outliers |
 | `list_folders_and_tags` | your folders and tags |
-| `account_summary` | one Instagram or TikTok account's analytics: best slots, hashtags, length, sounds, top videos |
-| `top_reels` | rank reels and TikTok videos across a folder / tag / accounts by Viral Score, views, saves, engagement… |
-| `compare_platforms` | match the same videos on an Instagram and a TikTok account and compare them |
-| `search_reels` | find posts by caption, hashtags or audio |
-| `get_reel` | everything about one post, incl. the mp4 `video_url`, `cover_url` and link expiry |
-| `download_reel` | save the mp4 and/or cover to `~/Downloads/OpenOutlier/<account>/` and return the path |
-| `refresh_reel` | fresh stats and links for one post |
+| `account_summary` | one Instagram, TikTok or YouTube account's analytics: best slots, hashtags, length, sounds, top videos; YouTube in two sections, `long_form` and `shorts` |
+| `top_reels` | rank reels, TikTok videos and YouTube videos / Shorts across a folder / tag / accounts by Viral Score, views, saves, engagement… (`format: shorts / long_form` for YouTube) |
+| `compare_platforms` | match the same videos on two platforms (Instagram ↔ TikTok, or a YouTube channel's Shorts ↔ Instagram or TikTok) and compare them |
+| `search_reels` | find posts by caption, hashtags or audio (YouTube: title, tags, description) |
+| `get_reel` | everything about one post, incl. the mp4 `video_url`, `cover_url` and link expiry; YouTube: format, exact or rounded views, exact or approximate date, chapters, heatmap peaks, category, tags, captions |
+| `download_reel` | save the mp4 and/or cover to `~/Downloads/OpenOutlier/<account>/` and return the path (YouTube: yt-dlp, with exact stats written back) |
+| `refresh_reel` | fresh stats and links for one post (YouTube: opens the watch page for exact numbers) |
+| `youtube_api_stats` | exact YouTube stats for a channel's videos, given videos, or the channel's full upload list through your own Data API key (optional; no request without `OPENOUTLIER_YOUTUBE_API_KEY`) |
+| `get_transcript` | a YouTube video's captions as text with timestamps, plus its first ~30 s as `hook` (yt-dlp on your Mac) |
 | `reel_history` | how a post's views, likes, comments, shares and saves changed over time |
-| `collect_profile` | the extension collects an Instagram or TikTok profile (or a subreddit) in your browser |
+| `collect_profile` | the extension collects an Instagram or TikTok profile, a YouTube channel (`yt/name`: Videos, then Shorts) or a subreddit in your browser |
 | `subreddit_summary` | one subreddit or user: best slots, title analysis, flairs, post types, top posts |
 | `top_posts` | rank Reddit posts across subreddits by Viral Score, score, comments… |
 | `content_ideas` | the most-upvoted questions and pain points in a set of subreddits, and how many reels your folder already made about each |
@@ -214,18 +270,22 @@ Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. 
 | `list_scheduled_posts` | the publishing queue and its results |
 | `schedule_post` | publish or schedule a reel, post or story from local files |
 | `cancel_scheduled_post` | remove a post from the queue |
+| `connect_youtube_channel` | start connecting your own YouTube channel (returns the Google sign-in link) |
+| `my_youtube_channel` | your channel's totals from YouTube Analytics: views, engaged views, watch time, average view %, subscribers |
+| `my_youtube_videos` | per video: views, engaged views, average view % and duration, thumbnail impressions and CTR, subscribers gained |
+| `my_youtube_retention` | one video's retention curve and where viewers drop off |
 | `command_status`, `bridge_status` | check a running command / the connection and backups |
 
-Example prompts: *"Use compare_platforms for my account: which episodes did better on TikTok, and what do they have in common?"* · *"Compare the 10 most viral reels in my Excel folder from the last 90 days and summarize their hooks."* · *"Collect r/excel and r/spreadsheets, then use content_ideas on my Excel folder and give me 10 reel ideas my competitors haven't covered."*
+Example prompts: *"Collect yt/somechannel, then compare its Shorts and long-form outliers: what do the titles of the top 5 of each have in common?"* · *"Use compare_platforms for my account: which episodes did better on TikTok, and what do they have in common?"* · *"Compare the 10 most viral reels in my Excel folder from the last 90 days and summarize their hooks."* · *"Collect r/excel and r/spreadsheets, then use content_ideas on my Excel folder and give me 10 reel ideas my competitors haven't covered."*
 </details>
 
 <details>
 <summary><b>How the connection works</b></summary>
 
-The MCP server keeps your library in `~/.openoutlier/openoutlier.db` and opens a small bridge on `127.0.0.1`, on the first free port in 47811–47820. The extension scans the same ports and only talks to a server that identifies itself as OpenOutlier. The bridge accepts requests only from the browser extension, never from websites (it checks the `Origin` and `Host` headers), and pairs with the first extension that connects; to re-pair, delete `~/.openoutlier/config.json`. Agent commands for Instagram run in a tab you already have open (or a background tab); Reddit and TikTok commands use a small unfocused window with your logged-in session and close it when done.
+The MCP server keeps your library in `~/.openoutlier/openoutlier.db` and opens a small bridge on `127.0.0.1`, on the first free port in 47811–47820. The extension scans the same ports and only talks to a server that identifies itself as OpenOutlier. The bridge accepts requests only from the browser extension, never from websites (it checks the `Origin` and `Host` headers), and pairs with the first extension that connects; to re-pair, delete `~/.openoutlier/config.json`. Agent commands for Instagram run in a tab you already have open (or a background tab); Reddit, TikTok and YouTube channel collection use a small unfocused window with your logged-in session (a channel grid only loads more while it is on screen) and close it when done; a YouTube `refresh_reel` opens one muted background tab.
 </details>
 
-The `my_*`, automation and publishing tools are the one part that leaves your computer: they call your own chatmany worker (see *My account* above) and can post to your Instagram account. They are off until you create `~/.openoutlier/chatmany.json` with `{"baseUrl": "https://<your worker>", "token": "<its OWNER_TOKEN>"}` (or set `OPENOUTLIER_CHATMANY_URL` and `OPENOUTLIER_CHATMANY_TOKEN`). `schedule_post` publishes nothing unless a time or `publish_now` is given.
+The Instagram `my_*`, automation and publishing tools leave your computer: they call your own chatmany worker (see *My account* above) and can post to your Instagram account. They are off until you create `~/.openoutlier/chatmany.json` with `{"baseUrl": "https://<your worker>", "token": "<its OWNER_TOKEN>"}` (or set `OPENOUTLIER_CHATMANY_URL` and `OPENOUTLIER_CHATMANY_TOKEN`). `schedule_post` publishes nothing unless a time or `publish_now` is given. The `my_youtube_*` tools call Google's YouTube Analytics API with your own OAuth client and only read (see *My YouTube channel*); `youtube_api_stats` calls the YouTube Data API with your own key.
 
 ## Your data: SQLite on your Mac, backed up daily
 
@@ -272,11 +332,11 @@ Then start a new agent session so it picks up the `openoutlier` tools.
 
 ## Privacy
 
-- No analytics, no tracking, no remote servers. The only requests OpenOutlier makes are to instagram.com and reddit.com themselves (post details, listing pages), to TikTok's and Instagram's file hosts when you download, all from your own session, and, if you use agents, to the MCP server on `127.0.0.1`.
+- No analytics, no tracking, no remote servers. The only requests OpenOutlier makes are to instagram.com and reddit.com themselves (post details, listing pages), to TikTok's, Instagram's and YouTube's (`i.ytimg.com`) file hosts when you download, all from your own session, and, if you use agents, to the MCP server on `127.0.0.1`. YouTube video downloads and transcripts are made by yt-dlp on your Mac, only when you ask for one. Only if you set them up: your own YouTube Data API key sends requests to `www.googleapis.com`, and My YouTube channel to Google's sign-in and YouTube Analytics API (from the bridge on your Mac).
 - Fonts (Fraunces, Inter Tight; SIL OFL) are bundled in `fonts/`; nothing is loaded from Google or any CDN.
-- Permissions: `storage` + `unlimitedStorage` (collected posts), `downloads` (media files), `alarms` (MCP connection check, Mentions), `notifications` (new Mentions), `scripting` (the read-only Mentions request inside your reddit.com tab), host access to instagram.com, tiktok.com, reddit.com and their file hosts, and optional access to your reddit-watch server (asked only when you connect one).
+- Permissions: `storage` + `unlimitedStorage` (collected posts), `downloads` (media files), `alarms` (MCP connection check, Mentions), `notifications` (new Mentions), `scripting` (the read-only Mentions request inside your reddit.com tab), host access to instagram.com, tiktok.com, youtube.com, reddit.com and their file hosts, and optional access to your reddit-watch server and chatmany worker (asked only when you connect one) and to `www.googleapis.com` (asked only when you save a YouTube Data API key).
 - The Library caches cover images in the extension's own IndexedDB, so covers keep showing after the platforms' links expire.
-- It never asks for your Instagram, TikTok or Reddit password.
+- It never asks for your Instagram, TikTok, YouTube or Reddit password.
 
 ## How it works
 
@@ -290,9 +350,15 @@ instagram.com page
  ├─ src/overlay.js   toolbar + stats card over the post being viewed
  └─ src/content.js   storage, missing-details loader, profile detection, auto-scroll
 tiktok.com page      src/tiktok.js (JSON → posts) + src/tiktok-content.js (storage, SSR scan, auto-scroll, download fallback)
+youtube.com page     src/youtube.js (ytInitialData / youtubei JSON → posts) + src/youtube-content.js (storage, auto-scroll, overlay, agent commands)
+src/youtube-exact.js "Get exact stats": opens the top outliers' watch pages one by one in a background tab
+src/youtube-api*.js  optional Data API key: exact stats / all uploads (pure part + service-worker job)
+mcp/youtube-dl.mjs   yt-dlp + ffmpeg downloads for YouTube, started by the bridge or download_reel
+mcp/youtube-transcript.mjs  get_transcript: captions through yt-dlp
+mcp/youtube-analytics.mjs   My YouTube channel: OAuth (PKCE, loopback to the bridge) + YouTube Analytics reports
 reddit.com page      src/reddit.js (listing JSON / <shreddit-post> → posts) + src/reddit-content.js (Collect top posts)
 src/background.js    downloads, opens the Library
-src/compare.js       matches the same video across Instagram and TikTok
+src/compare.js       matches the same video across Instagram, TikTok and YouTube Shorts
 src/agent-bridge.js  syncs the library to the local MCP server and runs agent commands
 src/mentions*.js     Reddit keyword matching and the 15-minute checker
 mcp/                 MCP server, 127.0.0.1 bridge, SQLite store, backup, launchd install
@@ -310,13 +376,14 @@ npm test                          # unit + MCP end-to-end tests (Node 20+; run `
 python3 -m http.server 8791       # then open http://127.0.0.1:8791/dev/demo.html
 ```
 
-The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare`, `#/mentions` and `#/studio`; add `?studio=<worker address>` to link My account), `popup-demo.html` (add `?empty` for the first-run state) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`.
+The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `youtube-demo.html` (channel tabs, watch page, Short, overlay; `?hl=tr` for Turkish), `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare`, `#/mentions`, `#/studio` and `#/my-youtube`; add `?studio=<worker address>` to link My account, `?ytapi` for a saved YouTube Data API key, `?ytanalytics=setup|connect|connected` for My YouTube channel), `popup-demo.html` (add `?empty` for the first-run state, `?ytapi` for a saved key; `youtube-demo.html?ytapi` too) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`, `make-youtube-fixture.mjs`.
 
 **Design.** The identity ("Signal Field": Signal Blue `#1E3BFF`, Outlier Lime `#C8FF2E`, Fraunces Black + Inter Tight, the Pixel O) and its rules live in [`brand/README.md`](brand/README.md). In short: the colour logo sits only on blue or ink, and lime is reserved for outliers and never sits on light paper.
 
 ## Roadmap
 
-- [x] Instagram, TikTok and Reddit; Library; Instagram ↔ TikTok comparison; MCP; SQLite + backups
+- [x] Instagram, TikTok, YouTube (videos + Shorts) and Reddit; Library; Instagram ↔ TikTok comparison; MCP; SQLite + backups
+- [x] YouTube: optional Data API key, transcripts (yt-dlp), Shorts ↔ Reels / TikTok comparison, your own channel through YouTube Analytics
 - [ ] TikTok comments and transcripts (subtitles TikTok already loads)
 - [ ] Reddit thread comments for deeper pain-point mining
 - [ ] Transcripts with your own API key
@@ -327,7 +394,7 @@ Contributions are welcome: open an issue or a pull request.
 
 ## Responsible use
 
-Use OpenOutlier for research on public content. Download only content you own or have permission to use. Respect creators' copyright and Instagram's, TikTok's and Reddit's terms. OpenOutlier paces its requests; don't run it in loops.
+Use OpenOutlier for research on public content. Download only content you own or have permission to use. Respect creators' copyright and Instagram's, TikTok's, YouTube's and Reddit's terms (YouTube's terms don't allow downloads outside its own features: the yt-dlp download is for personal, local research). OpenOutlier paces its requests; don't run it in loops.
 
 ## Credits
 

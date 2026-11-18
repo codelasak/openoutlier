@@ -1,5 +1,6 @@
 // OpenOutlier – toolbar + stats card shown on top of the reel/post you're viewing
-// (instagram.com/reel/…, /reels/…, /p/…; tiktok.com/@user/video/…). It lives in its own Shadow DOM host
+// (instagram.com/reel/…, /reels/…, /p/…; tiktok.com/@user/video/…; youtube.com/watch, /shorts/…).
+// It lives in its own Shadow DOM host
 // and is positioned over the video with position:fixed, so it never touches
 // Instagram's own markup.
 (function (root) {
@@ -56,7 +57,53 @@
   function dur(s) {
     if (!(s > 0)) return '–';
     s = Math.round(s);
+    if (s >= 3600) return Math.floor(s / 3600) + ':' + String(Math.floor(s / 60) % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+  /** A time in the video ("0:42", "1:02:03"); 0 s is "0:00". */
+  function at(s) { return s > 0 ? dur(s) : '0:00'; }
+  var mf = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
+
+  /** YouTube: Shorts and long-form videos are compared with their own format only. */
+  function sameFormat(a, b) { return (a.type === 'short') === (b.type === 'short'); }
+
+  /** A small "most replayed" strip: one bar per heatmap value, peaks marked. */
+  function heatStrip(p, onSeek) {
+    var NS = 'http://www.w3.org/2000/svg';
+    var vals = p.heatmap || [];
+    var svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + vals.length + ' 20');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('class', 'ov-heat');
+    svg.setAttribute('aria-hidden', 'true');
+    var d = 'M0 20';
+    vals.forEach(function (v, i) { d += ' L' + i + ' ' + (20 - v * 19).toFixed(2) + ' L' + (i + 1) + ' ' + (20 - v * 19).toFixed(2); });
+    d += ' L' + vals.length + ' 20 Z';
+    var path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', 'ov-heat-area');
+    svg.appendChild(path);
+    var total = p.duration || (p.heatmapStep ? p.heatmapStep * vals.length : 0);
+    (p.heatmapPeaks || []).forEach(function (t) {
+      if (!total) return;
+      var x = Math.min(vals.length, Math.max(0, t / total * vals.length));
+      var line = document.createElementNS(NS, 'rect');
+      line.setAttribute('x', (x - 0.4).toFixed(2));
+      line.setAttribute('y', '0');
+      line.setAttribute('width', '0.8');
+      line.setAttribute('height', '20');
+      line.setAttribute('class', 'ov-heat-peak');
+      svg.appendChild(line);
+    });
+    var peaks = (p.heatmapPeaks || []).slice(0, 3);
+    var label = h('p', { class: 'ov-muted ov-replay' }, 'Most replayed at ');
+    peaks.forEach(function (t, i) {
+      if (i) label.appendChild(document.createTextNode(i === peaks.length - 1 ? ' and ' : ', '));
+      label.appendChild(onSeek
+        ? h('button', { class: 'ov-time', type: 'button', title: 'Jump to ' + at(t), onclick: function () { onSeek(t); } }, at(t))
+        : h('b', { text: at(t) }));
+    });
+    return h('div', { class: 'ov-heat-wrap' }, svg, peaks.length ? label : h('p', { class: 'ov-muted ov-replay', text: 'Most replayed: no clear peak' }));
   }
 
   function readOpen() { try { return localStorage.getItem(OPEN_KEY) !== '0'; } catch (e) { return true; } }
@@ -116,14 +163,20 @@
     function download(what) {
       var p = code && opts.getPost(code);
       if (!p) { status = 'Still loading this post…'; render(); return; }
-      var has = what === 'cover' ? !!p.thumb : (p.files || []).length > 0;
+      // YouTube video files come from yt-dlp through the bridge (the callback finds it and says when it isn't running).
+      var has = what === 'cover' ? !!p.thumb : (p.platform === 'youtube' || (p.files || []).length > 0);
       if (!has) { status = 'No file link yet. Wait a second and try again.'; render(); return; }
       status = 'Starting download…';
       render();
-      opts.onDownloadMedia([p], what).then(function (r) {
-        status = r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the page and try again.';
+      var startedFor = code;
+      // YouTube videos report yt-dlp's progress (through the bridge) as they go.
+      var progress = function (label) { if (code === startedFor && label) { status = label; render(); } };
+      opts.onDownloadMedia([p], what, progress).then(function (r) {
+        if (code !== startedFor) return;
+        status = r && r.message ? r.message : r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the page and try again.';
         render();
-        setTimeout(function () { status = ''; render(); }, 3500);
+        var shownFor = code;
+        setTimeout(function () { if (code === shownFor) { status = ''; render(); } }, r && r.message ? 12000 : r && r.queued ? 3500 : r && r.errors && r.errors[0] && r.errors[0].length > 120 ? 20000 : 7000);
       }, function () { status = 'Download failed.'; render(); });
     }
 
@@ -144,6 +197,7 @@
         return;
       }
       var tt = p.platform === 'tiktok';
+      if (p.platform === 'youtube') { renderYouTube(p); return; }
       var handle = p.owner ? '@' + String(p.owner).replace(/^tt\//, '') : '';
       var eng = p.views > 0 ? (M.interactions(p) / p.views) * 100 : null;
       card.appendChild(h('div', { class: 'ov-head' },
@@ -172,6 +226,41 @@
       var audio = p.audio ? (p.audio.kind === 'music' || tt ? '♪ ' + p.audio.title + (p.audio.artist && p.audio.kind === 'music' ? ' · ' + p.audio.artist : '') : '♪ Original audio') : '';
       if (audio) card.appendChild(h('p', { class: 'ov-muted ov-audio', text: audio }));
       if (opts.isLoading(code)) card.appendChild(h('p', { class: 'ov-muted', text: 'Loading more details…' }));
+      if (status) card.appendChild(h('p', { class: 'ov-status', text: status }));
+      card.appendChild(h('button', { class: 'ov-link', type: 'button', onclick: opts.onOpenPanel }, 'Open the OpenOutlier panel'));
+    }
+
+    function renderYouTube(p) {
+      var handle = p.author ? '@' + p.author : (p.ownerName || String(p.owner || '').replace(/^yt\//, ''));
+      var short = p.type === 'short';
+      var when = !p.takenAt ? '' : p.dateApprox && !p.dateDay ? '≈ ' + mf.format(new Date(p.takenAt)) : df.format(new Date(p.takenAt));
+      card.appendChild(h('div', { class: 'ov-head' },
+        h('span', { class: 'ov-owner', text: handle }),
+        h('span', { class: 'ov-muted', text: when, title: p.dateApprox ? 'Approximate: YouTube showed a relative date' : null })));
+      var eng = M.engagementOf ? M.engagementOf(p, p.views) : (p.views > 0 ? (M.interactions(p) / p.views) * 100 : null);
+      card.appendChild(h('div', { class: 'ov-grid' },
+        stat('Views', (p.viewsApprox ? '≈' : '') + fmt(p.views), p.views != null ? (p.viewsApprox ? 'About ' : '') + nfFull.format(p.views) : null),
+        stat('Likes', fmt(p.likes), p.likes != null ? nfFull.format(p.likes) : 'Loads with the video'),
+        stat('Comments', (p.commentsApprox ? '≈' : '') + fmt(p.comments), p.comments != null ? nfFull.format(p.comments) : 'Loads with the video'),
+        stat('Duration', dur(p.duration)),
+        stat('Engagement', eng == null ? '–' : eng.toFixed(2) + '%', '(likes + comments) ÷ views'),
+        stat('Chapters', (p.chapters || []).length ? String(p.chapters.length) : '–', (p.chapters || []).map(function (c) { return at(c.start) + ' ' + c.title; }).join('\n') || 'No chapters')));
+
+      // Score against this channel's median for the same format (Shorts vs long-form).
+      var group = opts.getProfilePosts(p.owner).filter(function (x) { return x.views > 0 && sameFormat(x, p); });
+      var what = short ? 'Shorts' : 'long-form';
+      if (group.length >= 5 && p.views > 0) {
+        var med = M.median(group.map(function (x) { return x.views; }));
+        var ratio = p.views / med;
+        var hit = ratio >= M.OUTLIER_RATIO;
+        card.appendChild(h('p', { class: 'ov-compare' + (hit ? ' is-outlier' : ''), title: 'Median of ' + group.length + ' ' + what + ' views collected from this channel: ' + nfFull.format(Math.round(med)) },
+          hit ? h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')) : null,
+          h('b', { text: ratio.toFixed(1) + '×' }),
+          h('span', { text: handle + '\'s ' + what + ' median · Viral Score ' + M.viralScore(p.views, med) })));
+      } else {
+        card.appendChild(h('p', { class: 'ov-muted', text: 'Collect this channel\'s ' + (short ? 'Shorts' : 'Videos') + ' tab to compare with its median (' + group.length + ' of 5 ' + (short ? 'Shorts' : 'long-form videos') + ' so far).' }));
+      }
+      if ((p.heatmap || []).length) card.appendChild(heatStrip(p, opts.onSeek));
       if (status) card.appendChild(h('p', { class: 'ov-status', text: status }));
       card.appendChild(h('button', { class: 'ov-link', type: 'button', onclick: opts.onOpenPanel }, 'Open the OpenOutlier panel'));
     }

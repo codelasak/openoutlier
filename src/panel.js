@@ -18,6 +18,7 @@
   function dur(s) {
     if (!(s > 0)) return '';
     s = Math.round(s);
+    if (s >= 3600) return Math.floor(s / 3600) + ':' + String(Math.floor(s / 60) % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
     return s < 60 ? s + 's' : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
   function hourRange(block, size) {
@@ -143,6 +144,16 @@
   ];
   // Instagram + TikTok lists (TikTok shows saves publicly).
   var VIDEO_SORT_OPTIONS = SORT_OPTIONS.slice(0, 5).concat([['saves', 'Saves']], SORT_OPTIONS.slice(5));
+  // YouTube: likes and comments only come from watch pages, so they sort after views and score.
+  var YOUTUBE_SORT_OPTIONS = [
+    ['views', 'Views'],
+    ['viralScore', 'Viral Score'],
+    ['duration', 'Longest'],
+    ['date', 'Newest'],
+    ['likes', 'Likes'],
+    ['comments', 'Comments'],
+    ['engagement', 'Engagement rate']
+  ];
   var MIXED_SORT_OPTIONS = [
     ['viralScore', 'Viral Score'],
     ['views', 'Views / score'],
@@ -151,6 +162,7 @@
   ];
   var REDDIT_TYPES = [['all', 'All posts'], ['text', 'Text'], ['image', 'Image'], ['video', 'Video'], ['link', 'Link'], ['gallery', 'Gallery']];
   var PAGE = 150;
+  var EXACT_TOP = 10; // YouTube "Get exact stats": how many of the top videos (by Viral Score) it opens at most
 
   /**
    * 'instagram' | 'tiktok' | 'reddit' | 'mixed' for a list of posts.
@@ -159,22 +171,45 @@
   function platformOf(posts) {
     var r = 0;
     var t = 0;
-    for (var i = 0; i < posts.length; i++) { if (posts[i].platform === 'reddit') r++; else if (posts[i].platform === 'tiktok') t++; }
+    var y = 0;
+    for (var i = 0; i < posts.length; i++) { if (posts[i].platform === 'reddit') r++; else if (posts[i].platform === 'tiktok') t++; else if (posts[i].platform === 'youtube') y++; }
     if (r) return r === posts.length ? 'reddit' : 'mixed';
+    if (y && y === posts.length) return 'youtube';
     return t && t === posts.length ? 'tiktok' : 'instagram';
   }
-  /** Account id as shown: "@name" for Instagram, "@name (TikTok)" for TikTok, "r/excel" / "u/name" for Reddit. */
+  /** Account id as shown: "@name" for Instagram, "@name (TikTok)" / "@name (YouTube)", "r/excel" / "u/name" for Reddit. */
   function accountLabel(id) {
     var s = String(id || '');
     if (/^(r|u)\//.test(s)) return s;
     if (/^tt\//.test(s)) return '@' + s.slice(3) + ' (TikTok)';
+    if (/^yt\/UC/.test(s)) return s.slice(3) + ' (YouTube)';
+    if (/^yt\//.test(s)) return '@' + s.slice(3) + ' (YouTube)';
     return '@' + s;
   }
-  function ownerHandle(p) { return p && p.owner ? '@' + String(p.owner).replace(/^tt\//, '') : ''; }
+  function ownerHandle(p) {
+    if (!p || !p.owner) return '';
+    if (/^yt\//.test(p.owner)) return p.author ? '@' + p.author : p.ownerName || p.owner.slice(3);
+    return '@' + String(p.owner).replace(/^tt\//, '');
+  }
   function isReddit(p) { return p && p.platform === 'reddit'; }
   function isTT(p) { return p && p.platform === 'tiktok'; }
-  function siteName(p) { return isReddit(p) ? 'Reddit' : isTT(p) ? 'TikTok' : 'Instagram'; }
-  function engagementTip(p) { return isTT(p) ? '(likes + comments + shares + saves) ÷ views' : '(likes + comments) ÷ views'; }
+  function isYT(p) { return p && p.platform === 'youtube'; }
+  function siteName(p) { return isReddit(p) ? 'Reddit' : isTT(p) ? 'TikTok' : isYT(p) ? 'YouTube' : 'Instagram'; }
+  function engagementTip(p) {
+    if (isYT(p)) return p.likes == null && p.comments == null ? 'Likes and comments load when the video is opened on YouTube' : '(likes + comments) ÷ views';
+    return isTT(p) ? '(likes + comments + shares + saves) ÷ views' : '(likes + comments) ÷ views';
+  }
+  var mf = new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' });
+  /** A date for a row: exact, or "≈ Oct 2026" when YouTube only said "1 month ago". */
+  function dateLabel(p) {
+    if (!p.takenAt) return '';
+    return p.dateApprox && !p.dateDay ? '≈ ' + mf.format(new Date(p.takenAt)) : df.format(new Date(p.takenAt));
+  }
+  function viewsTip(p) {
+    if (p.views === null || p.views === undefined) return 'Views not available for this post';
+    if (isYT(p) && p.viewsApprox) return 'About ' + fmtFull(p.views) + ' views: YouTube rounds counts on channel pages. Opening the video gives the exact number.';
+    return fmtFull(p.views) + ' views';
+  }
   function unitOf(p) { return isReddit(p) ? 'score' : 'views'; }
   var TYPE_NAMES = { reel: 'Reel', video: 'Video', photo: 'Photo', carousel: 'Carousel', text: 'Text post', image: 'Image', link: 'Link', gallery: 'Gallery', poll: 'Poll', crosspost: 'Crosspost', unknown: 'Post' };
 
@@ -182,11 +217,15 @@
    * create(opts) → panel controller.
    * opts: {
    *   cssText, onAutoScroll(), onClearProfile(user), onSelectProfile(user),
-   *   onDownload(name, text, mime), onCopy(text), onDownloadMedia(posts, what), onOpenDashboard(),
+   *   onDownload(name, text, mime), onCopy(text), onDownloadMedia(posts, what, onProgress?), onOpenDashboard(),
    *   embedded: true  → render inline (no launcher/drawer chrome), used by the dashboard page
    *   preEnriched: true → posts already carry ratio/viralScore (e.g. scored per account)
    *   showOwner: true  → show @owner on each row (multi-account lists)
    *   loadImage(img, url) → optional custom image loader (dashboard cache)
+   *   onExactStats(posts) / onExactCancel() → YouTube "Get exact stats" (posts: the scored list of the open format);
+   *     progress comes back in update({ exact: { running, label } })
+   *   onApiStats('exact' | 'uploads') → YouTube with the user's Data API key; shown only while
+   *     update({ api: { configured, used, limit, running, label } }) has an api object
    * }
    */
   function create(opts) {
@@ -208,17 +247,20 @@
       tab: 'reels',
       sort: opts.defaultSort || 'views',
       typeFilter: 'reels',
+      ytFormat: 'long',  // YouTube: 'long' (videos + past streams) or 'short'
+      ytHint: null,      // the last format the page suggested (Shorts tab → 'short')
       outliersOnly: false,
       query: '',
       shown: PAGE,
       detail: null // code of the post shown in the detail card
     };
-    var state = { profiles: [], selected: null, posts: [], auto: { running: false, label: '' }, collect: null };
+    var state = { profiles: [], selected: null, posts: [], auto: { running: false, label: '' }, collect: null, exact: null };
     var plat = 'instagram'; // platform of the current list, set in render()
     var hasTT = false;      // the list has TikTok videos (adds the Saves sort)
     var multiPlat = false;  // the list mixes platforms (rows get a platform badge)
-    function sortOptions() { return plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : hasTT ? VIDEO_SORT_OPTIONS : SORT_OPTIONS; }
-    function listTab() { return opts.listTabLabel || (plat === 'instagram' ? 'Reels' : plat === 'tiktok' ? 'Videos' : 'Posts'); }
+    function sortOptions() { return plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : plat === 'youtube' ? YOUTUBE_SORT_OPTIONS : hasTT ? VIDEO_SORT_OPTIONS : SORT_OPTIONS; }
+    function listTab() { return opts.listTabLabel || (plat === 'instagram' ? 'Reels' : plat === 'tiktok' || plat === 'youtube' ? 'Videos' : 'Posts'); }
+    function ytFormatOf(p) { return p.type === 'short' ? 'short' : 'long'; }
     function unit() { return plat === 'reddit' ? 'score' : plat === 'mixed' ? 'views / score' : 'views'; }
 
     // ---- skeleton -----------------------------------------------------------
@@ -311,6 +353,8 @@
     // ---- data shaping --------------------------------------------------------
     function filtered() {
       var base = state.posts.filter(function (p) {
+        // YouTube: one format at a time (Shorts and long-form have separate medians).
+        if (isYT(p)) return plat !== 'youtube' || ytFormatOf(p) === ui.ytFormat;
         if (isReddit(p)) return ui.typeFilter === 'reels' || ui.typeFilter === 'all' || p.type === ui.typeFilter;
         if (ui.typeFilter === 'reels') return p.type === 'reel' || p.type === 'video';
         return ui.typeFilter === 'all';
@@ -332,7 +376,14 @@
       var total = state.posts.length;
       plat = state.platform || platformOf(state.posts);
       hasTT = state.posts.some(isTT);
-      multiPlat = state.posts.some(isTT) + state.posts.some(isReddit) + state.posts.some(function (p) { return !isTT(p) && !isReddit(p); }) > 1;
+      multiPlat = state.posts.some(isTT) + state.posts.some(isReddit) + state.posts.some(isYT) + state.posts.some(function (p) { return !isTT(p) && !isReddit(p) && !isYT(p); }) > 1;
+      if (plat === 'youtube') {
+        // Follow the channel tab that is open (Shorts tab → Shorts), but keep the user's own pick until it changes.
+        if (state.view && state.view !== ui.ytHint) { ui.ytHint = state.view; ui.ytFormat = state.view; }
+        var nShort = state.posts.filter(function (p) { return p.type === 'short'; }).length;
+        if (ui.ytFormat === 'short' && !nShort && state.posts.length) ui.ytFormat = 'long';
+        else if (ui.ytFormat === 'long' && nShort === state.posts.length) ui.ytFormat = 'short';
+      }
       if (plat === 'reddit' && !sortOptions().some(function (o) { return o[0] === ui.sort; })) ui.sort = 'views';
       if (plat !== 'instagram' && !sortOptions().some(function (o) { return o[0] === ui.sort; })) ui.sort = 'viralScore';
       tabs.reels.textContent = listTab();
@@ -400,6 +451,15 @@
             h('li', { text: 'Come back here to sort, analyze and export.' })),
           h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier only reads what TikTok already loaded; it never likes, follows, comments or posts.' }));
       }
+      if (opts.platform === 'youtube') {
+        return h('div', { class: 'empty' },
+          h('p', { class: 'empty-title', text: 'No YouTube videos collected yet' }),
+          h('ol', null,
+            h('li', null, 'Open a channel\'s Videos or Shorts tab, e.g. ', h('code', { text: 'youtube.com/@name/videos' })),
+            h('li', { text: 'Scroll down, or press Auto-scroll. Videos are collected as YouTube loads them.' }),
+            h('li', { text: 'Open a video to get its exact views, likes and date. Come back here to sort, analyze and export.' })),
+          h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier only reads what YouTube already loaded; it never likes, subscribes, comments or posts.' }));
+      }
       if (opts.platform === 'reddit') {
         return h('div', { class: 'empty' },
           h('p', { class: 'empty-title', text: 'No Reddit posts collected yet' }),
@@ -427,19 +487,38 @@
           ? REDDIT_TYPES.map(function (t) { return h('option', { value: t[0], selected: ui.typeFilter === t[0] || (t[0] === 'all' && ui.typeFilter === 'reels'), text: t[1] }); })
           : [h('option', { value: 'reels', selected: ui.typeFilter === 'reels', text: plat === 'mixed' ? 'Reels, videos & Reddit posts' : plat === 'tiktok' ? 'Videos' : 'Reels & videos' }),
             h('option', { value: 'all', selected: ui.typeFilter === 'all', text: plat === 'tiktok' ? 'Videos & photo posts' : 'All posts' })]);
-      var search = h('input', { type: 'search', placeholder: plat === 'reddit' ? 'Search titles or flair' : 'Search captions or #tags', value: ui.query, 'aria-label': 'Search captions' });
+      var search = h('input', { type: 'search', placeholder: plat === 'reddit' || plat === 'youtube' ? (plat === 'reddit' ? 'Search titles or flair' : 'Search titles or #tags') : 'Search captions or #tags', value: ui.query, 'aria-label': 'Search captions' });
       search.addEventListener('input', function () {
         ui.query = search.value; ui.shown = PAGE;
         render();
       });
+      var ytSwitch = null;
+      if (plat === 'youtube') {
+        var nS = state.posts.filter(function (p) { return p.type === 'short'; }).length;
+        var nL = state.posts.length - nS;
+        ytSwitch = h('div', { class: 'seg', role: 'group', 'aria-label': 'Format' },
+          [['long', 'Videos', nL, 'Long-form videos and past live streams, scored against their own median'], ['short', 'Shorts', nS, 'Shorts, scored against the Shorts median']].map(function (f) {
+            return h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': ui.ytFormat === f[0] ? 'true' : 'false', 'data-tip': f[3], onclick: function () {
+              ui.ytFormat = f[0]; ui.shown = PAGE; ui.detail = null; render();
+            } }, f[1], h('span', { class: 'seg-count', text: ' ' + fmtFull(f[2]) }));
+          }));
+      }
       var outl = h('label', { class: 'check' },
         h('input', { type: 'checkbox', checked: ui.outliersOnly, onchange: function (e) { ui.outliersOnly = e.target.checked; ui.shown = PAGE; render(); } }),
         'Outliers only');
-      wrap.appendChild(h('div', { class: 'controls' }, h('label', { class: 'field' }, 'Sort', sortSel), typeSel, outl, search));
+      wrap.appendChild(h('div', { class: 'controls' }, ytSwitch, h('label', { class: 'field' }, 'Sort', sortSel), plat === 'youtube' ? null : typeSel, outl, search));
 
       var list = data.list;
       wrap.appendChild(h('p', { class: 'summary' },
-        fmtFull(list.length) + ' shown · ' + (plat === 'mixed' ? 'scored against each account\'s own median' : 'median ' + fmt(M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' ' + unit()) + ' · outlier = ' + M.OUTLIER_RATIO + '× median or more'));
+        fmtFull(list.length) + ' shown · ' + (plat === 'mixed' ? 'scored against each account\'s own median' : 'median ' + fmt(M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' ' + unit() + (plat === 'youtube' ? (ui.ytFormat === 'short' ? ' (Shorts)' : ' (long-form)') : '')) + ' · outlier = ' + M.OUTLIER_RATIO + '× median or more'));
+      if (plat === 'youtube') {
+        var nApprox = data.all.filter(function (p) { return p.viewsApprox; }).length;
+        if (nApprox) wrap.appendChild(h('p', { class: 'muted small', text: nApprox === data.all.length
+          ? 'View counts are YouTube\'s rounded ones (63K, 1.2M), close enough to compare with the median. Open a video for its exact numbers.'
+          : nApprox + ' of ' + data.all.length + ' view counts are rounded by YouTube; the rest are exact (opened videos).' }));
+        if (opts.onExactStats) wrap.appendChild(exactBar(data.all));
+      }
+      if (plat === 'youtube' && opts.onApiStats && state.api) wrap.appendChild(apiBar());
 
       if (!list.length) { wrap.appendChild(h('p', { class: 'empty-small', text: 'Nothing matches these filters.' })); return wrap; }
 
@@ -451,6 +530,36 @@
           'Show ' + Math.min(PAGE, list.length - ui.shown) + ' more'));
       }
       return wrap;
+    }
+
+    /** YouTube: "Get exact stats" for the top outliers (opens their pages one by one in a background tab). */
+    function exactBar(all) {
+      var ex = state.exact || {};
+      var top = M.sortBy(all.filter(function (p) { return p.ratio != null; }), 'viralScore').slice(0, EXACT_TOP);
+      var todo = top.filter(function (p) { return p.viewsApprox || p.dateApprox !== false; }).length;
+      var btn = h('button', { class: 'btn' + (ex.running ? '' : ' btn-ghost'), type: 'button', disabled: !ex.running && !todo,
+        'data-tip': ex.running ? 'Stop after the current video' : todo
+          ? 'Opens the ' + todo + ' of the top ' + top.length + ' videos that still have rounded views or dates, one at a time in a background tab, so their views, likes and dates become exact. Takes about ' + Math.max(1, Math.round(todo * 10 / 60)) + ' min.'
+          : 'The top ' + top.length + ' videos already have exact stats',
+        onclick: function () { if (ex.running) opts.onExactCancel(); else opts.onExactStats(all); } },
+        ex.running ? 'Stop' : 'Get exact stats' + (todo ? ' (' + todo + ')' : ''));
+      return h('div', { class: 'exact-bar' }, btn, h('span', { class: 'muted small', 'aria-live': 'polite', text: ex.label || (todo ? 'for the top ' + top.length + ' by Viral Score' : 'Top ' + top.length + ' are exact') }));
+    }
+
+    /** YouTube with the user's own Data API key: exact stats for every saved video, or the full upload list. */
+    function apiBar() {
+      var a = state.api;
+      var all = state.posts || [];
+      var todo = all.filter(function (p) { return p.viewsApprox || p.dateApprox !== false; }).length;
+      var units = Math.max(1, Math.ceil(all.length / 50));
+      var exactBtn = h('button', { class: 'btn btn-ghost', type: 'button', disabled: a.running || !all.length,
+        'data-tip': 'Asks the YouTube Data API (your key) for the exact views, likes, comments, date, length and tags of all ' + all.length + ' saved videos (' + todo + ' still rounded). About ' + units + ' quota unit' + (units === 1 ? '' : 's') + '.',
+        onclick: function () { opts.onApiStats('exact'); } }, 'Exact stats via API');
+      var upBtn = h('button', { class: 'btn btn-ghost', type: 'button', disabled: a.running,
+        'data-tip': 'Lists the channel\'s newest 500 uploads (videos, Shorts, past streams) through the API, with exact stats, including ones the tabs never loaded. About 30 quota units.',
+        onclick: function () { opts.onApiStats('uploads'); } }, 'All uploads via API');
+      return h('div', { class: 'exact-bar' }, exactBtn, upBtn,
+        h('span', { class: 'muted small', 'aria-live': 'polite', text: (a.label ? a.label + ' ' : '') + 'API quota today: ' + fmtFull(a.used || 0) + ' / ' + fmtFull(a.limit || 10000) + ' units.' }));
     }
 
     function image(url, cls, fallback) {
@@ -477,6 +586,14 @@
       render();
     }
 
+    // Download messages per video, kept across re-renders (yt-dlp progress, then "Saved to …").
+    var dlMsgs = {};
+    var detailMsg = null;
+    function setDlMsg(code, text) {
+      dlMsgs[code] = text;
+      if (detailMsg && detailMsg.__code === code) detailMsg.textContent = text;
+    }
+
     function renderDetail(data) {
       var p = ui.detail && data.all.filter(function (x) { return x.code === ui.detail; })[0];
       if (!p) { ui.detail = null; detailEl.hidden = true; return; }
@@ -486,14 +603,18 @@
       if (isReddit(p)) { renderRedditDetail(p); detailEl.scrollTop = st; return; }
       var when = p.takenAt ? new Date(p.takenAt) : null;
       var nFiles = (p.files || []).length;
-      var msg = h('p', { class: 'status-line', 'aria-live': 'polite' });
+      var msg = h('p', { class: 'status-line', 'aria-live': 'polite', text: dlMsgs[p.code] || '' });
+      msg.__code = p.code;
+      detailMsg = msg;
       function dl(what, label, enabled) {
         var b = h('button', { class: what === 'media' ? 'btn btn-primary' : 'btn', type: 'button', disabled: !enabled, onclick: function () {
           b.disabled = true;
-          opts.onDownloadMedia([p], what).then(function (r) {
-            msg.textContent = r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') + '/'
-              : (r && r.errors && r.errors[0]) || 'Download failed. Open the post on ' + siteName(p) + ' once, then try again.';
-          }, function () { msg.textContent = 'Download failed.'; }).then(function () { b.disabled = false; });
+          var code = p.code;
+          setDlMsg(code, isYT(p) && what === 'media' ? 'Starting yt-dlp…' : '');
+          opts.onDownloadMedia([p], what, function (label) { setDlMsg(code, label); }).then(function (r) {
+            setDlMsg(code, r && r.message ? r.message : r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') + '/'
+              : (r && r.errors && r.errors[0]) || 'Download failed. Open the post on ' + siteName(p) + ' once, then try again.');
+          }, function () { setDlMsg(code, 'Download failed.'); }).then(function () { b.disabled = false; });
         } }, label);
         return b;
       }
@@ -506,19 +627,25 @@
         image(p.thumb, 'd-cover'),
         h('div', { class: 'd-side' },
           h('p', { class: 'd-owner', text: ownerHandle(p) + (multiPlat || isTT(p) ? ' · ' + siteName(p) : '') }),
-          h('p', { class: 'muted small d-when', text: when ? when.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date not loaded yet' }),
-          verdict(p, 'this account\'s median views'),
+          h('p', { class: 'muted small d-when', text: !when ? 'Date not loaded yet' : isYT(p) && p.dateApprox && p.dateDay
+            ? df.format(when) + ' (no time of day yet)'
+            : isYT(p) && p.dateApprox
+            ? 'About ' + mf.format(when) + ' (YouTube said "' + agoText(p.takenAt) + '"; open the video for the exact date)'
+            : when.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }),
+          verdict(p, isYT(p) ? 'this channel\'s median ' + (p.type === 'short' ? 'Shorts' : 'long-form') + ' views' : 'this account\'s median views'),
           p.pinned || p.paidPartnership ? h('div', { class: 'badges' },
             p.pinned ? h('span', { class: 'badge' }, 'Pinned') : null,
             p.paidPartnership ? h('span', { class: 'badge' }, 'Paid partnership') : null) : null,
           h('div', { class: 'd-actions' },
-            dl('media', nFiles > 1 ? 'Download ' + nFiles + ' files' : (p.type === 'reel' || p.type === 'video' ? 'Download video' : 'Download photo'), nFiles > 0),
+            isYT(p) ? h('span', { 'data-tip': 'Saved by yt-dlp on your Mac through the OpenOutlier bridge (needs yt-dlp and ffmpeg: brew install yt-dlp ffmpeg). Also fills in the exact views, likes, comments, date, chapters and heatmap.' }, dl('media', 'Download video', true)) :
+              dl('media', nFiles > 1 ? 'Download ' + nFiles + ' files' : (p.type === 'reel' || p.type === 'video' ? 'Download video' : 'Download photo'), nFiles > 0),
             dl('cover', 'Download cover', !!p.thumb),
             h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () {
               opts.onCopy(p.url).then(function () { msg.textContent = 'Link copied.'; }, function () { msg.textContent = p.url; });
             } }, 'Copy link')),
           msg)));
 
+      if (isYT(p)) { renderYouTubeStats(p); detailEl.scrollTop = st; return; }
       detailEl.appendChild(h('div', { class: 'd-grid' },
         big('Views', fmt(p.views), p.views != null ? fmtFull(p.views) : 'Not loaded yet'),
         big('Likes', fmt(p.likes), p.likes != null ? fmtFull(p.likes) : null),
@@ -541,6 +668,108 @@
         })));
       }
       detailEl.scrollTop = st;
+    }
+
+    /** "3 weeks ago"-style text for an approximate date (what YouTube showed, roughly). */
+    function agoText(t) {
+      var days = (Date.now() - t) / 864e5;
+      if (days < 1) return 'today';
+      if (days < 14) return Math.round(days) + ' days ago';
+      if (days < 60) return Math.round(days / 7) + ' weeks ago';
+      if (days < 365) return Math.round(days / 30.44) + ' months ago';
+      var y = Math.round(days / 365.25);
+      return y + (y === 1 ? ' year ago' : ' years ago');
+    }
+
+    function renderYouTubeStats(p) {
+      var fmtName = p.type === 'short' ? 'Short' : p.type === 'live' ? 'Live stream' : 'Video';
+      detailEl.appendChild(h('div', { class: 'd-grid' },
+        big('Views', (p.viewsApprox ? '≈' : '') + fmt(p.views), viewsTip(p)),
+        big('Likes', fmt(p.likes), p.likes != null ? fmtFull(p.likes) : 'Open the video on YouTube to load likes'),
+        big('Comments', (p.commentsApprox ? '≈' : '') + fmt(p.comments), p.comments != null ? fmtFull(p.comments) : 'Open the video on YouTube to load comments'),
+        big('Duration', p.duration ? dur(p.duration) : '–', p.type === 'short' && !p.duration ? 'The Shorts tab shows no length; open the Short to load it' : null),
+        big('Engagement', pct(p.engagement), engagementTip(p)),
+        big('× median', p.ratio ? p.ratio.toFixed(1) + '×' : '–', 'Views compared with this channel\'s median ' + (p.type === 'short' ? 'Short' : 'long-form video')),
+        big('Format', fmtName),
+        big('Category', p.category || '–', p.category ? null : 'Loads when the video is opened')));
+      if (p.caption) detailEl.appendChild(h('p', { class: 'd-caption d-title', text: p.caption }));
+      if ((p.heatmap || []).length) detailEl.appendChild(ytHeatmap(p));
+      if ((p.chapters || []).length) {
+        detailEl.appendChild(h('p', { class: 'subhead', text: p.chapters.length + ' chapters' }));
+        detailEl.appendChild(h('ol', { class: 'd-chapters' }, p.chapters.map(function (c, i) {
+          var next = p.chapters[i + 1];
+          var len = (next ? next.start : p.duration || 0) - c.start;
+          return h('li', null,
+            h('a', { class: 'd-time', href: ytAt(p, c.start), target: '_blank', rel: 'noopener noreferrer', 'data-tip': 'Open at ' + clock(c.start) }, clock(c.start)),
+            h('span', { class: 'd-ch-title', text: c.title }),
+            len > 0 ? h('span', { class: 'muted small', text: dur(len) }) : null);
+        })));
+      }
+      if (p.description) detailEl.appendChild(h('p', { class: 'd-caption', text: p.description }));
+      var facts = [];
+      if (p.hasCaptions === true) facts.push(p.autoCaptions ? 'Auto-generated captions' : 'Captions');
+      if (p.hasCaptions === false) facts.push('No captions');
+      if ((p.keywords || []).length) facts.push('Tags: ' + p.keywords.slice(0, 12).join(', '));
+      if (facts.length) detailEl.appendChild(h('p', { class: 'muted small', text: facts.join(' · ') }));
+      if ((p.hashtags || []).length) {
+        detailEl.appendChild(h('div', { class: 'd-tags' }, p.hashtags.map(function (t) {
+          return h('button', { class: 'chip', type: 'button', 'data-tip': 'Show videos with #' + t, onclick: function () {
+            ui.query = '#' + t; ui.tab = 'reels'; ui.shown = PAGE; ui.detail = null; detailEl.hidden = true; render();
+          } }, '#' + t);
+        })));
+      }
+    }
+
+    /** "0:42" for a moment in a video (0 → "0:00"). */
+    function clock(t) {
+      t = Math.max(0, Math.round(t || 0));
+      var m = Math.floor(t / 60);
+      return (m >= 60 ? Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') : String(m)) + ':' + String(t % 60).padStart(2, '0');
+    }
+    /** The video's link at a time (Shorts can't start at a time: plain link). */
+    function ytAt(p, t) { return p.type === 'short' ? p.url : 'https://www.youtube.com/watch?v=' + encodeURIComponent(p.code) + '&t=' + Math.max(0, Math.round(t)) + 's'; }
+
+    /** "Most replayed" strip: YouTube's 100-point heatmap, with its peaks marked. */
+    function ytHeatmap(p) {
+      var NS = 'http://www.w3.org/2000/svg';
+      var vals = p.heatmap;
+      var svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 ' + vals.length + ' 24');
+      svg.setAttribute('preserveAspectRatio', 'none');
+      svg.setAttribute('class', 'd-heat');
+      svg.setAttribute('role', 'img');
+      var total = p.duration || (p.heatmapStep ? p.heatmapStep * vals.length : 0);
+      var peaks = p.heatmapPeaks || [];
+      svg.setAttribute('aria-label', 'Replay heatmap' + (peaks.length ? ', most replayed at ' + peaks.map(clock).join(', ') : ''));
+      var d = 'M0 24';
+      vals.forEach(function (v, i) { var y = (24 - v * 23).toFixed(2); d += ' L' + i + ' ' + y + ' L' + (i + 1) + ' ' + y; });
+      var area = document.createElementNS(NS, 'path');
+      area.setAttribute('d', d + ' L' + vals.length + ' 24 Z');
+      area.setAttribute('class', 'd-heat-area');
+      svg.appendChild(area);
+      (p.chapters || []).forEach(function (c) {
+        if (!total || !c.start) return;
+        var tick = document.createElementNS(NS, 'rect');
+        tick.setAttribute('x', (c.start / total * vals.length - 0.15).toFixed(2));
+        tick.setAttribute('y', '0'); tick.setAttribute('width', '0.3'); tick.setAttribute('height', '24');
+        tick.setAttribute('class', 'd-heat-chapter');
+        svg.appendChild(tick);
+      });
+      peaks.forEach(function (t) {
+        if (!total) return;
+        var mark = document.createElementNS(NS, 'rect');
+        mark.setAttribute('x', (t / total * vals.length - 0.5).toFixed(2));
+        mark.setAttribute('y', '0'); mark.setAttribute('width', '1'); mark.setAttribute('height', '24');
+        mark.setAttribute('class', 'd-heat-peak');
+        svg.appendChild(mark);
+      });
+      var line = h('p', { class: 'muted small d-replay' }, peaks.length ? 'Most replayed at ' : 'No single most-replayed moment');
+      peaks.forEach(function (t, i) {
+        if (i) line.appendChild(document.createTextNode(i === peaks.length - 1 ? ' and ' : ', '));
+        var ch = (p.chapters || []).filter(function (c) { return c.start <= t; }).pop();
+        line.appendChild(h('a', { class: 'd-time', href: ytAt(p, t), target: '_blank', rel: 'noopener noreferrer', 'data-tip': ch ? 'In "' + ch.title + '"' : 'Open at ' + clock(t) }, clock(t)));
+      });
+      return h('div', { class: 'd-heat-wrap' }, h('p', { class: 'subhead', text: 'Replays' }), svg, line);
     }
 
     function big(label, value, tip) {
@@ -628,7 +857,9 @@
       if (p.outlier) badges.appendChild(outlierBadge(p, 'This post got ' + p.ratio.toFixed(1) + '× the profile\'s median views'));
       if (p.viralScore !== null) badges.appendChild(h('span', { class: 'badge badge-score', 'data-tip': 'Viral Score: 50 = median views, 75 = 2×, 100 = 4× or more' }, 'VS ' + p.viralScore));
       if (p.pinned) badges.appendChild(h('span', { class: 'badge', 'data-tip': 'Pinned to the profile' }, 'Pinned'));
-      if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform', 'data-tip': siteName(p) }, isTT(p) ? 'TT' : 'IG'));
+      if (isYT(p) && p.type === 'live') badges.appendChild(h('span', { class: 'badge', 'data-tip': p.liveNow ? 'Live now: the count is viewers, not views' : 'A past live stream (scored with the long-form videos)' }, 'Live'));
+      if (isYT(p) && p.membersOnly) badges.appendChild(h('span', { class: 'badge', 'data-tip': 'Members only' }, 'Members'));
+      if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform', 'data-tip': siteName(p) }, isTT(p) ? 'TT' : isYT(p) ? 'YT' : 'IG'));
 
       var meta = [];
       if (p.likes !== null && p.likes !== undefined) meta.push(fmt(p.likes) + ' likes');
@@ -637,12 +868,14 @@
       if (p.saves !== null && p.saves !== undefined) meta.push(fmt(p.saves) + ' saves');
       if (p.engagement !== null) meta.push(pct(p.engagement) + ' eng.');
       if (p.duration) meta.push(dur(p.duration));
-      if (p.takenAt) meta.push(df.format(new Date(p.takenAt)));
+      if (p.takenAt) meta.push(dateLabel(p));
 
       var nFiles = (p.files || []).length;
-      var dl = downloadButton(p, 'media', DL_PATH, nFiles,
-        nFiles > 1 ? 'Download all ' + nFiles + ' files' : 'Download ' + (nFiles && p.files[0].kind === 'video' ? 'video' : 'photo'),
-        isTT(p) ? 'No video link captured yet. Open the video on TikTok once.' : 'No video link captured yet. It loads with the post details.');
+      var dl = isYT(p)
+        ? downloadButton(p, 'media', DL_PATH, 1, 'Download video (yt-dlp through the OpenOutlier bridge)', '')
+        : downloadButton(p, 'media', DL_PATH, nFiles,
+          nFiles > 1 ? 'Download all ' + nFiles + ' files' : 'Download ' + (nFiles && p.files[0].kind === 'video' ? 'video' : 'photo'),
+          isTT(p) ? 'No video link captured yet. Open the video on TikTok once.' : 'No video link captured yet. It loads with the post details.');
       var cov = downloadButton(p, 'cover', IMG_PATH, p.thumb ? 1 : 0, 'Download cover image', 'No cover image captured yet.');
 
       if (opts.showOwner && p.owner) meta.unshift(ownerHandle(p));
@@ -655,7 +888,7 @@
           thumb,
           h('span', { class: 'row-main' },
             h('span', { class: 'row-top' },
-              h('span', { class: 'views', 'data-tip': p.views !== null ? fmtFull(p.views) + ' views' : 'Views not available for this post' }, p.views !== null ? fmt(p.views) : '–', h('span', { class: 'unit', text: ' views' })),
+              h('span', { class: 'views', 'data-tip': viewsTip(p) }, p.views != null ? (isYT(p) && p.viewsApprox ? '≈' : '') + fmt(p.views) : '–', h('span', { class: 'unit', text: ' views' })),
               badges),
             h('span', { class: 'meta', text: meta.join(' · ') }),
             p.caption ? h('span', { class: 'caption', text: p.caption.replace(/\s+/g, ' ') }) : null)),
@@ -666,8 +899,8 @@
       if (!count) return h('span', { class: 'icon-btn dl-btn dl-none', 'data-tip': emptyTip }, icon(path, 17));
       var b = h('button', { class: 'icon-btn dl-btn', type: 'button', 'aria-label': tip, 'data-tip': tip, onclick: function () {
         b.disabled = true;
-        opts.onDownloadMedia([p], what).then(function (r) {
-          b.setAttribute('data-tip', r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the profile and try again.');
+        opts.onDownloadMedia([p], what, function (label) { b.setAttribute('data-tip', label); }).then(function (r) {
+          b.setAttribute('data-tip', r && r.message ? r.message : r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') : (r && r.errors && r.errors[0]) || 'Download failed. Reload the profile and try again.');
         }, function () { b.setAttribute('data-tip', 'Download failed. Reload the profile and try again.'); })
           .then(function () { setTimeout(function () { b.disabled = false; }, 1500); });
       } }, icon(path, 17));
@@ -677,6 +910,7 @@
     // ---- analytics -------------------------------------------------------------
     function renderAnalytics(posts) {
       if (plat === 'reddit') return renderRedditAnalytics(posts);
+      if (plat === 'youtube') return renderYouTubeAnalytics(posts);
       var a = M.analyze(posts);
       var s = a.summary;
       var wrap = h('div', { class: 'analytics' });
@@ -714,6 +948,50 @@
       }
       if (!a.audio.kinds.length) audioBody.appendChild(h('p', { class: 'muted small', text: 'No audio data yet.' }));
       wrap.appendChild(section(tt ? 'Sounds' : 'Audio', tt ? 'Original sound vs. music, by median views.' : 'Original audio vs. licensed music, by median views.', audioBody));
+      return wrap;
+    }
+
+    function renderYouTubeAnalytics(posts) {
+      var a = M.analyze(posts, { all: M.enrich(state.posts) });
+      var s = a.summary;
+      var y = a.youtube;
+      var shorts = ui.ytFormat === 'short';
+      var what = shorts ? 'Shorts' : 'long-form videos';
+      var wrap = h('div', { class: 'analytics' });
+      wrap.appendChild(h('p', { class: 'muted small', text: 'Analytics for this channel\'s ' + what + ' (switch with Videos / Shorts in the Videos tab).' }));
+      if (posts.length < 12) wrap.appendChild(h('p', { class: 'note', text: 'Only ' + posts.length + ' ' + what + ' so far. Collect more (Auto-scroll) for reliable patterns.' }));
+      wrap.appendChild(h('div', { class: 'tiles' },
+        tile(shorts ? 'Shorts analyzed' : 'Videos analyzed', fmtFull(s.count)),
+        tile('Median views', fmt(s.medianViews), fmtFull(s.medianViews) + (y.approxViews ? ' (from YouTube\'s rounded counts)' : '')),
+        tile('Outliers (≥ ' + M.OUTLIER_RATIO + '×)', fmtFull(s.outliers), 'Videos with ≥ ' + M.OUTLIER_RATIO + '× the median views of their format', s.outliers > 0),
+        tile('Avg. engagement', pct(s.avgEngagement), s.avgEngagement == null ? 'Likes and comments load when videos are opened on YouTube' : '(likes + comments) ÷ views, over the videos that were opened'),
+        tile('Posts / week', s.postsPerWeek ? s.postsPerWeek.toFixed(1) : '–', y.approxDates ? 'From YouTube\'s relative dates ("3 weeks ago"), so roughly' : null),
+        tile('Total views', fmt(s.totalViews), fmtFull(s.totalViews))));
+
+      wrap.appendChild(section('Shorts vs. long-form', 'Median views per format on this channel. Each format is scored against its own median, so a Short is an outlier only among Shorts.',
+        y.formats.length ? bars(y.formats, function (g) { return g.key; }) : h('p', { class: 'muted small', text: 'No videos yet.' })));
+
+      var timeBody = [];
+      var dated = y.exactDates;
+      if (dated < posts.length) {
+        timeBody.push(h('p', { class: 'note', text: dated + ' of ' + posts.length + ' ' + what + ' have an exact publish date. ' +
+          (y.approxDates ? y.approxDates + ' only show "… ago" on the channel page' : '') + (y.approxDates && y.noDates ? ', and ' : '') + (y.noDates ? y.noDates + ' show no date at all (the Shorts tab has none)' : '') +
+          '. Best time uses exact dates only' + (dated < a.heatmap.minPosts ? ' and needs at least ' + a.heatmap.minPosts : '') + ': open videos on YouTube to add theirs.' }));
+      }
+      // Below a slot's worth of exact dates the grid would only show where one or two videos landed.
+      if (dated >= a.heatmap.minPosts) timeBody = timeBody.concat(bestSlot(a.heatmap)).concat(heatmapEl(a.heatmap));
+      wrap.appendChild(section('Best time to post', 'Views vs. what the channel was getting at the time, by day and time, in your local time. Slots with few videos are pulled toward 1×.', timeBody));
+
+      wrap.appendChild(section('Video length', 'Median views by ' + (shorts ? 'Short' : 'video') + ' length.',
+        a.durations.length ? bars(a.durations, function (g) { return g.key; }) : h('p', { class: 'muted small', text: shorts ? 'The Shorts tab shows no length. Open Shorts on YouTube to load theirs.' : 'No length data yet.' })));
+
+      wrap.appendChild(section('Title words that perform', 'Median views of ' + what + ' whose title uses each word (common words left out).',
+        y.words.length ? bars(y.words, function (g) { return g.key; }) : h('p', { class: 'muted small', text: 'Not enough titles yet to compare words.' })));
+      if (y.phrases.length) wrap.appendChild(section('Phrases that perform', 'Two-word phrases from titles, by median views.', bars(y.phrases, function (g) { return g.key; })));
+
+      wrap.appendChild(section('Hashtags that bring views',
+        'Median views of ' + what + ' using each hashtag (titles; descriptions once a video is opened).',
+        a.hashtags.length ? bars(a.hashtags.slice(0, 12), function (g) { return '#' + g.key; }) : h('p', { class: 'muted small', text: 'No hashtags in these titles.' })));
       return wrap;
     }
 
@@ -862,7 +1140,7 @@
         plat === 'reddit' ? null : downloadCard(list.filter(function (p) { return !isReddit(p); })),
         h('section', { class: 'card' },
           h('h3', { text: 'Columns' }),
-          h('p', { class: 'muted small mono', text: (M.isRedditList(list) ? M.REDDIT_COLUMN_NAMES : M.hasTikTok(list) ? M.TIKTOK_COLUMN_NAMES : M.COLUMN_NAMES).join(', ') })));
+          h('p', { class: 'muted small mono', text: (M.isRedditList(list) ? M.REDDIT_COLUMN_NAMES : M.isYouTubeList(list) ? M.YOUTUBE_COLUMN_NAMES : M.hasTikTok(list) ? M.TIKTOK_COLUMN_NAMES : M.COLUMN_NAMES).join(', ') })));
     }
 
     function downloadCard(list) {
@@ -882,11 +1160,19 @@
         return btn;
       }
       var tt = list.length && list.every(isTT);
+      if (list.length && list.every(isYT)) {
+        return h('section', { class: 'card' },
+          h('h3', { text: 'Download covers' }),
+          h('p', { class: 'muted small', text: 'Saves each video\'s cover in the best size YouTube has (1280×720 when there is one), named with its stats, e.g. 801.4Kviews_13.4Klikes_234comments_1.7pct_youtube_ID_cover.jpg. Video files: use the download button on a video (or the overlay on its page); yt-dlp saves them through the OpenOutlier bridge, one at a time. Only download content you have the right to use.' }),
+          h('div', { class: 'export-actions' }, bulk('cover', 'Download {n} covers')),
+          msg);
+      }
       return h('section', { class: 'card' },
         h('h3', { text: 'Download videos, photos & covers' }),
         h('p', { class: 'muted small', text: tt
           ? 'Downloads the videos in the current list, one after another. Files are named with their stats, e.g. 250Kviews_12Klikes_300comments_1.1Kshares_2.4Ksaves_6.3pct_tiktok_ID.mp4. TikTok\'s video links need this site\'s session and expire after a few hours to days: keep a tiktok.com tab open, and reload the profile if downloads fail. Only download content you have the right to use.'
-          : 'Downloads the posts in the current list. Files are named with their stats, e.g. 1.2Mviews_11.1Klikes_13Kcomments_2.0pct_post_CODE.mp4. Instagram\'s file links expire after a few days, so reload the profile if downloads fail. Only download content you have the right to use.' }),
+          : 'Downloads the posts in the current list. Files are named with their stats, e.g. 1.2Mviews_11.1Klikes_13Kcomments_2.0pct_post_CODE.mp4. Instagram\'s file links expire after a few days, so reload the profile if downloads fail.' +
+            (list.some(isYT) ? ' YouTube: covers are included; video files are saved one at a time with the download button on each video (yt-dlp through the OpenOutlier bridge).' : '') + ' Only download content you have the right to use.' }),
         h('div', { class: 'export-actions' }, bulk('media', 'Download {n} videos & photos'), bulk('cover', 'Download {n} covers')),
         msg);
     }

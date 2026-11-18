@@ -480,3 +480,15 @@ span.s-attach-pic { cursor: default; }
   .organize { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .btn, .card { transition: none; } }
+
+/* My YouTube channel (YouTube Analytics) */
+.yc-steps { margin: 8px 0; padding-left: 20px; font-size: 13px; line-height: 1.5; }
+.yc-table td.num, .yc-table th.num { text-align: right; }
+.yc-table td, .yc-table th { white-space: nowrap; }
+.yc-table td.yc-title { white-space: normal; min-width: 200px; max-width: 360px; }
+.yc-title a { color: var(--text); }
+.yc-open td { background: var(--surface); }
+.yc-curve-wrap { padding: 4px 0; }
+.yc-curve { display: block; width: 100%; max-width: 640px; height: 140px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; }
+.yc-curve .yc-line { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.yc-curve .yc-grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }

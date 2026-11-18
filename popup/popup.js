@@ -40,9 +40,18 @@ function outliersOf(posts) {
   if (!M) return 0;
   try {
     return M.enrich(Object.values(posts)).filter(function (p) {
-      return p.outlier && (p.platform === 'reddit' || p.type === 'reel' || p.type === 'video');
+      return p.outlier && (p.platform === 'reddit' || p.platform === 'youtube' || p.type === 'reel' || p.type === 'video');
     }).length;
   } catch (e) { return 0; }
+}
+
+/** Reddit: r/excel, u/name · TikTok: tt/name → "@name (TikTok)" · YouTube: yt/name → "@name (YouTube)", yt/UC… → "UC… (YouTube)". */
+function accountLabel(id) {
+  if (/^(r|u)\//.test(id)) return id;
+  if (/^tt\//.test(id)) return '@' + id.slice(3) + ' (TikTok)';
+  if (/^yt\/UC[A-Za-z0-9_-]{22}$/.test(id)) return id.slice(3) + ' (YouTube)';
+  if (/^yt\//.test(id)) return '@' + id.slice(3) + ' (YouTube)';
+  return '@' + id;
 }
 
 async function renderProfiles() {
@@ -60,8 +69,7 @@ async function renderProfiles() {
     a.href = '#';
     a.title = 'Open in the library';
     a.addEventListener('click', function (e) { e.preventDefault(); openLibrary('#/account/' + encodeURIComponent(p.username)); });
-    // Reddit: r/excel, u/name · TikTok: tt/name → "@name (TikTok)"
-    a.textContent = /^(r|u)\//.test(p.username) ? p.username : /^tt\//.test(p.username) ? '@' + p.username.slice(3) + ' (TikTok)' : '@' + p.username;
+    a.textContent = accountLabel(p.username);
     var n = document.createElement('span');
     n.className = 'num';
     n.textContent = nf.format(p.count);
@@ -130,3 +138,48 @@ renderAgentStatus();
 chrome.storage.onChanged.addListener(function (c) { if (c['rs:bridge']) renderAgentStatus(); });
 
 renderProfiles();
+
+// ---- optional YouTube Data API key ------------------------------------------------
+// Stored in rs:settings.youtubeApiKey (this browser only, never synced to the
+// bridge). Saving asks Chrome for access to www.googleapis.com, the only host
+// the key is sent to.
+(function () {
+  var A = self.OpenOutlierYouTubeApi;
+  var API_ORIGIN = 'https://www.googleapis.com/*';
+  var form = document.getElementById('ytapi-form');
+  if (!A || !form) return;
+  var input = document.getElementById('ytapi-key');
+  var msg = document.getElementById('ytapi-msg');
+  var state = document.getElementById('ytapi-state');
+  var remove = document.getElementById('ytapi-remove');
+
+  async function show(note) {
+    var r = await chrome.storage.local.get([SETTINGS_KEY, 'rs:yt-api-quota']);
+    var key = (r[SETTINGS_KEY] || {}).youtubeApiKey;
+    var used = A.usedToday(r['rs:yt-api-quota']);
+    var on = A.isKey(key);
+    state.textContent = on ? 'on · ' + nf.format(used) + ' / ' + nf.format(A.DAILY_QUOTA) + ' units today' : 'optional, off';
+    input.placeholder = on ? 'Saved (…' + key.slice(-4) + '). Paste a new key to replace it.' : 'AIza…';
+    remove.hidden = !on;
+    msg.textContent = note != null ? note : on ? 'Quota used today: ' + nf.format(used) + ' of ' + nf.format(A.DAILY_QUOTA) + ' units (resets at midnight Pacific time). Use "Exact stats via API" in a YouTube channel\'s panel.' : '';
+  }
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var key = input.value.trim();
+    if (!A.isKey(key)) { show('That doesn\'t look like an API key (letters, digits, - and _, usually 39 characters starting with AIza).'); return; }
+    var granted = false;
+    try { granted = await chrome.permissions.request({ origins: [API_ORIGIN] }); } catch (err) { granted = false; }
+    if (!granted) { show('Chrome needs permission to reach www.googleapis.com for the key to work. Nothing was saved.'); return; }
+    await setSetting('youtubeApiKey', key);
+    input.value = '';
+    show('Saved. The key stays in this browser.');
+  });
+  remove.addEventListener('click', async function () {
+    await setSetting('youtubeApiKey', '');
+    chrome.permissions.remove({ origins: [API_ORIGIN] }).catch(function () {});
+    show('Removed. OpenOutlier no longer calls the YouTube Data API.');
+  });
+  chrome.storage.onChanged.addListener(function (c) { if (c['rs:yt-api-quota']) show(); });
+  show();
+})();

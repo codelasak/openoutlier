@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "OpenOutlier – open-source Reels, TikTok & Reddit analytics",
+  "name": "OpenOutlier – open-source Reels, TikTok, YouTube & Reddit analytics",
   "short_name": "OpenOutlier",
   "version": "0.2.0",
-  "description": "Spot the posts that beat an account’s median: sort Reels, TikTok and Reddit posts, find outliers and the best time to post. Free.",
+  "description": "Spot posts that beat an account’s median on Reels, TikTok, YouTube and Reddit: sort, find outliers and the best time to post. Free.",
   "minimum_chrome_version": "111",
   "permissions": [
     "storage",
@@ -23,6 +23,8 @@
     "https://*.tiktokcdn-eu.com/*",
     "https://*.tiktokv.com/*",
     "https://*.ibyteimg.com/*",
+    "https://*.youtube.com/*",
+    "https://i.ytimg.com/*",
     "https://www.reddit.com/*",
     "https://*.redd.it/*",
     "http://127.0.0.1/*"
@@ -49,7 +51,8 @@
     {
       "matches": [
         "https://www.instagram.com/*",
-        "https://www.tiktok.com/*"
+        "https://www.tiktok.com/*",
+        "https://www.youtube.com/*"
       ],
       "js": [
         "src/hook.js"
@@ -87,6 +90,20 @@
     },
     {
       "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "src/metrics.js",
+        "src/youtube.js",
+        "src/brand.js",
+        "src/panel.js",
+        "src/overlay.js",
+        "src/youtube-content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
         "https://www.reddit.com/*"
       ],
       "js": [
@@ -111,6 +128,7 @@
       "matches": [
         "https://www.instagram.com/*",
         "https://www.tiktok.com/*",
+        "https://www.youtube.com/*",
         "https://www.reddit.com/*"
       ],
       "use_dynamic_url": true

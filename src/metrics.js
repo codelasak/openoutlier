@@ -17,6 +17,14 @@
     { label: '1.5–3 min', max: 180 },
     { label: '3 min +', max: Infinity }
   ];
+  // YouTube long-form videos run far longer than reels.
+  var LONG_BUCKETS = [
+    { label: '< 5 min', max: 300 },
+    { label: '5–10 min', max: 600 },
+    { label: '10–20 min', max: 1200 },
+    { label: '20–40 min', max: 2400 },
+    { label: '40 min +', max: Infinity }
+  ];
 
   function median(values) {
     var a = values.filter(function (v) { return typeof v === 'number' && isFinite(v); }).sort(function (x, y) { return x - y; });
@@ -43,10 +51,19 @@
    */
   function interactions(p) {
     if (p.platform === 'reddit') return p.comments || 0;
+    // YouTube: likes + comments where known (channel tabs show neither; watch pages show both).
     if (p.platform === 'tiktok') return (p.likes || 0) + (p.comments || 0) + (p.shares || 0) + (p.saves || 0);
     return (p.likes || 0) + (p.comments || 0);
   }
   function isTikTok(p) { return !!p && p.platform === 'tiktok'; }
+  function isYouTube(p) { return !!p && p.platform === 'youtube'; }
+  /** YouTube Shorts and long-form get separate medians: Shorts get far more views. */
+  function formatOf(p) { return p.type === 'short' ? 'short' : 'long'; }
+  function engagementOf(p, v) {
+    if (!(v > 0)) return null;
+    if (isYouTube(p) && p.likes == null && p.comments == null) return null;
+    return (interactions(p) / v) * 100;
+  }
 
   /**
    * Viral Score (0–100) compares a post's views to the profile's own median:
@@ -61,16 +78,24 @@
   /**
    * Add ratio / viralScore / engagement / outlier to each post (returns new objects).
    * Reddit: ratio is against the median score; engagement = comments ÷ score × 100.
+   * YouTube: each video is scored against its own channel's median for its format
+   * (Shorts vs long-form, live streams count as long-form). Other posts share one median, as before.
    */
+  function medianGroup(p) { return isYouTube(p) ? 'yt|' + p.owner + '|' + formatOf(p) : ''; }
+
   function enrich(posts) {
-    var med = median(posts.map(function (p) { var v = val(p); return v > 0 ? v : null; }));
+    var groups = {};
+    posts.forEach(function (p) { var v = val(p); var g = medianGroup(p); (groups[g] = groups[g] || []).push(v > 0 ? v : null); });
+    var meds = {};
+    Object.keys(groups).forEach(function (g) { meds[g] = median(groups[g]); });
     return posts.map(function (p) {
       var v = val(p);
+      var med = meds[medianGroup(p)];
       var ratio = v > 0 && med > 0 ? v / med : null;
       return Object.assign({}, p, {
         ratio: ratio,
         viralScore: viralScore(v, med),
-        engagement: v > 0 ? (interactions(p) / v) * 100 : null,
+        engagement: engagementOf(p, v),
         outlier: ratio !== null && ratio >= OUTLIER_RATIO
       });
     });
@@ -263,15 +288,17 @@
 
   function durations(posts, med) {
     var groups = {};
-    DURATION_BUCKETS.forEach(function (b) { groups[b.label] = []; });
+    // YouTube long-form (no Shorts in the list): minutes-scale buckets.
+    var buckets = posts.length && posts.every(function (p) { return isYouTube(p) && formatOf(p) === 'long'; }) ? LONG_BUCKETS : DURATION_BUCKETS;
+    buckets.forEach(function (b) { groups[b.label] = []; });
     posts.forEach(function (p) {
       if (!(p.duration > 0)) return;
-      for (var i = 0; i < DURATION_BUCKETS.length; i++) {
-        if (p.duration < DURATION_BUCKETS[i].max) { groups[DURATION_BUCKETS[i].label].push(p); break; }
+      for (var i = 0; i < buckets.length; i++) {
+        if (p.duration < buckets[i].max) { groups[buckets[i].label].push(p); break; }
       }
     });
     var stats = groupStats(groups, med);
-    return DURATION_BUCKETS.map(function (b) {
+    return buckets.map(function (b) {
       return stats.filter(function (s) { return s.key === b.label; })[0];
     }).filter(function (s) { return s.count > 0; });
   }
@@ -446,17 +473,46 @@
     return posts.length > 0 && posts.every(function (p) { return p.platform === 'reddit'; });
   }
 
-  /** Everything the Analytics tab needs. Expects enriched posts. */
-  function analyze(posts) {
+  function isYouTubeList(posts) {
+    return posts.length > 0 && posts.every(isYouTube);
+  }
+
+  /**
+   * YouTube extras: Shorts vs long-form (pass every format of the channel in `all`),
+   * title words, and how many dates are exact (best time uses only those).
+   */
+  function youtubeAnalysis(posts, med, all) {
+    var formats = { Shorts: [], 'Long-form': [], Live: [] };
+    (all || posts).forEach(function (p) { formats[p.type === 'short' ? 'Shorts' : p.type === 'live' ? 'Live' : 'Long-form'].push(p); });
+    var exact = posts.filter(function (p) { return p.takenAt && p.dateApprox === false; }).length;
+    return {
+      formats: groupStats(formats, null).filter(function (g) { return g.count > 0; }),
+      words: termStats(posts, med, false).slice(0, 15),
+      phrases: termStats(posts, med, true).slice(0, 10),
+      exactDates: exact,
+      approxDates: posts.filter(function (p) { return p.takenAt && p.dateApprox !== false; }).length,
+      noDates: posts.filter(function (p) { return !p.takenAt; }).length,
+      approxViews: posts.filter(function (p) { return p.views != null && p.viewsApprox; }).length
+    };
+  }
+
+  /**
+   * Everything the Analytics tab needs. Expects enriched posts.
+   * opts.all: YouTube only, the channel's posts in every format (for Shorts vs long-form).
+   */
+  function analyze(posts, opts) {
     var s = summary(posts);
+    var yt = isYouTubeList(posts);
     var out = {
       summary: s,
-      heatmap: heatmap(posts),
+      // YouTube: best time only from exact publish dates ("3 weeks ago" can't place a weekday or hour).
+      heatmap: heatmap(yt ? posts.filter(function (p) { return p.dateApprox === false; }) : posts),
       hashtags: hashtags(posts, s.medianViews),
       durations: durations(posts, s.medianViews),
       audio: audio(posts, s.medianViews)
     };
     if (isRedditList(posts)) out.reddit = redditAnalysis(posts, s.medianViews);
+    if (yt) out.youtube = youtubeAnalysis(posts, s.medianViews, opts && opts.all);
     return out;
   }
 
@@ -480,6 +536,7 @@
   function fileBaseName(p) {
     var parts = [];
     var tt = isTikTok(p);
+    var yt = isYouTube(p);
     var v = compactNumber(p.views);
     var l = compactNumber(p.likes);
     var c = compactNumber(p.comments);
@@ -491,7 +548,7 @@
     if (p.views > 0 && (p.likes != null || p.comments != null)) {
       parts.push((interactions(p) / p.views * 100).toFixed(1) + 'pct');
     }
-    parts.push(tt ? 'tiktok' : 'post', String(p.code || 'unknown').replace(/[^A-Za-z0-9_-]/g, ''));
+    parts.push(tt ? 'tiktok' : yt ? (p.type === 'short' ? 'short' : 'youtube') : 'post', String(p.code || 'unknown').replace(/[^A-Za-z0-9_-]/g, ''));
     return parts.join('_');
   }
 
@@ -567,6 +624,35 @@
     ['caption', function (p) { return (p.caption || '').replace(/\s+/g, ' ').trim(); }]
   ];
 
+  // YouTube: dates from channel tabs are approximate ("3 weeks ago"), so weekday and hour
+  // are only filled from exact publish dates; *_approx columns say which values are rounded.
+  function exactDate(p) { return p.takenAt && p.dateApprox === false ? new Date(p.takenAt) : null; }
+  var YOUTUBE_COLUMNS = [
+    ['rank', function (p, i) { return i + 1; }],
+    ['platform', function (p) { return p.platform || 'instagram'; }],
+    ['url', function (p) { return p.url; }],
+    ['id', function (p) { return p.code; }],
+    ['account', function (p) { return p.owner ? (/^yt\/UC/.test(p.owner) ? p.owner.slice(3) : '@' + String(p.owner).replace(/^(yt|tt)\//, '')) : ''; }],
+    ['format', function (p) { return p.type; }],
+    ['posted_at', function (p) { return p.takenAt ? new Date(p.takenAt).toISOString() : ''; }],
+    ['date_approx', function (p) { return p.takenAt ? (p.dateApprox === false ? '' : p.dateDay ? 'day' : 'yes') : ''; }],
+    ['weekday', function (p) { var d = exactDate(p); return d ? DAY_LABELS[dayIndex(d)] : ''; }],
+    ['hour_local', function (p) { var d = exactDate(p); return d ? d.getHours() : ''; }],
+    ['views', function (p) { return p.views; }],
+    ['views_approx', function (p) { return p.views != null && p.viewsApprox ? 'yes' : ''; }],
+    ['likes', function (p) { return p.likes; }],
+    ['comments', function (p) { return p.comments; }],
+    ['engagement_rate_pct', function (p) { return p.engagement == null ? '' : p.engagement.toFixed(2); }],
+    ['viral_score', function (p) { return p.viralScore; }],
+    ['x_median', function (p) { return p.ratio == null ? '' : p.ratio.toFixed(2); }],
+    ['duration_s', function (p) { return p.duration; }],
+    ['category', function (p) { return p.category; }],
+    ['chapters', function (p) { return (p.chapters || []).length || ''; }],
+    ['most_replayed_s', function (p) { return (p.heatmapPeaks || []).join(' '); }],
+    ['hashtags', function (p) { return (p.hashtags || []).map(function (t) { return '#' + t; }).join(' '); }],
+    ['title', function (p) { return (p.caption || '').replace(/\s+/g, ' ').trim(); }]
+  ];
+
   /** Any TikTok post in a list without Reddit posts → TikTok columns (they add platform, saves). */
   function hasTikTok(posts) { return posts.some(isTikTok); }
 
@@ -583,7 +669,7 @@
   /** delimiter ',' → CSV (for files), '\t' → TSV (for pasting into Sheets/Excel). */
   function toTable(posts, delimiter) {
     delimiter = delimiter || ',';
-    var cols = isRedditList(posts) ? REDDIT_COLUMNS : hasTikTok(posts) ? TIKTOK_COLUMNS : COLUMNS;
+    var cols = isRedditList(posts) ? REDDIT_COLUMNS : isYouTubeList(posts) ? YOUTUBE_COLUMNS : hasTikTok(posts) ? TIKTOK_COLUMNS : COLUMNS;
     var lines = [cols.map(function (c) { return c[0]; }).join(delimiter)];
     posts.forEach(function (p, i) {
       lines.push(cols.map(function (c) { return cell(c[1](p, i), delimiter); }).join(delimiter));
@@ -596,10 +682,15 @@
     COLUMN_NAMES: COLUMNS.map(function (c) { return c[0]; }),
     REDDIT_COLUMN_NAMES: REDDIT_COLUMNS.map(function (c) { return c[0]; }),
     TIKTOK_COLUMN_NAMES: TIKTOK_COLUMNS.map(function (c) { return c[0]; }),
+    YOUTUBE_COLUMN_NAMES: YOUTUBE_COLUMNS.map(function (c) { return c[0]; }),
     val: val,
     interactions: interactions,
     isTikTok: isTikTok,
     hasTikTok: hasTikTok,
+    isYouTube: isYouTube,
+    isYouTubeList: isYouTubeList,
+    formatOf: formatOf,
+    engagementOf: engagementOf,
     titleWords: titleWords,
     isQuestion: isQuestion,
     needKind: needKind,

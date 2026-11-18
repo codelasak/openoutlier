@@ -13,6 +13,7 @@ export const M = require('../src/metrics.js');
 export const MN = require('../src/mentions.js');
 export const T = require('../src/tiktok.js');
 export const C = require('../src/compare.js');
+export const Y = require('../src/youtube.js');
 
 export const HOME = resolveHome();
 export const COMMANDS_DIR = join(HOME, 'commands');
@@ -127,18 +128,30 @@ export async function waitForCommand(id, seconds) {
 
 // ---- queries ----------------------------------------------------------------
 
-const isVideo = (p) => p.type === 'reel' || p.type === 'video';
+// Reels (Instagram), videos (TikTok, YouTube long-form), YouTube Shorts and past live streams.
+const isVideo = (p) => p.type === 'reel' || p.type === 'video' || (p.platform === 'youtube' && (p.type === 'short' || p.type === 'live'));
+const isYouTubePost = (p) => p.platform === 'youtube';
 const isRedditPost = (p) => p.platform === 'reddit';
 
-/** Reddit accounts are stored as "r/<sub>" and "u/<user>", TikTok as "tt/<user>"; Instagram usernames never contain "/". */
+/**
+ * Reddit accounts are stored as "r/<sub>" and "u/<user>", TikTok as "tt/<user>", YouTube as
+ * "yt/<handle>" (or "yt/UC…" for a channel without a handle); Instagram usernames never contain "/".
+ */
 export function isRedditId(id) { return /^(r|u)\/[a-z0-9_-]{2,30}$/.test(String(id || '')); }
 export const isTikTokId = (id) => T.isTikTokId(id);
+export const isYouTubeId = (id) => Y.isYouTubeId(id);
 export function platformOf(lib, id) {
   if (lib.accounts[id]?.platform === 'reddit' || isRedditId(id)) return 'reddit';
   if (lib.accounts[id]?.platform === 'tiktok' || isTikTokId(id)) return 'tiktok';
+  if (lib.accounts[id]?.platform === 'youtube' || isYouTubeId(id)) return 'youtube';
   return 'instagram';
 }
-export function labelOf(id) { return isRedditId(id) ? id : isTikTokId(id) ? '@' + id.slice(3) + ' (TikTok)' : '@' + id; }
+export function labelOf(id) {
+  if (isRedditId(id)) return id;
+  if (isTikTokId(id)) return '@' + id.slice(3) + ' (TikTok)';
+  if (isYouTubeId(id)) return Y.label(id) + ' (YouTube)';
+  return '@' + id;
+}
 
 export function folderOf(lib, u) {
   const f = lib.org.accounts?.[u]?.folder;
@@ -153,10 +166,18 @@ function folderByName(lib, name) {
 
 /**
  * Normalize an account reference: "@Name" → "name"; "r/Excel", "/r/excel", "reddit.com/r/excel/top" → "r/excel";
- * "u/Name", "/user/name" → "u/name".
+ * "u/Name", "/user/name" → "u/name"; "tt/name" / tiktok.com/@name → TikTok; "yt/name", "youtube:@name",
+ * youtube.com/@Name or /channel/UC… → "yt/name" (channel ids keep their case).
  */
 export function normUser(u) {
   const s = String(u || '').trim();
+  // YouTube: "yt/name", "yt/UC…", "youtube:@name", "youtube.com/@name/videos", "youtube.com/channel/UC…"
+  const yt = s.match(/^(?:yt\/|youtube:\s*)@?([^\s/?#]{1,40})$/i) ||
+    s.match(/^(?:https?:\/\/)?(?:(?:www|m)\.)?youtube\.com\/(?:@([^\s/?#]{1,40})|channel\/(UC[A-Za-z0-9_-]{22}))/i);
+  if (yt) {
+    const id = Y.ytId(yt[1] || yt[2]);
+    if (isYouTubeId(id)) return id;
+  }
   // TikTok: "tt/name", "tiktok:@name", "tiktok.com/@name", "https://www.tiktok.com/@name/video/…"
   const t = s.match(/^(?:tt\/|tiktok:\s*@?)([A-Za-z0-9._]{1,30})$/i) || s.match(/^(?:https?:\/\/)?(?:(?:www|m)\.)?tiktok\.com\/@([A-Za-z0-9._]{1,30})/i);
   if (t) return 'tt/' + t[1].toLowerCase();
@@ -185,7 +206,7 @@ export function postCount(lib, u) { return Object.keys(lib.accounts[u]?.posts ||
 
 export function selectAccounts(lib, { folder, tag, usernames, includeSmall = false, platform } = {}) {
   let list = Object.keys(lib.accounts);
-  // platform: 'instagram' | 'tiktok' | 'reddit' | 'video' (Instagram + TikTok) | 'all'
+  // platform: 'instagram' | 'tiktok' | 'youtube' | 'reddit' | 'video' (Instagram + TikTok + YouTube) | 'all'
   if (platform === 'video') list = list.filter((u) => platformOf(lib, u) !== 'reddit');
   else if (platform && platform !== 'all') list = list.filter((u) => platformOf(lib, u) === platform);
   const explicit = (usernames && usernames.length) || folder || tag;
@@ -248,9 +269,73 @@ export function redditBrief(p, { full = false } = {}) {
   };
 }
 
-/** Compact reel record for agents (Reddit posts get redditBrief). */
+const fmtClock = (s) => {
+  if (s == null) return null;
+  const t = Math.max(0, Math.round(s));
+  const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = String(t % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+};
+/** "exact" (publish time known), "day" (calendar day only) or "approximate" ("3 weeks ago" on a channel tab). */
+const dateKind = (p) => (!p.takenAt ? null : p.dateApprox === false ? 'exact' : p.dateDay ? 'day' : 'approximate');
+/** YouTube format as agents see it: short | video | live. */
+const ytFormat = (p) => (p.type === 'short' || p.type === 'live' ? p.type : 'video');
+
+/**
+ * Compact YouTube record. Views and dates from channel tabs are YouTube's rounded /
+ * relative ones until the video is opened (watch page) or downloaded (yt-dlp).
+ */
+export function youtubeBrief(p, { full = false } = {}) {
+  const format = ytFormat(p);
+  const out = {
+    code: p.code,
+    platform: 'youtube',
+    url: p.url || Y.videoUrl(p.code, p.type),
+    account: p.owner,
+    channel: p.ownerName || undefined,
+    format,
+    title: p.caption || null,
+    posted_at: iso(p.takenAt),
+    date: dateKind(p) || undefined,
+    views: p.views ?? null,
+    views_exact: p.views == null ? undefined : !p.viewsApprox,
+    likes: p.likes ?? null,
+    comments: p.comments ?? null,
+    duration_s: p.duration ?? null,
+    engagement_pct: round(p.engagement),
+    // Shorts are scored against the channel's Shorts median, videos and live streams against its long-form median.
+    x_account_median: round(p.ratio),
+    median_group: format === 'short' ? 'shorts' : 'long_form',
+    viral_score: p.viralScore ?? null,
+    category: p.category || undefined,
+    tags: p.keywords?.length ? (full ? p.keywords : p.keywords.slice(0, 12)) : undefined,
+    hashtags: p.hashtags?.length ? p.hashtags : undefined,
+    chapters: p.chapters?.length ? (full ? p.chapters.map((c) => ({ start_s: c.start, at: fmtClock(c.start), title: c.title })) : p.chapters.length) : undefined,
+    most_replayed_at: p.heatmapPeaks?.length ? p.heatmapPeaks.map(fmtClock) : undefined,
+    captions: p.hasCaptions == null ? undefined : p.hasCaptions ? (p.autoCaptions ? 'auto-generated' : 'yes') : 'none',
+    transcript: p.hasTranscript == null ? undefined : p.hasTranscript ? 'available (get_transcript)' : 'none',
+    members_only: p.membersOnly || undefined,
+    live_now: p.liveNow || undefined,
+    unlisted: p.unlisted || undefined,
+    description: full ? (p.description || undefined) : undefined
+  };
+  if (full) {
+    out.most_replayed_at_s = p.heatmapPeaks?.length ? p.heatmapPeaks : undefined;
+    out.heatmap = p.heatmap?.length ? { step_s: p.heatmapStep ?? null, values: p.heatmap, note: 'YouTube\'s "most replayed" graph: 100 values 0–1 across the video, 1 = the most re-watched moment.' } : undefined;
+    out.cover_url = p.thumb || Y.coverUrls(p.code)[0] || null;
+    out.channel_id = p.ownerId || undefined;
+    out.download_note = 'download_reel saves this video with yt-dlp on this computer and fills in exact views, likes, comments, upload time, tags, chapters and the heatmap.';
+    out.last_seen_at = iso(p.seenAt);
+    if (p.viewsApprox || p.dateApprox !== false) {
+      out.exact_stats_hint = 'Views' + (p.viewsApprox ? ' are rounded' : ' are exact') + ' and the date is ' + (dateKind(p) || 'unknown') + '. refresh_reel opens the watch page (exact views, likes, comments, date, chapters, heatmap); download_reel does the same through yt-dlp.';
+    }
+  }
+  return out;
+}
+
+/** Compact reel record for agents (Reddit posts get redditBrief, YouTube videos youtubeBrief). */
 export function brief(p, { full = false } = {}) {
   if (isRedditPost(p)) return redditBrief(p, { full });
+  if (isYouTubePost(p)) return youtubeBrief(p, { full });
   const tt = p.platform === 'tiktok';
   const out = {
     code: p.code,
@@ -313,6 +398,7 @@ export function accountRow(lib, u) {
   const vids = posts.filter(isVideo);
   const withViews = vids.filter((p) => p.views > 0);
   const name = posts.find((p) => p.ownerName)?.ownerName || null;
+  if (platformOf(lib, u) === 'youtube') return youtubeAccountRow(lib, u, posts, name);
   if (platformOf(lib, u) === 'tiktok') {
     const prof = lib.accounts[u]?.profile || {};
     const rate = (k) => round(M.mean(withViews.filter((p) => p[k] != null).map((p) => p[k] / p.views * 100)));
@@ -345,6 +431,36 @@ export function accountRow(lib, u) {
     reels: vids.length,
     median_views: M.median(withViews.map((p) => p.views)),
     outliers: vids.filter((p) => p.outlier).length,
+    updated_at: iso(lib.accounts[u]?.updatedAt)
+  };
+}
+
+/** YouTube channel: Shorts and long-form (videos + past live streams) have separate medians. */
+function youtubeAccountRow(lib, u, posts, name) {
+  const prof = lib.accounts[u]?.profile || {};
+  const shorts = posts.filter((p) => p.type === 'short');
+  const long = posts.filter((p) => p.type !== 'short');
+  const med = (list) => M.median(list.filter((p) => p.views > 0).map((p) => p.views));
+  return {
+    username: u,
+    platform: 'youtube',
+    handle: prof.handle ? '@' + prof.handle : (/^yt\/UC/.test(u) ? undefined : '@' + u.slice(3)),
+    channel_id: prof.channelId || posts.find((p) => p.ownerId)?.ownerId || undefined,
+    name: prof.name || name,
+    subscribers: prof.subscribers ?? undefined,
+    videos_on_channel: prof.videos ?? undefined,
+    verified: prof.verified || undefined,
+    folder: folderOf(lib, u)?.name || null,
+    tags: tagsOf(lib, u),
+    posts_saved: posts.length,
+    long_form: long.length,
+    shorts: shorts.length,
+    live: posts.filter((p) => p.type === 'live').length || undefined,
+    median_views_long_form: med(long),
+    median_views_shorts: med(shorts),
+    outliers: posts.filter((p) => p.outlier).length,
+    exact_views: posts.filter((p) => p.views != null && !p.viewsApprox).length,
+    exact_dates: posts.filter((p) => p.dateApprox === false).length,
     updated_at: iso(lib.accounts[u]?.updatedAt)
   };
 }
@@ -486,9 +602,58 @@ export function contentIdeas(lib, { folder, tag, subreddits, since_days = 365, l
   };
 }
 
+const termRow = (label) => (g) => ({ [label]: g.key, posts: g.count, median_views: g.medianViews, x_median: round(g.lift) });
+
+/** One YouTube format (Shorts or long-form) of a channel, analyzed on its own median. */
+function youtubeFormatSummary(posts, all, label) {
+  if (!posts.length) return { videos_analyzed: 0, note: `No ${label} saved yet. collect_profile collects the channel's Videos and Shorts tabs.` };
+  const a = M.analyze(posts, { all });
+  const y = a.youtube;
+  const times = postingTimes(a.heatmap, 'views');
+  return {
+    videos_analyzed: a.summary.count,
+    median_views: a.summary.medianViews,
+    avg_views: round(a.summary.avgViews, 0),
+    total_views: a.summary.totalViews,
+    avg_engagement_pct: round(a.summary.avgEngagement),
+    engagement_note: a.summary.avgEngagement == null ? 'Likes and comments only load when a video is opened (refresh_reel) or downloaded (download_reel).' : '(likes + comments) ÷ views, over the videos whose likes/comments are known.',
+    outliers: a.summary.outliers,
+    posts_per_week: round(a.summary.postsPerWeek, 1),
+    first_post: iso(a.summary.firstPost),
+    last_post: iso(a.summary.lastPost),
+    views_rounded: y.approxViews,
+    dates: { exact: y.exactDates, approximate: y.approxDates, unknown: y.noDates },
+    ...times,
+    timing_note: `Best time uses exact publish dates only (${y.exactDates} of ${posts.length}); channel tabs give rounded views and "3 weeks ago" dates. ` + times.timing_note,
+    video_length: a.durations.map((d) => ({ bucket: d.key, posts: d.count, median_views: d.medianViews, x_account_median: round(d.lift) })),
+    title_words: y.words.map(termRow('word')),
+    title_phrases: y.phrases.map(termRow('phrase')),
+    top_hashtags: a.hashtags.slice(0, 15).map((h) => ({ hashtag: '#' + h.key, posts: h.count, median_views: h.medianViews, x_account_median: round(h.lift) })),
+    top_videos: M.sortBy(posts, 'views').slice(0, 10).map((p) => youtubeBrief(p))
+  };
+}
+
+/** YouTube channel analytics: Shorts and long-form separately (Shorts get far more views). */
+function youtubeSummary(lib, u) {
+  const posts = enrichedPosts(lib, u);
+  const shorts = posts.filter((p) => p.type === 'short');
+  const long = posts.filter((p) => p.type !== 'short');
+  const formats = M.analyze(posts, { all: posts }).youtube.formats;
+  return {
+    account: accountRow(lib, u),
+    how_scored: 'Each Short is compared with the median of this channel\'s Shorts and each long-form video (including past live streams) with the median of its long-form videos, so Shorts don\'t make every video look like an outlier.',
+    formats: formats.map((g) => ({ format: g.key, videos: g.count, median_views: g.medianViews, avg_views: round(g.avgViews, 0) })),
+    long_form: youtubeFormatSummary(long, posts, 'long-form videos'),
+    shorts: youtubeFormatSummary(shorts, posts, 'Shorts'),
+    timezone_note: 'Times use the computer\'s local time zone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone,
+    view_count_note: 'YouTube changed how it counts views for Shorts in March 2025 (every start or replay counts) and for all formats in August 2026, so newer videos can look stronger than older ones. Best-time slots are era-adjusted (each video vs. the ~30 around it in time).'
+  };
+}
+
 export function accountSummary(lib, u) {
   if (platformOf(lib, u) === 'reddit') return subredditSummary(lib, u);
-  if (!lib.accounts[u]) throw new Error(`${labelOf(u)} is not in the library. Use collect_profile ${isTikTokId(u) ? 'with ' + u + ' ' : ''}to collect it.`);
+  if (!lib.accounts[u]) throw new Error(`${labelOf(u)} is not in the library. Use collect_profile ${isTikTokId(u) || isYouTubeId(u) ? 'with ' + u + ' ' : ''}to collect it.`);
+  if (platformOf(lib, u) === 'youtube') return youtubeSummary(lib, u);
   const tt = platformOf(lib, u) === 'tiktok';
   const posts = enrichedPosts(lib, u);
   const reels = posts.filter(isVideo);
@@ -523,32 +688,57 @@ export function hiddenSmall(lib, scope) {
   return selectAccounts(lib, { ...scope, includeSmall: true }).length - selectAccounts(lib, scope).length;
 }
 
-/** Rank Instagram reels and TikTok videos (platform: 'all' = both, default). Reddit has top_posts. */
-export function topReels(lib, { folder, tag, usernames, sort = 'viral_score', since_days, limit = 20, min_views = 0, include_photos = false, include_small_accounts = false, platform = 'all' } = {}) {
-  const plat = platform === 'instagram' || platform === 'tiktok' ? platform : 'video';
+/** YouTube format filter: 'shorts' | 'long_form' keep only YouTube videos of that format. */
+const formatFilter = (format) => (format === 'shorts' ? (p) => isYouTubePost(p) && p.type === 'short'
+  : format === 'long_form' ? (p) => isYouTubePost(p) && p.type !== 'short' : () => true);
+
+/** Rank Instagram reels, TikTok videos and YouTube videos/Shorts (platform: 'all' = all three, default). Reddit has top_posts. */
+export function topReels(lib, { folder, tag, usernames, sort = 'viral_score', since_days, limit = 20, min_views = 0, include_photos = false, include_small_accounts = false, platform = 'all', format } = {}) {
+  const plat = platform === 'instagram' || platform === 'tiktok' || platform === 'youtube' ? platform : format ? 'youtube' : 'video';
   const accounts = selectAccounts(lib, { folder, tag, usernames, includeSmall: include_small_accounts, platform: plat });
   const since = since_days ? Date.now() - since_days * 864e5 : null;
+  const fmtOk = formatFilter(format);
   let posts = accounts.flatMap((u) => enrichedPosts(lib, u));
-  posts = posts.filter((p) => (include_photos || isVideo(p)) && (p.views || 0) >= min_views && (!since || (p.takenAt && p.takenAt >= since)));
+  posts = posts.filter((p) => (include_photos || isVideo(p)) && fmtOk(p) && (p.views || 0) >= min_views && (!since || (p.takenAt && p.takenAt >= since)));
   const sorted = M.sortBy(posts, SORT_KEYS[sort] || 'viralScore');
   const hidden = include_small_accounts ? 0 : hiddenSmall(lib, { folder, tag, usernames, platform: plat });
   const platforms = [...new Set(accounts.map((u) => platformOf(lib, u)))];
-  return { accounts: accounts.length, platforms, hidden_small_accounts: hidden || undefined, matched: posts.length, reels: sorted.slice(0, limit).map((p) => brief(p)) };
+  return {
+    accounts: accounts.length, platforms, hidden_small_accounts: hidden || undefined, matched: posts.length,
+    youtube_note: platforms.includes('youtube') ? 'YouTube Shorts are scored against their channel\'s Shorts median and long-form videos against its long-form median. views_exact: false = YouTube\'s rounded channel-page count.' : undefined,
+    reels: sorted.slice(0, limit).map((p) => brief(p))
+  };
 }
 
-export function searchReels(lib, { query, folder, tag, usernames, limit = 20, include_small_accounts = false, platform = 'all' } = {}) {
+export function searchReels(lib, { query, folder, tag, usernames, limit = 20, include_small_accounts = false, platform = 'all', format } = {}) {
   const q = String(query || '').toLowerCase().trim();
   if (!q) throw new Error('query is empty');
   const words = q.split(/\s+/);
-  const accounts = selectAccounts(lib, { folder, tag, usernames, includeSmall: include_small_accounts, platform });
+  const accounts = selectAccounts(lib, { folder, tag, usernames, includeSmall: include_small_accounts, platform: format && (!platform || platform === 'all') ? 'youtube' : platform });
+  const fmtOk = formatFilter(format);
   const hits = accounts.flatMap((u) => enrichedPosts(lib, u)).filter((p) => {
-    const hay = ((p.caption || '') + ' ' + (p.hashtags || []).map((t) => '#' + t).join(' ') + ' ' + (p.audio?.title || '') + ' ' + (p.flair || '')).toLowerCase();
+    if (!fmtOk(p)) return false;
+    // YouTube: title, tags (keywords) and description too.
+    const hay = ((p.caption || '') + ' ' + (p.hashtags || []).map((t) => '#' + t).join(' ') + ' ' + (p.audio?.title || '') + ' ' + (p.flair || '') +
+      ' ' + (p.keywords || []).join(' ') + ' ' + (p.description || '')).toLowerCase();
     return words.every((w) => hay.includes(w));
   });
   return { matched: hits.length, reels: M.sortBy(hits, 'viralScore').slice(0, limit).map((p) => brief(p)) };
 }
 
+/** A YouTube video id from a youtube.com/watch?v=, /shorts/, /live/ or youtu.be/ URL (not from a bare id). */
+export function youtubeIdOf(code) {
+  return /youtube\.com|youtu\.be/i.test(String(code || '')) ? Y.videoIdOf(code) : null;
+}
+
 export function findReel(lib, code) {
+  const yid = youtubeIdOf(code);
+  if (yid) {
+    for (const u of Object.keys(lib.accounts)) {
+      if (lib.accounts[u].posts?.[yid]) return enrichedPosts(lib, u).find((p) => p.code === yid);
+    }
+    return null;
+  }
   const tid = T.videoIdOf(code);
   if (tid) {
     for (const u of Object.keys(lib.accounts)) {
@@ -577,53 +767,86 @@ export function findReel(lib, code) {
  * compare views, engagement and × each account's own median.
  * account_ig: Instagram username; account_tt: TikTok username (tt/ optional). If one is missing, the same handle is used.
  */
-export function comparePlatforms(lib, { account_ig, account_tt, since_days, min_score, limit = 50 } = {}) {
+const CMP_NAMES = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube Shorts' };
+/** yt/name, yt/UC…, youtube.com/@name, or a bare handle → the YouTube account id. */
+const ytAccount = (u) => { const n = normUser(u); return isYouTubeId(n) ? n : normUser('yt/' + String(u).trim().replace(/^@/, '')); };
+
+/**
+ * Match the same short videos across two accounts on different platforms:
+ * Instagram ↔ TikTok (as before), or a YouTube channel's Shorts ↔ Instagram or TikTok.
+ * Each side is scored against its own median (a channel's Shorts median for YouTube).
+ */
+export function comparePlatforms(lib, { account_ig, account_tt, account_yt, since_days, min_score, limit = 50 } = {}) {
   let ig = account_ig ? normUser(account_ig) : null;
   let tt = account_tt ? normUser(account_tt) : null;
+  let yt = account_yt ? ytAccount(account_yt) : null;
+  if (ig && isYouTubeId(ig) && !yt) { yt = ig; ig = null; }
   if (ig && isTikTokId(ig) && !tt) { tt = ig; ig = null; }
   if (tt && !isTikTokId(tt)) tt = 'tt/' + tt.replace(/^@/, '');
-  if (!ig && tt) ig = tt.slice(3);
-  if (!tt && ig) tt = 'tt/' + ig;
-  if (!ig || !tt) throw new Error('Give account_ig and/or account_tt.');
-  const igIds = Object.keys(lib.accounts).filter((u) => platformOf(lib, u) === 'instagram');
-  const ttIds = Object.keys(lib.accounts).filter((u) => platformOf(lib, u) === 'tiktok');
-  if (!lib.accounts[ig] || platformOf(lib, ig) !== 'instagram') throw new Error(`Instagram account @${ig} is not in the library. Saved Instagram accounts: ${igIds.slice(0, 15).join(', ') || 'none'}.`);
-  if (!lib.accounts[tt]) throw new Error(`TikTok account ${labelOf(tt)} is not in the library. Saved TikTok accounts: ${ttIds.map((u) => u.slice(3)).slice(0, 15).join(', ') || 'none'}. Use collect_profile with tt/<name>.`);
+  const ids = (plat) => Object.keys(lib.accounts).filter((u) => platformOf(lib, u) === plat);
+  if (yt) {
+    if (ig && tt) throw new Error('Compare two accounts at a time: account_yt with account_ig or with account_tt.');
+    if (!ig && !tt) {
+      // Same handle on Instagram, else on TikTok.
+      const h = yt.slice(3).toLowerCase();
+      if (lib.accounts[h] && platformOf(lib, h) === 'instagram') ig = h;
+      else if (lib.accounts['tt/' + h]) tt = 'tt/' + h;
+      else throw new Error(`Give account_ig or account_tt to compare ${labelOf(yt)}'s Shorts with (no Instagram or TikTok account named ${h} is saved).`);
+    }
+    if (!lib.accounts[yt] || platformOf(lib, yt) !== 'youtube') throw new Error(`YouTube channel ${labelOf(yt)} is not in the library. Saved channels: ${ids('youtube').slice(0, 15).join(', ') || 'none'}. Use collect_profile with yt/<handle>.`);
+  } else {
+    if (!ig && tt) ig = tt.slice(3);
+    if (!tt && ig) tt = 'tt/' + ig;
+    if (!ig || !tt) throw new Error('Give two of account_ig, account_tt and account_yt.');
+  }
+  if (ig && (!lib.accounts[ig] || platformOf(lib, ig) !== 'instagram')) throw new Error(`Instagram account @${ig} is not in the library. Saved Instagram accounts: ${ids('instagram').slice(0, 15).join(', ') || 'none'}.`);
+  if (tt && !lib.accounts[tt]) throw new Error(`TikTok account ${labelOf(tt)} is not in the library. Saved TikTok accounts: ${ids('tiktok').map((u) => u.slice(3)).slice(0, 15).join(', ') || 'none'}. Use collect_profile with tt/<name>.`);
+
+  const [pa, pb] = ig && tt ? ['instagram', 'tiktok'] : ig ? ['instagram', 'youtube'] : ['tiktok', 'youtube'];
+  const idOf = { instagram: ig, tiktok: tt, youtube: yt };
   const since = since_days ? Date.now() - since_days * 864e5 : null;
-  const keep = (p) => !since || (p.takenAt && p.takenAt >= since);
-  const r = C.match(enrichedPosts(lib, ig).filter(keep), enrichedPosts(lib, tt).filter(keep), { minScore: min_score });
+  const keep = (p) => !since || (p.takenAt && p.takenAt >= since) || (p.platform === 'youtube' && !C.dateOf(p)); // undated Shorts stay in
+  const r = C.match(enrichedPosts(lib, idOf[pa]).filter(keep), enrichedPosts(lib, idOf[pb]).filter(keep), { minScore: min_score });
   const sideOut = (x) => ({
-    code: x.code, url: x.url, posted_at: iso(x.posted_at), views: x.views, likes: x.likes, comments: x.comments,
-    shares: x.shares, saves: x.platform === 'tiktok' ? x.saves : undefined, duration_s: x.duration,
+    code: x.code, url: x.url, posted_at: iso(x.posted_at), date: x.platform === 'youtube' ? x.date : undefined,
+    views: x.views, likes: x.likes, comments: x.comments,
+    shares: x.platform === 'youtube' ? undefined : x.shares, saves: x.platform === 'tiktok' ? x.saves : undefined, duration_s: x.duration,
     engagement_pct: round(x.engagement), x_account_median: round(x.ratio), viral_score: x.viralScore,
     caption: (x.caption || '').replace(/\s+/g, ' ').slice(0, 160)
   });
   const s = r.summary;
-  return {
-    instagram: ig,
-    tiktok: tt,
-    how_matched: `Same video = similar caption (Turkish letters, emoji, hashtags ignored), shared hashtags, length within ~1.5 s and posted within ±${C.MAX_DAYS} days; different episode numbers ("Bug #12" vs "#13") never match. Each video is matched once. x_account_median compares each side with its own account's median views, so the platform with the bigger audience doesn't win automatically.`,
-    summary: {
-      instagram_videos: s.videosA,
-      tiktok_videos: s.videosB,
-      matched: s.matched,
-      typical_tiktok_to_instagram_views: round(s.typicalViewsRatio),
-      median_views: { instagram: s.medianViewsA, tiktok: s.medianViewsB },
-      median_x_account_median: { instagram: round(s.medianRatioA), tiktok: round(s.medianRatioB) },
-      median_engagement_pct: { instagram: round(s.medianEngagementA), tiktok: round(s.medianEngagementB) },
-      better_relative_to_own_median: { instagram: s.winsA, tiktok: s.winsB },
-      hits_on_both: s.hitsOnBoth,
-      engagement_note: 'TikTok engagement counts likes + comments + shares + saves; Instagram counts likes + comments (shares/saves are rarely public there).'
-    },
-    pairs: r.pairs.slice(0, limit).map((p) => ({
-      match_score: p.score, confidence: p.confidence, days_apart: p.days,
-      better_on: p.winner === 'a' ? 'instagram' : p.winner === 'b' ? 'tiktok' : null,
-      tiktok_to_instagram_views: round(p.viewsRatio),
-      instagram: sideOut(p.a), tiktok: sideOut(p.b)
-    })),
-    only_on_instagram: { count: r.onlyA.length, examples: r.onlyA.slice(0, 10).map((x) => ({ code: x.code, url: x.url, posted_at: iso(x.posted_at), views: x.views, caption: (x.caption || '').slice(0, 100) })) },
-    only_on_tiktok: { count: r.onlyB.length, examples: r.onlyB.slice(0, 10).map((x) => ({ code: x.code, url: x.url, posted_at: iso(x.posted_at), views: x.views, caption: (x.caption || '').slice(0, 100) })) }
+  const out = { [pa]: idOf[pa], [pb]: idOf[pb] };
+  const engagement = { instagram: 'Instagram counts likes + comments (shares/saves are rarely public there)', tiktok: 'TikTok counts likes + comments + shares + saves', youtube: 'YouTube counts likes + comments' };
+  out.how_matched = `Same video = similar caption${pb === 'youtube' ? ' / Shorts title' : ''} (Turkish letters, emoji, hashtags ignored), shared hashtags, length within ~1.5 s and posted within ±${C.MAX_DAYS} days; different episode numbers ("Bug #12" vs "#13") never match. Each video is matched once. x_account_median compares each side with its own account's median views${pb === 'youtube' ? ' (for YouTube, the channel\'s Shorts median; long-form videos are left out)' : ''}, so the platform with the bigger audience doesn't win automatically.`;
+  out.summary = {
+    [`${pa}_videos`]: s.videosA,
+    [pb === 'youtube' ? 'youtube_shorts' : `${pb}_videos`]: s.videosB,
+    matched: s.matched,
+    [`typical_${pb}_to_${pa}_views`]: round(s.typicalViewsRatio),
+    median_views: { [pa]: s.medianViewsA, [pb]: s.medianViewsB },
+    median_x_account_median: { [pa]: round(s.medianRatioA), [pb]: round(s.medianRatioB) },
+    median_engagement_pct: { [pa]: round(s.medianEngagementA), [pb]: round(s.medianEngagementB) },
+    better_relative_to_own_median: { [pa]: s.winsA, [pb]: s.winsB },
+    hits_on_both: s.hitsOnBoth,
+    engagement_note: engagement[pa] + '; ' + engagement[pb] + '.'
   };
+  if (pb === 'youtube') {
+    const shorts = enrichedPosts(lib, yt).filter((p) => C.isVideo(p));
+    const dated = shorts.filter((p) => C.dateOf(p)).length;
+    out.summary.youtube_dates = { exact_or_day: dated, without_usable_date: shorts.length - dated };
+    if (shorts.length - dated) out.summary.dates_note = `${shorts.length - dated} of ${shorts.length} Shorts have no exact date (the Shorts tab shows none), so they only match on clearly similar titles. youtube_api_stats (with an API key), refresh_reel or download_reel fill in exact dates.`;
+  }
+  out.pairs = r.pairs.slice(0, limit).map((p) => ({
+    match_score: p.score, confidence: p.confidence, days_apart: p.days,
+    better_on: p.winner === 'a' ? pa : p.winner === 'b' ? pb : null,
+    [`${pb}_to_${pa}_views`]: round(p.viewsRatio),
+    [pa]: sideOut(p.a), [pb]: sideOut(p.b)
+  }));
+  const only = (list) => ({ count: list.length, examples: list.slice(0, 10).map((x) => ({ code: x.code, url: x.url, posted_at: iso(x.posted_at), views: x.views, caption: (x.caption || '').slice(0, 100) })) });
+  out[`only_on_${pa}`] = only(r.onlyA);
+  out[`only_on_${pb}`] = only(r.onlyB);
+  out.platforms = [CMP_NAMES[pa], CMP_NAMES[pb]];
+  return out;
 }
 
 // ---- Reddit mentions --------------------------------------------------------

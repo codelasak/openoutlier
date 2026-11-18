@@ -2,10 +2,12 @@
 // scripts can't download cross-origin CDN files themselves); the MCP bridge and
 // the Reddit Mentions checker live in their own files (imported below).
 'use strict';
-importScripts('metrics.js', 'agent-bridge.js', 'mentions.js', 'mentions-bg.js'); // fileBaseName + local MCP bridge + Reddit mentions
+importScripts('metrics.js', 'youtube.js', 'agent-bridge.js', 'mentions.js', 'mentions-bg.js', 'youtube-exact.js', 'youtube-api.js', 'youtube-api-bg.js'); // fileBaseName + local MCP bridge + Reddit mentions + YouTube "Get exact stats" + the optional Data API key
 
 var ALLOWED_HOST = /(^|\.)(cdninstagram\.com|fbcdn\.net)$/i;
 var TIKTOK_HOST = /(^|\.)(tiktokcdn(-[a-z]+)?\.com|tiktok\.com|tiktokv\.com|ibyteimg\.com|ibytedtos\.com|byteoversea\.com|muscdn\.com)$/i;
+var YT_THUMB_HOST = /^i[0-9]?\.ytimg\.com$/i;
+var YT_VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
 function safeName(s) {
   return String(s || '').replace(/[^A-Za-z0-9._-]+/g, '_').replace(/^[._]+/, '').slice(0, 80) || 'instagram';
@@ -151,6 +153,60 @@ async function tiktokDownloads(jobs, senderTab) {
   return out;
 }
 
+// ---- YouTube covers ------------------------------------------------------------
+// Public thumbnails on i.ytimg.com: maxresdefault (1280×720) is missing on some
+// videos, so check each size and save the first one that exists:
+// maxresdefault → sddefault → hqdefault → the thumbnail the page showed.
+// Video files come from yt-dlp through the local bridge (not the extension).
+function youtubeCoverUrls(p) {
+  var out = [];
+  if (YT_VIDEO_ID.test(String(p.code || ''))) {
+    ['maxresdefault', 'sddefault', 'hqdefault'].forEach(function (n) { out.push('https://i.ytimg.com/vi/' + p.code + '/' + n + '.jpg'); });
+  }
+  try {
+    var u = new URL(p.cover);
+    if (u.protocol === 'https:' && YT_THUMB_HOST.test(u.hostname) && out.indexOf(p.cover) === -1) out.push(p.cover);
+  } catch (e) { /* no captured thumbnail */ }
+  return out;
+}
+
+async function firstExisting(urls) {
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var r = await fetch(urls[i], { method: 'HEAD', credentials: 'omit', cache: 'no-store' });
+      // A missing size answers 404 (sometimes with a 120×90 grey placeholder).
+      var len = Number(r.headers.get('content-length') || 0);
+      if (r.ok && (!len || len > 2000)) return urls[i];
+    } catch (e) { /* try the next size */ }
+  }
+  return null;
+}
+
+async function youtubeCovers(posts) {
+  var out = { ok: true, queued: 0, failed: 0, skipped: 0, files: [], errors: [] };
+  for (var i = 0; i < posts.length; i++) {
+    var p = posts[i];
+    var url = await firstExisting(youtubeCoverUrls(p));
+    if (!url) { out.failed++; if (out.errors.length < 3) out.errors.push('No cover image found for ' + p.code + '.'); continue; }
+    try {
+      await chrome.downloads.download({
+        url: url,
+        filename: 'OpenOutlier/' + safeName(p.owner) + '/' + self.ReelScopeMetrics.fileBaseName(p) + '_cover.jpg',
+        conflictAction: 'uniquify',
+        saveAs: false
+      });
+      out.queued++;
+      out.files.push({ url: url });
+    } catch (e) {
+      out.failed++;
+      if (out.errors.length < 3) out.errors.push(String(e.message || e));
+    }
+    if (posts.length > 5) await new Promise(function (r) { setTimeout(r, 350); });
+  }
+  if (!out.errors.length) delete out.errors;
+  return out;
+}
+
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
   if (!msg || sender.id !== chrome.runtime.id) return; // only our own content scripts / pages
   if (msg.type === 'reelscope:open-dashboard') {
@@ -158,6 +214,15 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     return;
   }
   if (msg.type !== 'reelscope:download' || !Array.isArray(msg.posts)) return;
+
+  if (msg.posts.length && msg.posts.every(function (p) { return p && p.platform === 'youtube'; })) {
+    if (msg.what !== 'cover') {
+      sendResponse({ ok: false, queued: 0, failed: msg.posts.length, errors: ['YouTube video files are downloaded with yt-dlp through the OpenOutlier bridge, not by the extension.'] });
+      return;
+    }
+    youtubeCovers(msg.posts).then(sendResponse, function (e) { sendResponse({ ok: false, queued: 0, failed: msg.posts.length, errors: [String(e.message || e)] }); });
+    return true;
+  }
 
   if (msg.posts.length && msg.posts.every(function (p) { return p && p.platform === 'tiktok'; })) {
     var ttPlan = jobsFor(msg.posts, msg.what === 'cover' ? 'cover' : 'media');
@@ -168,21 +233,42 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     return true;
   }
 
-  var plan = jobsFor(msg.posts, msg.what === 'cover' ? 'cover' : 'media');
-  // Start downloads one after another so Chrome isn't flooded.
-  (async function () {
-    var queued = 0;
-    var failed = 0;
-    for (var i = 0; i < plan.jobs.length; i++) {
-      try {
-        await chrome.downloads.download(plan.jobs[i]);
-        queued++;
-      } catch (e) {
-        failed++;
-      }
-      if (plan.jobs.length > 5) await new Promise(function (r) { setTimeout(r, 350); });
+  // A list that mixes platforms (Library "Top posts"): YouTube covers take their own
+  // path (size check on i.ytimg.com); YouTube video files are never in p.files.
+  var ytPosts = msg.posts.filter(function (p) { return p && p.platform === 'youtube'; });
+  var rest = msg.posts.filter(function (p) { return !(p && p.platform === 'youtube'); });
+  var what = msg.what === 'cover' ? 'cover' : 'media';
+  var restAllTikTok = rest.length && rest.every(function (p) { return p && p.platform === 'tiktok'; });
+  var ttRest = restAllTikTok ? jobsFor(rest, what) : null;
+  Promise.all([
+    ttRest ? tiktokDownloads(ttRest.jobs, sender.tab).then(function (r) { r.skipped = ttRest.skipped; return r; }) : plainDownloads(rest, what),
+    ytPosts.length && what === 'cover' ? youtubeCovers(ytPosts) : Promise.resolve(null)
+  ]).then(function (r) {
+    var out = r[0];
+    var y = r[1];
+    if (y) {
+      out.queued += y.queued;
+      out.failed += y.failed;
+      if (y.errors) out.errors = (out.errors || []).concat(y.errors);
     }
-    sendResponse({ ok: true, queued: queued, skipped: plan.skipped, failed: failed });
-  })();
+    sendResponse(out);
+  }, function (e) { sendResponse({ ok: false, queued: 0, failed: msg.posts.length, errors: [String(e.message || e)] }); });
   return true; // async response
 });
+
+/** Instagram (and TikTok in mixed lists): chrome.downloads, one after another so Chrome isn't flooded. */
+async function plainDownloads(posts, what) {
+  var plan = jobsFor(posts, what);
+  var queued = 0;
+  var failed = 0;
+  for (var i = 0; i < plan.jobs.length; i++) {
+    try {
+      await chrome.downloads.download(plan.jobs[i]);
+      queued++;
+    } catch (e) {
+      failed++;
+    }
+    if (plan.jobs.length > 5) await new Promise(function (r) { setTimeout(r, 350); });
+  }
+  return { ok: true, queued: queued, skipped: plan.skipped, failed: failed };
+}

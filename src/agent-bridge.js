@@ -12,6 +12,12 @@
 //   TikTok commands (collect_tiktok, refresh_tiktok, download_tiktok) do the
 //   same on the profile / video page: TikTok's API is signed, so OpenOutlier
 //   only reads what the page loads.
+//   YouTube commands: collect_youtube opens the channel's Videos tab in a small
+//   unfocused window (its grid only loads more while it is rendered), scrolls it,
+//   then loads the Shorts tab in the same window and scrolls that (one step per
+//   tab, each a fresh page load so YouTube inlines that tab's first page).
+//   refresh_youtube opens one watch / Shorts page in a muted background tab and
+//   waits for its exact stats, like "Get exact stats" (youtube-exact.js).
 // Turn it off in the popup ("Connect to AI agents").
 'use strict';
 
@@ -189,6 +195,7 @@
     var map = await getRunning();
     var job = map[id];
     if (!job) return;
+    if (job.results) result = combineSteps(job.results.concat([result]));
     delete map[id];
     await putRunning(map);
     syncing = syncing.then(flushSync); // make sure the new data reached the server first
@@ -211,6 +218,58 @@
     return 'https://www.reddit.com/r/' + name + '/' + sort + '/' + (sort === 'top' ? '?t=' + (/^(hour|day|week|month|year|all)$/.test(a.t || '') ? a.t : 'year') : '');
   }
 
+  var YT_TABS = ['videos', 'shorts', 'streams'];
+  /** youtube.com page for a YouTube command: a channel tab (collect) or one video (refresh). */
+  function youtubeUrl(type, a, tab) {
+    if (type === 'refresh_youtube') {
+      var v = encodeURIComponent(String(a.id || ''));
+      return a.type === 'short' ? 'https://www.youtube.com/shorts/' + v : 'https://www.youtube.com/watch?v=' + v;
+    }
+    var s = String(a.id || '').replace(/^yt\//, '');
+    var base = /^UC[A-Za-z0-9_-]{22}$/.test(s) ? 'https://www.youtube.com/channel/' + s : 'https://www.youtube.com/@' + encodeURIComponent(s);
+    return base + '/' + (YT_TABS.indexOf(tab) !== -1 ? tab : 'videos');
+  }
+  function youtubeTabs(a) {
+    var tabs = (Array.isArray(a.tabs) ? a.tabs : ['videos', 'shorts']).filter(function (t, i, all) { return YT_TABS.indexOf(t) !== -1 && all.indexOf(t) === i; });
+    return tabs.length ? tabs : ['videos'];
+  }
+
+  /** collect_youtube ran one step per channel tab: one result for the MCP server. */
+  function combineSteps(results) {
+    var tabs = results.map(function (r) { return r || {}; });
+    var last = tabs.filter(function (r) { return r.account; }).pop() || {};
+    var ok = tabs.some(function (r) { return r.ok; });
+    var notes = tabs.map(function (r) { return r.note; }).filter(Boolean);
+    return {
+      ok: ok,
+      account: last.account,
+      saved_total: last.saved_total,
+      long_form: last.long_form,
+      shorts: last.shorts,
+      channel_videos: last.channel_videos,
+      subscribers: last.subscribers,
+      tabs: tabs.map(function (r) { return { tab: r.tab, ok: !!r.ok, collected_now: r.collected_now, end_reached: r.end_reached, error: r.error || undefined, skipped: r.skipped || undefined }; }),
+      error: ok ? undefined : (tabs.map(function (r) { return r.error; }).filter(Boolean)[0] || 'Nothing was collected.'),
+      note: notes.length ? notes.join(' ') : undefined
+    };
+  }
+
+  /** A YouTube collect step finished: load the next channel tab in the same window, or finish. */
+  async function stepDone(id, result) {
+    var map = await getRunning();
+    var job = map[id];
+    if (!job || !job.steps || !job.steps.length || (result && result.fatal)) { finish(id, result); return; }
+    var tab = job.steps.shift();
+    job.results = (job.results || []).concat([result || {}]);
+    var cmd = Object.assign({}, job.command, { args: Object.assign({}, job.command.args, { tab: tab, prevTab: job.command.args.tab }) });
+    job.command = cmd;
+    map[id] = job;
+    await putRunning(map);
+    try { await chrome.tabs.update(job.tabId, { url: youtubeUrl('collect_youtube', cmd.args, tab) }); } catch (e) { finish(id, { ok: false, tab: tab, error: 'The collection window was closed.' }); return; }
+    var ok = await sendCommand(job.tabId, cmd);
+    if (!ok) finish(id, { ok: false, tab: tab, error: 'Could not reach YouTube in the browser for the ' + tab + ' tab.' });
+  }
+
   function tiktokUrl(type, a) {
     var name = encodeURIComponent(String(a.username || '').replace(/^\/?(tt\/|@)/i, '').toLowerCase());
     if (type === 'collect_tiktok') return 'https://www.tiktok.com/@' + name;
@@ -222,9 +281,25 @@
     if (map[command.id]) return;
     var reddit = command.type === 'collect_reddit';
     var tiktok = /^(collect|refresh|download)_tiktok$/.test(command.type);
-    var pageUrl = reddit ? redditUrl(command.args || {}) : tiktok ? tiktokUrl(command.type, command.args || {}) : null;
+    var youtube = /^(collect|refresh)_youtube$/.test(command.type);
+    var steps = null;
+    if (command.type === 'collect_youtube') {
+      // One step per channel tab: the first now, the rest after each finishes (stepDone).
+      steps = youtubeTabs(command.args || {});
+      command = Object.assign({}, command, { args: Object.assign({}, command.args, { tab: steps.shift() }) });
+    }
+    var pageUrl = reddit ? redditUrl(command.args || {}) : tiktok ? tiktokUrl(command.type, command.args || {}) :
+      youtube ? youtubeUrl(command.type, command.args || {}, (command.args || {}).tab) : null;
     var tab = pageUrl ? null : await instagramTab();
     var opened = false;
+    if (command.type === 'refresh_youtube') {
+      // One watch page: its inline data is all that's needed, so a muted background tab is enough.
+      try {
+        tab = await chrome.tabs.create({ url: pageUrl, active: false });
+        chrome.tabs.update(tab.id, { muted: true }).catch(function () {});
+        opened = true;
+      } catch (e) { tab = null; }
+    }
     if (!tab && pageUrl) {
       // Reddit and TikTok are read from the page itself, and their infinite
       // scroll may not load in a background tab: use a small unfocused window of
@@ -240,17 +315,85 @@
       opened = true;
     }
     map[command.id] = { port: port, tabId: tab.id, openedTab: opened, startedAt: Date.now() };
+    if (steps) { map[command.id].steps = steps; map[command.id].command = command; map[command.id].results = []; }
     await putRunning(map);
     var ok = await sendCommand(tab.id, command);
-    var site = reddit ? 'Reddit' : tiktok ? 'TikTok' : 'Instagram';
-    var host = reddit ? 'www.reddit.com' : tiktok ? 'www.tiktok.com' : 'instagram.com';
+    var site = reddit ? 'Reddit' : tiktok ? 'TikTok' : youtube ? 'YouTube' : 'Instagram';
+    var host = reddit ? 'www.reddit.com' : tiktok ? 'www.tiktok.com' : youtube ? 'www.youtube.com' : 'instagram.com';
     if (!ok) finish(command.id, { ok: false, error: 'Could not reach ' + site + ' in the browser. Is ' + host + ' loading and are you logged in?' });
   }
 
   chrome.runtime.onMessage.addListener(function (msg, sender) {
     if (!msg || sender.id !== chrome.runtime.id) return;
-    if (msg.type === 'reelscope:command-done' && msg.id) finish(msg.id, msg.result || {});
+    if (msg.type === 'reelscope:command-done' && msg.id) stepDone(msg.id, msg.result || {});
     if (msg.type === 'reelscope:bridge-check') tick();
+  });
+
+  // ---- YouTube video files: yt-dlp on the Mac, started through the bridge ------------
+  // Works whether or not "Connect to AI agents" is on: it only sends the video id
+  // (plus its channel and format, for the folder name) when you press download.
+  var NO_BRIDGE = 'YouTube videos are saved by yt-dlp on your Mac through the OpenOutlier bridge, and the bridge isn\'t running. ' +
+    'Start it once with: sh mcp/launchd/install.sh (in the OpenOutlier folder; it then stays on), or add the OpenOutlier MCP server to Claude. ' +
+    'See the README, "Connect AI agents". Covers download without it.';
+  var OLD_BRIDGE = 'The OpenOutlier bridge that is running is older than this extension and can\'t download YouTube videos. ' +
+    'Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge (or restart Claude if it runs the bridge).';
+  var JOB_RE = /^[0-9a-f-]{36}$/;
+
+  async function ytVideoStart(msg) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(String(msg.id || ''))) return { ok: false, error: 'Not a YouTube video id.' };
+    var found = await findServer(await getState());
+    if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE };
+    if ((found.health.features || []).indexOf('youtube-download') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE };
+    var facts = msg.post && typeof msg.post === 'object' ? { owner: msg.post.owner, type: msg.post.type } : undefined;
+    var r = await post(found.port, '/youtube/download', { id: msg.id, what: msg.what || 'video', post: facts });
+    return { ok: true, port: found.port, job: r.job, state: r.state, label: r.label };
+  }
+
+  async function ytVideoStatus(msg) {
+    if (PORTS.indexOf(msg.port) === -1 || !JOB_RE.test(String(msg.job || ''))) return { ok: false, error: 'Bad request.' };
+    var res = await fetch('http://127.0.0.1:' + msg.port + '/youtube/download/' + msg.job, { signal: AbortSignal.timeout(5000) });
+    var j = await res.json().catch(function () { return {}; });
+    if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
+    return j;
+  }
+
+  // ---- My YouTube channel: YouTube Analytics through the bridge (the OAuth sign-in and
+  // tokens live on the Mac, mcp/youtube-analytics.mjs). Only these paths are passed on.
+  var YT_ANALYTICS = { 'GET /youtube/analytics/status': 1, 'POST /youtube/analytics/connect': 1, 'POST /youtube/analytics/disconnect': 1,
+    'GET /youtube/analytics/channel': 1, 'GET /youtube/analytics/videos': 1, 'GET /youtube/analytics/retention': 1 };
+  var NO_BRIDGE_ANALYTICS = 'My YouTube channel runs through the OpenOutlier bridge on your Mac (it keeps the Google sign-in), and the bridge isn\'t running. ' +
+    'Start it once with: sh mcp/launchd/install.sh (in the OpenOutlier folder), or add the OpenOutlier MCP server to Claude. See the README, "My YouTube channel".';
+  var OLD_BRIDGE_ANALYTICS = 'The OpenOutlier bridge that is running is older than this extension and has no YouTube Analytics. ' +
+    'Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge (or restart Claude if it runs the bridge).';
+
+  async function ytAnalytics(msg) {
+    var method = msg.method === 'POST' ? 'POST' : 'GET';
+    var path = String(msg.path || '');
+    if (!YT_ANALYTICS[method + ' ' + path]) return { ok: false, error: 'Bad request.' };
+    var q = new URLSearchParams();
+    if (msg.days) q.set('days', String(Math.min(3650, Math.max(1, Number(msg.days) || 28))));
+    if (msg.limit) q.set('limit', String(Math.min(200, Math.max(1, Number(msg.limit) || 50))));
+    if (msg.id) { if (!/^[A-Za-z0-9_-]{11}$/.test(String(msg.id))) return { ok: false, error: 'Not a YouTube video id.' }; q.set('id', msg.id); }
+    var found = await findServer(await getState());
+    if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE_ANALYTICS };
+    if ((found.health.features || []).indexOf('youtube-analytics') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE_ANALYTICS };
+    var url = 'http://127.0.0.1:' + found.port + path + (String(q) ? '?' + q : '');
+    var res = await fetch(url, method === 'POST'
+      ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(60000) }
+      : { signal: AbortSignal.timeout(60000) });
+    var j = await res.json().catch(function () { return {}; });
+    if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
+    return j;
+  }
+
+  chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+    if (!msg || sender.id !== chrome.runtime.id) return;
+    var fn = msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics : null;
+    if (!fn) return;
+    fn(msg).then(sendResponse, function (e) {
+      sendResponse({ ok: false, error: /Failed to fetch|NetworkError/i.test(String(e && e.message)) ? NO_BRIDGE : String(e && e.message || e) });
+    });
+    return true;
   });
 
   // ---- schedule -----------------------------------------------------------------

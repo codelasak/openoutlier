@@ -12,21 +12,31 @@
 // /api/recommend/item_list, /api/search/…, /api/related/item_list … (any
 // /api/ response that carries video items). TikTok signs these requests, so
 // OpenOutlier never replays them; it only reads what the page already got.
+//
+// YouTube: /youtubei/v1/browse (channel tabs and their continuations),
+// get_watch (in-app clicks on a video: [playerResponse, watchNextResponse]),
+// player, next, reel/reel_item_watch and reel/reel_watch_sequence (Shorts).
+// They all go through fetch, so this must stay at document_start.
 (function () {
   'use strict';
   if (window.__reelscopeHooked) return;
   window.__reelscopeHooked = true;
 
-  // window.__reelscopeSite lets dev/tiktok-demo.html (served from localhost) use TikTok mode.
+  // window.__reelscopeSite lets dev/tiktok-demo.html and dev/youtube-demo.html (served from localhost) pick a site.
   var TIKTOK = /(^|\.)tiktok\.com$/.test(location.hostname) || window.__reelscopeSite === 'tiktok';
-  var URL_RE = TIKTOK
-    ? /\/api\/(?!comment\/|im\/|user\/(?!detail)|notice\/|upload\/|report|ba\/|v1\/web\/report)/
-    : /\/graphql|\/api\/v1\//;
+  var YOUTUBE = /(^|\.)youtube\.com$/.test(location.hostname) || window.__reelscopeSite === 'youtube';
+  var URL_RE = YOUTUBE
+    ? /\/youtubei\/v1\/(browse|next|player|get_watch|reel\/reel_item_watch|reel\/reel_watch_sequence)(\?|$)/
+    : TIKTOK
+      ? /\/api\/(?!comment\/|im\/|user\/(?!detail)|notice\/|upload\/|report|ba\/|v1\/web\/report)/
+      : /\/graphql|\/api\/v1\//;
   var MAX_BYTES = 15 * 1024 * 1024;
 
   function looksUseful(text) {
     // Cheap pre-filter. Instagram media objects always carry a shortcode ("code");
     // TikTok video items always carry createTime and a stats block.
+    // YouTube: every useful response names a videoId (watch, Shorts) or a contentId (grid lockups).
+    if (YOUTUBE) return text.indexOf('"videoId"') !== -1 || text.indexOf('"contentId"') !== -1;
     if (TIKTOK) return text.indexOf('"createTime"') !== -1 && (text.indexOf('"stats"') !== -1 || text.indexOf('"statsV2"') !== -1);
     return text.indexOf('"code"') !== -1 || text.indexOf('"shortcode"') !== -1;
   }

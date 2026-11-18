@@ -446,3 +446,144 @@ test('TikTok: accounts next to Instagram, top_reels across platforms, compare_pl
   assert.deepEqual(cmds[0].args, { id: ok.code, username: 'excel.bugs.demo' });
   await pendingRefresh;
 });
+
+test('YouTube: channels next to the others, Shorts and long-form medians, YouTube fields, collect and refresh commands', async () => {
+  const Y = createRequire(import.meta.url)('../src/youtube.js');
+  const read = (f) => readFileSync(join(here, '..', 'dev', 'youtube', f), 'utf8');
+  const now = Date.now();
+  const videos = Y.parsePage(read('channel-videos.html'), { lang: 'en', now });
+  const shorts = Y.parsePage(read('channel-shorts.html'), { lang: 'en', now });
+  const watch = Y.parsePage(read('watch.html'), { lang: 'en', now, videoId: 'yTdemo00029' });
+  const short = Y.parsePage(read('short.html'), { lang: 'en', now, videoId: 'yTdemo00035' });
+  const posts = {};
+  [...videos.posts, ...shorts.posts, ...watch.posts, ...short.posts].forEach((p) => { posts[p.code] = Y.merge(posts[p.code], p); });
+  const nShorts = Object.values(posts).filter((p) => p.type === 'short').length;
+  const nLong = Object.values(posts).length - nShorts;
+  assert.ok(nShorts >= 5 && nLong >= 5);
+  const org = { folders: [{ id: 'fb', name: 'Excel Bug' }], accounts: {
+    'excel.bugs.demo': { folder: 'fb', tags: [] }, 'tt/excel.bugs.demo': { folder: 'fb', tags: ['tiktok'] }, 'yt/exceldemo': { folder: 'fb', tags: ['youtube'] }
+  } };
+  const r = await bridge('/sync', { method: 'POST', body: { full: false, org, accounts: {
+    'yt/exceldemo': { posts, updatedAt: now, platform: 'youtube', profile: videos.channel }
+  } } });
+  assert.equal(r.status, 200);
+
+  // list_accounts / list_folders_and_tags
+  const yt = await call('list_accounts', { platform: 'youtube' });
+  assert.equal(yt.data.count, 1);
+  const row = yt.data.accounts[0];
+  assert.deepEqual([row.username, row.platform, row.handle, row.channel_id, row.name, row.subscribers, row.videos_on_channel, row.verified],
+    ['yt/exceldemo', 'youtube', '@ExcelDemo', 'UCdemoExcelChannel000000', 'Excel Demo', 712000, 776, true]);
+  assert.deepEqual([row.posts_saved, row.long_form, row.shorts], [nShorts + nLong, nLong, nShorts]);
+  assert.ok(row.median_views_long_form > row.median_views_shorts, 'separate medians');
+  assert.ok(row.exact_views >= 2 && row.exact_dates >= 2);
+  assert.ok((await call('list_accounts')).data.accounts.some((a) => a.username === 'yt/exceldemo'));
+  assert.deepEqual((await call('list_folders_and_tags')).data.folders.find((f) => f.name === 'Excel Bug'),
+    { name: 'Excel Bug', accounts: 3, instagram: 1, tiktok: 1, youtube: 1 });
+
+  // account_summary: two sections, each on its own median; every way of naming the channel works.
+  for (const name of ['yt/ExcelDemo', 'youtube:@ExcelDemo', 'https://www.youtube.com/@ExcelDemo/videos']) {
+    const s = await call('account_summary', { username: name });
+    assert.equal(s.isError, false, name + ': ' + s.text);
+    assert.equal(s.data.account.username, 'yt/exceldemo');
+  }
+  const sum = await call('account_summary', { username: 'yt/exceldemo' });
+  assert.equal(sum.data.long_form.videos_analyzed, nLong);
+  assert.equal(sum.data.shorts.videos_analyzed, nShorts);
+  assert.equal(sum.data.long_form.median_views, row.median_views_long_form);
+  assert.equal(sum.data.shorts.median_views, row.median_views_shorts);
+  assert.ok(sum.data.shorts.top_videos.every((p) => p.format === 'short' && p.median_group === 'shorts'));
+  assert.ok(sum.data.long_form.top_videos.every((p) => p.format !== 'short' && p.median_group === 'long_form'));
+  assert.match(sum.data.long_form.timing_note, /exact publish dates only/);
+  assert.ok(sum.data.formats.some((f) => f.format === 'Shorts') && sum.data.formats.some((f) => f.format === 'Long-form'));
+  assert.match(sum.data.view_count_note, /March 2025.*August 2026/);
+  const missing = await call('account_summary', { username: 'yt/nobody.here' });
+  assert.ok(missing.isError && /collect_profile with yt\/nobody\.here/.test(missing.text));
+
+  // top_reels across platforms; a Short is scored against the Shorts median.
+  const all = await call('top_reels', { folder: 'Excel Bug', limit: 200 });
+  assert.deepEqual(all.data.platforms.sort(), ['instagram', 'tiktok', 'youtube']);
+  assert.ok(all.data.youtube_note);
+  const aShort = all.data.reels.find((p) => p.code === 'yTdemo00035');
+  assert.equal(aShort.x_account_median, Math.round(posts.yTdemo00035.views / row.median_views_shorts * 100) / 100);
+  const onlyShorts = await call('top_reels', { format: 'shorts', limit: 200 });
+  assert.equal(onlyShorts.data.reels.length, nShorts);
+  assert.ok(onlyShorts.data.reels.every((p) => p.platform === 'youtube' && p.format === 'short'));
+  const onlyYt = await call('top_reels', { platform: 'youtube', sort: 'views', limit: 3 });
+  assert.ok(onlyYt.data.reels.every((p) => p.platform === 'youtube'));
+  assert.equal(onlyYt.data.reels[0].code, 'yTdemo00029');
+  const found = await call('search_reels', { query: 'pivot', platform: 'youtube' });
+  assert.ok(found.data.matched > 0 && found.data.reels.every((p) => p.platform === 'youtube'));
+  assert.ok((await call('search_reels', { query: 'excel', format: 'long_form' })).data.reels.every((p) => p.format !== 'short'));
+
+  // get_reel by URL (watch, youtu.be, shorts) and by id.
+  for (const code of ['https://www.youtube.com/watch?v=yTdemo00029&t=42s', 'https://youtu.be/yTdemo00029', 'yTdemo00029']) {
+    assert.equal((await call('get_reel', { code })).data?.code, 'yTdemo00029', code);
+  }
+  const v = (await call('get_reel', { code: 'https://youtu.be/yTdemo00029' })).data;
+  assert.deepEqual([v.platform, v.format, v.views, v.views_exact, v.date, v.likes, v.comments, v.category, v.captions],
+    ['youtube', 'video', 801352, true, 'exact', 13398, 234, 'Education', 'auto-generated']);
+  assert.deepEqual(v.chapters[1], { start_s: 17, at: '0:17', title: 'Record Macro' });
+  assert.deepEqual(v.most_replayed_at, ['1:05', '2:16']);
+  assert.equal(v.heatmap.values.length, 100);
+  assert.equal(v.cover_url, 'https://i.ytimg.com/vi/yTdemo00029/maxresdefault.jpg');
+  assert.match(v.download_note, /yt-dlp/);
+  assert.equal(v.exact_stats_hint, undefined);
+  const s = (await call('get_reel', { code: 'https://www.youtube.com/shorts/yTdemo00035' })).data;
+  assert.deepEqual([s.format, s.median_group, s.captions, s.url], ['short', 'shorts', 'none', 'https://www.youtube.com/shorts/yTdemo00035']);
+  const rounded = Object.values(posts).find((p) => p.viewsApprox && p.type === 'video');
+  const g = (await call('get_reel', { code: rounded.code })).data;
+  assert.deepEqual([g.views_exact, g.date], [false, 'approximate']);
+  assert.match(g.exact_stats_hint, /refresh_reel/);
+  const brief = all.data.reels.find((p) => p.code === 'yTdemo00029');
+  assert.equal(brief.chapters, 4); // the short form only counts them
+  assert.equal(brief.heatmap, undefined);
+
+  // collect_profile → collect_youtube (Videos, then Shorts); refresh_reel → refresh_youtube.
+  async function nextCommand() {
+    let cmds = [];
+    for (let i = 0; i < 20 && !cmds.length; i++) {
+      cmds = (await (await bridge('/commands')).json()).commands;
+      if (!cmds.length) await new Promise((res) => setTimeout(res, 200));
+    }
+    return cmds[0];
+  }
+  let pending = call('collect_profile', { username: 'https://www.youtube.com/@SomeChannel/shorts', wait_seconds: 3 });
+  let cmd = await nextCommand();
+  assert.equal(cmd.type, 'collect_youtube');
+  assert.deepEqual(cmd.args, { id: 'yt/somechannel', maxPosts: 300, tabs: ['videos', 'shorts'] });
+  await bridge('/commands/result', { method: 'POST', body: { id: cmd.id, result: { ok: true, account: 'yt/somechannel', note: 'done' } } });
+  assert.equal((await pending).data.result.account, 'yt/somechannel');
+  pending = call('collect_profile', { username: 'youtube.com/channel/UCabcdefghijklmnopqrstuv', youtube_tabs: ['shorts'], max_reels: 50, wait_seconds: 1 });
+  cmd = await nextCommand();
+  assert.deepEqual(cmd.args, { id: 'yt/UCabcdefghijklmnopqrstuv', maxPosts: 50, tabs: ['shorts'] });
+  await pending;
+  pending = call('refresh_reel', { code: 'https://www.youtube.com/shorts/yTnotsaved1', wait_seconds: 1 });
+  cmd = await nextCommand();
+  assert.equal(cmd.type, 'refresh_youtube');
+  assert.deepEqual(cmd.args, { id: 'yTnotsaved1', type: 'short' });
+  await pending;
+  pending = call('refresh_reel', { code: 'yTdemo00029', wait_seconds: 1 });
+  cmd = await nextCommand();
+  assert.deepEqual([cmd.type, cmd.args], ['refresh_youtube', { id: 'yTdemo00029', type: 'video' }]);
+  await pending;
+});
+
+test('library: YouTube ids, labels and URL parsing', async () => {
+  const L = await import('../mcp/library.mjs');
+  assert.equal(L.normUser('yt/ExcelDemo'), 'yt/exceldemo');
+  assert.equal(L.normUser('@ExcelDemo'), 'exceldemo'); // a bare handle stays Instagram
+  assert.equal(L.normUser('https://m.youtube.com/@ExcelDemo'), 'yt/exceldemo');
+  assert.equal(L.normUser('https://www.youtube.com/channel/UCdemoExcelChannel000000/videos'), 'yt/UCdemoExcelChannel000000');
+  assert.equal(L.normUser('yt/UCdemoExcelChannel000000'), 'yt/UCdemoExcelChannel000000');
+  assert.equal(L.normUser('youtube: @çay.saati'), 'yt/çay.saati');
+  assert.equal(L.labelOf('yt/exceldemo'), '@exceldemo (YouTube)');
+  assert.equal(L.labelOf('yt/UCdemoExcelChannel000000'), 'UCdemoExcelChannel000000 (YouTube)');
+  const lib = { accounts: { 'yt/exceldemo': { posts: {} }, 'tt/x': { posts: {} }, x: { posts: {} }, 'r/excel': { posts: {} } }, org: { folders: [], accounts: {} } };
+  assert.deepEqual(['yt/exceldemo', 'tt/x', 'x', 'r/excel'].map((u) => L.platformOf(lib, u)), ['youtube', 'tiktok', 'instagram', 'reddit']);
+  assert.deepEqual(L.selectAccounts(lib, { platform: 'video', includeSmall: true }).sort(), ['tt/x', 'x', 'yt/exceldemo']);
+  for (const u of ['https://www.youtube.com/watch?v=yTdemo00029', 'https://youtube.com/watch?feature=share&v=yTdemo00029', 'https://youtu.be/yTdemo00029?si=x', 'https://www.youtube.com/shorts/yTdemo00029', 'https://www.youtube.com/live/yTdemo00029']) {
+    assert.equal(L.youtubeIdOf(u), 'yTdemo00029', u);
+  }
+  assert.equal(L.youtubeIdOf('yTdemo00029'), null); // bare ids could be Instagram shortcodes
+});

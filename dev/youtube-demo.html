@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenOutlier YouTube demo</title>
+  <style>
+    body { margin: 0; font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; color: #111; }
+    header { padding: 24px 32px; border-bottom: 1px solid #ddd; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; color: #666; max-width: 760px; }
+    nav { display: flex; gap: 8px; padding: 12px 32px; flex-wrap: wrap; }
+    nav button, nav a { font: inherit; padding: 6px 10px; }
+    main { padding: 12px 32px 40px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 200px); gap: 10px; }
+    .grid div { aspect-ratio: 16 / 9; background: #eee; border-radius: 6px; font-size: 11px; padding: 6px; color: #555; overflow: hidden; }
+    .grid.shorts div { aspect-ratio: 9 / 16; }
+    #more { color: #666; margin-top: 12px; }
+    #spacer { height: 900px; }
+    #player { display: none; margin: 0 0 16px; }
+    #player video { display: block; width: 640px; height: 360px; max-width: 100%; background: #111; border-radius: 10px; }
+    #player.short video { width: 300px; height: 533px; }
+  </style>
+  <!-- Stand-in for the chrome.* APIs so the content scripts run on a normal page. -->
+  <script>
+    (function () {
+      var data = {};
+      var listeners = [];
+      window.chrome = {
+        storage: {
+          local: {
+            get: async function (k) {
+              var all = JSON.parse(JSON.stringify(data));
+              if (k == null) return all;
+              var o = {};
+              [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; });
+              return o;
+            },
+            set: async function (o) { Object.assign(data, JSON.parse(JSON.stringify(o))); },
+            remove: async function (k) { [].concat(k).forEach(function (x) { delete data[x]; }); }
+          },
+          onChanged: { addListener: function () {} }
+        },
+        runtime: {
+          getURL: function (p) { return '/' + p; },
+          onMessage: { addListener: function (fn) { listeners.push(fn); } },
+          sendMessage: async function (m) {
+            if (/^reelscope:yt-exact/.test(m.type)) return demoExact(m);
+            if (/^reelscope:yt-video/.test(m.type)) return demoVideo(m);
+            // ?ytapi: a saved YouTube Data API key (src/youtube-api-bg.js stand-in).
+            if (m.type === 'reelscope:yt-api-status') return { configured: demoQ.has('ytapi'), quota: { used: 37, limit: 10000 } };
+            if (m.type === 'reelscope:yt-api') { await new Promise(function (r) { setTimeout(r, 500); }); return { ok: true, updated: 12, added: m.action === 'uploads' ? 30 : 0, units: m.action === 'uploads' ? 31 : 1, quota: { used: m.action === 'uploads' ? 68 : 38, limit: 10000 } }; }
+            if (m.type === 'reelscope:download' && m.what !== 'cover') return { ok: false, queued: 0, errors: ['YouTube video files are downloaded with yt-dlp through the OpenOutlier bridge, not by the extension.'] };
+            if (m.type !== 'reelscope:download') return { ok: true };
+            // Mirror what background.js would save (it picks maxresdefault → sddefault → hqdefault).
+            var names = (m.posts || []).map(function (p) { return 'OpenOutlier/' + String(p.owner).replace('/', '_') + '/' + ReelScopeMetrics.fileBaseName(p) + '_cover.jpg'; });
+            console.log('[demo] would download:\n' + names.join('\n'));
+            window.__demoDownloads = names;
+            return { ok: true, queued: names.length, skipped: 0, failed: 0, files: names.map(function (n) { return { url: 'https://i.ytimg.com/…/maxresdefault.jpg', filename: n }; }) };
+          }
+        }
+      };
+      // Stand-in for the bridge's yt-dlp jobs (src/agent-bridge.js → POST /youtube/download, GET /youtube/download/<job>).
+      // ?nobridge answers like a Mac without the bridge running; ?ytdlperror like a YouTube format block.
+      var videoJobs = {};
+      var demoQ = new URLSearchParams(location.search); // read at load: the demo's SPA navigation changes the URL
+      function demoVideo(m) {
+        var q = demoQ;
+        if (m.type === 'reelscope:yt-video') {
+          if (q.has('nobridge')) return Promise.resolve({ ok: false, noBridge: true, error: 'YouTube videos are saved by yt-dlp on your Mac through the OpenOutlier bridge, and the bridge isn\'t running. Start it once with: sh mcp/launchd/install.sh (in the OpenOutlier folder; it then stays on), or add the OpenOutlier MCP server to Claude. See the README, "Connect AI agents". Covers download without it.' });
+          var job = '00000000-0000-4000-8000-' + String(Date.now()).slice(-12);
+          videoJobs[job] = { id: m.id, owner: m.post && m.post.owner, polls: 0 };
+          window.__demoVideoRequests = (window.__demoVideoRequests || []).concat([{ id: m.id, what: m.what, post: m.post }]);
+          return Promise.resolve({ ok: true, port: 47811, job: job, state: 'queued' });
+        }
+        var j = videoJobs[m.job];
+        if (!j) return Promise.resolve({ ok: false, error: 'unknown job' });
+        j.polls++;
+        var steps = ['Asking YouTube for the formats…', 'Downloading video 18% (9s left)', 'Downloading video 64% (3s left)', 'Downloading audio 80%', 'Merging video and audio…'];
+        if (j.polls <= steps.length) return Promise.resolve({ ok: true, state: 'running', label: steps[j.polls - 1] });
+        if (q.has('ytdlperror')) return Promise.resolve({ ok: true, state: 'error', error: { code: 'blocked', message: 'YouTube didn\'t give yt-dlp a downloadable format (Requested format is not available).', hint: 'Update yt-dlp: brew upgrade yt-dlp (YouTube changes often and old versions stop working). If it still fails, the optional PO-token helper bgutil-ytdlp-pot-provider (a yt-dlp plugin) usually fixes it.' } });
+        var p = findDemoPost(j.id) || {};
+        var exact = Object.assign({}, p, { views: 801352, viewsApprox: false, likes: 13398, comments: 234, takenAt: Date.parse('2025-05-08T11:30:48Z'), dateApprox: false });
+        delete exact.dateDay;
+        var name = ReelScopeMetrics.fileBaseName(exact);
+        return Promise.resolve({ ok: true, state: 'done', label: 'Saved', post: exact,
+          files: [{ kind: 'video', path: '/Users/demo/Downloads/OpenOutlier/' + String(j.owner || 'youtube').replace('/', '_') + '/' + name + '.mp4', display: '~/Downloads/OpenOutlier/' + String(j.owner || 'youtube').replace('/', '_') + '/' + name + '.mp4' }] });
+      }
+      function findDemoPost(id) {
+        for (var k in data) if (data[k] && data[k].posts && data[k].posts[id]) return data[k].posts[id];
+        return null;
+      }
+      // Stand-in for src/youtube-exact.js (the service worker): instead of opening each video's page
+      // in a background tab, it posts that video's player response, as the page would have, and reports progress.
+      var exactJob = null;
+      function progress() {
+        var j = exactJob;
+        var st = { running: !j.finished, total: j.videos.length, index: j.index, done: j.done, failed: 0, skipped: 0, label: j.label, finished: j.finished };
+        listeners.forEach(function (fn) { fn({ type: 'reelscope:yt-exact-progress', state: st }, {}, function () {}); });
+        return st;
+      }
+      function demoExact(m) {
+        if (m.type === 'reelscope:yt-exact-status') return Promise.resolve({ running: false });
+        if (m.type === 'reelscope:yt-exact-cancel') { if (exactJob && !exactJob.finished) exactJob.cancelled = true; return Promise.resolve(exactJob ? progress() : {}); }
+        if (exactJob && !exactJob.finished) return Promise.resolve({ ok: false, error: 'Already running.' });
+        var videos = (m.videos || []).slice(0, 25);
+        window.__demoExactRequests = (window.__demoExactRequests || []).concat([videos.map(function (v) { return v.code; })]);
+        exactJob = { videos: videos, index: 0, done: 0, label: 'Starting…', finished: false };
+        var job = exactJob;
+        fetch('/dev/youtube/player.json').then(function (r) { return r.json(); }).then(function (tpl) {
+          (function step() {
+            if (job.cancelled || job.index >= job.videos.length) {
+              job.finished = true;
+              job.label = (job.cancelled ? 'Stopped. ' : 'Done: ') + job.done + ' updated.';
+              progress();
+              return;
+            }
+            var v = job.videos[job.index];
+            job.label = 'Opening ' + (job.index + 1) + ' of ' + job.videos.length + '…';
+            progress();
+            setTimeout(function () {
+              var stored = (data['rs:p:' + v.owner] || { posts: {} }).posts[v.code] || {};
+              var pr = JSON.parse(JSON.stringify(tpl));
+              pr.videoDetails.videoId = v.code;
+              pr.videoDetails.title = stored.caption || pr.videoDetails.title;
+              var exactViews = String(Math.round((stored.views || 1000) * (1 + (job.index % 7) / 100)) + 37);
+              pr.videoDetails.viewCount = exactViews;
+              var mf = pr.microformat.playerMicroformatRenderer;
+              mf.viewCount = exactViews;
+              mf.likeCount = String(Math.round(exactViews / 60));
+              mf.canonicalUrl = v.type === 'short' ? 'https://www.youtube.com/shorts/' + v.code : 'https://www.youtube.com/watch?v=' + v.code;
+              var when = new Date((stored.takenAt || Date.now()) - 3 * 3600e3).toISOString();
+              mf.publishDate = mf.uploadDate = when;
+              window.postMessage({ __reelscope: 1, type: 'payload', text: JSON.stringify(pr) }, '*');
+              job.done++;
+              job.index++;
+              progress();
+              setTimeout(step, 400);
+            }, 500);
+          })();
+        });
+        return Promise.resolve({ ok: true, total: videos.length });
+      }
+      window.__reelscopeSite = 'youtube'; // hook.js: forward /youtubei/v1/ responses on localhost
+      window.__demoStore = data;
+      window.__demoOpenPanel = function () { listeners.forEach(function (fn) { fn({ type: 'reelscope:toggle' }, {}, function () {}); }); };
+
+      // ?hl=tr loads the Turkish fixtures ("63 B" = 63 thousand) and sets <html lang>.
+      var hl = new URLSearchParams(location.search).get('hl') === 'tr' ? 'tr' : 'en';
+      window.__demoHl = hl;
+      document.documentElement.lang = hl === 'tr' ? 'tr-TR' : 'en';
+
+      // Fake YouTube web API, installed before hook.js so the hook wraps it like youtube.com's real fetch.
+      // browse: first call = the Videos continuation fixture, then an empty last page;
+      // browse?tab=shorts = the Shorts tab; get_watch = a click on the 801K video.
+      var realFetch = window.fetch;
+      var browseCalls = 0;
+      window.__demoApiCalls = [];
+      function inline(html) {
+        var m = html.match(/var ytInitialData = ([\s\S]*?);<\/script>/);
+        return m[1];
+      }
+      window.fetch = function (input) {
+        var url = typeof input === 'string' ? input : input.url;
+        if (url.indexOf('/youtubei/v1/') === -1) return realFetch.apply(this, arguments);
+        window.__demoApiCalls.push(url);
+        var body;
+        if (/browse\?tab=shorts/.test(url)) body = realFetch('/dev/youtube/channel-shorts' + (hl === 'tr' ? '.tr' : '') + '.html').then(function (r) { return r.text(); }).then(inline);
+        else if (/browse/.test(url)) body = browseCalls++ ? Promise.resolve('{"onResponseReceivedActions":[{"appendContinuationItemsAction":{"continuationItems":[]}}],"x":"videoId"}') : realFetch('/dev/youtube/browse-videos.json').then(function (r) { return r.text(); });
+        else if (/get_watch/.test(url)) body = realFetch('/dev/youtube/get_watch.json').then(function (r) { return r.text(); });
+        else if (/player\?short/.test(url)) body = realFetch('/dev/youtube/player-short.json').then(function (r) { return r.text(); });
+        else if (/reel_item_watch/.test(url)) body = realFetch('/dev/youtube/reel-item-watch.json').then(function (r) { return r.text(); });
+        else body = Promise.resolve('{}');
+        return body.then(function (t) { return new Response(t, { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } }); });
+      };
+    })();
+  </script>
+  <script src="../src/hook.js"></script>
+</head>
+<body>
+  <header>
+    <h1>OpenOutlier YouTube demo page</h1>
+    <p>Stands in for youtube.com/@ExcelDemo/videos. The first page's <code>ytInitialData</code> is inlined like YouTube's own HTML; scrolling "loads" a <code>/youtubei/v1/browse</code> continuation through the same hook the extension uses. The buttons simulate in-app navigation (a Shorts tab browse, a <code>get_watch</code> video click, then <code>yt-navigate-finish</code>). Data: dev/youtube (anonymized). Add <code>?hl=tr</code> for the Turkish labels.</p>
+  </header>
+  <nav>
+    <button type="button" id="go-videos">Videos tab</button>
+    <button type="button" id="go-shorts">Shorts tab (SPA browse)</button>
+    <button type="button" id="go-watch">Open the 801K video (get_watch)</button>
+    <button type="button" id="go-short">Open a Short (player + reel_item_watch)</button>
+  </nav>
+  <main>
+    <div id="player"><video muted playsinline></video></div>
+    <div class="grid" id="grid"></div>
+    <p id="more">Scroll down to load more…</p>
+    <div id="spacer"></div>
+  </main>
+  <script src="../src/metrics.js"></script>
+  <script src="../src/youtube.js"></script>
+  <script src="../src/brand.js"></script>
+  <script src="../src/panel.js"></script>
+  <script src="../src/overlay.js"></script>
+  <script>
+    var hl = window.__demoHl;
+    var loading = false;
+    var done = false;
+    function navigate(path) {
+      var pl = document.getElementById('player');
+      pl.style.display = /^\/(watch|shorts)/.test(path) ? 'block' : 'none';
+      pl.className = /^\/shorts/.test(path) ? 'short' : '';
+      history.pushState(null, '', path);
+      document.dispatchEvent(new CustomEvent('yt-navigate-finish'));
+    }
+    function addTiles(n, cls) {
+      var g = document.getElementById('grid');
+      g.className = 'grid ' + (cls || '');
+      for (var i = 0; i < n; i++) { var d = document.createElement('div'); d.textContent = 'video'; g.appendChild(d); }
+    }
+    function loadMore() {
+      if (loading || done || !/\/videos$/.test(location.pathname)) return;
+      loading = true;
+      // Like YouTube's app: a POST to /youtubei/v1/browse with the continuation token (the hook sees the response).
+      fetch('/youtubei/v1/browse?prettyPrint=false', { method: 'POST' }).then(function (r) { return r.json(); }).then(function (j) {
+        var items = j.onResponseReceivedActions[0].appendContinuationItemsAction.continuationItems;
+        addTiles(items.length);
+        done = !items.length;
+        document.getElementById('more').textContent = done ? 'No more videos.' : 'Scroll down to load more…';
+        loading = false;
+      });
+    }
+    window.addEventListener('scroll', function () {
+      if (window.innerHeight + window.scrollY > document.documentElement.scrollHeight - 200) loadMore();
+    });
+    document.getElementById('go-videos').onclick = function () { navigate('/@ExcelDemo/videos'); };
+    document.getElementById('go-shorts').onclick = function () {
+      fetch('/youtubei/v1/browse?tab=shorts', { method: 'POST' }).then(function () { document.getElementById('grid').textContent = ''; addTiles(6, 'shorts'); navigate('/@ExcelDemo/shorts'); });
+    };
+    document.getElementById('go-watch').onclick = function () {
+      fetch('/youtubei/v1/get_watch?prettyPrint=false', { method: 'POST' }).then(function () { navigate('/watch?v=yTdemo00029'); });
+    };
+    document.getElementById('go-short').onclick = function () {
+      // Like YouTube's app: reel_item_watch can arrive before /player (the content script holds the fragment).
+      fetch('/youtubei/v1/reel/reel_item_watch?prettyPrint=false', { method: 'POST' })
+        .then(function () { return fetch('/youtubei/v1/player?short', { method: 'POST' }); })
+        .then(function () { navigate('/shorts/yTdemo00035'); });
+    };
+    // The first page: YouTube's HTML inlines ytInitialData; the content script reads it at document_idle.
+    fetch('/dev/youtube/channel-videos' + (hl === 'tr' ? '.tr' : '') + '.html').then(function (r) { return r.text(); }).then(function (html) {
+      var s = document.createElement('script');
+      s.textContent = 'var ytInitialData = ' + html.match(/var ytInitialData = ([\s\S]*?);<\/script>/)[1] + ';';
+      document.body.appendChild(s);
+      history.replaceState(null, '', '/@ExcelDemo/videos' + (hl === 'tr' ? '?hl=tr' : ''));
+      addTiles(7);
+      var cs = document.createElement('script');
+      cs.src = '/src/youtube-content.js';
+      cs.onload = function () { setTimeout(window.__demoOpenPanel, 900); };
+      document.body.appendChild(cs);
+    });
+  </script>
+</body>
+</html>

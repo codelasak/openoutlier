@@ -78,3 +78,13 @@ li a:hover { color: var(--link); }
 .muted { color: var(--muted); margin: 0; }
 footer { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px 8px 6px; border-top: 1px solid var(--line); background: var(--card); font-size: 12px; }
 @media (prefers-reduced-motion: reduce) { .btn, .switch span, .switch span::after { transition: none; } }
+
+/* optional YouTube Data API key */
+.opt { padding: 10px 0 4px; border-top: 1px solid var(--line); }
+.opt summary { cursor: pointer; }
+.opt summary .muted { font-size: 12px; }
+.opt > p { margin: 6px 0 0; font-size: 12px; line-height: 1.4; }
+.keyrow { display: flex; gap: 6px; margin-top: 8px; }
+.keyrow input { flex: 1; min-width: 0; height: 30px; padding: 0 8px; border: 1.5px solid var(--line-2); border-radius: 4px; background: var(--card); }
+.btn-small { width: auto; height: 30px; }
+.small { font-size: 12px; }

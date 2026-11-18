@@ -17,6 +17,13 @@ import { DatabaseSync } from 'node:sqlite';
 import { existsSync, readFileSync, renameSync, mkdirSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
+
+// YouTube records carry rounded vs exact counts and relative vs exact dates;
+// src/youtube.js `merge` keeps the better value, so a sync with the
+// extension's rounded copy can't undo exact numbers from yt-dlp or a watch page.
+const Y = createRequire(import.meta.url)('../src/youtube.js');
+const isYouTubePost = (id, p) => (p && p.platform === 'youtube') || String(id).startsWith('yt/');
 
 const COUNT_FIELDS = ['views', 'likes', 'comments', 'shares', 'saves'];
 
@@ -111,6 +118,7 @@ export class Store {
       ON CONFLICT(id) DO UPDATE SET platform = COALESCE(excluded.platform, accounts.platform),
         profile = COALESCE(excluded.profile, accounts.profile), updated_at = MAX(COALESCE(accounts.updated_at, 0), excluded.updated_at)`);
     const oldPost = this.db.prepare('SELECT views, likes, comments, shares, saves FROM posts WHERE account_id = ? AND code = ?');
+    const oldData = this.db.prepare('SELECT data FROM posts WHERE account_id = ? AND code = ?');
     const upPost = this.db.prepare(`INSERT INTO posts (account_id, code, data, views, likes, comments, shares, saves, taken_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(account_id, code) DO UPDATE SET data = excluded.data, views = excluded.views, likes = excluded.likes,
@@ -133,8 +141,12 @@ export class Store {
           continue;
         }
         upAccount.run(id, rec.platform || null, rec.profile && typeof rec.profile === 'object' ? JSON.stringify(rec.profile) : null, num(rec.updatedAt) || now);
-        for (const [code, p] of Object.entries(rec.posts)) {
+        for (let [code, p] of Object.entries(rec.posts)) {
           if (!p || typeof p !== 'object') continue;
+          if (isYouTubePost(id, p)) {
+            const old = oldData.get(id, code);
+            if (old) { try { p = Y.merge(JSON.parse(old.data), p); } catch { /* keep the incoming copy */ } }
+          }
           const counts = COUNT_FIELDS.map((f) => num(p[f]));
           const prev = oldPost.get(id, code);
           upPost.run(id, code, JSON.stringify(p), ...counts, num(p.takenAt), now);
@@ -158,6 +170,56 @@ export class Store {
       throw e;
     }
     return { posts, snapshots };
+  }
+
+  /**
+   * Merge new facts about one post into the stored record (YouTube: src/youtube.js
+   * `merge`, exact beats rounded; others: a plain field overlay). Creates the
+   * account when needed. Records a snapshot when the counts change.
+   * Returns the merged record.
+   */
+  mergePost(accountId, code, patch, { platform } = {}) {
+    const now = Date.now();
+    const row = this.db.prepare('SELECT data, views, likes, comments, shares, saves FROM posts WHERE account_id = ? AND code = ?').get(accountId, code);
+    let prev = null;
+    if (row) { try { prev = JSON.parse(row.data); } catch { /* replace a broken row */ } }
+    const merged = isYouTubePost(accountId, patch) ? Y.merge(prev, patch) : { ...(prev || {}), ...patch };
+    const counts = COUNT_FIELDS.map((f) => num(merged[f]));
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      this.db.prepare(`INSERT INTO accounts (id, platform, profile, updated_at) VALUES (?, ?, NULL, ?)
+        ON CONFLICT(id) DO UPDATE SET platform = COALESCE(accounts.platform, excluded.platform)`).run(accountId, platform || merged.platform || null, now);
+      this.db.prepare(`INSERT INTO posts (account_id, code, data, views, likes, comments, shares, saves, taken_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(account_id, code) DO UPDATE SET data = excluded.data, views = excluded.views, likes = excluded.likes,
+          comments = excluded.comments, shares = excluded.shares, saves = excluded.saves,
+          taken_at = COALESCE(excluded.taken_at, posts.taken_at), updated_at = excluded.updated_at`)
+        .run(accountId, code, JSON.stringify(merged), ...counts, num(merged.takenAt), now);
+      const changed = !row || COUNT_FIELDS.some((f, i) => (row[f] ?? null) !== counts[i]);
+      if (changed && counts.some((c) => c !== null)) {
+        this.db.prepare(`INSERT OR IGNORE INTO snapshots (account_id, code, seen_at, views, likes, comments, shares, saves)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(accountId, code, now, ...counts);
+      }
+      this.setMeta('revision', this.revision() + 1);
+      this.db.exec('COMMIT');
+    } catch (e) {
+      this.db.exec('ROLLBACK');
+      throw e;
+    }
+    return merged;
+  }
+
+  /** Merge fields into an account's profile (null / undefined values are skipped). Creates the account when needed. */
+  mergeProfile(accountId, patch, { platform } = {}) {
+    const now = Date.now();
+    const row = this.db.prepare('SELECT profile FROM accounts WHERE id = ?').get(accountId);
+    let prof = {};
+    if (row && row.profile) { try { prof = JSON.parse(row.profile) || {}; } catch { /* replace */ } }
+    for (const [k, v] of Object.entries(patch || {})) if (v !== null && v !== undefined) prof[k] = v;
+    this.db.prepare(`INSERT INTO accounts (id, platform, profile, updated_at) VALUES (?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET profile = excluded.profile, platform = COALESCE(accounts.platform, excluded.platform)`).run(accountId, platform || null, JSON.stringify(prof), now);
+    this.setMeta('revision', this.revision() + 1);
+    return prof;
   }
 
   /** The library in the shape the query code expects (cached per revision). */

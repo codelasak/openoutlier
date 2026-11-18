@@ -12,9 +12,10 @@
        chrome.* API, three fake Instagram accounts built from dev/graphql/query.json,
        two fake subreddits from dev/reddit/listings.json, and a fake "Excel Bug"
        creator on TikTok (dev/tiktok/item_list.json) + the same videos on Instagram
-       (dev/tiktok/ig-twin.json) for the Compare view. -->
+       (dev/tiktok/ig-twin.json) for the Compare view, and a YouTube channel (dev/youtube). -->
   <script src="../src/extract.js"></script>
   <script src="../src/tiktok.js"></script>
+  <script src="../src/youtube.js"></script>
   <script src="../src/reddit.js"></script>
   <script src="../src/mentions.js"></script>
   <script>
@@ -51,11 +52,44 @@
               await chrome.storage.local.set({ 'rs:mentions-state': Object.assign({}, store['rs:mentions-state'], { server: { lastFailAt: Date.now(), lastError: new Date().toISOString() + ' Failed to fetch (demo: no server)' } }) });
               return { ok: true, added: 0 };
             }
+            // Phase 5 stand-ins: ?ytapi (a saved Data API key), ?ytanalytics=setup|connect|connected (My YouTube channel).
+            var qs = new URLSearchParams(location.search);
+            if (m.type === 'reelscope:yt-api-status') return { configured: qs.has('ytapi'), quota: { used: window.__ytUnits || 37, limit: 10000 }, running: false };
+            if (m.type === 'reelscope:yt-api') {
+              await new Promise(function (r) { setTimeout(r, 600); });
+              var rec = store['rs:p:' + m.owner];
+              var n = 0;
+              Object.keys(rec.posts).forEach(function (c) { var p = rec.posts[c]; if (p.viewsApprox || p.dateApprox !== false) { n++; p.views = Math.round((p.views || 0) * 1.03); p.viewsApprox = false; p.takenAt = p.takenAt || Date.now() - n * 5 * 864e5; p.dateApprox = false; delete p.dateDay; } });
+              window.__ytUnits = (window.__ytUnits || 37) + Math.ceil(Object.keys(rec.posts).length / 50);
+              await chrome.storage.local.set({ ['rs:p:' + m.owner]: rec });
+              return { ok: true, updated: n, units: Math.ceil(Object.keys(rec.posts).length / 50), quota: { used: window.__ytUnits, limit: 10000 } };
+            }
+            if (m.type === 'reelscope:yt-analytics') return demoAnalytics(m, qs.get('ytanalytics'));
             return { ok: true, queued: (m.posts || []).length, skipped: 0, failed: 0 };
           }
         },
         permissions: { request: async function () { return true; }, contains: async function () { return true; } }
       };
+
+      function demoAnalytics(m, mode) {
+        var connected = mode === 'connected' || window.__ytConnected;
+        if (m.path === '/youtube/analytics/status') return mode ? { ok: true, configured: mode !== 'setup', connected: !!connected, channel: connected ? { title: 'Excel Bugs (demo)', handle: 'ExcelBugsDemo', subscribers: 18400 } : null } : { ok: false, noBridge: true, error: 'My YouTube channel runs through the OpenOutlier bridge on your Mac (it keeps the Google sign-in), and the bridge isn\'t running.' };
+        if (m.path === '/youtube/analytics/connect') { setTimeout(function () { window.__ytConnected = true; }, 2000); return { ok: true, url: 'about:blank' }; }
+        if (m.path === '/youtube/analytics/disconnect') { window.__ytConnected = false; return { ok: true }; }
+        if (m.path === '/youtube/analytics/channel') return { ok: true, channel: { title: 'Excel Bugs (demo)', handle: 'ExcelBugsDemo', subscribers: 18400 }, totals: { views: 412000, engaged_views: 351000, watch_minutes: 610000, avg_view_duration_s: 41, avg_view_pct: 71.4, subscribers_gained: 930, subscribers_lost: 85, likes: 21000, comments: 940, shares: 3100 } };
+        if (m.path === '/youtube/analytics/videos') return { ok: true, videos: [0, 1, 2, 3, 4, 5].map(function (i) {
+          return { id: 'yTdemo0003' + i, title: ['Excel Bug #12: the date that turns into a number', 'Why VLOOKUP returns #N/A', 'Excel Bug #11: merged cells', 'XLOOKUP in 40 seconds', 'Excel Bug #10: phantom spaces', 'Flash Fill trick'][i], format: i % 2 ? 'video' : 'short',
+            views: [180000, 92000, 61000, 40000, 22000, 9000][i], engaged_views: [151000, 88000, 50000, 37000, 17000, 8200][i], avg_view_pct: [84.1, 46.3, 77.9, 52.2, 69.0, 58.4][i], avg_view_duration_s: [32, 215, 29, 120, 25, 61][i],
+            impressions: [210000, 610000, 95000, 380000, 60000, 140000][i], ctr_pct: [8.4, 6.1, 7.2, 4.2, 5.0, 3.3][i],
+            likes: [9100, 3800, 2900, 1500, 900, 300][i], comments: [410, 260, 120, 80, 40, 12][i], subscribers_gained: [380, 210, 90, 60, 30, 8][i] };
+        }) };
+        if (m.path === '/youtube/analytics/retention') {
+          var pts = [];
+          for (var i = 1; i <= 100; i++) pts.push({ at: i / 100, watch_ratio: Math.round((i < 4 ? 1.02 - i * 0.04 : 0.88 * Math.exp(-i / 140) + (i > 60 && i < 66 ? 0.08 : 0)) * 1000) / 1000 });
+          return { ok: true, id: m.id, points: pts, summary: { start: 1, at_25pct: 0.74, at_50pct: 0.62, at_75pct: 0.52, end: 0.43, steepest_drop: { at: 0.04, loss: 0.15 }, rewatched_at: [0.01] } };
+        }
+        return { ok: false, error: 'demo: ' + m.path };
+      }
 
       // Fake accounts.
       var text = await (await fetch('/dev/graphql/query.json')).text();
@@ -91,7 +125,28 @@
       var twin = await (await fetch('/dev/tiktok/ig-twin.json')).json();
       store['rs:p:excel.bugs.demo'] = { posts: {}, updatedAt: Date.now() - 7200e3 };
       twin.forEach(function (p) { store['rs:p:excel.bugs.demo'].posts[p.code] = p; });
-      store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] }, 'excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'tt/excel.bugs.demo': { folder: 'f2', tags: ['mine'] } } };
+      // A YouTube channel (dev/youtube): Videos + Shorts tabs, plus one opened video and one opened Short (exact stats).
+      var YT = self.OpenOutlierYouTube;
+      var ytPosts = {};
+      var ytChannel = null;
+      for (var f of [['channel-videos.html'], ['channel-shorts.html'], ['watch.html', 'yTdemo00029'], ['short.html', 'yTdemo00035']]) {
+        var res = YT.parsePage(await (await fetch('/dev/youtube/' + f[0])).text(), { lang: 'en', videoId: f[1] || null });
+        if (!ytChannel && res.channel) ytChannel = res.channel;
+        res.posts.forEach(function (p) { ytPosts[p.code] = YT.merge(ytPosts[p.code], p); });
+      }
+      store['rs:p:yt/exceldemo'] = { posts: ytPosts, updatedAt: Date.now() - 900e3, platform: 'youtube', profile: ytChannel };
+      // The "Excel Bug" series also as YouTube Shorts (titles, some exact dates, some none), for Compare.
+      var ytBugs = {};
+      twin.forEach(function (p, i) {
+        if (i % 4 === 3) return;
+        var code = ('yTbug' + p.code).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 11).padEnd(11, '0');
+        var q = { code: code, platform: 'youtube', type: 'short', url: 'https://www.youtube.com/shorts/' + code, owner: 'yt/excel.bugs.demo', author: 'excel.bugs.demo', ownerName: 'Excel Bugs (demo)',
+          caption: String(p.caption || '').split('\n')[0].slice(0, 90), hashtags: (p.hashtags || []).slice(0, 2), views: Math.round((p.views || 1000) * (0.4 + (i % 5) * 0.3)), viewsApprox: i % 3 === 0, likes: Math.round((p.likes || 10) * 0.5), duration: p.duration, files: [], thumb: p.thumb };
+        if (i % 3 !== 2 && p.takenAt) { q.takenAt = p.takenAt + 5 * 3600e3; q.dateApprox = false; }
+        ytBugs[code] = q;
+      });
+      store['rs:p:yt/excel.bugs.demo'] = { posts: ytBugs, updatedAt: Date.now() - 600e3, platform: 'youtube', profile: { handle: 'excel.bugs.demo', name: 'Excel Bugs (demo)', subscribers: 18400 } };
+      store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] }, 'excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'tt/excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'yt/exceldemo': { folder: 'f2', tags: ['competitor'] } } };
 
       // Fake Reddit keyword watches and mentions.
       var now = Date.now();
@@ -120,7 +175,7 @@
       // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
       var realFetch = window.fetch;
       window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/youtube-channel-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

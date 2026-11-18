@@ -7,6 +7,12 @@
 //   hashtag overlap, video length (±1.5 s = same), posting date (must be within ±3 days)
 // and episode numbers: "Excel Bug #12" never matches "Excel Bug #13".
 // Each video is matched at most once (best pairs first).
+//
+// Platforms: Instagram reels, TikTok videos and YouTube Shorts (a channel's
+// long-form videos are never matched: they aren't the same cut). A YouTube date
+// only counts when it is exact or a calendar day (watch page, yt-dlp, Data API);
+// "3 weeks ago" from a channel tab is treated as no date, and the Shorts tab
+// shows none at all, so those Shorts only match on clearly similar titles.
 (function (root, factory) {
   var api = factory(typeof module === 'object' && module.exports ? require('./metrics.js') : root.ReelScopeMetrics);
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -72,16 +78,23 @@
     return out;
   }
 
+  /** The posting time to match on: YouTube only when exact or day-precise. */
+  function dateOf(p) {
+    if (!p.takenAt) return null;
+    if (p.platform === 'youtube' && p.dateApprox !== false && !p.dateDay) return null;
+    return p.takenAt;
+  }
+
   function prep(p) {
     var clean = cleanCaption(p.caption);
-    return { p: p, clean: clean, words: setOf(words(clean)), grams: trigrams(clean), tags: setOf((p.hashtags || []).map(fold)), nums: numbers(p) };
+    return { p: p, at: dateOf(p), clean: clean, words: setOf(words(clean)), grams: trigrams(clean), tags: setOf((p.hashtags || []).map(fold)), nums: numbers(p) };
   }
 
   /** How alike two prepared posts are. → { score 0–1, parts } or null when they can't be the same video. */
   function similarity(a, b) {
     var pa = a.p;
     var pb = b.p;
-    var days = pa.takenAt && pb.takenAt ? Math.abs(pa.takenAt - pb.takenAt) / DAY : null;
+    var days = a.at && b.at ? Math.abs(a.at - b.at) / DAY : null;
     if (days !== null && days > MAX_DAYS) return null;
     var hasText = a.clean.length >= 4 && b.clean.length >= 4;
     var text = hasText ? Math.max(dice(a.words, b.words), dice(a.grams, b.grams)) : 0;
@@ -112,7 +125,8 @@
     return { score: Math.round(score * 1000) / 1000, days: days, parts: parts, numClash: !!numClash };
   }
 
-  function isVideo(p) { return p.type === 'reel' || p.type === 'video'; }
+  /** Short-form videos only: reels, TikTok videos, YouTube Shorts. */
+  function isVideo(p) { return p.platform === 'youtube' ? p.type === 'short' : p.type === 'reel' || p.type === 'video'; }
 
   function side(p) {
     return {
@@ -121,7 +135,9 @@
       shares: p.shares == null ? null : p.shares, saves: p.saves == null ? null : p.saves,
       duration: p.duration || null, engagement: p.engagement == null ? null : p.engagement,
       ratio: p.ratio == null ? null : p.ratio, viralScore: p.viralScore == null ? null : p.viralScore,
-      caption: p.caption || '', thumb: p.thumb || null
+      caption: p.caption || '', thumb: p.thumb || null,
+      // YouTube: how sure the date is (exact | day | approximate | none); other platforms are exact.
+      date: p.platform === 'youtube' ? (!p.takenAt ? 'none' : p.dateApprox === false ? 'exact' : p.dateDay ? 'day' : 'approximate') : (p.takenAt ? 'exact' : 'none')
     };
   }
 
@@ -194,5 +210,10 @@
     };
   }
 
-  return { match: match, similarity: function (a, b) { return similarity(prep(a), prep(b)); }, cleanCaption: cleanCaption, MAX_DAYS: MAX_DAYS, MIN_SCORE: MIN_SCORE };
+  var PLATFORM_ORDER = ['instagram', 'tiktok', 'youtube'];
+  /** Which side a platform goes on: Instagram, then TikTok, then YouTube (so IG ↔ TT keeps IG as "a"). */
+  function sideOrder(pa, pb) { return PLATFORM_ORDER.indexOf(pa) <= PLATFORM_ORDER.indexOf(pb) ? [pa, pb] : [pb, pa]; }
+
+  return { match: match, similarity: function (a, b) { return similarity(prep(a), prep(b)); }, cleanCaption: cleanCaption, isVideo: isVideo, dateOf: dateOf,
+    sideOrder: sideOrder, PLATFORM_ORDER: PLATFORM_ORDER, MAX_DAYS: MAX_DAYS, MIN_SCORE: MIN_SCORE };
 });

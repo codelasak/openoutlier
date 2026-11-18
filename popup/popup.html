@@ -24,7 +24,7 @@
       <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M7 1h2v2H7zM5 3h6v2H5zM4 5h8v5H4zM3 10h10v2H3zM6 13h4v2H6z" fill="currentColor"/></svg>
       <span id="mentions-label">Reddit mentions</span><span id="mentions-count" class="count" hidden></span>
     </button>
-    <p id="hint" class="hint" hidden>Open <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> (a profile's <b>Reels</b> tab), a profile on <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a> or a subreddit on <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>, then scroll. Reload the tab if you just installed OpenOutlier.</p>
+    <p id="hint" class="hint" hidden>Open <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> (a profile's <b>Reels</b> tab), a profile on <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a>, a channel's <b>Videos</b> or <b>Shorts</b> tab on <a href="https://www.youtube.com/" target="_blank" rel="noopener">youtube.com</a> or a subreddit on <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>, then scroll. Reload the tab if you just installed OpenOutlier.</p>
 
     <label class="toggle">
       <span><b>Load missing views &amp; dates</b><span class="muted">Asks Instagram for each post's details, one at a time, the same way its own post page does. Turn off if Instagram shows "try again later".</span></span>
@@ -36,9 +36,20 @@
       <span class="switch"><input id="agents" type="checkbox" checked><span></span></span>
     </label>
 
+    <details class="opt" id="ytapi">
+      <summary><b>YouTube Data API key</b> <span class="muted" id="ytapi-state">optional, off</span></summary>
+      <p class="muted">Your own key from Google Cloud (YouTube Data API v3) gives exact views, likes, comments and dates for 50 videos per quota unit, and a channel's full upload list, without opening pages. Free quota: 10,000 units a day. Without a key OpenOutlier never calls the API.</p>
+      <form id="ytapi-form" class="keyrow">
+        <input id="ytapi-key" type="password" autocomplete="off" spellcheck="false" placeholder="AIza…" aria-label="YouTube Data API key">
+        <button id="ytapi-save" class="btn btn-small" type="submit">Save</button>
+      </form>
+      <p class="muted small" id="ytapi-msg" aria-live="polite"></p>
+      <button id="ytapi-remove" class="btn btn-ghost" type="button" hidden>Remove the key</button>
+    </details>
+
     <h2 class="label">Saved accounts &amp; subreddits</h2>
     <ul id="profiles"></ul>
-    <p id="none" class="muted" hidden>Nothing saved yet. Open a profile on Instagram or TikTok, or a subreddit, then scroll.</p>
+    <p id="none" class="muted" hidden>Nothing saved yet. Open a profile on Instagram or TikTok, a YouTube channel, or a subreddit, then scroll.</p>
   </main>
 
   <footer>
@@ -46,6 +57,8 @@
     <span class="muted">Free &amp; open source · MIT</span>
   </footer>
   <script src="../src/metrics.js"></script>
+  <script src="../src/youtube.js"></script>
+  <script src="../src/youtube-api.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
