@@ -218,7 +218,7 @@
     return m ? decodeURIComponent(m[1]) : null;
   }
 
-  /** GET an Instagram web API path from this logged-in page. → { kind: ok|rate|auth|error, text } */
+  /** GET an Instagram web API path from this logged-in page. → { kind: ok|rate|auth|error, text }; errors carry status and the start of the body. */
   async function igGet(path) {
     var headers = { 'X-IG-App-ID': '936619743392459', 'X-Requested-With': 'XMLHttpRequest', 'X-ASBD-ID': '129477' };
     var csrf = cookie('csrftoken');
@@ -234,11 +234,11 @@
       res = await fetch(path, { credentials: 'include', headers: headers });
       text = await res.text();
     } catch (e) {
-      return { kind: 'error' };
+      return { kind: 'error', status: 0, body: String(e && e.message || e).slice(0, 160) };
     }
     if (res.status === 429 || /wait a few minutes|rate.?limit|too many requests/i.test(text)) return { kind: 'rate' };
     if (res.status === 401 || res.status === 403 || /login_required|checkpoint_required/i.test(text)) return { kind: 'auth' };
-    if (!res.ok) return { kind: 'error', status: res.status };
+    if (!res.ok) return { kind: 'error', status: res.status, body: text.replace(/\s+/g, ' ').slice(0, 160) };
     if (/^\s*</.test(text)) return { kind: 'rate' }; // HTML app shell instead of JSON = soft throttle
     return { kind: 'ok', text: text };
   }
@@ -374,7 +374,10 @@
     var r = await igGet('/api/v1/users/web_profile_info/?username=' + encodeURIComponent(username));
     if (r.kind === 'ok') {
       var prof = X.parseProfile(r.text);
-      if (prof && prof.username === username) facts[username] = prof;
+      if (prof && prof.username === username) {
+        facts[username] = prof;
+        if (profiles[username]) { dirty[username] = true; scheduleSave(); } // keep it even if the feed fails
+      }
       if (prof && prof.id) return prof.id;
     }
     if (known) return known.ownerId;
@@ -391,15 +394,35 @@
     var maxId = null;
     var got = 0;
     var backoff = 0;
-    for (var page = 0; page < 120 && got < maxPosts; page++) {
-      var r = await igGet('/api/v1/feed/user/' + userId + '/?count=33' + (maxId ? '&max_id=' + encodeURIComponent(maxId) : ''));
+    // Instagram serves a profile's feed under two addresses and is picky about the page size.
+    // If the first request is refused, try the next form once before giving up, and say what each answered.
+    var forms = [{ count: 33 }, { count: 12 }, { byName: true, count: 12 }];
+    var form = 0;
+    var tried = [];
+    function feedPath(f) {
+      return (f.byName ? '/api/v1/feed/user/' + encodeURIComponent(username) + '/username/' : '/api/v1/feed/user/' + userId + '/') +
+        '?count=' + f.count + (maxId ? '&max_id=' + encodeURIComponent(maxId) : '');
+    }
+    function why(r) { return r.status ? 'HTTP ' + r.status + (r.body ? ': ' + r.body : '') : 'request failed' + (r.body ? ': ' + r.body : ''); }
+    for (var page = 0; page < 180 && got < maxPosts; page++) {
+      var r = await igGet(feedPath(forms[form]));
       if (r.kind === 'rate') {
         if (backoff >= COOLDOWNS.length) return { ok: got > 0, partial: true, posts: got, error: 'Instagram is limiting requests; stopped early.' };
         await sleep(COOLDOWNS[backoff++]);
         page--;
         continue;
       }
-      if (r.kind !== 'ok') return { ok: got > 0, partial: true, posts: got, error: r.kind === 'auth' ? 'Not logged in to Instagram.' : 'Instagram returned an error.' };
+      if (r.kind === 'error' && !got && form < forms.length - 1) {
+        tried.push((forms[form].byName ? 'by username' : 'by id') + ', ' + forms[form].count + ' per page → ' + why(r));
+        form++;
+        page--;
+        await sleep(1500 + Math.random() * 1000);
+        continue;
+      }
+      if (r.kind !== 'ok') {
+        return { ok: got > 0, partial: true, posts: got, tried: tried.length ? tried : undefined,
+          error: r.kind === 'auth' ? 'Not logged in to Instagram.' : 'Instagram returned an error (' + why(r) + ').' };
+      }
       backoff = 0;
       var posts = X.parseText(r.text).filter(function (p) { return !p.owner || p.owner === username; });
       posts.forEach(function (p) { p.owner = username; });
@@ -416,6 +439,7 @@
     var prof = facts[username] || {};
     return {
       ok: true, username: username, collected_now: got, saved_total: all.length,
+      feed: (forms[form].byName ? 'by username' : 'by id') + ', ' + forms[form].count + ' per page', tried: tried.length ? tried : undefined,
       reels: all.filter(isVideo).length,
       carousels: all.filter(function (p) { return p.type === 'carousel'; }).length,
       photos: all.filter(function (p) { return p.type === 'photo'; }).length,
