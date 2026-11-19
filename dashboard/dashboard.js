@@ -78,7 +78,11 @@
     var posts = Object.values(rec.posts || {});
     var enriched = M.enrich(posts);
     var videos = enriched.filter(counts);
-    var withViews = videos.filter(function (p) { return M.val(p) > 0; });
+    // Instagram carousels and photos: no views, scored by likes on their own median.
+    var igPosts = enriched.filter(M.isLikesScored);
+    var byLikes = !videos.length && igPosts.length > 0; // an account saved from its main grid only
+    var main = byLikes ? igPosts : videos;
+    var withViews = main.filter(function (p) { return M.val(p) > 0; });
     var latest = posts.slice().sort(function (a, b) { return (b.seenAt || 0) - (a.seenAt || 0); })[0] || {};
     var pic = null;
     var name = null;
@@ -99,9 +103,12 @@
       pic: latest.ownerPic || pic,
       name: latest.ownerName || name,
       count: posts.length,
-      reels: videos.length,
-      medianViews: M.median(withViews.map(M.val)),
-      outliers: videos.filter(function (p) { return p.outlier; }).length,
+      reels: main.length,
+      byLikes: byLikes,
+      carousels: igPosts.length,
+      medianLikes: M.baselineOf(igPosts) !== null ? M.baselineOf(igPosts) : M.median(igPosts.map(function (p) { return p.likes > 0 ? p.likes : null; })),
+      medianViews: M.baselineOf(main) !== null ? M.baselineOf(main) : M.median(withViews.map(M.val)),
+      outliers: videos.concat(igPosts).filter(function (p) { return p.outlier; }).length,
       top: withViews.slice().sort(function (a, b) { return M.val(b) - M.val(a); }).slice(0, 3)
     };
   }
@@ -480,13 +487,13 @@
         : h('div', { class: 'covers' }, [0, 1, 2].map(function (i) {
           var t = a.top[i];
           if (!t) return h('div', { class: 'cover-cell' }, h('div', { class: 'thumb-empty' }));
-          return h('div', { class: 'cover-cell' }, img(t.thumb, 'cover'), t.outlier ? outlierBadge(t.ratio, times(t.ratio) + ' this account\'s median views') : null);
+          return h('div', { class: 'cover-cell' }, img(t.thumb, 'cover'), t.outlier ? outlierBadge(t.ratio, times(t.ratio) + ' this account\'s median ' + (a.byLikes ? 'likes' : 'views')) : null);
         })),
       h('div', { class: 'card-stats' },
         yt ? h('div', { title: ytTip }, h('b', { text: nfFull.format(yt.long) + ' · ' + nfFull.format(yt.shorts) }), h('span', { text: 'videos · Shorts' }))
-          : h('div', null, h('b', { text: nfFull.format(a.reels) }), h('span', { text: reddit ? 'posts' : tiktok ? 'videos' : 'reels' })),
+          : h('div', { title: !a.byLikes && a.carousels ? 'Plus ' + nfFull.format(a.carousels) + ' carousels and photos (median ' + fmt(a.medianLikes) + ' likes)' : null }, h('b', { text: nfFull.format(a.reels) }), h('span', { text: reddit ? 'posts' : tiktok ? 'videos' : a.byLikes ? 'carousels & photos' : 'reels' })),
         yt ? h('div', { title: ytTip }, h('b', { text: fmt(ytMedian) }), h('span', { text: yt.long ? 'median views' : 'median (Shorts)' }))
-          : h('div', null, h('b', { text: fmt(a.medianViews) }), h('span', { text: reddit ? 'median score' : 'median views' })),
+          : h('div', null, h('b', { text: fmt(a.medianViews) }), h('span', { text: reddit ? 'median score' : a.byLikes ? 'median likes' : 'median views' })),
         h('div', null, h('b', { text: nfFull.format(a.outliers) }), h('span', { text: 'outliers' }))),
       folderOf(u) || tagsOf(u).length ? h('div', { class: 'chips' },
         folderOf(u) ? h('span', { class: 'chip folder' }, px('folder', 12), folderName(folderOf(u))) : null,
@@ -583,12 +590,13 @@
     var facts = a.platform === 'reddit' ? 'Reddit · '
       : yt ? (prof.name || a.name ? (prof.name || a.name) + ' · ' : '') + (prof.subscribers != null ? fmt(prof.subscribers) + ' subscribers · ' : '') +
         nfFull.format(yt.long) + ' videos (median ' + fmt(yt.medianLong) + ' views) · ' + nfFull.format(yt.shorts) + ' Shorts (median ' + fmt(yt.medianShorts) + ' views) · '
-        : (a.name ? a.name + ' · ' : '') + (prof.followers != null ? fmt(prof.followers) + ' followers · ' : '');
+        : (a.name ? a.name + ' · ' : '') + (prof.followers != null ? fmt(prof.followers) + ' followers · ' : '') +
+          (a.platform === 'instagram' && a.carousels ? nfFull.format(a.carousels) + ' carousels & photos (median ' + fmt(a.medianLikes) + ' likes) · ' : '');
     main.appendChild(h('div', { class: 'acct-head' },
       a.platform === 'reddit' ? h('div', { class: 'avatar big thumb-empty', text: u.charAt(2).toUpperCase() }) : img(a.pic, 'avatar big', handle(u).charAt(1).toUpperCase()),
       h('div', { class: 'acct-title' },
         h('h1', null, shownName(a), ' ', platformChip(a.platform)),
-        h('p', { text: facts + nfFull.format(a.count) + ' posts saved' + (prof.videos ? ' of ~' + nfFull.format(prof.videos) : '') + ' · updated ' + ago(a.updatedAt) }),
+        h('p', { text: facts + nfFull.format(a.count) + ' posts saved' + (prof.videos || prof.posts ? ' of ~' + nfFull.format(prof.videos || prof.posts) : '') + ' · updated ' + ago(a.updatedAt) }),
         yt ? h('p', { class: 'sub', text: 'Shorts and long-form videos each have their own median. Views from channel tabs are YouTube\'s rounded counts (≈); opened videos have exact ones.' }) : null,
         h('p', null, a.platform === 'reddit'
           ? h('a', { href: 'https://www.reddit.com/' + (u.charAt(0) === 'u' ? 'user/' + encodeURIComponent(u.slice(2)) + '/submitted/' : 'r/' + encodeURIComponent(u.slice(2)) + '/top/?t=year'), target: '_blank', rel: 'noopener', text: 'Open on Reddit to refresh ↗' })

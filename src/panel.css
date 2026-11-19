@@ -399,6 +399,18 @@ button.row-link {
 .d-hero { display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: start; }
 .d-cover { width: 120px; aspect-ratio: 9 / 16; height: auto; object-fit: cover; border-radius: 4px; background: var(--sunk); display: block; }
 .d-side { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+/* every slide of a carousel: a strip of thumbnails, the picked one large underneath */
+.d-slides-wrap { margin: 4px 0 0; }
+.d-slides-wrap .subhead { margin-top: 10px; }
+.d-slides { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; }
+.d-slide { position: relative; flex: 0 0 auto; width: 68px; padding: 0; border: 2px solid transparent; border-radius: 5px; background: var(--sunk); cursor: pointer; overflow: hidden; font: inherit; color: inherit; }
+.d-slide:hover { border-color: var(--muted); }
+.d-slide.is-active { border-color: var(--link); }
+.d-slide:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+.d-slide-img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.d-slide-n { position: absolute; left: 3px; bottom: 3px; padding: 0 5px; border-radius: 3px; font-size: 10.5px; font-weight: 700; line-height: 16px; background: rgba(0, 0, 0, 0.66); color: #fff; }
+.d-slide-open { margin: 2px 0 0; }
+.d-slide-big { display: block; width: 100%; max-height: 620px; min-height: 120px; object-fit: contain; border-radius: 5px; background: var(--sunk); }
 .d-owner { margin: 0; font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
 .d-when { margin: -6px 0 0; }
 .d-actions { display: flex; flex-wrap: wrap; gap: 6px; }

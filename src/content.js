@@ -16,6 +16,8 @@
 
   /** username -> { code -> post } */
   var profiles = {};
+  /** username -> profile facts (followers, posts on the profile …), see X.profileOf */
+  var facts = {};
   var dirty = {};
   var selected = null; // profile the user picked in the panel (null = follow the page)
   var settings = { fetchDetails: true };
@@ -26,7 +28,10 @@
     var saved = await chrome.storage.local.get(null);
     Object.keys(saved).forEach(function (k) {
       // Reddit accounts ("r/…", "u/…") share the key prefix; Instagram names never contain "/".
-      if (k.indexOf(KEY_PREFIX) === 0 && k.indexOf('/') === -1 && saved[k] && saved[k].posts) profiles[k.slice(KEY_PREFIX.length)] = saved[k].posts;
+      if (k.indexOf(KEY_PREFIX) === 0 && k.indexOf('/') === -1 && saved[k] && saved[k].posts) {
+        profiles[k.slice(KEY_PREFIX.length)] = saved[k].posts;
+        if (saved[k].profile) facts[k.slice(KEY_PREFIX.length)] = saved[k].profile;
+      }
     });
     if (saved[SETTINGS_KEY]) Object.assign(settings, saved[SETTINGS_KEY]);
   } catch (e) { /* storage unavailable: run in memory */ }
@@ -45,9 +50,15 @@
     users.forEach(function (u) {
       var rec = stored[KEY_PREFIX + u];
       if (rec && rec.posts) profiles[u] = X.mergePostMaps(rec.posts, profiles[u]);
+      facts[u] = newerFacts(facts[u], rec && rec.profile);
       batch[KEY_PREFIX + u] = { posts: profiles[u], updatedAt: Date.now() };
+      if (facts[u]) batch[KEY_PREFIX + u].profile = facts[u];
     });
     await chrome.storage.local.set(batch);
+  }
+  function newerFacts(a, b) {
+    if (!a || !b) return a || b || null;
+    return (b.seenAt || 0) > (a.seenAt || 0) ? b : a;
   }
   function saveNow() {
     saving = saving.then(writeDirty).catch(function (e) { console.warn('[OpenOutlier] save failed', e); });
@@ -70,9 +81,10 @@
       if (k.indexOf(KEY_PREFIX) !== 0 || k.indexOf('/') !== -1) return;
       var u = k.slice(KEY_PREFIX.length);
       var nv = changes[k].newValue;
-      if (!nv) { delete profiles[u]; changed = true; return; } // cleared from the popup
+      if (!nv) { delete profiles[u]; delete facts[u]; changed = true; return; } // cleared from the popup
       // Saved by another tab (or by us): take in what it knows.
       if (nv.posts) { profiles[u] = profiles[u] ? X.mergePostMaps(profiles[u], nv.posts) : nv.posts; changed = true; }
+      if (nv.profile) facts[u] = newerFacts(facts[u], nv.profile);
     });
     if (changed) scheduleRender();
   });
@@ -141,7 +153,18 @@
   window.addEventListener('message', function (e) {
     if (e.source !== window || !e.data || e.data.__reelscope !== 1 || e.data.type !== 'payload') return;
     try { ingest(X.parseText(e.data.text)); } catch (err) { console.warn('[OpenOutlier] parse failed', err); }
+    try { noteProfile(X.parseProfile(e.data.text)); } catch (err) { /* not a profile response */ }
   });
+
+  /** Keep followers / posts-on-profile for an account we already save posts for (or the one on screen). */
+  function noteProfile(prof) {
+    if (!prof || !prof.username) return;
+    var u = prof.username;
+    if (!profiles[u] && u !== pageProfile()) return;
+    facts[u] = prof;
+    if (profiles[u]) { dirty[u] = true; scheduleSave(); }
+    scheduleRender();
+  }
 
   // Data Instagram embeds in the initial HTML (first page of a profile).
   function scanEmbedded() {
@@ -309,7 +332,7 @@
 
   function toggleAuto() {
     if (auto.running) { stopAuto('Stopped.'); return; }
-    if (!pageProfile()) { auto.label = 'Open a profile\'s Reels tab first.'; scheduleRender(); return; }
+    if (!pageProfile()) { auto.label = 'Open a profile first: its Reels tab for reels, its main grid for carousels and photos.'; scheduleRender(); return; }
     auto.running = true;
     auto.stale = 0;
     auto.last = countFor(pageProfile());
@@ -347,15 +370,15 @@
   // ---- agent commands (sent by background.js from the local MCP server) ------
   async function resolveUserId(username) {
     var known = profiles[username] && Object.values(profiles[username]).filter(function (p) { return p.ownerId; })[0];
-    if (known) return known.ownerId;
+    // One request for the profile's facts (followers, how many posts it has), which also names the id.
     var r = await igGet('/api/v1/users/web_profile_info/?username=' + encodeURIComponent(username));
-    if (r.kind !== 'ok') return { error: r.kind };
-    try {
-      var id = JSON.parse(r.text).data.user.id;
-      return /^\d+$/.test(String(id)) ? String(id) : { error: 'not_found' };
-    } catch (e) {
-      return { error: 'not_found' };
+    if (r.kind === 'ok') {
+      var prof = X.parseProfile(r.text);
+      if (prof && prof.username === username) facts[username] = prof;
+      if (prof && prof.id) return prof.id;
     }
+    if (known) return known.ownerId;
+    return { error: r.kind === 'ok' ? 'not_found' : r.kind };
   }
 
   /** Page through a profile's posts (about 30 per request) — each item comes with views, date and video link. */
@@ -390,7 +413,15 @@
     }
     await flushSave();
     var all = profiles[username] ? Object.values(profiles[username]) : [];
-    return { ok: true, username: username, collected_now: got, saved_total: all.length, reels: all.filter(isVideo).length };
+    var prof = facts[username] || {};
+    return {
+      ok: true, username: username, collected_now: got, saved_total: all.length,
+      reels: all.filter(isVideo).length,
+      carousels: all.filter(function (p) { return p.type === 'carousel'; }).length,
+      photos: all.filter(function (p) { return p.type === 'photo'; }).length,
+      posts_on_profile: prof.posts != null ? prof.posts : undefined,
+      followers: prof.followers != null ? prof.followers : undefined
+    };
   }
 
   async function refreshReel(code) {
@@ -422,6 +453,7 @@
     onSelectProfile: function (u) { selected = u || null; scheduleRender(); },
     onClearProfile: function (u) {
       delete profiles[u];
+      delete facts[u];
       delete dirty[u];
       if (selected === u) selected = null;
       chrome.storage.local.remove(KEY_PREFIX + u);
@@ -456,6 +488,7 @@
         profiles: profileList(),
         selected: u,
         posts: u ? Object.values(profiles[u]) : [],
+        profile: u ? facts[u] || null : null,
         auto: { running: auto.running, label: details.label || auto.label }
       });
       overlay.refresh();

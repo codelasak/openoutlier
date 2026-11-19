@@ -8,7 +8,7 @@
   'use strict';
 
   var CODE_RE = /^[A-Za-z0-9_-]{5,64}$/;
-  var CAPTION_MAX = 600;
+  var CAPTION_MAX = 2200; // Instagram's own caption limit: keep it whole (calls to action often sit at the end)
   // Instagram has renamed the view counter several times. Order = preference.
   var VIEW_FIELDS = ['play_count', 'ig_play_count', 'view_count', 'video_view_count', 'video_play_count', 'fb_play_count'];
 
@@ -63,7 +63,15 @@
 
   function audioOf(o) {
     var cm = o.clips_metadata;
-    if (!cm || typeof cm !== 'object') return null;
+    // Photos and carousels with a song carry it in music_metadata instead.
+    if (!cm || typeof cm !== 'object') cm = o.music_metadata;
+    if (!cm || typeof cm !== 'object') {
+      var attr = o.clips_music_attribution_info; // GraphQL shape
+      if (attr && typeof attr === 'object' && (attr.song_name || attr.artist_name)) {
+        return { kind: attr.uses_original_audio ? 'original' : 'music', title: String(attr.song_name || ''), artist: String(attr.artist_name || '') };
+      }
+      return null;
+    }
     var music = getPath(cm, ['music_info', 'music_asset_info']);
     if (music && (music.title || music.display_artist)) {
       return { kind: 'music', title: String(music.title || ''), artist: String(music.display_artist || '') };
@@ -96,22 +104,89 @@
     return getPath(o, ['video_versions', 0, 'url']) || o.video_url || null;
   }
 
-  /** Downloadable files of a post: [{ kind: 'video'|'image', url }] (CDN links, they expire after a few days). */
+  /** Downloadable files of a post, one per slide: [{ kind: 'video'|'image', url, thumb? }] (CDN links, they expire after a few days). */
   function filesOf(o) {
-    var children = Array.isArray(o.carousel_media)
-      ? o.carousel_media
-      : (getPath(o, ['edge_sidecar_to_children', 'edges']) || []).map(function (e) { return e && e.node; });
+    var children = childrenOf(o);
     var items = children.length ? children : [o];
     var out = [];
     items.forEach(function (c) {
       if (!c || typeof c !== 'object') return;
       var v = bestVideo(c);
-      if (typeof v === 'string') { out.push({ kind: 'video', url: v }); return; }
+      if (typeof v === 'string') {
+        var file = { kind: 'video', url: v };
+        var still = bestImage(c); // a frame to show for a video slide
+        if (typeof still === 'string') file.thumb = still;
+        out.push(file);
+        return;
+      }
       // A video whose link hasn't loaded yet: don't save its cover as "the video".
       var isVid = num(c.media_type) === 2 || c.product_type === 'clips' || c.is_video === true || num(c.video_duration) > 0;
       var img = bestImage(c);
       if (!isVid && typeof img === 'string') out.push({ kind: 'image', url: img });
     });
+    return out;
+  }
+
+  function childrenOf(o) {
+    return Array.isArray(o.carousel_media)
+      ? o.carousel_media
+      : (getPath(o, ['edge_sidecar_to_children', 'edges']) || []).map(function (e) { return e && e.node; });
+  }
+
+  function isVideoItem(c) {
+    return !!c && (num(c.media_type) === 2 || c.product_type === 'clips' || c.is_video === true || num(c.video_duration) > 0 || nonEmptyArray(c.video_versions));
+  }
+
+  /** Lowercased usernames from a list of { user | node.user | sponsor: { username } } (or bare users), without repeats. */
+  function usernames(list, max) {
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function (x) {
+      var u = x && (getPath(x, ['user', 'username']) || getPath(x, ['node', 'user', 'username']) || getPath(x, ['sponsor', 'username']) || x.username);
+      if (typeof u !== 'string' || !u) return;
+      u = u.toLowerCase();
+      if (out.indexOf(u) === -1 && out.length < (max || 20)) out.push(u);
+    });
+    return out;
+  }
+
+  /**
+   * What Instagram shows about a post beyond its counters. Only the keys that
+   * are present are returned, so slim grid records stay slim:
+   *   slides, slideVideos   carousel length and how many slides are videos
+   *   tagged, collabs, sponsors   people tagged in it, co-authors ("collab" posts), paid-partnership brands
+   *   location              place name
+   *   width, height         original size in pixels (4:5, 1:1, 9:16 …)
+   *   title                 reel title, when the creator set one
+   *   likesHidden, commentsOff   the creator hid the like count / turned comments off
+   */
+  function extrasOf(o, type) {
+    var out = {};
+    var kids = childrenOf(o).filter(function (c) { return c && typeof c === 'object'; });
+    var slides = num(o.carousel_media_count) || kids.length;
+    if (type === 'carousel' && slides > 0) {
+      out.slides = slides;
+      if (kids.length) out.slideVideos = kids.filter(isVideoItem).length;
+    }
+    var tagged = usernames(getPath(o, ['usertags', 'in']) || getPath(o, ['edge_media_to_tagged_user', 'edges']));
+    kids.forEach(function (c) {
+      usernames(getPath(c, ['usertags', 'in']) || getPath(c, ['edge_media_to_tagged_user', 'edges'])).forEach(function (u) {
+        if (tagged.indexOf(u) === -1 && tagged.length < 20) tagged.push(u);
+      });
+    });
+    if (tagged.length) out.tagged = tagged;
+    var collabs = usernames(o.coauthor_producers, 10);
+    if (collabs.length) out.collabs = collabs;
+    var sponsors = usernames(o.sponsor_tags || getPath(o, ['edge_media_to_sponsor_user', 'edges']), 10);
+    if (sponsors.length) out.sponsors = sponsors;
+    var place = getPath(o, ['location', 'name']);
+    if (typeof place === 'string' && place) out.location = place.slice(0, 120);
+    var first = kids[0] || o;
+    var w = num(o.original_width) || num(getPath(o, ['dimensions', 'width'])) || num(first.original_width) || num(getPath(first, ['dimensions', 'width']));
+    var hgt = num(o.original_height) || num(getPath(o, ['dimensions', 'height'])) || num(first.original_height) || num(getPath(first, ['dimensions', 'height']));
+    if (w > 0 && hgt > 0) { out.width = w; out.height = hgt; }
+    if (typeof o.title === 'string' && o.title.trim()) out.title = o.title.trim().slice(0, 200);
+    if (o.like_and_view_counts_disabled === true) out.likesHidden = true;
+    if (o.comments_disabled === true || o.commenting_disabled_for_viewer === true) out.commentsOff = true;
     return out;
   }
 
@@ -151,7 +226,7 @@
     var pk = o.pk != null && /^\d+$/.test(String(o.pk)) ? String(o.pk)
       : (typeof o.id === 'string' && /^\d+(_\d+)?$/.test(o.id) ? o.id.split('_')[0] : null);
 
-    return {
+    var post = {
       code: code,
       pk: pk,
       url:'https://www.instagram.com/' + (type === 'reel' ? 'reel' : 'p') + '/' + code + '/',
@@ -179,6 +254,9 @@
       files: filesOf(o),
       seenAt: Date.now()
     };
+    var extras = extrasOf(o, type);
+    for (var k in extras) post[k] = extras[k];
+    return post;
   }
 
   /** Walk any JSON value and collect every media object found. */
@@ -217,6 +295,47 @@
       }
       return out;
     }
+  }
+
+  /**
+   * Profile facts from a response about one account (web_profile_info, users/<id>/info,
+   * the profile page's own query): followers, following, posts on the profile.
+   * → { username, id, name, followers, following, posts, verified, private, category } or null.
+   */
+  function profileOf(json) {
+    if (!json || typeof json !== 'object') return null;
+    var cands = [getPath(json, ['data', 'user']), json.user, getPath(json, ['graphql', 'user'])];
+    for (var i = 0; i < cands.length; i++) {
+      var u = cands[i];
+      if (!u || typeof u !== 'object' || typeof u.username !== 'string' || !u.username) continue;
+      var followers = num(getPath(u, ['edge_followed_by', 'count']));
+      if (followers === null) followers = num(u.follower_count);
+      if (followers === null) continue;
+      var following = num(getPath(u, ['edge_follow', 'count']));
+      if (following === null) following = num(u.following_count);
+      var posts = num(getPath(u, ['edge_owner_to_timeline_media', 'count']));
+      if (posts === null) posts = num(u.media_count);
+      var id = u.id != null ? u.id : u.pk;
+      return {
+        username: u.username.toLowerCase(),
+        id: id != null && /^\d+$/.test(String(id)) ? String(id) : null,
+        name: typeof u.full_name === 'string' && u.full_name ? u.full_name : null,
+        followers: followers,
+        following: following,
+        posts: posts,
+        verified: u.is_verified === true,
+        private: u.is_private === true,
+        category: typeof u.category_name === 'string' && u.category_name ? u.category_name : (typeof u.category === 'string' && u.category ? u.category : null),
+        seenAt: Date.now()
+      };
+    }
+    return null;
+  }
+
+  /** Same, from a raw response body. */
+  function parseProfile(text) {
+    if (typeof text !== 'string' || (text.indexOf('"edge_followed_by"') === -1 && text.indexOf('"follower_count"') === -1)) return null;
+    try { return profileOf(JSON.parse(text.replace(/^\s*for\s*\(;;\);/, ''))); } catch (e) { return null; }
   }
 
   var ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
@@ -277,6 +396,8 @@
     merge: merge,
     hashtagsOf: hashtagsOf,
     filesOf: filesOf,
+    profileOf: profileOf,
+    parseProfile: parseProfile,
     shortcodeToPk: shortcodeToPk
   };
 });

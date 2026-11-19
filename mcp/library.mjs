@@ -337,6 +337,7 @@ export function brief(p, { full = false } = {}) {
   if (isRedditPost(p)) return redditBrief(p, { full });
   if (isYouTubePost(p)) return youtubeBrief(p, { full });
   const tt = p.platform === 'tiktok';
+  const byLikes = M.isLikesScored(p);
   const out = {
     code: p.code,
     platform: tt ? 'tiktok' : 'instagram',
@@ -355,9 +356,20 @@ export function brief(p, { full = false } = {}) {
     avg_watch_s: p.avgWatchMs != null ? Math.round(p.avgWatchMs / 100) / 10 : undefined,
     skip_rate_pct: p.skipRate ?? undefined,
     duration_s: p.duration ?? null,
-    engagement_pct: round(p.engagement),
+    // Carousels and photos have no views: their "engagement" is comments_per_100_likes below.
+    engagement_pct: byLikes ? null : round(p.engagement),
     x_account_median: round(p.ratio),
     viral_score: p.viralScore ?? null,
+    scored_by: byLikes ? 'likes' : undefined,
+    slides: p.type === 'carousel' ? (p.slides || (p.files || []).length || undefined) : undefined,
+    comments_x_account_median: round(p.commentRatio) ?? undefined,
+    comments_per_100_likes: round(p.commentsPer100Likes, 1) ?? undefined,
+    comment_keyword: p.commentKeyword || undefined,
+    likes_hidden: p.likesHidden || undefined,
+    collab_with: p.collabs?.length ? p.collabs : undefined,
+    tagged: p.tagged?.length ? p.tagged : undefined,
+    location: p.location || undefined,
+    title: p.title || undefined,
     pinned: p.pinned || undefined,
     audio: p.audio ? (p.audio.kind === 'music' ? `music: ${p.audio.title}${p.audio.artist ? ' – ' + p.audio.artist : ''}` : tt ? `original sound: ${p.audio.title}` : 'original audio') : null,
     hashtags: p.hashtags?.length ? p.hashtags : undefined,
@@ -372,6 +384,12 @@ export function brief(p, { full = false } = {}) {
     out.link_expires_at = iso(exp);
     out.link_expired = exp ? exp < Date.now() : null;
     out.saves = p.saves ?? null;
+    if (!tt) {
+      out.slide_videos = p.slideVideos ?? undefined;
+      out.size = p.width && p.height ? `${p.width}x${p.height}` : undefined;
+      out.sponsors = p.sponsors?.length ? p.sponsors : undefined;
+      out.comments_off = p.commentsOff || undefined;
+    }
     if (tt) out.download_note = 'TikTok video links need the browser session: download_reel tries directly, then asks the extension to fetch it in a tiktok.com tab.';
     out.last_seen_at = iso(p.seenAt);
   }
@@ -396,6 +414,7 @@ export function accountRow(lib, u) {
   }
   const posts = enrichedPosts(lib, u);
   const vids = posts.filter(isVideo);
+  const igPosts = posts.filter(M.isLikesScored);
   const withViews = vids.filter((p) => p.views > 0);
   const name = posts.find((p) => p.ownerName)?.ownerName || null;
   if (platformOf(lib, u) === 'youtube') return youtubeAccountRow(lib, u, posts, name);
@@ -427,10 +446,16 @@ export function accountRow(lib, u) {
     name,
     folder: folderOf(lib, u)?.name || null,
     tags: tagsOf(lib, u),
+    followers: lib.accounts[u]?.profile?.followers ?? undefined,
+    posts_on_profile: lib.accounts[u]?.profile?.posts ?? undefined,
     posts_saved: posts.length,
     reels: vids.length,
-    median_views: M.median(withViews.map((p) => p.views)),
+    median_views: M.baselineOf(vids) ?? M.median(withViews.map((p) => p.views)),
     outliers: vids.filter((p) => p.outlier).length,
+    // Carousels and photos have no public views: counted in likes, against their own median.
+    carousels_and_photos: igPosts.length || undefined,
+    median_likes_carousels_photos: igPosts.length ? (M.baselineOf(igPosts) ?? M.median(igPosts.map((p) => (p.likes > 0 ? p.likes : null)))) : undefined,
+    outliers_carousels_photos: igPosts.length ? igPosts.filter((p) => p.outlier).length : undefined,
     updated_at: iso(lib.accounts[u]?.updatedAt)
   };
 }
@@ -678,11 +703,63 @@ export function accountSummary(lib, u) {
     video_length: a.durations.map((d) => ({ bucket: d.key, posts: d.count, median_views: d.medianViews, x_account_median: round(d.lift) })),
     audio: a.audio.kinds.map((k) => ({ kind: tt ? (k.key === 'Licensed music' ? 'Music' : 'Original sound') : k.key, posts: k.count, median_views: k.medianViews })),
     top_music: tt ? a.audio.topTracks.map((t) => ({ track: t.key, posts: t.count, median_views: t.medianViews })) : undefined,
-    top_reels: M.sortBy(reels, 'views').slice(0, 10).map((p) => brief(p))
+    top_reels: M.sortBy(reels, 'views').slice(0, 10).map((p) => brief(p)),
+    ...(tt ? {} : {
+      reel_comments: commentSection(a, 'views'),
+      carousels_and_photos: carouselSummary(posts.filter(M.isLikesScored))
+    })
   };
 }
 
-const SORT_KEYS = { viral_score: 'viralScore', views: 'views', likes: 'likes', comments: 'comments', shares: 'shares', saves: 'saves', engagement: 'engagement', date: 'date', duration: 'duration' };
+const commentRow = (unit) => (g) => ({
+  group: g.key, posts: g.count, median_comments: g.medianComments, total_comments: g.totalComments,
+  comments_per_100_likes: round(g.medianCommentsPer100Likes, 1), ['median_' + unit]: g.medianViews
+});
+
+/** Comment stats of one Instagram format: the median, "comment KEYWORD" posts vs the rest, each keyword, the most commented posts. */
+function commentSection(a, unit) {
+  const ig = a.instagram;
+  if (!ig) return undefined;
+  return {
+    median_comments: a.summary.medianComments,
+    total_comments: a.summary.totalComments,
+    median_comments_per_100_likes: round(a.summary.medianCommentsPer100Likes, 1),
+    keyword_posts: a.summary.keywordPosts,
+    keyword_note: 'comment_keyword = the caption asks people to comment a word to get something ("Comment CFO and I\'ll send the link"). Those comments come from the giveaway, so read comments_x_account_median on such posts as reach of the offer, not as discussion.',
+    keyword_vs_rest: ig.cta.length ? ig.cta.map(commentRow(unit)) : undefined,
+    keywords: ig.keywords.length ? ig.keywords.map((g) => ({ keyword: g.key, posts: g.count, median_comments: g.medianComments, total_comments: g.totalComments, ['median_' + unit]: g.medianViews })) : undefined,
+    caption_length: ig.captions.map((g) => ({ bucket: g.key, posts: g.count, ['median_' + unit]: g.medianViews, median_comments: g.medianComments })),
+    collab_vs_solo: ig.collabs.length ? ig.collabs.map(commentRow(unit)) : undefined,
+    most_commented: ig.topComments.slice(0, 5).map((p) => brief(p))
+  };
+}
+
+/** Instagram carousels and photos: no public view count, so everything here is in likes, against their own median. */
+function carouselSummary(posts) {
+  if (!posts.length) return { posts_analyzed: 0, note: 'No carousels or photos saved yet. collect_profile pages the whole feed (reels, carousels and photos).' };
+  const a = M.analyze(posts);
+  const ig = a.instagram;
+  const scored = posts.some((p) => p.ratio != null);
+  return {
+    how_scored: `Instagram shows views on carousels and photos only to their owner, so each one is scored by likes ÷ this account's median likes on carousels and photos. Pinned posts and posts under 3 days old are scored but left out of the median. Needs ${M.MIN_BASELINE} posts with likes.` + (scored ? '' : ' Not enough yet: no scores.'),
+    posts_analyzed: a.summary.count,
+    formats: ig.types.map((g) => ({ format: g.key, posts: g.count, median_likes: g.medianViews, median_comments: g.medianComments })),
+    median_likes: a.summary.medianViews,
+    avg_likes: round(a.summary.avgViews, 0),
+    total_likes: a.summary.totalViews,
+    outliers: a.summary.outliers,
+    posts_per_week: round(a.summary.postsPerWeek, 1),
+    first_post: iso(a.summary.firstPost),
+    last_post: iso(a.summary.lastPost),
+    ...postingTimes(a.heatmap, 'likes'),
+    carousel_length: ig.slides.map((g) => ({ bucket: g.key, posts: g.count, median_likes: g.medianViews, x_account_median: round(g.lift) })),
+    top_hashtags: a.hashtags.slice(0, 15).map((h) => ({ hashtag: '#' + h.key, posts: h.count, median_likes: h.medianViews, x_account_median: round(h.lift) })),
+    comments: commentSection(a, 'likes'),
+    top_posts: M.sortBy(posts, 'viralScore').slice(0, 10).map((p) => brief(p))
+  };
+}
+
+const SORT_KEYS = { viral_score: 'viralScore', views: 'views', likes: 'likes', comments: 'comments', comments_x_median: 'commentRatio', shares: 'shares', saves: 'saves', engagement: 'engagement', date: 'date', duration: 'duration' };
 
 export function hiddenSmall(lib, scope) {
   return selectAccounts(lib, { ...scope, includeSmall: true }).length - selectAccounts(lib, scope).length;
@@ -693,18 +770,23 @@ const formatFilter = (format) => (format === 'shorts' ? (p) => isYouTubePost(p) 
   : format === 'long_form' ? (p) => isYouTubePost(p) && p.type !== 'short' : () => true);
 
 /** Rank Instagram reels, TikTok videos and YouTube videos/Shorts (platform: 'all' = all three, default). Reddit has top_posts. */
-export function topReels(lib, { folder, tag, usernames, sort = 'viral_score', since_days, limit = 20, min_views = 0, include_photos = false, include_small_accounts = false, platform = 'all', format } = {}) {
+export function topReels(lib, { folder, tag, usernames, sort = 'viral_score', since_days, limit = 20, min_views = 0, include_photos = false, post_type, include_small_accounts = false, platform = 'all', format } = {}) {
+  // post_type: 'reels' (default) | 'carousels_photos' (Instagram carousels and photos, ranked by likes) | 'all'
+  const kind = post_type || (include_photos ? 'all' : 'reels');
+  const kindOk = kind === 'all' ? () => true : kind === 'carousels_photos' ? (p) => M.isLikesScored(p) : isVideo;
+  if (kind === 'carousels_photos' && platform === 'all') platform = 'instagram';
   const plat = platform === 'instagram' || platform === 'tiktok' || platform === 'youtube' ? platform : format ? 'youtube' : 'video';
   const accounts = selectAccounts(lib, { folder, tag, usernames, includeSmall: include_small_accounts, platform: plat });
   const since = since_days ? Date.now() - since_days * 864e5 : null;
   const fmtOk = formatFilter(format);
   let posts = accounts.flatMap((u) => enrichedPosts(lib, u));
-  posts = posts.filter((p) => (include_photos || isVideo(p)) && fmtOk(p) && (p.views || 0) >= min_views && (!since || (p.takenAt && p.takenAt >= since)));
+  posts = posts.filter((p) => kindOk(p) && fmtOk(p) && (M.val(p) || 0) >= min_views && (!since || (p.takenAt && p.takenAt >= since)));
   const sorted = M.sortBy(posts, SORT_KEYS[sort] || 'viralScore');
   const hidden = include_small_accounts ? 0 : hiddenSmall(lib, { folder, tag, usernames, platform: plat });
   const platforms = [...new Set(accounts.map((u) => platformOf(lib, u)))];
   return {
     accounts: accounts.length, platforms, hidden_small_accounts: hidden || undefined, matched: posts.length,
+    scoring_note: kind !== 'reels' ? `Instagram carousels and photos have no public views: they are scored by likes against their account's median carousel or photo (scored_by: "likes"; needs ${M.MIN_BASELINE} of them), so viral_score still compares fairly with reels. min_views applies to likes for them.` : undefined,
     youtube_note: platforms.includes('youtube') ? 'YouTube Shorts are scored against their channel\'s Shorts median and long-form videos against its long-form median. views_exact: false = YouTube\'s rounded channel-page count.' : undefined,
     reels: sorted.slice(0, limit).map((p) => brief(p))
   };

@@ -104,6 +104,9 @@
     setTimeout(function () {
       fetch('/dev/graphql/slim.json').then(function (r) { return r.clone().json(); }).then(function (j) {
         firstCode = j.data.xdt_api__v1__clips__user__connection_v2.edges[0].node.media.code;
+        // The profile's main grid (carousels and photos, scored by likes) and its facts.
+        fetch('/dev/graphql/posts.json');
+        fetch('/dev/graphql/profile.json');
         if (location.hash === '#reel') document.getElementById('go-reel').click();
         else setTimeout(window.__demoOpenPanel, 400);
       });

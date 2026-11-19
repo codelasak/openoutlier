@@ -7,6 +7,11 @@
   'use strict';
 
   var OUTLIER_RATIO = 2; // ≥ 2× the profile's median views = outlier
+  // Instagram carousels and photos are scored by likes. With fewer than this many
+  // to compare with, a "2× post" is the sample, not an outlier: no score yet.
+  var MIN_BASELINE = 8;
+  // A post this new is still collecting views and likes: it gets a score, but stays out of the median.
+  var FRESH_MS = 72 * 3600 * 1000;
   var DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   var BLOCK_HOURS = 3;
   var DURATION_BUCKETS = [
@@ -41,8 +46,17 @@
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-  /** The number a post is ranked by: views on Instagram and TikTok, score (upvotes) on Reddit. */
-  function val(p) { return p && p.platform === 'reddit' ? p.score : p.views; }
+  function isInstagram(p) { return !!p && (!p.platform || p.platform === 'instagram'); }
+  /** Instagram shows no view count on carousels and photos, so those are ranked by likes. */
+  function isLikesScored(p) { return isInstagram(p) && (p.type === 'carousel' || p.type === 'photo'); }
+
+  /**
+   * The number a post is ranked by: views on reels and videos (Instagram, TikTok,
+   * YouTube), likes on Instagram carousels and photos, score (upvotes) on Reddit.
+   */
+  function val(p) { return p && p.platform === 'reddit' ? p.score : isLikesScored(p) ? p.likes : p.views; }
+  /** 'views' | 'likes' | 'score': what val() counts for this post. */
+  function basisOf(p) { return p && p.platform === 'reddit' ? 'score' : isLikesScored(p) ? 'likes' : 'views'; }
 
   /**
    * Interactions that count toward engagement. TikTok shows shares and saves
@@ -50,7 +64,8 @@
    * comments; Reddit uses comments (÷ score).
    */
   function interactions(p) {
-    if (p.platform === 'reddit') return p.comments || 0;
+    // Reddit and Instagram carousels/photos: comments per 100 upvotes / likes.
+    if (p.platform === 'reddit' || isLikesScored(p)) return p.comments || 0;
     // YouTube: likes + comments where known (channel tabs show neither; watch pages show both).
     if (p.platform === 'tiktok') return (p.likes || 0) + (p.comments || 0) + (p.shares || 0) + (p.saves || 0);
     return (p.likes || 0) + (p.comments || 0);
@@ -81,29 +96,100 @@
    * YouTube: each video is scored against its own channel's median for its format
    * (Shorts vs long-form, live streams count as long-form). Other posts share one median, as before.
    */
-  function medianGroup(p) { return isYouTube(p) ? 'yt|' + p.owner + '|' + formatOf(p) : ''; }
+  function medianGroup(p) { return isYouTube(p) ? 'yt|' + p.owner + '|' + formatOf(p) : isLikesScored(p) ? 'ig-posts' : ''; }
 
-  function enrich(posts) {
+  /** Pinned posts (usually the account's best) and posts under 72 hours old don't define "normal". */
+  function inBaseline(p, now) {
+    return !p.pinned && !(p.takenAt && now - p.takenAt < FRESH_MS && now >= p.takenAt);
+  }
+
+  /**
+   * The keyword of a "comment X and I'll send you the link" call to action, upper-cased, or null.
+   * Those posts collect comments from the giveaway, not from the content, so they are flagged.
+   */
+  var DQ = '["“”„«»]';
+  var NOT_DQ = '[^"“”„«»\\n]';
+  var KEYWORD_RES = [
+    // Comment "CFO" · Comment below “AI”
+    new RegExp('\\bcomment(?:s|ing)?\\b[^"“”„«»\\n.!?]{0,24}' + DQ + '(' + NOT_DQ + '{1,30})' + DQ, 'i'),
+    // comment 'guide' (one word: an apostrophe is not a quote, "comment and I'll send it")
+    new RegExp('\\bcomment(?:s|ing)?\\b[^\\n]{0,24}?\\s[\'‘]([\\p{L}\\p{N}_-]{2,20})[\'’](?![\\p{L}\\p{N}])', 'iu'),
+    // Drop "CFO" in the comments · type "guide" below
+    new RegExp('\\b(?:drop|type|write|leave|send|say)\\s+' + DQ + '(' + NOT_DQ + '{1,30})' + DQ + '\\s+(?:in\\s+the\\s+comments?|below)', 'i'),
+    // Yorumlara "EXCEL" yaz
+    new RegExp('\\byorum\\p{L}*' + NOT_DQ + '{0,12}' + DQ + '(' + NOT_DQ + '{1,30})' + DQ, 'iu'),
+    // Comment CFO (a bare word in capitals)
+    /\b[Cc]omment\s+(?:the\s+word\s+)?([A-Z][A-Z0-9]{1,19})\b/
+  ];
+  function commentKeyword(caption) {
+    var text = String(caption || '');
+    if (text.length < 9) return null;
+    for (var i = 0; i < KEYWORD_RES.length; i++) {
+      var m = KEYWORD_RES[i].exec(text);
+      var k = m && m[1].trim();
+      // A keyword is a word or two, not a quoted sentence.
+      if (k && /[\p{L}\p{N}]/u.test(k) && k.split(/\s+/).length <= 3) return k.toUpperCase();
+    }
+    return null;
+  }
+
+  /**
+   * Scores every post against the median of its own group. opts.now (ms) is "today" for the 72-hour rule.
+   * Adds: ratio, viralScore, outlier, engagement, basis ('views' | 'likes' | 'score'),
+   * commentRatio (comments ÷ the group's median comments), commentsPer100Likes, commentKeyword.
+   */
+  /** The median a list was scored against, when all of it shares one (else null). */
+  function baselineOf(posts) {
+    var b = posts.length ? posts[0].baseline : null;
+    if (b === null || b === undefined) return null;
+    for (var i = 1; i < posts.length; i++) if (posts[i].baseline !== b) return null;
+    return b;
+  }
+
+  function enrich(posts, opts) {
+    var now = (opts && opts.now) || Date.now();
     var groups = {};
-    posts.forEach(function (p) { var v = val(p); var g = medianGroup(p); (groups[g] = groups[g] || []).push(v > 0 ? v : null); });
-    var meds = {};
-    Object.keys(groups).forEach(function (g) { meds[g] = median(groups[g]); });
+    posts.forEach(function (p) {
+      var g = groups[medianGroup(p)] || (groups[medianGroup(p)] = { all: [], base: [], comments: [], likesScored: isLikesScored(p) });
+      var v = val(p);
+      g.all.push(v > 0 ? v : null);
+      if (!inBaseline(p, now)) return;
+      g.base.push(v > 0 ? v : null);
+      if (typeof p.comments === 'number') g.comments.push(p.comments);
+    });
+    Object.keys(groups).forEach(function (k) {
+      var g = groups[k];
+      var n = g.base.filter(function (v) { return v !== null; }).length;
+      // Everything pinned or brand new: fall back to what there is.
+      g.med = median(n ? g.base : g.all);
+      if (g.likesScored && (n || g.all.filter(function (v) { return v !== null; }).length) < MIN_BASELINE) g.med = null;
+      g.medComments = g.med === null ? null : median(g.comments);
+    });
     return posts.map(function (p) {
       var v = val(p);
-      var med = meds[medianGroup(p)];
+      var g = groups[medianGroup(p)];
+      var med = g.med;
       var ratio = v > 0 && med > 0 ? v / med : null;
       return Object.assign({}, p, {
         ratio: ratio,
         viralScore: viralScore(v, med),
         engagement: engagementOf(p, v),
-        outlier: ratio !== null && ratio >= OUTLIER_RATIO
+        outlier: ratio !== null && ratio >= OUTLIER_RATIO,
+        basis: basisOf(p),
+        baseline: med, // the median this post was scored against
+        commentRatio: typeof p.comments === 'number' && g.medComments > 0 ? p.comments / g.medComments : null,
+        commentsPer100Likes: typeof p.comments === 'number' && p.likes > 0 && p.platform !== 'reddit' ? p.comments / p.likes * 100 : null,
+        commentKeyword: p.platform === 'reddit' ? null : commentKeyword(p.caption)
       });
     });
   }
 
   var SORTERS = {
-    views: val,
+    // "Views" stays views: carousels and photos (ranked by likes) have none and go last.
+    views: function (p) { return p && p.platform === 'reddit' ? p.score : p.views; },
     score: val,
+    commentRatio: function (p) { return p.commentRatio; },
+    slides: function (p) { return p.slides; },
     upvoteRatio: function (p) { return p.upvoteRatio; },
     // Score is capped at 100, so rank by the uncapped ratio (same order, no ties at the top).
     viralScore: function (p) { return p.viralScore === null || p.viralScore === undefined ? null : p.ratio; },
@@ -327,12 +413,20 @@
     var withViews = posts.filter(function (p) { return val(p) > 0; });
     var dated = posts.map(function (p) { return p.takenAt; }).filter(Boolean).sort(function (a, b) { return a - b; });
     var weeks = dated.length >= 2 ? Math.max(1, (dated[dated.length - 1] - dated[0]) / (7 * 864e5)) : null;
+    var scoredAgainst = baselineOf(posts);
     return {
       count: posts.length,
-      medianViews: median(withViews.map(val)),
+      // The same median the scores use (pinned and brand-new posts left out) when the list has one.
+      medianViews: scoredAgainst !== null ? scoredAgainst : median(withViews.map(val)),
       avgViews: mean(withViews.map(val)),
       totalViews: withViews.reduce(function (s, p) { return s + val(p); }, 0),
       medianComments: median(posts.map(function (p) { return p.comments; })),
+      medianLikes: median(posts.map(function (p) { return p.likes > 0 ? p.likes : null; })),
+      totalComments: posts.reduce(function (s, p) { return s + (p.comments || 0); }, 0),
+      medianCommentsPer100Likes: median(posts.map(function (p) { return p.commentsPer100Likes; })),
+      keywordPosts: posts.filter(function (p) { return p.commentKeyword; }).length,
+      // 'views' | 'likes' | 'score' when every post is ranked by the same number, else 'mixed'.
+      basis: posts.length ? posts.map(basisOf).reduce(function (a, b) { return a === b ? a : 'mixed'; }) : 'views',
       avgUpvoteRatio: mean(posts.map(function (p) { return p.upvoteRatio; })),
       avgEngagement: mean(posts.map(function (p) { return p.engagement; })),
       // Per 100 views; only posts that show the counter (TikTok always does).
@@ -469,6 +563,84 @@
     return { matched: ideas.length, ideas: ideas.slice(0, limit), themes: themes.slice(0, opts.themes || 12) };
   }
 
+  // ---- Instagram: comments, calls to action, carousels --------------------------
+
+  var SLIDE_BUCKETS = [
+    { label: '2–4 slides', max: 4 }, { label: '5–7 slides', max: 7 }, { label: '8–10 slides', max: 10 }, { label: '11+ slides', max: Infinity }
+  ];
+  var CAPTION_BUCKETS = [
+    { label: 'No caption', max: 0 }, { label: '1–20 words', max: 20 }, { label: '21–60 words', max: 60 },
+    { label: '61–150 words', max: 150 }, { label: '151+ words', max: Infinity }
+  ];
+  var TYPE_LABELS = { reel: 'Reels', video: 'Videos', carousel: 'Carousels', photo: 'Photos' };
+
+  function bucketed(posts, buckets, numOf, med) {
+    var groups = {};
+    buckets.forEach(function (b) { groups[b.label] = []; });
+    posts.forEach(function (p) {
+      var n = numOf(p);
+      if (n === null || n === undefined) return;
+      for (var i = 0; i < buckets.length; i++) if (n <= buckets[i].max) { groups[buckets[i].label].push(p); break; }
+    });
+    var stats = groupStats(groups, med);
+    return buckets.map(function (b) { return stats.filter(function (s) { return s.key === b.label; })[0]; }).filter(function (s) { return s.count > 0; });
+  }
+
+  /** Like groupStats, plus how each group does on comments. */
+  function commentStats(groups, med) {
+    return groupStats(groups, med).map(function (g) {
+      var list = groups[g.key];
+      g.medianComments = median(list.map(function (p) { return p.comments; }));
+      g.totalComments = list.reduce(function (s, p) { return s + (p.comments || 0); }, 0);
+      g.medianCommentsPer100Likes = median(list.map(function (p) { return p.commentsPer100Likes; }));
+      return g;
+    });
+  }
+
+  /**
+   * Instagram extras for a list of enriched posts (one scoring basis: reels, or carousels and photos):
+   *   types       carousels vs photos (or reels vs videos), by the list's median
+   *   slides      carousel length buckets
+   *   captions    caption length buckets
+   *   cta         posts with a "comment KEYWORD" call to action vs the rest (median comments, comments per 100 likes)
+   *   keywords    each keyword: posts, median and total comments
+   *   collabs     collab posts vs solo; tagged: posts tagging people vs none
+   *   topComments the posts furthest above the median comment count
+   */
+  function instagramAnalysis(posts, med) {
+    var types = {};
+    var cta = { 'Comment keyword': [], 'No keyword': [] };
+    var keywords = {};
+    var collabs = { 'Collab post': [], 'Solo post': [] };
+    var tagged = { 'Tags people': [], 'No tags': [] };
+    posts.forEach(function (p) {
+      var t = TYPE_LABELS[p.type] || 'Other';
+      (types[t] = types[t] || []).push(p);
+      cta[p.commentKeyword ? 'Comment keyword' : 'No keyword'].push(p);
+      if (p.commentKeyword) (keywords[p.commentKeyword] = keywords[p.commentKeyword] || []).push(p);
+      collabs[(p.collabs || []).length ? 'Collab post' : 'Solo post'].push(p);
+      tagged[(p.tagged || []).length ? 'Tags people' : 'No tags'].push(p);
+    });
+    function both(groups) {
+      var g = commentStats(groups, med).filter(function (x) { return x.count > 0; });
+      return g.length > 1 ? g : [];
+    }
+    return {
+      types: commentStats(types, med).filter(function (g) { return g.count > 0; }).sort(function (a, b) { return b.count - a.count; }),
+      slides: bucketed(posts.filter(function (p) { return p.type === 'carousel'; }), SLIDE_BUCKETS, function (p) { return p.slides || (p.files || []).length || null; }, med),
+      captions: bucketed(posts, CAPTION_BUCKETS, function (p) { return wordCount(p.caption); }, med),
+      cta: both(cta),
+      keywords: commentStats(keywords, med).sort(function (a, b) { return b.totalComments - a.totalComments || b.count - a.count; }).slice(0, 15),
+      collabs: both(collabs),
+      tagged: both(tagged),
+      topComments: sortBy(posts.filter(function (p) { return p.commentRatio !== null && p.commentRatio !== undefined; }), 'commentRatio').slice(0, 10)
+    };
+  }
+
+  function isInstagramList(posts) {
+    return posts.length > 0 && posts.every(isInstagram);
+  }
+
   function isRedditList(posts) {
     return posts.length > 0 && posts.every(function (p) { return p.platform === 'reddit'; });
   }
@@ -512,6 +684,7 @@
       audio: audio(posts, s.medianViews)
     };
     if (isRedditList(posts)) out.reddit = redditAnalysis(posts, s.medianViews);
+    if (isInstagramList(posts)) out.instagram = instagramAnalysis(posts, s.medianViews);
     if (yt) out.youtube = youtubeAnalysis(posts, s.medianViews, opts && opts.all);
     return out;
   }
@@ -569,8 +742,16 @@
     ['engagement_rate_pct', function (p) { return p.engagement == null ? '' : p.engagement.toFixed(2); }],
     ['viral_score', function (p) { return p.viralScore; }],
     ['x_median', function (p) { return p.ratio == null ? '' : p.ratio.toFixed(2); }],
+    ['scored_by', function (p) { return p.basis || basisOf(p); }],
+    ['comments_x_median', function (p) { return p.commentRatio == null ? '' : p.commentRatio.toFixed(2); }],
+    ['comments_per_100_likes', function (p) { return p.commentsPer100Likes == null ? '' : p.commentsPer100Likes.toFixed(1); }],
+    ['comment_keyword', function (p) { return p.commentKeyword || ''; }],
+    ['slides', function (p) { return p.type === 'carousel' ? (p.slides || (p.files || []).length || '') : ''; }],
     ['duration_s', function (p) { return p.duration; }],
     ['pinned', function (p) { return p.pinned ? 'yes' : ''; }],
+    ['collabs', function (p) { return (p.collabs || []).join(' '); }], // bare usernames: a leading @ reads as a formula in spreadsheets
+    ['tagged', function (p) { return (p.tagged || []).join(' '); }], // bare usernames: a leading @ reads as a formula in spreadsheets
+    ['location', function (p) { return p.location || ''; }],
     ['audio', function (p) { return p.audio ? (p.audio.kind === 'music' ? 'music: ' : 'original: ') + p.audio.title + (p.audio.artist ? ' – ' + p.audio.artist : '') : ''; }],
     ['hashtags', function (p) { return (p.hashtags || []).map(function (t) { return '#' + t; }).join(' '); }],
     ['caption', function (p) { return (p.caption || '').replace(/\s+/g, ' ').trim(); }]
@@ -683,7 +864,16 @@
     REDDIT_COLUMN_NAMES: REDDIT_COLUMNS.map(function (c) { return c[0]; }),
     TIKTOK_COLUMN_NAMES: TIKTOK_COLUMNS.map(function (c) { return c[0]; }),
     YOUTUBE_COLUMN_NAMES: YOUTUBE_COLUMNS.map(function (c) { return c[0]; }),
+    MIN_BASELINE: MIN_BASELINE,
+    FRESH_MS: FRESH_MS,
     val: val,
+    basisOf: basisOf,
+    baselineOf: baselineOf,
+    isInstagram: isInstagram,
+    isLikesScored: isLikesScored,
+    inBaseline: inBaseline,
+    commentKeyword: commentKeyword,
+    isInstagramList: isInstagramList,
     interactions: interactions,
     isTikTok: isTikTok,
     hasTikTok: hasTikTok,

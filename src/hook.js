@@ -38,7 +38,9 @@
     // YouTube: every useful response names a videoId (watch, Shorts) or a contentId (grid lockups).
     if (YOUTUBE) return text.indexOf('"videoId"') !== -1 || text.indexOf('"contentId"') !== -1;
     if (TIKTOK) return text.indexOf('"createTime"') !== -1 && (text.indexOf('"stats"') !== -1 || text.indexOf('"statsV2"') !== -1);
-    return text.indexOf('"code"') !== -1 || text.indexOf('"shortcode"') !== -1;
+    // Profile facts (followers, posts on the profile) ride on responses that may list no posts.
+    return text.indexOf('"code"') !== -1 || text.indexOf('"shortcode"') !== -1 ||
+      text.indexOf('"edge_followed_by"') !== -1 || text.indexOf('"follower_count"') !== -1;
   }
 
   function forward(url, text) {

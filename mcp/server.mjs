@@ -120,23 +120,24 @@ server.registerTool('list_folders_and_tags', {
 
 server.registerTool('account_summary', {
   title: 'Account analytics',
-  description: 'Analytics for one Instagram, TikTok or YouTube account: median/total views, engagement, posting frequency, best posting day & time, hashtags that bring views, best video length, original vs licensed audio (TikTok: original sound vs music, top music, shares and saves per 100 views), and its top 10 videos. YouTube channels get two sections, long_form and shorts, each against its own median (plus title words, exact vs approximate dates; best times from exact dates only). (Given r/name or u/name it returns subreddit_summary instead.)',
+  description: 'Analytics for one Instagram, TikTok or YouTube account: median/total views, engagement, posting frequency, best posting day & time, hashtags that bring views, best video length, original vs licensed audio (TikTok: original sound vs music, top music, shares and saves per 100 views), and its top 10 videos. Instagram also returns carousels_and_photos (no public views, so scored by likes against their own median: formats, carousel length, best times, top posts) and comment stats for both (median comments, comments per 100 likes, "comment KEYWORD" posts vs the rest, each keyword, most commented posts), plus followers and posts_on_profile once the profile was collected. YouTube channels get two sections, long_form and shorts, each against its own median (plus title words, exact vs approximate dates; best times from exact dates only). (Given r/name or u/name it returns subreddit_summary instead.)',
   inputSchema: { username: z.string().describe('Instagram username, with or without @; TikTok as tt/name or a tiktok.com/@name URL; YouTube as yt/name, a youtube.com/@name or /channel/UC… URL (or r/name, u/name)') },
   annotations: { readOnlyHint: true }
 }, ({ username }) => safe(() => json(accountSummary(readLibrary(), normUser(username)))));
 
 server.registerTool('top_reels', {
   title: 'Top reels',
-  description: 'Rank Instagram reels, TikTok videos and YouTube videos and Shorts across accounts (a folder, a tag, a list of usernames, or everything). Each video is scored against its own account\'s median (YouTube: the channel\'s Shorts median for Shorts, its long-form median for videos), so viral_score compares fairly across big and small accounts and across platforms. Every result has a platform field. For Reddit posts use top_posts.',
+  description: 'Rank Instagram reels, TikTok videos and YouTube videos and Shorts across accounts (a folder, a tag, a list of usernames, or everything). post_type: "carousels_photos" ranks Instagram carousels and photos instead (scored by likes, since Instagram shows no views on them), "all" ranks both together. Each video is scored against its own account\'s median (YouTube: the channel\'s Shorts median for Shorts, its long-form median for videos), so viral_score compares fairly across big and small accounts and across platforms. Every result has a platform field. For Reddit posts use top_posts.',
   inputSchema: {
     ...scope,
     platform: z.enum(['instagram', 'tiktok', 'youtube', 'all']).optional().describe('Default all (Instagram, TikTok and YouTube)'),
     format: z.enum(['shorts', 'long_form']).optional().describe('YouTube only: just Shorts or just long-form videos (and past live streams)'),
-    sort: z.enum(['viral_score', 'views', 'likes', 'comments', 'shares', 'saves', 'engagement', 'date', 'duration']).optional().describe('Default viral_score. saves: TikTok only'),
+    sort: z.enum(['viral_score', 'views', 'likes', 'comments', 'comments_x_median', 'shares', 'saves', 'engagement', 'date', 'duration']).optional().describe('Default viral_score. saves: TikTok only. comments_x_median: comments ÷ the account\'s median comments for that format'),
+    post_type: z.enum(['reels', 'carousels_photos', 'all']).optional().describe('Default reels (videos). carousels_photos: Instagram carousels and photos, ranked by likes. all: both'),
     since_days: z.number().positive().optional().describe('Only reels posted in the last N days'),
     min_views: z.number().min(0).optional(),
     limit: z.number().int().min(1).max(200).optional().describe('Default 20'),
-    include_photos: z.boolean().optional().describe('Include photo/carousel posts (default false)'),
+    include_photos: z.boolean().optional().describe('Same as post_type "all" (kept for older prompts)'),
     include_small_accounts: z.boolean().optional().describe(`Include accounts with fewer than ${MIN_POSTS} saved posts (default false; accounts named in usernames/folder/tag are always included)`)
   },
   annotations: { readOnlyHint: true }
@@ -292,10 +293,10 @@ async function downloadTikTok(p, what, directory) {
 
 server.registerTool('collect_profile', {
   title: 'Collect a profile',
-  description: 'Ask the OpenOutlier extension to open an Instagram profile\'s Reels tab in a background Chrome tab, scroll through it and load views and dates. New and existing accounts both work; results land in the library. Waits up to wait_seconds, then returns a command id you can check with command_status. Given tt/name or a tiktok.com/@name URL it collects that TikTok profile: the extension opens it in a small unfocused Chrome window and scrolls it for up to ~4 minutes, reading the videos TikTok loads (no TikTok API calls of its own; if TikTok shows a puzzle, the user has to solve it once). Given yt/name, a youtube.com/@name or /channel/UC… URL it collects that YouTube channel: the extension opens its Videos tab in a small unfocused Chrome window, scrolls it (up to ~3 minutes, max_reels videos), then does the same on its Shorts tab, reading what YouTube loads (no YouTube API calls of its own). Views from channel tabs are YouTube\'s rounded ones and dates are relative ("3 weeks ago"); use refresh_reel on the videos that matter for exact numbers. Given r/name or u/name it collects that subreddit / Reddit user instead (see collect_subreddit).',
+  description: 'Ask the OpenOutlier extension to collect an Instagram profile in a background Chrome tab: it pages the profile\'s feed, newest first (reels, carousels and photos together, about 33 per request), with views, likes, comments, dates, slides and files, and notes its followers and how many posts it has. New and existing accounts both work; results land in the library, and the result counts reels, carousels and photos. Waits up to wait_seconds, then returns a command id you can check with command_status. Given tt/name or a tiktok.com/@name URL it collects that TikTok profile: the extension opens it in a small unfocused Chrome window and scrolls it for up to ~4 minutes, reading the videos TikTok loads (no TikTok API calls of its own; if TikTok shows a puzzle, the user has to solve it once). Given yt/name, a youtube.com/@name or /channel/UC… URL it collects that YouTube channel: the extension opens its Videos tab in a small unfocused Chrome window, scrolls it (up to ~3 minutes, max_reels videos), then does the same on its Shorts tab, reading what YouTube loads (no YouTube API calls of its own). Views from channel tabs are YouTube\'s rounded ones and dates are relative ("3 weeks ago"); use refresh_reel on the videos that matter for exact numbers. Given r/name or u/name it collects that subreddit / Reddit user instead (see collect_subreddit).',
   inputSchema: {
     username: z.string().describe('Instagram username, TikTok as tt/name or tiktok.com/@name, YouTube as yt/name or youtube.com/@name (or r/name, u/name for Reddit)'),
-    max_reels: z.number().int().min(12).max(2000).optional().describe('Stop after this many reels (default 300; YouTube: per tab)'),
+    max_reels: z.number().int().min(12).max(2000).optional().describe('Stop after this many posts (default 300; Instagram counts reels, carousels and photos together; YouTube: per tab)'),
     youtube_tabs: z.array(z.enum(['videos', 'shorts', 'streams'])).optional().describe('YouTube only: which channel tabs to collect, in order (default ["videos", "shorts"])'),
     wait_seconds: z.number().int().min(0).max(110).optional().describe('How long to wait for it to finish (default 45)')
   }
