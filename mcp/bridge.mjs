@@ -107,12 +107,19 @@ async function handle(req, res, port) {
 
   await writeStatus({ extensionId: m[1], extensionSeenAt: Date.now(), port });
 
+  // Chrome leaves the Origin header off an extension's GET requests to hosts it has permission
+  // for, so a GET from the real extension never gets past the check above (it only ever arrived
+  // from tests). The extension sends its reads as POST …?as=get instead: a POST always carries
+  // its Origin. Treat those as the GET they stand for.
+  const method = req.method === 'POST' && url.searchParams.get('as') === 'get' ? 'GET' : req.method;
+  if (method !== req.method) req.resume(); // its "{}" body is not read
+
   if (req.method === 'POST' && url.pathname === '/sync') {
     const body = await readBody(req);
     const lib = await applySync({ full: !!body.full, accounts: body.accounts, org: body.org, watches: body.watches, mentions: body.mentions });
     return send(res, 200, { ok: true, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length }, origin);
   }
-  if (req.method === 'GET' && url.pathname === '/commands') {
+  if (method === 'GET' && url.pathname === '/commands') {
     return send(res, 200, { commands: await takePendingCommands() }, origin);
   }
   if (req.method === 'POST' && url.pathname === '/commands/result') {
@@ -133,13 +140,13 @@ async function handle(req, res, port) {
     return send(res, 200, { ok: true, ...startJob({ id, what, prev }) }, origin);
   }
   const jm = url.pathname.match(/^\/youtube\/download\/([0-9a-f-]{36})$/);
-  if (req.method === 'GET' && jm) {
+  if (method === 'GET' && jm) {
     const st = jobStatus(jm[1]);
     return st ? send(res, 200, { ok: true, ...st }, origin) : send(res, 404, { error: 'unknown job (the bridge may have restarted)' }, origin);
   }
   // My YouTube channel (YouTube Analytics API, the user's own OAuth client).
   if (url.pathname.startsWith('/youtube/analytics/')) {
-    const r = await YA.handleRoute(req.method, url, { port });
+    const r = await YA.handleRoute(method, url, { port });
     if (r) return send(res, r[0], r[1], origin);
   }
   return send(res, 404, { error: 'not found' }, origin);

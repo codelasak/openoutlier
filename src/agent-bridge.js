@@ -82,6 +82,20 @@
     return res.json();
   }
 
+  /**
+   * A read from the bridge. Chrome sends no Origin header on an extension's GET to a host it
+   * has permission for, and the bridge only answers its paired extension (it checks Origin),
+   * so a plain GET is refused. Reads go out as POST …?as=get, which does carry the Origin.
+   */
+  function read(port, path, timeoutMs) {
+    return fetch('http://127.0.0.1:' + port + path + (path.indexOf('?') === -1 ? '?' : '&') + 'as=get', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+      signal: timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined
+    });
+  }
+
   async function snapshot(onlyUsers) {
     var all = await chrome.storage.local.get(null);
     var accounts = {};
@@ -167,8 +181,12 @@
 
   // ---- commands ---------------------------------------------------------------
   async function pollCommands(port) {
-    var res = await fetch('http://127.0.0.1:' + port + '/commands');
-    if (!res.ok) return;
+    var res = await read(port, '/commands');
+    if (!res.ok) {
+      // Syncing still works, so the bridge looks connected while commands never arrive: say why.
+      console.warn('[OpenOutlier] the bridge refused the command check (HTTP ' + res.status + '). Restart the OpenOutlier bridge so it matches this extension.');
+      return;
+    }
     var list = (await res.json()).commands || [];
     for (var i = 0; i < list.length; i++) startCommand(port, list[i]);
   }
@@ -351,7 +369,7 @@
 
   async function ytVideoStatus(msg) {
     if (PORTS.indexOf(msg.port) === -1 || !JOB_RE.test(String(msg.job || ''))) return { ok: false, error: 'Bad request.' };
-    var res = await fetch('http://127.0.0.1:' + msg.port + '/youtube/download/' + msg.job, { signal: AbortSignal.timeout(5000) });
+    var res = await read(msg.port, '/youtube/download/' + msg.job, 5000);
     var j = await res.json().catch(function () { return {}; });
     if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
     return j;
@@ -377,10 +395,10 @@
     var found = await findServer(await getState());
     if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE_ANALYTICS };
     if ((found.health.features || []).indexOf('youtube-analytics') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE_ANALYTICS };
-    var url = 'http://127.0.0.1:' + found.port + path + (String(q) ? '?' + q : '');
-    var res = await fetch(url, method === 'POST'
-      ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(60000) }
-      : { signal: AbortSignal.timeout(60000) });
+    var full = path + (String(q) ? '?' + q : '');
+    var res = method === 'POST'
+      ? await fetch('http://127.0.0.1:' + found.port + full, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', signal: AbortSignal.timeout(60000) })
+      : await read(found.port, full, 60000);
     var j = await res.json().catch(function () { return {}; });
     if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
     return j;

@@ -93,6 +93,13 @@ test('skips a port used by another program', () => {
 test('bridge refuses websites and wrong hosts', async () => {
   assert.equal((await bridge('/commands', { origin: 'https://evil.example' })).status, 403);
   assert.equal((await bridge('/commands', { origin: null })).status, 403);
+  // What Chrome really sends: no Origin on the extension's GETs, so reads arrive as POST …?as=get.
+  assert.equal((await bridge('/commands?as=get', { method: 'POST', body: {}, origin: null })).status, 403);
+  assert.equal((await bridge('/commands?as=get', { method: 'POST', body: {}, origin: 'https://evil.example' })).status, 403);
+  const viaPost = await bridge('/commands?as=get', { method: 'POST', body: {} });
+  assert.equal(viaPost.status, 200);
+  assert.deepEqual((await viaPost.json()).commands, []);
+  assert.equal((await bridge('/commands', { method: 'POST', body: {} })).status, 404, 'a POST is only a read when it says so');
   // DNS rebinding: a page on evil.example resolving to 127.0.0.1 sends Host: evil.example.
   // (fetch() ignores a custom Host header, so use http.request.)
   const status = await new Promise((resolve, reject) => {

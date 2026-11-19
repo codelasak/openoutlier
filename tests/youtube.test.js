@@ -596,7 +596,8 @@ function bridgeHarness() {
   const fetch = async (url, opts = {}) => {
     if (url.endsWith('/health')) return reply({ app: 'reelscope', syncId: 's1', accounts: 0, features: ['youtube-download'] });
     if (url.endsWith('/sync')) return reply({ syncId: 's1' });
-    if (url.endsWith('/commands')) return reply({ commands: queue.splice(0) });
+    // Reads go out as POST …?as=get: Chrome sends no Origin on an extension's GET, and the bridge checks it.
+    if (url.endsWith('/commands?as=get')) { assert.equal(opts.method, 'POST'); return reply({ commands: queue.splice(0) }); }
     if (url.endsWith('/commands/result')) { results.push(JSON.parse(opts.body)); return reply({ ok: true }); }
     throw new Error('unexpected ' + url);
   };

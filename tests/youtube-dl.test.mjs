@@ -309,6 +309,11 @@ test('bridge: POST /youtube/download starts a job, the status route reports prog
     assert.equal(st.post.views, 801352);
     assert.equal(st.post.viewsApprox, false);
     assert.equal((await req('/youtube/download/00000000-0000-0000-0000-000000000000')).status, 404);
+    // The extension's status poll as Chrome sends it: POST …?as=get (its GETs carry no Origin).
+    const polled = await req('/youtube/download/' + start.job + '?as=get', { method: 'POST', body: '{}' });
+    assert.equal(polled.status, 200);
+    assert.equal((await polled.json()).state, 'done');
+    assert.equal((await req('/youtube/download/' + start.job + '?as=get', { method: 'POST', body: '{}', origin: null })).status, 403);
     const err = await (await req('/youtube/download', { method: 'POST', body: JSON.stringify({ id: 'privAteVid0' }) })).json();
     for (let i = 0; i < 50; i++) {
       st = await (await req('/youtube/download/' + err.job)).json();
