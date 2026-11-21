@@ -212,7 +212,7 @@
       if (r.ok && !r.page) ui.liveOpen = true;
       schedulePoll();
       env.rerender();
-      try { var p = await chrome.storage.local.get(SETTINGS_KEY); profit = (p[SETTINGS_KEY] || {}).ownProfit || {}; } catch (e) { /* none */ }
+      try { profit = (await F.readSetting('ownProfit')) || {}; } catch (e) { /* none */ }
     }
     // While a channel's history is still loading, look again every 20 s.
     function schedulePoll() {
@@ -299,12 +299,12 @@
     async function saveProfit(key, patch) {
       profit[key] = Object.assign({}, profit[key], patch);
       try {
-        var r = await chrome.storage.local.get(SETTINGS_KEY);
-        var s = Object.assign({}, r[SETTINGS_KEY]);
-        s.ownProfit = profit;
-        var o = {};
-        o[SETTINGS_KEY] = s;
-        await chrome.storage.local.set(o);
+        // rs:own-profit (its own key), merged per channel with a fresh read.
+        await F.updateSettings(async function () {
+          var fresh = Object.assign({}, await F.readSetting('ownProfit'));
+          fresh[key] = profit[key];
+          return { ownProfit: fresh };
+        });
       } catch (e) { /* kept for this visit */ }
     }
 

@@ -25,6 +25,10 @@
 })(typeof self !== 'undefined' ? self : this, function (root) {
   var SETTINGS_KEY = 'rs:settings';
   var BRIDGE_KEY = 'rs:bridge';
+  // Sub-settings edited by different pages live in their own storage keys, so a write from one
+  // page (or the popup, or a content script) can never put back an old copy of another's.
+  // They used to sit inside rs:settings; migrateSplit() moves them once, readers fall back.
+  var SPLIT = { radar: 'rs:radar', niche: 'rs:niche-settings', ownProfit: 'rs:own-profit' };
 
   var GROUPS = [
     { id: 'cards', label: { tr: 'Video kartları', en: 'Video cards' }, hint: { tr: 'Arama, ana sayfa, yan liste ve kanal ızgarası', en: 'Search, home, the watch-page sidebar and channel grids' } },
@@ -320,49 +324,125 @@
   var writes = Promise.resolve();
   function serial(fn) { var p = writes.then(fn); writes = p.catch(function () {}); return p; }
 
-  /** Turn a feature on or off (stored in rs:settings.features). */
-  function set(id, on) { return serial(function () { return setNow(id, on); }); }
-  async function setNow(id, on) {
-    if (!BY_ID[id] || !hasChrome) return false;
+  /**
+   * The one way to write settings. patch: { key: value } or fn(freshSettings) → patch. Each
+   * top-level key is merged into a fresh read of rs:settings (undefined deletes it); the split
+   * keys (radar, niche, ownProfit) go to their own storage keys. Writes in this context run one at
+   * a time; across contexts only the changed keys are written, from a read made just before.
+   * → the new rs:settings
+   */
+  function updateSettings(patch) {
+    // A content script (youtube.com origin) can't share a lock with the extension's pages: it asks
+    // the service worker to write for it. Only data patches travel (functions stay local).
+    if (hasChrome && !extOrigin() && typeof patch !== 'function' && root.chrome.runtime && root.chrome.runtime.sendMessage) {
+      return serial(function () { return viaWorker({ patch: patch }); });
+    }
+    return serial(function () { return locked(function () { return updateNow(patch); }); });
+  }
+  // The Library, the popup and the service worker share the extension origin, so a Web Lock
+  // serializes their read-merge-write across contexts (not only within one page).
+  function extOrigin() { try { return root.location && root.location.protocol === 'chrome-extension:'; } catch (e) { return false; } }
+  function locked(fn) {
+    var locks = root.navigator && root.navigator.locks;
+    return locks && extOrigin() ? locks.request('openoutlier:rs-settings', fn) : fn();
+  }
+  async function viaWorker(msg) {
+    try {
+      var r = await root.chrome.runtime.sendMessage(Object.assign({ type: 'reelscope:settings-update' }, msg));
+      if (r && r.ok) { take(r.settings); return r.settings; }
+    } catch (e) { /* no worker (a demo page): write here */ }
+    return locked(function () { return msg.feature ? updateNow(featurePatch(msg.feature.id, msg.feature.on)) : updateNow(msg.patch); });
+  }
+  function featurePatch(id, on) { return function (s) { var feats = sanitize(s.features); feats[id] = !!on; return { features: feats }; }; }
+  async function updateNow(patch) {
+    if (!hasChrome) return {};
     var r = await root.chrome.storage.local.get(SETTINGS_KEY);
     var s = Object.assign({}, r[SETTINGS_KEY]);
-    var feats = sanitize(s.features);
-    feats[id] = !!on;
-    s.features = feats;
+    var p = typeof patch === 'function' ? await patch(Object.assign({}, s)) : patch;
+    if (!p || typeof p !== 'object') return s;
     var o = {};
-    o[SETTINGS_KEY] = s;
-    await root.chrome.storage.local.set(o);
-    take(s);
-    return true;
+    var drop = [];
+    var touched = false;
+    Object.keys(p).forEach(function (k) {
+      if (SPLIT[k]) {
+        if (p[k] === undefined) drop.push(SPLIT[k]); else o[SPLIT[k]] = p[k];
+        if (k in s) { delete s[k]; touched = true; }
+        return;
+      }
+      if (p[k] === undefined) delete s[k]; else s[k] = p[k];
+      touched = true;
+    });
+    if (touched) o[SETTINGS_KEY] = s;
+    if (Object.keys(o).length) await root.chrome.storage.local.set(o);
+    if (drop.length) await root.chrome.storage.local.remove(drop);
+    if (touched) take(s);
+    return s;
+  }
+  // The service worker writes for content scripts (one lock with the extension's pages).
+  if (hasChrome && root.chrome.runtime && root.chrome.runtime.onMessage && typeof root.importScripts === 'function') {
+    root.chrome.runtime.onMessage.addListener(function (msg, sender, reply) {
+      if (!msg || msg.type !== 'reelscope:settings-update' || (sender && sender.id && root.chrome.runtime.id && sender.id !== root.chrome.runtime.id)) return;
+      var patch = msg.feature && BY_ID[msg.feature.id] ? featurePatch(msg.feature.id, msg.feature.on) : msg.patch;
+      if (!patch || (typeof patch !== 'function' && typeof patch !== 'object')) { reply({ ok: false }); return; }
+      serial(function () { return locked(function () { return updateNow(patch); }); }).then(function (s) { reply({ ok: true, settings: s }); }, function (e) { reply({ ok: false, error: String(e && e.message || e) }); });
+      return true;
+    });
+  }
+
+  /** One setting, wherever it lives (a split key, else rs:settings). */
+  async function readSetting(name) {
+    if (!hasChrome) return undefined;
+    var keys = SPLIT[name] ? [SPLIT[name], SETTINGS_KEY] : [SETTINGS_KEY];
+    var r = await root.chrome.storage.local.get(keys);
+    if (SPLIT[name] && r[SPLIT[name]] !== undefined) return r[SPLIT[name]];
+    return (r[SETTINGS_KEY] || {})[name];
+  }
+  /** Move radar / niche / ownProfit out of rs:settings (once; the service worker calls it at start). */
+  function migrateSplit() {
+    return serial(async function () {
+      if (!hasChrome) return 0;
+      var keys = [SETTINGS_KEY].concat(Object.keys(SPLIT).map(function (k) { return SPLIT[k]; }));
+      var r = await root.chrome.storage.local.get(keys);
+      var s = Object.assign({}, r[SETTINGS_KEY]);
+      var o = {};
+      var n = 0;
+      Object.keys(SPLIT).forEach(function (k) {
+        if (!(k in s)) return;
+        if (r[SPLIT[k]] === undefined && s[k] != null) o[SPLIT[k]] = s[k];
+        delete s[k];
+        n++;
+      });
+      if (!n) return 0;
+      o[SETTINGS_KEY] = s;
+      await root.chrome.storage.local.set(o);
+      take(s);
+      return n;
+    });
+  }
+
+  /** Turn a feature on or off (stored in rs:settings.features). */
+  function set(id, on) {
+    if (!BY_ID[id] || !hasChrome) return Promise.resolve(false);
+    var done = function () { return true; };
+    if (!extOrigin() && root.chrome.runtime && root.chrome.runtime.sendMessage) return serial(function () { return viaWorker({ feature: { id: id, on: !!on } }); }).then(done);
+    return updateSettings(featurePatch(id, on)).then(done);
   }
   /** A choice setting's current value (CHOICES), e.g. choice('outlierFormula') → 'median'. */
   function choice(name) { return cache.choices[name] != null ? cache.choices[name] : choiceOf(name); }
   /** Store a choice setting (rs:settings.<name>). */
-  function setChoice(name, value) { return serial(function () { return setChoiceNow(name, value); }); }
-  async function setChoiceNow(name, value) {
-    if (!CHOICES[name] || CHOICES[name].values.indexOf(value) === -1 || !hasChrome) return false;
-    var r = await root.chrome.storage.local.get(SETTINGS_KEY);
-    var s = Object.assign({}, r[SETTINGS_KEY]);
-    s[name] = value;
-    var o = {};
-    o[SETTINGS_KEY] = s;
-    await root.chrome.storage.local.set(o);
-    take(s);
-    return true;
+  function setChoice(name, value) {
+    if (!CHOICES[name] || CHOICES[name].values.indexOf(value) === -1 || !hasChrome) return Promise.resolve(false);
+    var p = {};
+    p[name] = value;
+    return updateSettings(p).then(function () { return true; });
   }
 
   /** Back to the defaults (forgets every choice). */
-  function reset() { return serial(resetNow); }
-  async function resetNow() {
-    if (!hasChrome) return;
-    var r = await root.chrome.storage.local.get(SETTINGS_KEY);
-    var s = Object.assign({}, r[SETTINGS_KEY]);
-    delete s.features;
-    Object.keys(CHOICES).forEach(function (k) { delete s[k]; });
-    var o = {};
-    o[SETTINGS_KEY] = s;
-    await root.chrome.storage.local.set(o);
-    take(s);
+  function reset() {
+    if (!hasChrome) return Promise.resolve();
+    var p = { features: undefined };
+    Object.keys(CHOICES).forEach(function (k) { p[k] = undefined; });
+    return updateSettings(p).then(function () {});
   }
 
   /** What is set up, from storage: { apiKey, bridge, bridgeKey, oauth } (undefined = not known yet). */
@@ -389,6 +469,7 @@
     SETTINGS_KEY: SETTINGS_KEY, GROUPS: GROUPS, FEATURES: FEATURES, CHOICES: CHOICES, choiceOf: choiceOf, choice: choice, setChoice: setChoice,
     get: get, defaults: defaults, sanitize: sanitize, resolve: resolve, isOnIn: isOnIn, missing: missing, lang: lang,
     ready: ready, isOn: isOn, flags: flags, onChange: onChange, set: set, reset: reset, env: env,
+    SPLIT: SPLIT, updateSettings: updateSettings, readSetting: readSetting, migrateSplit: migrateSplit,
     uiLang: function () { return lang(cache.uiLang); }
   };
 });

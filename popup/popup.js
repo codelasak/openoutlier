@@ -102,13 +102,11 @@ document.getElementById('clear').addEventListener('click', async function () {
 });
 
 var SETTINGS_KEY = 'rs:settings';
-async function setSetting(key, value) {
-  var r = await chrome.storage.local.get(SETTINGS_KEY);
-  var s = Object.assign({}, r[SETTINGS_KEY]);
-  s[key] = value;
-  var patch = {};
-  patch[SETTINGS_KEY] = s;
-  await chrome.storage.local.set(patch);
+// Through the shared helper (src/features.js): only this key changes, from a fresh read.
+function setSetting(key, value) {
+  var p = {};
+  p[key] = value;
+  return self.OpenOutlierFeatures.updateSettings(p);
 }
 var detailsBox = document.getElementById('details');
 var agentsBox = document.getElementById('agents');

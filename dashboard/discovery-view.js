@@ -159,20 +159,21 @@
     function reload(delay) { var k = st.key; setTimeout(function () { if (st.key === k) load(st.tab, st.arg, true); }, delay || 0); }
 
     // ---- rs:settings.radar --------------------------------------------------------------------------
+    // The radar settings have their own storage key (rs:radar, src/features.js SPLIT).
     var settings = {};
     function radarSettings() { return D.sanitizeRadar(settings.radar); }
-    chrome.storage.local.get(SETTINGS_KEY).then(function (r) { settings = r[SETTINGS_KEY] || {}; });
-    chrome.storage.onChanged.addListener(function (c, area) { if (area === 'local' && c[SETTINGS_KEY]) settings = c[SETTINGS_KEY].newValue || {}; });
+    function readRadar() { return F.readSetting('radar').then(function (v) { settings = { radar: v }; }); }
+    readRadar();
+    chrome.storage.onChanged.addListener(function (c, area) { if (area === 'local' && (c[F.SPLIT.radar] || c[SETTINGS_KEY])) readRadar(); });
     async function saveRadar(fn) {
-      var r = await chrome.storage.local.get(SETTINGS_KEY);
-      var s = Object.assign({}, r[SETTINGS_KEY]);
-      var rd = D.sanitizeRadar(s.radar);
-      fn(rd);
-      s.radar = D.sanitizeRadar(rd);
-      settings = s;
-      var o = {};
-      o[SETTINGS_KEY] = s;
-      await chrome.storage.local.set(o);
+      var next = null;
+      await F.updateSettings(async function () {
+        var rd = D.sanitizeRadar(await F.readSetting('radar'));
+        fn(rd);
+        next = D.sanitizeRadar(rd);
+        return { radar: next };
+      });
+      settings = { radar: next };
       st.msg = L().saved;
       env.rerender();
       reload(2500); // the settings reach the bridge ~1.5 s after a change

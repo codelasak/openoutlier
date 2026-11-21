@@ -138,10 +138,16 @@ test('language: a saved choice, then ?hl=, then the page or Chrome language', ()
   assert.equal(ctx('', '', 'de-DE', 'chrome-extension:').lang(), 'en');
 });
 
+/** navigator.locks as the extension's pages share it (one origin): one holder at a time per name. */
+function fakeLocks() {
+  const tails = {};
+  return { request: (name, fn) => { const run = (tails[name] || Promise.resolve()).then(() => fn()); tails[name] = run.catch(() => {}); return run; } };
+}
+
 /** src/features.js in a sandbox with a fake chrome.storage that fires onChanged like Chrome does. */
-function browser(initial = {}) {
-  const local = JSON.parse(JSON.stringify(initial));
-  const listeners = [];
+function browser(initial = {}, shared = null) {
+  const local = shared ? shared.local : JSON.parse(JSON.stringify(initial));
+  const listeners = shared ? shared.listeners : [];
   const chrome = {
     storage: {
       local: {
@@ -150,14 +156,19 @@ function browser(initial = {}) {
           const changes = {};
           for (const [k, v] of Object.entries(o)) { changes[k] = { oldValue: local[k], newValue: JSON.parse(JSON.stringify(v)) }; local[k] = JSON.parse(JSON.stringify(v)); }
           setTimeout(() => listeners.forEach((fn) => fn(changes, 'local')), 0);
+        },
+        remove: async (k) => {
+          const changes = {};
+          for (const x of [].concat(k)) if (x in local) { changes[x] = { oldValue: local[x] }; delete local[x]; }
+          setTimeout(() => listeners.forEach((fn) => fn(changes, 'local')), 0);
         }
       },
       onChanged: { addListener: (fn) => listeners.push(fn) }
     }
   };
-  const sandbox = { self: { chrome, location: { search: '', protocol: 'chrome-extension:' }, navigator: { language: 'en-US' } }, URLSearchParams, Promise, Object, Array, JSON, console, setTimeout };
+  const sandbox = { self: { chrome, location: { search: '', protocol: 'chrome-extension:' }, navigator: { language: 'en-US', locks: shared ? shared.locks : undefined } }, URLSearchParams, Promise, Object, Array, JSON, console, setTimeout };
   vm.runInNewContext(readFileSync(join(__dirname, '..', 'src', 'features.js'), 'utf8'), sandbox);
-  return { F: sandbox.self.OpenOutlierFeatures, local, chrome };
+  return { F: sandbox.self.OpenOutlierFeatures, local, chrome, listeners };
 }
 
 test('browser: isOn reads rs:settings.features, set() stores only the choice, onChange fires without a reload', async () => {
@@ -220,6 +231,87 @@ test('browser: two quick switches are both kept (writes go one at a time)', asyn
   await Promise.all([B.set('card-vph', false), B.set('dislikes', false), B.setChoice('outlierFormula', 'mean'), B.set('hide-shorts', true)]);
   assert.deepEqual({ ...local['rs:settings'].features }, { 'card-vph': false, dislikes: false, 'hide-shorts': true });
   assert.equal(local['rs:settings'].outlierFormula, 'mean');
+});
+
+test('settings helper (review A4): only the changed key is written, from a fresh read; two pages writing at once lose nothing', async () => {
+  const shared = { local: { 'rs:settings': { youtubeApiKey: 'AIza' + 'x'.repeat(35), agentBridge: true, features: { dislikes: false } } }, listeners: [], locks: fakeLocks() };
+  const popup = browser(null, shared).F;
+  const library = browser(null, shared).F;
+  const content = browser(null, shared).F;
+  await Promise.all([popup.ready, library.ready, content.ready]);
+  // Interleaved: the popup turns the bridge off, the Library saves the API key and the language, a content script flips a switch.
+  await Promise.all([
+    popup.updateSettings({ agentBridge: false }),
+    library.updateSettings({ uiLang: 'tr' }),
+    library.updateSettings(async (s) => ({ youtubeApiKey: s.youtubeApiKey.replace('x', 'y') })),
+    content.set('card-vph', false)
+  ]);
+  const st = shared.local['rs:settings'];
+  assert.equal(st.agentBridge, false);
+  assert.equal(st.uiLang, 'tr');
+  assert.match(st.youtubeApiKey, /^AIzay/);
+  assert.deepEqual({ ...st.features }, { dislikes: false, 'card-vph': false }, 'the switch merged into the stored features');
+  // undefined deletes a key.
+  await popup.updateSettings({ uiLang: undefined });
+  assert.equal('uiLang' in shared.local['rs:settings'], false);
+  // A write returns the merged settings and updates this page's cache at once.
+  const after = await library.updateSettings({ outlierFormula: 'mean' });
+  assert.equal(after.outlierFormula, 'mean');
+  assert.equal(library.choice('outlierFormula'), 'mean');
+});
+
+test('settings helper (review A4): radar, niche and ownProfit live in their own keys; migrateSplit moves old ones; readSetting falls back', async () => {
+  const radar = { keywords: { Excel: ['pivot table'] }, maxSubs: 50000 };
+  const shared = { local: { 'rs:settings': { agentBridge: true, radar, niche: { breakoutRatio: 4 }, ownProfit: { UCx: { video: 30 } } } }, listeners: [], locks: fakeLocks() };
+  const lib = browser(null, shared).F;
+  const pop = browser(null, shared).F;
+  await lib.ready;
+  assert.deepEqual({ ...(await lib.readSetting('radar')) }, radar, 'before the move, read from rs:settings');
+  assert.equal(await lib.migrateSplit(), 3);
+  assert.deepEqual(Object.keys(shared.local['rs:settings']), ['agentBridge']);
+  assert.deepEqual({ ...shared.local['rs:radar'] }, radar);
+  assert.equal(shared.local['rs:niche-settings'].breakoutRatio, 4);
+  assert.equal(shared.local['rs:own-profit'].UCx.video, 30);
+  assert.equal(await lib.migrateSplit(), 0, 'idempotent');
+  // The radar page and the popup write at the same moment: neither can put back the other's old copy.
+  await Promise.all([
+    lib.updateSettings({ radar: Object.assign({}, radar, { maxSubs: 10000 }) }),
+    pop.updateSettings({ agentBridge: false }),
+    lib.updateSettings(async () => ({ niche: Object.assign({}, await lib.readSetting('niche'), { fastStart: false }) }))
+  ]);
+  assert.equal(shared.local['rs:radar'].maxSubs, 10000);
+  assert.equal(shared.local['rs:settings'].agentBridge, false);
+  assert.equal('radar' in shared.local['rs:settings'], false);
+  assert.deepEqual({ ...shared.local['rs:niche-settings'] }, { breakoutRatio: 4, fastStart: false });
+  await lib.updateSettings({ ownProfit: undefined });
+  assert.equal('rs:own-profit' in shared.local, false, 'undefined removes a split key');
+});
+
+test('settings helper (review A4): a content script\'s writes go through the service worker, under the pages\' lock', async () => {
+  const shared = { local: { 'rs:settings': { agentBridge: true } }, listeners: [], locks: fakeLocks() };
+  const page = browser(null, shared);
+  // The worker: same storage and lock, importScripts present, answers runtime messages.
+  const handlers = [];
+  const worker = (() => {
+    const b = browser(null, shared);
+    return b;
+  })();
+  // Re-run features.js as a worker so it registers its message handler.
+  const wsandbox = { self: { chrome: Object.assign({}, worker.chrome, { runtime: { id: 'ext', onMessage: { addListener: (fn) => handlers.push(fn) } } }), location: { search: '', protocol: 'chrome-extension:' }, navigator: { language: 'en-US', locks: shared.locks }, importScripts() {} }, URLSearchParams, Promise, Object, Array, JSON, console, setTimeout };
+  vm.runInNewContext(readFileSync(join(__dirname, '..', 'src', 'features.js'), 'utf8'), wsandbox);
+  assert.equal(handlers.length, 1);
+  // The content script: youtube.com origin, sends its writes to the worker.
+  const sent = [];
+  const csandbox = { self: { chrome: Object.assign({}, page.chrome, { runtime: { sendMessage: (m) => { sent.push(m); return new Promise((res) => handlers[0](JSON.parse(JSON.stringify(m)), { id: 'ext' }, res)); } } }), location: { search: '', protocol: 'https:' }, document: { documentElement: { lang: 'en' } }, navigator: { language: 'en-US' } }, URLSearchParams, Promise, Object, Array, JSON, console, setTimeout };
+  vm.runInNewContext(readFileSync(join(__dirname, '..', 'src', 'features.js'), 'utf8'), csandbox);
+  const CS = csandbox.self.OpenOutlierFeatures;
+  await CS.ready;
+  await Promise.all([CS.set('hide-shorts', true), page.F.updateSettings({ agentBridge: false }), CS.setChoice('outlierFormula', 'mean')]);
+  assert.deepEqual(sent.map((m) => m.type), ['reelscope:settings-update', 'reelscope:settings-update']);
+  assert.equal(shared.local['rs:settings'].agentBridge, false);
+  assert.equal(shared.local['rs:settings'].features['hide-shorts'], true);
+  assert.equal(shared.local['rs:settings'].outlierFormula, 'mean');
+  assert.equal(CS.isOn('hide-shorts'), true, 'the content script\'s cache follows the worker\'s answer');
 });
 
 test('browser: env() says what is set up, from the popup key and the bridge state', async () => {

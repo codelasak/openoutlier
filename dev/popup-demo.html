@@ -36,7 +36,7 @@
         'rs:p:yt/exceldemo': { posts: ytPosts(30), updatedAt: Date.now() - 5 * 36e5, platform: 'youtube' },
         'rs:mentions': { items: { a: {}, b: {}, c: {}, d: {} }, read: { d: true } },
         'rs:watches': [{}],
-        'rs:bridge': { connected: true, port: 47321, lastSyncAt: Date.now() - 6e4, lastBackupAt: Date.now() - 36e5, lastBackupOk: true, settingsAt: Date.now() }
+        'rs:bridge': { connected: true, port: 47811, lastSyncAt: Date.now() - 6e4, lastBackupAt: Date.now() - 36e5, lastBackupOk: true, settingsAt: Date.now() }
       };
       // ?bridge=off|nokey|ready: the bridge's copy of the key (default nokey).
       var demoBridge = new URLSearchParams(location.search).get('bridge') || 'nokey';
@@ -87,7 +87,7 @@
       var doc = new DOMParser().parseFromString(html, 'text/html');
       doc.querySelectorAll('script').forEach(function (s) { s.remove(); });
       document.body.insertAdjacentHTML('beforeend', doc.body.innerHTML.replace(/\.\.\/brand\//g, '/brand/'));
-      for (var src of ['/src/metrics.js', '/src/youtube.js', '/src/youtube-api.js', '/popup/popup.js']) {
+      for (var src of ['/src/metrics.js', '/src/youtube.js', '/src/youtube-api.js', '/src/features.js', '/popup/popup.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

@@ -4,6 +4,9 @@
 'use strict';
 importScripts('metrics.js', 'youtube.js', 'features.js', 'agent-bridge.js', 'mentions.js', 'mentions-bg.js', 'youtube-exact.js', 'youtube-api.js', 'youtube-api-bg.js', 'yt-insights.js', 'youtube-insights-bg.js'); // fileBaseName + local MCP bridge + Reddit mentions + YouTube "Get exact stats" + the optional Data API key + phase 3's badges (channels.list cache, monetization, Return YouTube Dislike)
 
+// rs:settings.radar / .niche / .ownProfit → their own keys (src/features.js SPLIT), once.
+try { self.OpenOutlierFeatures.migrateSplit().catch(function () {}); } catch (e) { /* ignore */ }
+
 var ALLOWED_HOST = /(^|\.)(cdninstagram\.com|fbcdn\.net)$/i;
 var TIKTOK_HOST = /(^|\.)(tiktokcdn(-[a-z]+)?\.com|tiktok\.com|tiktokv\.com|ibyteimg\.com|ibytedtos\.com|byteoversea\.com|muscdn\.com)$/i;
 var YT_THUMB_HOST = /^i[0-9]?\.ytimg\.com$/i;

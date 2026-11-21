@@ -193,8 +193,11 @@
     var F = self.OpenOutlierFeatures;
     var r = await chrome.storage.local.get([SETTINGS_KEY, QUOTA_KEY]);
     var s = r[SETTINGS_KEY] || {};
-    var body = JSON.stringify({ features: F ? F.sanitize(s.features) : {}, quota: r[QUOTA_KEY] || null, niche: s.niche && typeof s.niche === 'object' ? s.niche : null,
-      radar: s.radar && typeof s.radar === 'object' ? s.radar : null });
+    // Niche and radar settings have their own storage keys (src/features.js SPLIT); older installs have them in rs:settings.
+    var niche = F && F.readSetting ? await F.readSetting('niche') : s.niche;
+    var radar = F && F.readSetting ? await F.readSetting('radar') : s.radar;
+    var body = JSON.stringify({ features: F ? F.sanitize(s.features) : {}, quota: r[QUOTA_KEY] || null, niche: niche && typeof niche === 'object' ? niche : null,
+      radar: radar && typeof radar === 'object' ? radar : null });
     if (!force && body === lastSettings.body && Date.now() - lastSettings.at < SETTINGS_EVERY) return;
     var res = await post(found.port, '/settings', JSON.parse(body));
     lastSettings = { body: body, at: Date.now() };
@@ -309,7 +312,7 @@
 
   chrome.storage.onChanged.addListener(function (changes, area) {
     if (area !== 'local') return;
-    if (changes[QUOTA_KEY]) pushSettingsSoon();
+    if (changes[QUOTA_KEY] || changes['rs:niche-settings'] || changes['rs:radar']) pushSettingsSoon();
     var users = Object.keys(changes).filter(function (k) { return k.indexOf(KEY_PREFIX) === 0; }).map(function (k) { return k.slice(KEY_PREFIX.length); });
     var org = !!changes[ORG_KEY];
     var watches = !!changes[WATCHES_KEY];

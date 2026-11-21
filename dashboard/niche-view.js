@@ -571,12 +571,8 @@
     }
 
     async function saveNiche(patch) {
-      var r = await chrome.storage.local.get(SETTINGS_KEY);
-      var s = Object.assign({}, r[SETTINGS_KEY]);
-      s.niche = Object.assign({}, s.niche, patch);
-      var o = {};
-      o[SETTINGS_KEY] = s;
-      await chrome.storage.local.set(o);
+      // rs:niche-settings (its own key, src/features.js SPLIT), merged with a fresh read.
+      await F.updateSettings(async function () { return { niche: Object.assign({}, await F.readSetting('niche'), patch) }; });
       if (ui.data) ui.data.settings = Object.assign({}, ui.data.settings, patch);
       env.rerender();
     }

@@ -98,13 +98,11 @@
     function fill(s, o) { return s.replace(/\{(\w)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
     function isKey(k) { return typeof k === 'string' && /^[A-Za-z0-9_-]{30,60}$/.test(k.trim()); }
 
-    async function setSetting(key, value) {
-      var r = await chrome.storage.local.get(SETTINGS_KEY);
-      var s = Object.assign({}, r[SETTINGS_KEY]);
-      if (value === null) delete s[key]; else s[key] = value;
-      var o = {};
-      o[SETTINGS_KEY] = s;
-      await chrome.storage.local.set(o);
+    // Every write goes through the shared helper (src/features.js): only this key changes, from a fresh read.
+    function setSetting(key, value) {
+      var p = {};
+      p[key] = value === null ? undefined : value;
+      return F.updateSettings(p);
     }
 
     async function bridgeKey(action) {
