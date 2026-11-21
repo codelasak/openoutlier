@@ -30,7 +30,17 @@
       bridgeKeyYes: 'The bridge has an API key ({s}).', bridgeKeyNo: 'The bridge has no API key yet: background jobs can\'t use the API.',
       bridgeHow: 'Background jobs (niche tracking, your channel\'s daily history) run in the OpenOutlier bridge, which stays on through launchd, also while Chrome is closed. Install it once from the OpenOutlier folder:',
       bridgeMore: 'README → "Connect AI agents". The bridge answers only this extension, on 127.0.0.1.',
-      srcFile: 'from the key file', srcEnv: 'from OPENOUTLIER_YOUTUBE_API_KEY'
+      srcFile: 'from the key file', srcEnv: 'from OPENOUTLIER_YOUTUBE_API_KEY',
+      prov: {
+        title: 'Optional providers', text: 'Third-party APIs, all off. A provider makes no request until its switch is on (Features → Optional providers) and its key is here. Keys go to the bridge only (~/.openoutlier/providers.json, readable only by you, never in backups) and are never shown again.',
+        noBridge: 'Keys are kept by the bridge on this Mac, and it isn\'t connected.', on: 'on', off: 'off', keySet: 'key set', noKey: 'no key', noKeyNeeded: 'no key needed',
+        scraping: 'scraping-based', scrapingTip: 'The provider scrapes YouTube. YouTube\'s API policy (§III.E.6) doesn\'t allow that data next to an API key in the same app, so it is a separate switch and its rows are labelled.',
+        paid: 'paid', free: 'free', save: 'Save key', remove: 'Remove key', savedMsg: 'Saved on the bridge.', removedMsg: 'Removed from the bridge.',
+        fields: { clientId: 'Client ID', token: 'Token', login: 'API login', password: 'API password' },
+        sbHistory: 'History', sb30: '30 days (1 credit)', sb1y: '1 year (2 credits)', sb3y: '3 years (3 credits)', sbQuote: 'Show the cost', sbQuoteLine: '{n} tracked channels × {p} credits = {c} credits (about ${u}).', sbFree: '{n} asked in the last 30 days: free.',
+        sbGo: 'Backfill for {c} credits', sbDone: 'Backfilled {n} channels ({d} days); {u} credits used.', sbLeft: '{l} credits left.', sbOff: 'Turn on Social Blade in Features to backfill.',
+        dfsLine: '{n} keywords tracked for rank (Niche tracking → Keywords), about ${c} a day.', dfsCheck: 'Check now', dfsDone: 'Checked {n} keywords.', dfsNone: 'Pick keywords in Niche tracking → Keywords → Track rank.'
+      }
     },
     tr: {
       title: 'Ayarlar', sub: 'Özellikler, anahtarlar ve bridge',
@@ -50,7 +60,17 @@
       bridgeKeyYes: 'Bridge\'de API anahtarı var ({s}).', bridgeKeyNo: 'Bridge\'de henüz API anahtarı yok: arka plan işleri API\'yi kullanamaz.',
       bridgeHow: 'Arka plan işleri (niş takibi, kanalının günlük geçmişi) OpenOutlier bridge\'inde çalışır; launchd sayesinde Chrome kapalıyken de açık kalır. OpenOutlier klasöründen bir kez kur:',
       bridgeMore: 'README → "Connect AI agents". Bridge yalnız bu eklentiye, 127.0.0.1 üzerinden cevap verir.',
-      srcFile: 'anahtar dosyasından', srcEnv: 'OPENOUTLIER_YOUTUBE_API_KEY\'den'
+      srcFile: 'anahtar dosyasından', srcEnv: 'OPENOUTLIER_YOUTUBE_API_KEY\'den',
+      prov: {
+        title: 'İsteğe bağlı servisler', text: 'Üçüncü parti API\'ler, hepsi kapalı. Bir servis, anahtarı açılıp (Özellikler → İsteğe bağlı servisler) anahtarı buraya eklenmeden hiçbir istek atmaz. Anahtarlar sadece bridge\'e gider (~/.openoutlier/providers.json, yalnız sen okuyabilirsin, yedeklere girmez) ve bir daha gösterilmez.',
+        noBridge: 'Anahtarları bu Mac\'teki bridge tutar ve bridge bağlı değil.', on: 'açık', off: 'kapalı', keySet: 'anahtar var', noKey: 'anahtar yok', noKeyNeeded: 'anahtar gerekmez',
+        scraping: 'scraping tabanlı', scrapingTip: 'Servis YouTube\'u kazıyor. YouTube\'un API politikası (§III.E.6) bu veriyi aynı uygulamada bir API anahtarıyla kullanmaya izin vermiyor; bu yüzden ayrı bir ayar ve satırları ayrı etiketli.',
+        paid: 'ücretli', free: 'bedava', save: 'Anahtarı kaydet', remove: 'Anahtarı sil', savedMsg: 'Bridge\'e kaydedildi.', removedMsg: 'Bridge\'den silindi.',
+        fields: { clientId: 'Client ID', token: 'Token', login: 'API kullanıcı adı', password: 'API parolası' },
+        sbHistory: 'Geçmiş', sb30: '30 gün (1 kredi)', sb1y: '1 yıl (2 kredi)', sb3y: '3 yıl (3 kredi)', sbQuote: 'Maliyeti göster', sbQuoteLine: '{n} takip edilen kanal × {p} kredi = {c} kredi (yaklaşık ${u}).', sbFree: '{n} kanal son 30 günde soruldu: bedava.',
+        sbGo: '{c} krediyle geçmişi çek', sbDone: '{n} kanalın geçmişi yüklendi ({d} gün); {u} kredi kullanıldı.', sbLeft: '{l} kredi kaldı.', sbOff: 'Geçmiş çekmek için Özellikler\'den Social Blade\'i aç.',
+        dfsLine: 'Sırası takip edilen {n} kelime (Niş Takibi → Anahtar kelimeler), günde yaklaşık ${c}.', dfsCheck: 'Şimdi kontrol et', dfsDone: '{n} kelime kontrol edildi.', dfsNone: 'Kelimeleri Niş Takibi → Anahtar kelimeler → Sırayı takip et ile seç.'
+      }
     }
   };
 
@@ -67,6 +87,11 @@
       st.quota = r['rs:yt-api-quota'] || null;
       st.flags = F.flags();
       st.env = await F.env();
+      if (st.env.bridge) {
+        var p = await chrome.runtime.sendMessage({ type: 'reelscope:discovery', what: 'providers' }).catch(function () { return null; });
+        st.providers = p && p.ok ? p.providers : null;
+        st.providersOld = !!(p && p.oldBridge);
+      } else st.providers = null;
     }
 
     function L() { return S[F.uiLang()] || S.en; }
@@ -96,7 +121,7 @@
       if (code === 'tracker') { F.set('tracker', true); return; }
       if (code === 'copyKey') { bridgeKey('copy'); return; }
       if (code === 'oauth') { location.hash = '#/my-youtube'; return; }
-      var el = document.getElementById(code === 'bridge' ? 'set-bridge' : 'set-apikey');
+      var el = document.getElementById(code === 'bridge' ? 'set-bridge' : code === 'providerKey' ? 'set-providers' : 'set-apikey');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         el.classList.add('flash');
@@ -168,6 +193,93 @@
         connected ? null : [h('p', { class: 'muted small', text: T.bridgeHow }), h('pre', { class: 'set-code' }, h('code', { text: 'sh mcp/launchd/install.sh' })), h('p', { class: 'muted small', text: T.bridgeMore })]);
     }
 
+
+    // ---- phase 5: optional providers (mcp/providers/) ----------------------------------------------------
+    function fill2(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
+    var pv = { drafts: {}, msg: {}, sbHistory: '1y', quote: null, busy: false };
+    async function provCall(what, extra) {
+      pv.busy = true;
+      env.rerender();
+      var r = await chrome.runtime.sendMessage(Object.assign({ type: 'reelscope:discovery', what: what }, extra || {})).catch(function (e) { return { ok: false, error: e.message }; });
+      pv.busy = false;
+      return r || { ok: false, error: '?' };
+    }
+    function providersCard(T) {
+      var P = T.prov;
+      var lg = F.uiLang();
+      var list = F.FEATURES.filter(function (f) { return f.group === 'providers'; });
+      var body = [];
+      if (!st.env.bridge || !st.providers) body.push(h('p', { class: 'muted small', text: st.providersOld ? T.bridgeOn.replace('{p}', st.bridge.port) + ' ' + (lg === 'tr' ? 'Bridge eski: yeniden başlat.' : 'The bridge is older: restart it.') : P.noBridge }));
+      list.forEach(function (f) {
+        var id = f.provider;
+        var info = st.providers && st.providers[id];
+        var on = !!st.flags[f.id];
+        var scraping = f.notes.indexOf('scraping') !== -1;
+        var paid = f.notes.indexOf('paid') !== -1;
+        var head = h('div', { class: 'set-prov-head' },
+          h('b', { text: info ? info.name : f.label[lg] }),
+          h('span', { class: 'set-pill' + (on ? ' is-on' : ''), text: on ? P.on : P.off }),
+          info ? h('span', { class: 'set-pill' + (info.configured && info.needs_key ? ' is-ok' : ''), text: !info.needs_key ? P.noKeyNeeded : info.configured ? P.keySet : P.noKey }) : null,
+          scraping ? h('span', { class: 'set-pill is-warn', title: P.scrapingTip, text: P.scraping }) : null,
+          h('span', { class: 'set-pill is-soft', text: paid ? P.paid : P.free }));
+        var rows = [head];
+        if (info && info.cost) rows.push(h('p', { class: 'muted small', text: info.cost[lg] || info.cost.en }));
+        if (info && info.needs_key) {
+          var inputs = info.fields.map(function (k) {
+            var i = h('input', { type: k === 'clientId' || k === 'login' ? 'text' : 'password', autocomplete: 'off', spellcheck: 'false', 'aria-label': (info.name + ' ' + (P.fields[k] || k)), placeholder: P.fields[k] || k,
+              oninput: function (e) { pv.drafts[id + '.' + k] = e.target.value; } });
+            i.value = pv.drafts[id + '.' + k] || '';
+            return i;
+          });
+          rows.push(h('form', { class: 'set-provkey', onsubmit: async function (e) {
+            e.preventDefault();
+            var key = {};
+            info.fields.forEach(function (k) { key[k] = (pv.drafts[id + '.' + k] || '').trim(); });
+            var r = await provCall('provider-key', { id: id, key: key });
+            if (r.ok) info.fields.forEach(function (k) { delete pv.drafts[id + '.' + k]; });
+            pv.msg[id] = r.ok ? P.savedMsg : r.error || '?';
+            await load(); env.rerender();
+          } }, inputs, h('button', { class: 'btn', type: 'submit', disabled: pv.busy }, P.save),
+            info.configured ? h('button', { class: 'btn btn-ghost', type: 'button', disabled: pv.busy, onclick: async function () {
+              var r = await provCall('provider-key', { id: id, remove: true });
+              pv.msg[id] = r.ok ? P.removedMsg : r.error || '?';
+              await load(); env.rerender();
+            } }, P.remove) : null));
+        }
+        if (id === 'socialblade' && info && info.configured) {
+          if (!on) rows.push(h('p', { class: 'muted small', text: P.sbOff }));
+          else {
+            var hsel = h('select', { 'aria-label': P.sbHistory, onchange: function () { pv.sbHistory = hsel.value; pv.quote = null; env.rerender(); } },
+              [['30d', P.sb30], ['1y', P.sb1y], ['3y', P.sb3y]].map(function (o) { return h('option', { value: o[0], selected: pv.sbHistory === o[0], text: o[1] }); }));
+            rows.push(h('div', { class: 'm-actions set-actions' }, hsel,
+              h('button', { class: 'btn btn-ghost', type: 'button', disabled: pv.busy, onclick: async function () { var r = await provCall('sb-quote', { history: pv.sbHistory }); pv.quote = r.ok ? r : null; pv.msg[id] = r.ok ? '' : r.error; env.rerender(); } }, P.sbQuote)));
+            if (pv.quote) {
+              var q = pv.quote;
+              rows.push(h('p', { class: 'small', text: fill2(P.sbQuoteLine, { n: q.channels.length, p: q.per_channel, c: q.credits, u: q.est_usd }) + (q.free.length ? ' ' + fill2(P.sbFree, { n: q.free.length }) : '') }));
+              rows.push(h('div', { class: 'm-actions set-actions' }, h('button', { class: 'btn btn-primary', type: 'button', disabled: pv.busy || !q.channels.length, onclick: async function () {
+                var r = await provCall('sb-backfill', { history: q.history, confirm: q.credits });
+                pv.quote = null;
+                pv.msg[id] = r.ok ? fill2(P.sbDone, { n: r.channels.filter(function (c) { return !c.error; }).length, d: r.channels.reduce(function (a, c) { return a + (c.days || 0); }, 0), u: r.credits_used }) + (r.credits_left != null ? ' ' + fill2(P.sbLeft, { l: r.credits_left }) : '') : r.error || '?';
+                env.rerender();
+              } }, fill2(P.sbGo, { c: q.credits }))));
+            }
+          }
+        }
+        if (id === 'dataforseo' && info && info.configured && on) {
+          var rk = (st.settings.radar && st.settings.radar.rankKeywords) || [];
+          rows.push(h('p', { class: 'small', text: rk.length ? fill2(P.dfsLine, { n: rk.length, c: (rk.length * 0.002).toFixed(3) }) : P.dfsNone }));
+          if (rk.length) rows.push(h('div', { class: 'm-actions set-actions' }, h('button', { class: 'btn btn-ghost', type: 'button', disabled: pv.busy, onclick: async function () {
+            var r = await provCall('dfs-check');
+            pv.msg[id] = r.ok ? fill2(P.dfsDone, { n: r.checked.length }) : r.error || '?';
+            env.rerender();
+          } }, P.dfsCheck)));
+        }
+        if (pv.msg[id]) rows.push(h('p', { class: 'm-msg small', role: 'status', text: pv.msg[id] }));
+        body.push(h('div', { class: 'set-prov' + (on ? ' is-on' : '') }, rows));
+      });
+      return h('section', { class: 'm-card set-card', id: 'set-providers' }, h('h2', { text: P.title }), h('p', { class: 'muted small', text: P.text }), body);
+    }
+
     function render(main) {
       var T = L();
       var active = document.activeElement;
@@ -183,7 +295,7 @@
       });
       main.appendChild(h('div', { class: 'set-grid' },
         h('section', { class: 'set-main', 'aria-label': T.features }, h('h2', { class: 'set-h', text: T.features }), list),
-        h('aside', { class: 'set-side' }, apiCard(T), bridgeCard(T), langCard(T))));
+        h('aside', { class: 'set-side' }, apiCard(T), bridgeCard(T), providersCard(T), langCard(T))));
       if (refocus) { var el = main.querySelector(refocus); if (el) el.focus({ preventScroll: true }); }
     }
 

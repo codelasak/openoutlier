@@ -1,0 +1,50 @@
+{
+ "kind": "youtube#searchListResponse",
+ "regionCode": "US",
+ "items": [
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrOP000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrofficeprotipsxxxxxx",
+    "title": "XLOOKUP vs VLOOKUP in 2026"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrSW000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrsheetwizardxxxxxxxx",
+    "title": "XLOOKUP is dead? The function nobody talks about"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrOLD00001"
+   },
+   "snippet": {
+    "channelId": "UCrdrcellmatesxxxxxxxxxx",
+    "title": "Old XLOOKUP tutorial (before the window)"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrSW000002"
+   },
+   "snippet": {
+    "channelId": "UCrdrsheetwizardxxxxxxxx",
+    "title": "XLOOKUP with two criteria (no helper column)"
+   }
+  }
+ ]
+}

@@ -595,9 +595,25 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
   }
 
+  // card-velocity in the panel's Videos list: the same bridge answer as the in-page badges (src/youtube-cards.js).
+  var velSub = false;
+  function velocityOf(p) {
+    var D = self.OpenOutlierYTData;
+    var I = self.OpenOutlierInsights;
+    if (!D || !I || !FT || !FT.isOn('card-velocity')) return null;
+    if (!velSub && D.onData) { velSub = true; D.onData(scheduleRender); }
+    var f = D.videoFacts(p.code);
+    var v = f && f.velocity;
+    if (!v || v.score == null) return null;
+    var lg = D.lang();
+    var at = I.cpLabel(v.hours, lg);
+    return { text: at + ': ' + I.times(v.score, lg), hot: v.score >= 3,
+      tip: (lg === 'tr' ? 'Takip edilen video: ' + at + ' içinde ' + I.full(v.views, lg) + ' izlenme, kanalın normalinin ' : 'Tracked video: ' + I.full(v.views, lg) + ' views at ' + at + ', ') + I.times(v.score, lg) + (lg === 'tr' ? '' : ' the channel\'s normal') };
+  }
   var panel = P.create({
     cssText: cssText,
     platform: 'youtube',
+    velocityOf: velocityOf,
     listTabLabel: 'Videos',
     autoTip: 'Scroll this channel tab automatically until every video has loaded',
     onAutoScroll: toggleAuto,

@@ -1,0 +1,39 @@
+{
+ "kind": "youtube#searchListResponse",
+ "regionCode": "US",
+ "items": [
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrPP000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrpivotpointtvxxxxxxx",
+    "title": "Pivot Table tricks the pros use"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrGL000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrgridlogicxxxxxxxxxx",
+    "title": "Pivot tables finally explained (with a cat)"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrSS000002"
+   },
+   "snippet": {
+    "channelId": "UCrdrspreadsheetsistersx",
+    "title": "Excel pivot table in 60 seconds #shorts"
+   }
+  }
+ ]
+}

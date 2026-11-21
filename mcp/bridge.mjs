@@ -27,6 +27,10 @@ import * as NICHE from './niche.mjs';
 import * as OWN from './own-history.mjs';
 import * as CARDS from './cards.mjs';
 import * as CONTENT from './content.mjs';
+import * as DISC from './discovery.mjs';
+import * as PROV from './providers/index.mjs';
+import * as SB from './providers/socialblade.mjs';
+import * as DFS from './providers/dataforseo.mjs';
 import { createRequire } from 'node:module';
 
 const Features = createRequire(import.meta.url)('../src/features.js');
@@ -43,7 +47,9 @@ const VERSION = '0.1.0';
 // 'own-history': own-channel history (phase 2: several channels, /youtube/own/*, milestones in the settings answer).
 // 'cards': phase 3's in-page badges and cards (/youtube/cards, /youtube/channel-card, /youtube/video-card).
 // 'content-tools': phase 4 (/youtube/comments, /youtube/sponsors, title history in /youtube/video-card, sponsors on the niche page).
-const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools'];
+// 'discovery': phase 5 (/youtube/discovery/*: radar, channel map, similar channels and thumbnails, keyword ideas, co-recommendations).
+// 'providers': phase 5's optional third-party providers (/providers*: status, keys, Social Blade backfill, DataForSEO ranks).
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools', 'discovery', 'providers'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
@@ -152,6 +158,8 @@ async function handle(req, res, port) {
       const n = NICHE.sanitizeSettings(body.niche);
       if (n && JSON.stringify(n) !== JSON.stringify(st.getMeta(NICHE.SETTINGS_META, null))) st.setMeta(NICHE.SETTINGS_META, n);
     }
+    // Phase 5: the radar's keyword lists, thresholds and hl/gl (rs:settings.radar).
+    if (body.radar && typeof body.radar === 'object') DISC.saveRadarSettings(st, body.radar);
     return send(res, 200, await settingsAnswer(), origin);
   }
   if (req.method === 'POST' && url.pathname === '/settings/youtube-api-key') {
@@ -235,6 +243,60 @@ async function handle(req, res, port) {
     const r = CONTENT.channelSponsors(store(), { channel: url.searchParams.get('channel') || '' });
     return send(res, r.error ? 400 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r }, origin);
   }
+  // Discovery (phase 5, mcp/discovery.mjs): radar, channel map, similar channels / thumbnails, keyword ideas.
+  if (req.method === 'POST' && url.pathname === '/youtube/discovery/corec') {
+    const body = await readBody(req);
+    const r = DISC.putCoRecs(store(), { source: body.source, recs: Array.isArray(body.recs) ? body.recs.slice(0, 40) : [] });
+    return send(res, r.ok || r.off ? 200 : 400, r, origin);
+  }
+  if (url.pathname.startsWith('/youtube/discovery/')) {
+    const q = url.searchParams;
+    const niche = q.has('niche') ? q.get('niche').slice(0, 80) : undefined;
+    if (method === 'GET' && url.pathname === '/youtube/discovery/radar') return send(res, 200, DISC.radarPage(store(), { niche }), origin);
+    if (req.method === 'POST' && url.pathname === '/youtube/discovery/radar/run') {
+      if (!Features.resolve(store().getMeta('features', null))['niche-radar']) return send(res, 200, { ok: false, off: true, error: 'The niche radar is switched off.' }, origin);
+      return send(res, 200, DISC.radarRunNow(store()), origin);
+    }
+    if (method === 'GET' && url.pathname === '/youtube/discovery/map') return send(res, 200, DISC.channelMap(store(), { niche }), origin);
+    if (method === 'GET' && url.pathname === '/youtube/discovery/similar') {
+      const r = DISC.similarChannels(store(), { channel: q.get('channel') || '', limit: Math.min(30, Number(q.get('limit')) || 12) });
+      return send(res, r.ok ? 200 : 404, r, origin);
+    }
+    if (method === 'GET' && url.pathname === '/youtube/discovery/thumbs') {
+      const r = await DISC.similarThumbs(store(), { video: q.get('id') || '' });
+      return send(res, r.ok ? 200 : 400, r, origin);
+    }
+    if (method === 'GET' && url.pathname === '/youtube/discovery/keywords') {
+      const seed = q.get('seed') ? q.get('seed').slice(0, 100) : null;
+      const r = await DISC.keywordIdeas(store(), { niche, seeds: seed ? [seed] : undefined, expand: q.get('expand') ? q.get('expand').slice(0, 100) : undefined,
+        hl: q.get('hl') || undefined, gl: q.get('gl') || undefined, lang: q.get('lang') === 'tr' ? 'tr' : 'en' });
+      return send(res, 200, r, origin);
+    }
+  }
+  // Optional providers (mcp/providers/): status, keys (never echoed), Social Blade backfill, DataForSEO rank check.
+  if (method === 'GET' && url.pathname === '/providers') return send(res, 200, { ok: true, providers: PROV.status(store()) }, origin);
+  if (req.method === 'POST' && url.pathname === '/providers/key') {
+    const body = await readBody(req);
+    const id = String(body.id || '');
+    const r = body.remove === true ? PROV.removeKey(id) : PROV.saveKey(id, body.key);
+    if (r.ok) log(body.remove === true ? 'removed the key of provider' : 'saved the key of provider', id);
+    return send(res, r.ok ? 200 : 400, { ...r, providers: PROV.status(store()) }, origin);
+  }
+  if (req.method === 'POST' && url.pathname === '/providers/socialblade/quote') {
+    const body = await readBody(req);
+    return send(res, 200, { ok: true, ...SB.quote(store(), { channels: Array.isArray(body.channels) ? body.channels.slice(0, 500) : undefined, history: body.history }) }, origin);
+  }
+  if (req.method === 'POST' && url.pathname === '/providers/socialblade/backfill') {
+    const body = await readBody(req);
+    const r = await SB.backfill(store(), { channels: Array.isArray(body.channels) ? body.channels.slice(0, 500) : undefined, history: body.history, confirm: body.confirm,
+      on: !!Features.resolve(store().getMeta('features', null))['provider-socialblade'] });
+    return send(res, 200, r, origin);
+  }
+  if (req.method === 'POST' && url.pathname === '/providers/dataforseo/check') {
+    const s = DISC.radarSettings(store());
+    const r = await DFS.checkRanks(store(), { keywords: s.rankKeywords, region: s.region, lang: s.lang, on: !!Features.resolve(store().getMeta('features', null))['provider-dataforseo'] });
+    return send(res, 200, r, origin);
+  }
   // Kanalım (mcp/own-history.mjs): the stored daily history of the connected channels.
   if (method === 'GET' && url.pathname === '/youtube/own/page') {
     const ch = url.searchParams.get('channel') || '';
@@ -283,7 +345,9 @@ async function settingsAnswer() {
     // Breakouts the extension hasn't shown as a Chrome notification yet (it acks them).
     niche: (() => { try { return { tracked: store().db.prepare('SELECT COUNT(*) AS n FROM tracked_channels WHERE active = 1').get().n, alerts: NICHE.pendingAlerts(store()), settings: NICHE.nicheSettings(store()) }; } catch { return null; } })(),
     // New milestones of the connected channels (the extension notifies when own-milestones is on, and acks).
-    own: (() => { try { return { channels: OWN.ownChannels(store()).length, milestones: OWN.pendingMilestones(store()) }; } catch { return null; } })()
+    own: (() => { try { return { channels: OWN.ownChannels(store()).length, milestones: OWN.pendingMilestones(store()) }; } catch { return null; } })(),
+    // Phase 5: the optional providers (on / key set / scraping), never the keys.
+    providers: (() => { try { return PROV.status(store()); } catch { return null; } })()
   };
 }
 

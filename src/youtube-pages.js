@@ -21,6 +21,7 @@
   var I = self.OpenOutlierInsights;
   var FT = self.OpenOutlierFeatures;
   var D = self.OpenOutlierYTData;
+  var DS = self.OpenOutlierDiscovery; // phase 5: similar channels, the RPM estimate (src/discovery.js)
   if (!Y || !I || !FT || !D) return;
 
   var S = {
@@ -48,6 +49,12 @@
       promotes: 'Promotes', promotesTip: 'Sponsor phrases, discount codes and affiliate / tracked links in this channel\'s video descriptions (rule-based scan, {n} descriptions).',
       promotesNone: 'No sponsors or affiliate links in {n} descriptions', promotesUntracked: 'Track the channel to scan its descriptions for sponsors', vids: '{n} videos', vid1: '1 video', code: 'code {c}', promotesScan: 'from {n} descriptions',
       kindSponsor: 'sponsor', kindAffiliate: 'affiliate', kindLink: 'link', kindUtm: 'tracked link', kindCode: 'code', kindDiscount: 'discount',
+      similar: 'Similar channels', similarTip: 'Recommended next to this channel in the "Up Next" lists of videos you watched (counts kept on this Mac, fading over ~30 days) and channels whose titles and tags read alike.',
+      simCo: 'Up Next ×{n}', simText: 'similar titles', simBoth: 'Up Next ×{n} · titles', simNone: 'Nothing yet: it learns from the "Up Next" lists of the videos you watch.', simMap: 'Channel map', simTracked: 'tracked',
+      rpm: 'Est. revenue / mo', rpmEst: 'estimate', rpmSub: 'RPM ${lo}–{hi} · {cat}', rpmSubShorts: 'RPM ${lo}–{hi} · {cat} · Shorts ${slo}–{shi}', rpmNone: 'needs views per month',
+      rpmTip: 'A rough estimate, not the channel\'s real revenue: {views} views a month ({basis}) × a typical RPM for {cat} (what creators earn per 1,000 views, mostly US/UK audiences). Real RPM varies 3× by country, season and topic.',
+      rpmTracked: 'tracker, last {d} days', rpmLifetime: 'lifetime average', rpmRecent: 'saved uploads of the last 90 days, a floor', rpmOther: 'general',
+      simThumbs: 'Similar thumbnails', simThumbsTip: 'Library videos whose thumbnails look like this one (perceptual hash), in the OpenOutlier Library.',
       title: 'OpenOutlier'
     },
     tr: {
@@ -74,6 +81,12 @@
       promotes: 'Tanıttıkları', promotesTip: 'Bu kanalın video açıklamalarındaki sponsor ifadeleri, indirim kodları ve affiliate / takipli linkler (kurallarla tarama, {n} açıklama).',
       promotesNone: '{n} açıklamada sponsor ya da affiliate link yok', promotesUntracked: 'Açıklamalarını sponsorlar için taramak üzere kanalı takip et', vids: '{n} video', vid1: '1 video', code: 'kod {c}', promotesScan: '{n} açıklamadan',
       kindSponsor: 'sponsor', kindAffiliate: 'affiliate', kindLink: 'link', kindUtm: 'takipli link', kindCode: 'kod', kindDiscount: 'indirim',
+      similar: 'Benzer kanallar', similarTip: 'İzlediğin videoların "Sıradaki" listelerinde bu kanalın yanında önerilenler (sayılar bu Mac\'te, ~30 günde solar) ve başlık ve etiketleri benzeyen kanallar.',
+      simCo: 'Sıradaki ×{n}', simText: 'benzer başlıklar', simBoth: 'Sıradaki ×{n} · başlıklar', simNone: 'Henüz yok: izlediğin videoların "Sıradaki" listelerinden öğrenir.', simMap: 'Kanal haritası', simTracked: 'takipte',
+      rpm: 'Tahmini gelir / ay', rpmEst: 'tahmin', rpmSub: 'RPM ${lo}–{hi} · {cat}', rpmSubShorts: 'RPM ${lo}–{hi} · {cat} · Shorts ${slo}–{shi}', rpmNone: 'aylık izlenme gerekli',
+      rpmTip: 'Kaba bir tahmin, kanalın gerçek geliri değil: ayda {views} izlenme ({basis}) × {cat} için tipik RPM (içerik üreticisinin 1.000 izlenme başına kazancı, çoğunlukla ABD/İngiltere izleyicisi). Gerçek RPM ülkeye, mevsime ve konuya göre 3 kat değişir.',
+      rpmTracked: 'takipten, son {d} gün', rpmLifetime: 'kanal ömrü ortalaması', rpmRecent: 'son 90 günün kayıtlı yüklemeleri, alt sınır', rpmOther: 'genel',
+      simThumbs: 'Benzer thumbnail\'ler', simThumbsTip: 'Thumbnail\'i buna benzeyen Library videoları (perceptual hash), OpenOutlier Library\'de.',
       title: 'OpenOutlier'
     }
   };
@@ -149,6 +162,16 @@
     '.pr b{font-weight:500}',
     '.pr small{color:var(--muted);font-size:11.5px}',
     '.wide .sub{white-space:normal}',
+    // Phase 5: similar channels (channel card) and the similar-thumbnails link (watch card).
+    '.sim{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px 0 4px;border-radius:13px;box-shadow:inset 0 0 0 1px var(--line);font-size:12.5px;white-space:nowrap;color:inherit;text-decoration:none;max-width:100%}',
+    '.sim:hover{background:var(--line)}',
+    '.sim img,.sim .av{width:18px;height:18px;border-radius:50%;flex:none;object-fit:cover;background:var(--line)}',
+    '.sim b{font-weight:500;overflow:hidden;text-overflow:ellipsis}',
+    '.sim small{color:var(--muted);font-size:11.5px}',
+    '.wide a.more,.cell a.go{color:var(--link);text-decoration:none;font-size:12.5px;white-space:nowrap}',
+    '.wide a.more:hover,.cell a.go:hover{text-decoration:underline}',
+    '.cell a.go{font-size:14px;font-weight:500;line-height:22px}',
+    '.est{display:inline-block;margin-left:6px;padding:0 5px;border-radius:4px;font-size:10.5px;font-weight:500;line-height:16px;vertical-align:2px;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}',
     '@media (max-width:640px){.cell{padding:2px 10px}.v{font-size:14px}}'
   ].join('\n');
   var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path fill="#C8FF2E" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
@@ -286,7 +309,7 @@
   }
   function channelCard() {
     var c = ctx();
-    var on = c.kind === 'channel' && (FT.isOn('channel-stats') || FT.isOn('channel-growth') || FT.isOn('channel-monetization') || FT.isOn('channel-sponsors'));
+    var on = c.kind === 'channel' && (FT.isOn('channel-stats') || FT.isOn('channel-growth') || FT.isOn('channel-monetization') || FT.isOn('channel-sponsors') || FT.isOn('channel-similar') || FT.isOn('channel-rpm'));
     var acct = on ? (D.lib() && D.lib().pageAccount()) || c.id : null;
     var slot = on && acct ? channelSlot() : null;
     if (!slot) { if (chCard) { chCard.el.remove(); chCard = null; } return; }
@@ -305,14 +328,17 @@
     if (uc && FT.isOn('channel-stats')) D.requestChannels([uc]);
     var info = uc ? D.channelInfo(uc) : null;
     var st = I.channelStats(posts, info || (prof.videos != null ? { videos: prof.videos } : null), Date.now());
-    var growth = uc && FT.isOn('channel-growth') ? askBridge('c:' + uc, { what: 'channel', channel: uc }) : null;
+    var growth = uc && (FT.isOn('channel-growth') || FT.isOn('channel-rpm')) ? askBridge('c:' + uc, { what: 'channel', channel: uc }) : null;
+    if (uc && FT.isOn('channel-rpm') && !FT.isOn('channel-stats')) D.requestChannels([uc]);
+    var sim = uc && DS && FT.isOn('channel-similar') ? askSimilar(uc) : null;
+    var rpm = DS && FT.isOn('channel-rpm') ? rpmOf(posts, info, growth, prof) : null;
     var monA = null;
     if (FT.isOn('channel-monetization') && uc) {
       var smp = I.sampleVideos(posts, 5);
       monA = posts.length ? askMon('c:' + uc, { kind: 'channel', channel: uc, ids: smp.ids, shortsOnly: smp.shortsOnly }) : { state: 'checking' };
     }
     var spons = uc && FT.isOn('channel-sponsors') ? askSponsors(uc) : null;
-    var sig = JSON.stringify([lg, acct, st, growth && growth.series && growth.series.length, growth && growth.tracked, monA, spons && [spons.scanned, spons.brands.length], FT.flags(), D.noKey(), document.documentElement.hasAttribute('dark')]);
+    var sig = JSON.stringify([lg, acct, st, growth && growth.series && growth.series.length, growth && growth.tracked, monA, spons && [spons.scanned, spons.brands.length], sim && sim.similar && sim.similar.map(function (x) { return x.id; }), rpm, FT.flags(), D.noKey(), document.documentElement.hasAttribute('dark')]);
     draw(chCard, sig, function (card) {
       card.setAttribute('aria-label', L.stats);
       var head = h('div', { class: 'cell head' }, []);
@@ -340,10 +366,59 @@
           card.appendChild(cell(L.growth, h('span', { class: 'v' }, [h('span', { class: 'sk' })]), { sub: L.growthNone }));
         }
       }
+      if (rpm) card.appendChild(rpmCell(rpm, L, lg));
       if (FT.isOn('channel-stats') && !info && D.noKey()) card.appendChild(h('p', { class: 'note', text: L.needKey }));
       // Untracked channels without saved descriptions get no row (no clutter on every channel page).
       if (spons && (spons.brands.length || spons.tracked)) card.appendChild(sponsorRow(spons, L, lg));
+      // Similar channels: shown when there is something to show, or (as a hint) on channels the tracker or the Library knows.
+      if (sim && (sim.similar.length || sim.channel && (sim.channel.tracked || sim.channel.saved))) card.appendChild(similarRow(sim, L, lg));
     });
+  }
+
+  // ---- channel-similar (phase 5, mcp/discovery.mjs through the bridge) ----------------------------------
+  var similar = {}; // UC → answer | { pending } | { none }
+  function askSimilar(uc) {
+    if (similar[uc]) return similar[uc].none || similar[uc].pending ? null : similar[uc];
+    similar[uc] = { pending: true };
+    D.send({ type: 'reelscope:discovery', what: 'similar', channel: uc }).then(function (r) { similar[uc] = r && r.ok ? r : { none: true }; refresh(); });
+    return null;
+  }
+  function similarRow(sim, L, lg) {
+    var row = h('div', { class: 'wide', title: L.similarTip }, [h('b', { text: L.similar })]);
+    if (!sim.similar.length) { row.appendChild(h('span', { class: 'sub', text: L.simNone })); return row; }
+    sim.similar.slice(0, 6).forEach(function (x) {
+      var why = x.why === 'both' ? fill(L.simBoth, { n: I.full(x.seen || 0, lg) }) : x.why === 'corec' ? fill(L.simCo, { n: I.full(x.seen || 0, lg) }) : L.simText;
+      var tip = [x.name, x.subs != null ? I.compact(x.subs, lg) : null, x.tracked ? L.simTracked : null, x.terms && x.terms.length ? x.terms.join(', ') : null].filter(Boolean).join(' · ');
+      var av = x.thumb ? h('img', { src: x.thumb, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }) : h('span', { class: 'av' });
+      row.appendChild(h('a', { class: 'sim', href: x.url, title: tip }, [av, h('b', { text: x.name }), h('small', { text: why })]));
+    });
+    var more = h('a', { class: 'more', href: '#', text: L.simMap + ' →' });
+    more.addEventListener('click', function (e) { e.preventDefault(); try { chrome.runtime.sendMessage({ type: 'reelscope:open-dashboard', hash: '#/niche/map' }); } catch (err) { /* reloaded */ } });
+    row.appendChild(more);
+    return row;
+  }
+
+  // ---- channel-rpm (phase 5): category RPM × views per month, always labelled an estimate ----------------
+  function rpmOf(posts, info, growth, prof) {
+    var mv = DS.monthlyViews({ series: growth && growth.series, totalViews: info && info.views, createdAt: info && info.publishedAt, posts: posts, now: Date.now() });
+    var cat = DS.mainCategory(posts);
+    var recent = posts.filter(function (p) { return p.takenAt && Date.now() - p.takenAt < 180 * 864e5 && p.views; });
+    var tot = recent.reduce(function (a, p) { return a + p.views; }, 0);
+    var sh = tot ? recent.filter(function (p) { return p.type === 'short'; }).reduce(function (a, p) { return a + p.views; }, 0) / tot : 0;
+    var est = DS.rpmEstimate({ category: cat, views: mv ? mv.views : null, shortsShare: sh });
+    est.basis = mv;
+    est.shortsShare = sh;
+    return est;
+  }
+  function money(x, lg) { return new Intl.NumberFormat(lg === 'tr' ? 'tr-TR' : 'en-US', { notation: x >= 10000 ? 'compact' : 'standard', maximumFractionDigits: x >= 10000 ? 1 : 0 }).format(x); }
+  function rpmCell(est, L, lg) {
+    var cat = est.known ? est.category : L.rpmOther;
+    var n = function (x) { return new Intl.NumberFormat(lg === 'tr' ? 'tr-TR' : 'en-US', { maximumFractionDigits: 2 }).format(x); };
+    var sub = est.shortsShare >= 0.2 ? fill(L.rpmSubShorts, { lo: n(est.rpm[0]), hi: n(est.rpm[1]), cat: cat, slo: n(est.shortsRpm[0]), shi: n(est.shortsRpm[1]) }) : fill(L.rpmSub, { lo: n(est.rpm[0]), hi: n(est.rpm[1]), cat: cat });
+    var b = est.basis;
+    var basis = !b ? '' : b.basis === 'tracked' ? fill(L.rpmTracked, { d: b.days }) : b.basis === 'lifetime' ? L.rpmLifetime : L.rpmRecent;
+    var v = h('span', { class: 'v' }, [est.monthly ? '$' + money(est.monthly[0], lg) + '–' + money(est.monthly[1], lg) : '–', h('span', { class: 'est', text: L.rpmEst })]);
+    return cell(L.rpm, v, { tip: b ? fill(L.rpmTip, { views: I.compact(b.views, lg), basis: basis, cat: cat }) : null, sub: est.monthly ? sub : L.rpmNone });
   }
 
   // ---- title-history (phase 1's video_meta_log through /youtube/video-card) ---------------------------
@@ -420,7 +495,7 @@
   }
   function watchCard() {
     var c = ctx();
-    var on = c.kind === 'watch' && c.video && (FT.isOn('video-card') || FT.isOn('video-monetization') || FT.isOn('dislikes') || FT.isOn('title-history'));
+    var on = c.kind === 'watch' && c.video && (FT.isOn('video-card') || FT.isOn('video-monetization') || FT.isOn('dislikes') || FT.isOn('title-history') || FT.isOn('channel-similar'));
     var slot = on ? watchSlot() : null;
     if (!slot) { if (wCard) { wCard.el.remove(); wCard = null; } return; }
     if (!wCard) wCard = host('watch-card');
@@ -466,6 +541,11 @@
         if (dis.pending) val.appendChild(h('span', { class: 'sk' }));
         var link = h('a', { href: 'https://returnyoutubedislike.com/', target: '_blank', rel: 'noopener noreferrer', text: dis.failed ? L.rydFail : L.rydBy });
         card.appendChild(h('div', { class: 'cell', title: L.rydTip }, [lb, val, h('span', { class: 'sub' }, [link])]));
+      }
+      if (FT.isOn('channel-similar')) {
+        var go = h('a', { class: 'go', href: '#', text: L.simThumbs + ' →' });
+        go.addEventListener('click', function (e) { e.preventDefault(); try { chrome.runtime.sendMessage({ type: 'reelscope:open-dashboard', hash: '#/niche/thumbs/' + id }); } catch (err) { /* reloaded */ } });
+        card.appendChild(h('div', { class: 'cell', title: L.simThumbsTip }, [h('span', { class: 'lb' }, ['Library']), go]));
       }
       if (hist) card.appendChild(historyRow(hist, L, lg));
       var own = b && b.own;

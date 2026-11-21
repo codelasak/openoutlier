@@ -53,6 +53,7 @@ const apiKind = (extra = {}) => ({
 
 test('heartbeat: seeded once, runs when due, next run = every + jitter; nothing runs early', async () => {
   const s = store();
+  s.setMeta('features', { 'channel-similar': false }); // phase 5's thumbnail index (on by default) isn't what these scheduler tests are about
   const c = clock();
   const tr = new Tracker({ store: s, now: c.now, random: seq(0.5), apiKey: () => null });
   tr.seed();
@@ -80,16 +81,17 @@ test('heartbeat: seeded once, runs when due, next run = every + jitter; nothing 
 
 test('feature gating: a job of a switched-off feature waits (still due) and runs once it is on again', async () => {
   const s = store();
+  s.setMeta('features', { 'channel-similar': false }); // phase 5's thumbnail index (on by default) isn't what these scheduler tests are about
   const c = clock();
   const tr = new Tracker({ store: s, now: c.now, random: () => 0, apiKey: () => null });
   tr.seed();
-  s.setMeta('features', { tracker: false });
+  s.setMeta('features', { tracker: false, 'channel-similar': false });
   assert.equal(featureFlags(s).tracker, false);
   assert.deepEqual((await tr.tick()).ran, []);
   assert.equal(tr.job('heartbeat').runs, 0);
   c.advance(2 * 60 * MIN);
   assert.deepEqual((await tr.tick()).ran, [], 'missed runs are not replayed while off');
-  s.setMeta('features', {}); // back to the default (on)
+  s.setMeta('features', { 'channel-similar': false }); // back to the default (on) for the tracker
   assert.deepEqual((await tr.tick()).ran, ['heartbeat'], 'runs once, right away');
   assert.deepEqual((await tr.tick()).ran, []);
   s.close();
@@ -115,6 +117,7 @@ test('single flight: overlapping ticks share one run', async () => {
 
 test('lease: a second process waits while the first holds it, and takes over when it lapses', async () => {
   const s = store();
+  s.setMeta('features', { 'channel-similar': false }); // phase 5's thumbnail index (on by default) isn't what these scheduler tests are about
   const c = clock();
   const one = new Tracker({ store: s, now: c.now, random: () => 0, apiKey: () => null, owner: 'daemon', leaseMs: 10 * MIN });
   const two = new Tracker({ store: s, now: c.now, random: () => 0, apiKey: () => null, owner: 'mcp-server', leaseMs: 10 * MIN });
@@ -137,6 +140,7 @@ test('restart: a new tracker on the same database keeps the schedule and picks u
   const dir = mkdtempSync(join(tmpdir(), 'openoutlier-tracker-restart-'));
   const c = clock();
   let s = new Store(dir);
+  s.setMeta('features', { 'channel-similar': false }); // phase 5's thumbnail index (on by default) isn't what these scheduler tests are about
   const first = new Tracker({ store: s, now: c.now, random: () => 0, apiKey: () => null });
   first.seed();
   await first.tick();

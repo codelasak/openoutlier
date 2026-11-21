@@ -1020,6 +1020,9 @@
       if (p.commentRatio >= M.OUTLIER_RATIO && !isTT(p) && !isYT(p)) badges.appendChild(h('span', { class: 'badge', 'data-tip': fmtFull(p.comments) + ' comments: ' + p.commentRatio.toFixed(1) + '× this account\'s median' }, p.commentRatio.toFixed(1) + '× comments'));
       if (isYT(p) && p.type === 'live') badges.appendChild(h('span', { class: 'badge', 'data-tip': p.liveNow ? 'Live now: the count is viewers, not views' : 'A past live stream (scored with the long-form videos)' }, 'Live'));
       if (isYT(p) && p.membersOnly) badges.appendChild(h('span', { class: 'badge', 'data-tip': 'Members only' }, 'Members'));
+      // card-velocity (phase 5 brings it to the panel list): tracked videos only, "24 h: 3.4×" from the bridge's tracker.
+      var vel = isYT(p) && opts.velocityOf ? opts.velocityOf(p) : null;
+      if (vel) badges.appendChild(h('span', { class: 'badge badge-vel' + (vel.hot ? ' is-hot' : ''), 'data-tip': vel.tip }, vel.text));
       if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform', 'data-tip': siteName(p) }, isTT(p) ? 'TT' : isYT(p) ? 'YT' : 'IG'));
 
       var meta = [];

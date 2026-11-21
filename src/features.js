@@ -33,14 +33,19 @@
     { id: 'video', label: { tr: 'Video sayfası', en: 'Watch page' }, hint: null },
     { id: 'shorts', label: { tr: 'Shorts akışı', en: 'Shorts feed' }, hint: null },
     { id: 'studio', label: { tr: 'YouTube Studio', en: 'YouTube Studio' }, hint: null },
-    { id: 'background', label: { tr: 'Arka plan (bridge)', en: 'Background (bridge)' }, hint: { tr: 'Mac\'teki OpenOutlier bridge\'i çalıştırır; Chrome kapalıyken de devam eder', en: 'Run by the OpenOutlier bridge on your Mac, also while Chrome is closed' } }
+    { id: 'background', label: { tr: 'Arka plan (bridge)', en: 'Background (bridge)' }, hint: { tr: 'Mac\'teki OpenOutlier bridge\'i çalıştırır; Chrome kapalıyken de devam eder', en: 'Run by the OpenOutlier bridge on your Mac, also while Chrome is closed' } },
+    { id: 'providers', label: { tr: 'İsteğe bağlı servisler', en: 'Optional providers' }, hint: { tr: 'Üçüncü parti API\'ler; hepsi kapalı başlar, açıp anahtarını eklemeden hiçbir istek atılmaz. Anahtarlar Ayarlar\'da, bu Mac\'te (~/.openoutlier/providers.json) durur.', en: 'Third-party APIs; all start off, and none makes a request until you turn it on and add its key. Keys are set in Settings and stay on this Mac (~/.openoutlier/providers.json).' } }
   ];
 
   // requires / optional: 'apiKey' (a Data API key in this browser), 'bridge' (the bridge
   // on this Mac is connected), 'bridgeKey' (the bridge has a Data API key), 'oauth'
   // (My YouTube channel is connected), 'tracker' (the tracker feature is on and can run).
+  // 'providerKey' (an optional provider's key is set on the bridge; f.provider names it).
   // notes: 'thirdParty' (a third party gets the video id), 'ytRequest' (OpenOutlier asks
-  // YouTube itself, slowly), 'mcp' (the analysis part runs in Claude through MCP), 'estimate'.
+  // YouTube itself, slowly), 'mcp' (the analysis part runs in Claude through MCP), 'estimate',
+  // 'quota' (spends Data API units: the cost is shown before it runs), 'scraping' (the provider
+  // scrapes YouTube, which YouTube's API policy §III.E.6 doesn't allow next to an API key),
+  // 'paid' (the provider charges per call), 'suggest' (asks Google's autocomplete, unofficially).
   function F(id, group, phase, on, tr, en, trDesc, enDesc, extra) {
     var f = { id: id, group: group, phase: phase, default: on, available: false, label: { tr: tr, en: en }, desc: { tr: trDesc, en: enDesc },
       requires: [], optional: [], notes: [], surface: [] };
@@ -85,14 +90,15 @@
       'Kanalın reklam gösterip göstermediği (5 örnek video).', 'Whether the channel shows ads (5 sample videos).',
       { available: true, notes: ['ytRequest'], surface: ['youtube:channel'] }),
     F('channel-similar', 'channel', 5, true, 'Benzer kanallar', 'Similar channels',
-      'Birlikte önerilen ve benzer başlıklı kanallar.', 'Channels recommended together and with similar titles.',
-      { surface: ['youtube:channel', 'library'] }),
+      'İzleme sayfalarındaki "Sıradaki" listelerinden birlikte önerilen kanallar (yalnız sayılar, bu Mac\'te) ve başlık/etiket benzerliği; kanal kartında satır, Niş Takibi\'nde kanal haritası, benzer thumbnail\'ler.',
+      'Channels recommended together in the "Up Next" lists of watch pages (counts only, on this Mac) and by similar titles and tags: a row on the channel card, the channel map in Niche tracking, similar thumbnails.',
+      { available: true, requires: ['bridge'], surface: ['youtube:channel', 'youtube:watch', 'library'] }),
     F('channel-sponsors', 'channel', 4, true, 'Sponsor taraması', 'Sponsor scan',
       'Takip edilen kanalların açıklamalarındaki sponsorlar, indirim kodları ve affiliate linkleri (kanal kartı, Niş Takibi, MCP).', 'Sponsors, discount codes and affiliate links in tracked channels\' descriptions (channel card, Niche tracking, MCP).',
       { available: true, requires: ['bridge'], optional: ['tracker'], surface: ['youtube:channel', 'library'] }),
-    F('channel-rpm', 'channel', 3, false, 'Tahmini RPM ve gelir', 'Estimated RPM & revenue',
-      'Kategori tablosu × izlenme; kaba bir tahmin.', 'Category table × views; a rough estimate.',
-      { notes: ['estimate'], surface: ['youtube:channel'] }),
+    F('channel-rpm', 'channel', 5, false, 'Tahmini RPM ve gelir', 'Estimated RPM & revenue',
+      'Kanal kartında kategori RPM tablosu × aylık izlenmeyle tahmini aylık gelir aralığı.', 'An estimated monthly revenue range on the channel card: a category RPM table × monthly views.',
+      { available: true, notes: ['estimate'], surface: ['youtube:channel'] }),
 
     F('video-card', 'video', 3, true, 'Video kartı', 'Video card',
       'Outlier, VPH (ömür boyu ve son 24 saat), etkileşim ve hız eğrisi.', 'Outlier, VPH (lifetime and last 24 h), engagement and the velocity curve.',
@@ -140,8 +146,13 @@
       'Her pazartesi nişin özeti, Library\'de.', 'A summary of the niche every Monday, in the Library.',
       { available: true, requires: ['tracker'], surface: ['bridge', 'library'] }),
     F('niche-radar', 'background', 5, false, 'Niş radarı', 'Niche radar',
-      'Anahtar kelimelerle günlük arama; arama başına 100 birim.', 'A daily keyword search; 100 quota units per search.',
-      { requires: ['bridge', 'bridgeKey'], surface: ['bridge', 'library'] }),
+      'Nişin anahtar kelimeleriyle günlük arama: bu hafta küçük kanallarda patlayan videolar ve takip etmediğin yükselen kanallar (Niş Takibi → Radar). Kelime başına ~102 birim.',
+      'A daily search for the niche\'s keywords: this week\'s breakouts on small channels and rising channels you don\'t track (Niche tracking → Radar). About 102 units per keyword.',
+      { available: true, requires: ['bridge', 'bridgeKey'], notes: ['quota'], surface: ['bridge', 'library'] }),
+    F('keyword-ideas', 'background', 5, true, 'Anahtar kelime fikirleri', 'Keyword ideas',
+      'YouTube\'un otomatik tamamlamasını (bridge üzerinden, yavaşlatılmış, 7 gün önbellek) nişin başlık kelimeleri, konu boşlukları ve kendi arama terimlerinle birleştirir (Niş Takibi → Anahtar kelimeler, MCP keyword_ideas).',
+      'Merges YouTube\'s autocomplete (through the bridge, rate-limited, cached 7 days) with the niche\'s title words, topic gaps and your own search terms (Niche tracking → Keywords, MCP keyword_ideas).',
+      { available: true, requires: ['bridge'], notes: ['suggest'], surface: ['bridge', 'library'] }),
     F('own-history', 'background', 2, true, 'Kendi kanal geçmişim', 'My channel history',
       'YouTube Analytics\'ten günlük kanal ve video verisi, kanalın ilk gününden itibaren; her sabah son 7 gün yenilenir.', 'Daily channel and video data from YouTube Analytics since the channel\'s first day; the last 7 days are refreshed every morning.',
       { available: true, requires: ['bridge', 'oauth'], surface: ['bridge', 'library'] }),
@@ -154,7 +165,20 @@
     F('api-retention-30d', 'background', 0, false, 'Rakip API verisini 30 günde sil', 'Delete competitors\' API data after 30 days',
       'YouTube API politikasına uyum: Data API\'den gelen rakip ölçümleri 30 günden sonra silinir; RSS ve sayfa ölçümleri kalır.',
       'For YouTube\'s API policy: competitors\' Data API measurements are deleted after 30 days; RSS and page measurements stay.',
-      { available: true, requires: ['bridge'], surface: ['bridge'] })
+      { available: true, requires: ['bridge'], surface: ['bridge'] }),
+
+    F('provider-ryd', 'providers', 5, false, 'Return YouTube Dislike (MCP)', 'Return YouTube Dislike (MCP)',
+      'video_velocity\'ye tahmini dislike sayısını ekler (bridge sorar; anahtar gerekmez). Video sayfasındaki dislike hücresi ayrı: Video sayfası → Dislike sayısı.',
+      'Adds the estimated dislikes to video_velocity (asked by the bridge; no key). The watch page\'s dislike cell is separate: Watch page → Dislike count.',
+      { available: true, provider: 'ryd', requires: ['bridge'], notes: ['thirdParty'], link: 'https://returnyoutubedislike.com/', surface: ['bridge'] }),
+    F('provider-socialblade', 'providers', 5, false, 'Social Blade geçmişi', 'Social Blade history',
+      'Takip edilen rakiplerin takip öncesi günlük abone ve izlenme geçmişi, bir kerelik (channel_stats, kaynak socialblade). Kredi maliyeti çalıştırmadan önce gösterilir.',
+      'A one-time backfill of tracked competitors\' daily subscribers and views from before tracking (channel_stats, source socialblade). The credit cost is shown before it runs.',
+      { available: true, provider: 'socialblade', requires: ['bridge', 'providerKey'], notes: ['paid'], link: 'https://socialblade.com/business-api', surface: ['bridge', 'library'] }),
+    F('provider-dataforseo', 'providers', 5, false, 'DataForSEO sıralama takibi', 'DataForSEO rank tracking',
+      'Seçtiğin anahtar kelimelerde kanalının YouTube aramasındaki sırası, günde bir (Niş Takibi → Anahtar kelimeler).',
+      'Where your channel ranks in YouTube search for the keywords you pick, once a day (Niche tracking → Keywords).',
+      { available: true, provider: 'dataforseo', requires: ['bridge', 'providerKey'], notes: ['scraping', 'paid'], link: 'https://dataforseo.com/apis/serp-api/youtube-serp-api', surface: ['bridge', 'library'] })
   ];
 
   var BY_ID = {};
@@ -223,6 +247,10 @@
       if (r === 'tracker') {
         if (!flags.tracker) out.push('tracker');
         else missing('tracker', env, flags).forEach(function (m) { if (out.indexOf(m) === -1) out.push(m); });
+      } else if (r === 'providerKey') {
+        // env.providers: { id: { configured } } from the bridge's settings answer; unknown → not reported.
+        var p = env.providers && f.provider ? env.providers[f.provider] : null;
+        if (p && p.configured === false && out.indexOf(r) === -1) out.push(r);
       } else if (env[r] === false && out.indexOf(r) === -1) out.push(r);
     });
     return out;
@@ -352,6 +380,7 @@
       // bridge they are unknown, not missing: the bridge itself is what to fix first.
       bridgeKey: connected && b.bridgeApiKey != null ? !!b.bridgeApiKey : undefined,
       oauth: connected && b.oauthConnected != null ? !!b.oauthConnected : undefined,
+      providers: connected && b.providers && typeof b.providers === 'object' ? b.providers : undefined,
       bridgeSettings: connected && !!b.settingsAt
     };
   }

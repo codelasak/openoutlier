@@ -251,6 +251,93 @@ CREATE TABLE IF NOT EXISTS comment_sets (
 );
 `;
 
+// Phase 5 (discovery, docs/youtube-niche-plan.md 6.4–6.6 and 8.2): co-recommendation counts from
+// the "Up Next" sidebars (aggregated, decaying; no video ids or watch times), channels seen in
+// sidebars and radar results, the niche radar's runs and results, perceptual hashes of library
+// thumbnails (similar thumbnails), the autocomplete cache, and optional providers' rank checks.
+const SCHEMA_DISCOVERY = `
+CREATE TABLE IF NOT EXISTS co_recs (
+  a          TEXT NOT NULL,             -- the watched video's channel (UC…)
+  b          TEXT NOT NULL,             -- a channel in its "Up Next" list
+  weight     REAL NOT NULL,             -- decayed count (half-life 30 days, src/discovery.js)
+  n          INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (a, b)
+);
+CREATE INDEX IF NOT EXISTS co_recs_by_b ON co_recs (b);
+CREATE TABLE IF NOT EXISTS seen_channels (
+  channel_id   TEXT PRIMARY KEY,
+  name         TEXT,
+  handle       TEXT,
+  thumb        TEXT,
+  subs         INTEGER,
+  views_total  INTEGER,
+  videos       INTEGER,
+  created      INTEGER,
+  stats_at     INTEGER,                 -- when subs / views came from channels.list
+  updated_at   INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS radar_runs (
+  id        INTEGER PRIMARY KEY AUTOINCREMENT,
+  at        INTEGER NOT NULL,
+  niche     TEXT,
+  keywords  TEXT,                       -- JSON: the keywords searched
+  skipped   TEXT,                       -- JSON: keywords left for the next run (budget)
+  units     INTEGER,
+  videos    INTEGER,
+  error     TEXT
+);
+CREATE TABLE IF NOT EXISTS radar_videos (
+  video_id     TEXT PRIMARY KEY,
+  channel_id   TEXT NOT NULL,
+  niche        TEXT,
+  keywords     TEXT,                    -- JSON: the keywords that found it
+  title        TEXT,
+  thumb        TEXT,
+  type         TEXT,
+  published_at INTEGER,
+  views        INTEGER,
+  likes        INTEGER,
+  comments     INTEGER,
+  duration     INTEGER,
+  first_seen   INTEGER NOT NULL,
+  updated_at   INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS radar_videos_by_niche ON radar_videos (niche, published_at);
+CREATE TABLE IF NOT EXISTS thumb_hashes (
+  video_id   TEXT PRIMARY KEY,
+  hash       TEXT,                      -- "d:<16 hex>" (mcp/thumbhash.mjs); null = could not fetch
+  at         INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS keyword_cache (
+  q           TEXT NOT NULL,
+  hl          TEXT NOT NULL,
+  gl          TEXT NOT NULL,
+  suggestions TEXT NOT NULL,            -- JSON array
+  fetched_at  INTEGER NOT NULL,
+  PRIMARY KEY (q, hl, gl)
+);
+CREATE TABLE IF NOT EXISTS serp_ranks (
+  keyword    TEXT NOT NULL,
+  day        TEXT NOT NULL,
+  source     TEXT NOT NULL,             -- dataforseo
+  rank       INTEGER,                   -- the best rank of a tracked "mine" channel's video, null = not in the results
+  video_id   TEXT,
+  channel_id TEXT,
+  top        TEXT,                      -- JSON: the first results
+  checked_at INTEGER NOT NULL,
+  PRIMARY KEY (keyword, day, source)
+);
+CREATE TABLE IF NOT EXISTS provider_log (
+  provider   TEXT NOT NULL,
+  ref        TEXT NOT NULL,             -- channel id, keyword …
+  at         INTEGER NOT NULL,
+  cost       REAL,                      -- credits or USD, as the provider counts
+  detail     TEXT,
+  PRIMARY KEY (provider, ref, at)
+);
+`;
+
 /** Ordered, each run once (meta schema_version); `up` must be safe to run again anyway. */
 export const MIGRATIONS = [
   { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) },
@@ -283,6 +370,10 @@ export const MIGRATIONS = [
       st.addColumn('tracked_videos', 'thumb_snap', 'TEXT');
       st.addColumn('video_meta_log', 'thumb_snap', 'TEXT');
     }
+  },
+  {
+    version: 5, name: 'discovery: co-recommendations, seen channels, niche radar, thumbnail hashes, autocomplete cache, provider rank checks',
+    up: (st) => st.db.exec(SCHEMA_DISCOVERY)
   }
 ];
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
@@ -320,6 +411,7 @@ export class Store {
     this.db.exec(SCHEMA_NICHE_TRACKING);
     this.db.exec(SCHEMA_OWN_HISTORY);
     this.db.exec(SCHEMA_CONTENT_TOOLS);
+    this.db.exec(SCHEMA_DISCOVERY);
     let v = Number(this.getMeta('schema_version', 0)) || 0;
     for (const m of MIGRATIONS) {
       if (m.version <= v) continue;

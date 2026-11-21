@@ -1,0 +1,409 @@
+{
+ "kind": "youtube#videoListResponse",
+ "items": [
+  {
+   "id": "rdrSW000001",
+   "snippet": {
+    "publishedAt": "2026-11-18T14:00:00.000Z",
+    "channelId": "UCrdrsheetwizardxxxxxxxx",
+    "channelTitle": "Sheet Wizard",
+    "title": "XLOOKUP is dead? The function nobody talks about",
+    "description": "XLOOKUP is dead? The function nobody talks about\n\nFree workbook: https://example.com/rdrSW000001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrSW000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel xlookup",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT10M10S"
+   },
+   "statistics": {
+    "viewCount": "61000",
+    "likeCount": "2033",
+    "commentCount": "153"
+   }
+  },
+  {
+   "id": "rdrSW000002",
+   "snippet": {
+    "publishedAt": "2026-11-15T16:00:00.000Z",
+    "channelId": "UCrdrsheetwizardxxxxxxxx",
+    "channelTitle": "Sheet Wizard",
+    "title": "XLOOKUP with two criteria (no helper column)",
+    "description": "XLOOKUP with two criteria (no helper column)\n\nFree workbook: https://example.com/rdrSW000002",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrSW000002/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel xlookup",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT7M35S"
+   },
+   "statistics": {
+    "viewCount": "8800",
+    "likeCount": "293",
+    "commentCount": "22"
+   }
+  },
+  {
+   "id": "rdrFF000001",
+   "snippet": {
+    "publishedAt": "2026-11-19T08:00:00.000Z",
+    "channelId": "UCrdrformulafridayxxxxxx",
+    "channelTitle": "Formula Friday",
+    "title": "Build this Excel dashboard in 15 minutes",
+    "description": "Build this Excel dashboard in 15 minutes\n\nFree workbook: https://example.com/rdrFF000001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrFF000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel dashboard",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT15M5S"
+   },
+   "statistics": {
+    "viewCount": "47000",
+    "likeCount": "1567",
+    "commentCount": "118"
+   }
+  },
+  {
+   "id": "rdrCM000001",
+   "snippet": {
+    "publishedAt": "2026-11-17T10:00:00.000Z",
+    "channelId": "UCrdrcellmatesxxxxxxxxxx",
+    "channelTitle": "Cell Mates",
+    "title": "I made an Excel KPI dashboard for my bakery",
+    "description": "I made an Excel KPI dashboard for my bakery\n\nFree workbook: https://example.com/rdrCM000001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrCM000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel dashboard",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT12M22S"
+   },
+   "statistics": {
+    "viewCount": "22800",
+    "likeCount": "760",
+    "commentCount": "57"
+   }
+  },
+  {
+   "id": "rdrGL000001",
+   "snippet": {
+    "publishedAt": "2026-11-19T16:00:00.000Z",
+    "channelId": "UCrdrgridlogicxxxxxxxxxx",
+    "channelTitle": "Grid Logic",
+    "title": "Pivot tables finally explained (with a cat)",
+    "description": "Pivot tables finally explained (with a cat)\n\nFree workbook: https://example.com/rdrGL000001",
+    "categoryId": "28",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrGL000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel pivot table",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT8M48S"
+   },
+   "statistics": {
+    "viewCount": "31500",
+    "likeCount": "1050",
+    "commentCount": "79"
+   }
+  },
+  {
+   "id": "rdrGL000002",
+   "snippet": {
+    "publishedAt": "2026-11-16T12:00:00.000Z",
+    "channelId": "UCrdrgridlogicxxxxxxxxxx",
+    "channelTitle": "Grid Logic",
+    "title": "Power Query: clean 10 files in one click",
+    "description": "Power Query: clean 10 files in one click\n\nFree workbook: https://example.com/rdrGL000002",
+    "categoryId": "28",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrGL000002/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "power query",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT11M28S"
+   },
+   "statistics": {
+    "viewCount": "6900",
+    "likeCount": "230",
+    "commentCount": "17"
+   }
+  },
+  {
+   "id": "rdrPP000001",
+   "snippet": {
+    "publishedAt": "2026-11-19T00:00:00.000Z",
+    "channelId": "UCrdrpivotpointtvxxxxxxx",
+    "channelTitle": "Pivot Point TV",
+    "title": "Pivot Table tricks the pros use",
+    "description": "Pivot Table tricks the pros use\n\nFree workbook: https://example.com/rdrPP000001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrPP000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel pivot table",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT20M20S"
+   },
+   "statistics": {
+    "viewCount": "41000",
+    "likeCount": "1367",
+    "commentCount": "103"
+   }
+  },
+  {
+   "id": "rdrOP000001",
+   "snippet": {
+    "publishedAt": "2026-11-18T04:00:00.000Z",
+    "channelId": "UCrdrofficeprotipsxxxxxx",
+    "channelTitle": "Office Pro Tips",
+    "title": "XLOOKUP vs VLOOKUP in 2026",
+    "description": "XLOOKUP vs VLOOKUP in 2026\n\nFree workbook: https://example.com/rdrOP000001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrOP000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel xlookup",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT9M0S"
+   },
+   "statistics": {
+    "viewCount": "290000",
+    "likeCount": "9667",
+    "commentCount": "725"
+   }
+  },
+  {
+   "id": "rdrDD000001",
+   "snippet": {
+    "publishedAt": "2026-11-20T06:00:00.000Z",
+    "channelId": "UCrdrdatadoodlesxxxxxxxx",
+    "channelTitle": "Data Doodles",
+    "title": "Power Query for beginners: merge sheets",
+    "description": "Power Query for beginners: merge sheets\n\nFree workbook: https://example.com/rdrDD000001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrDD000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "power query",
+     "excel dashboard",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT13M31S"
+   },
+   "statistics": {
+    "viewCount": "54000",
+    "likeCount": "1800",
+    "commentCount": "135"
+   }
+  },
+  {
+   "id": "rdrSS000001",
+   "snippet": {
+    "publishedAt": "2026-11-20T10:00:00.000Z",
+    "channelId": "UCrdrspreadsheetsistersx",
+    "channelTitle": "Spreadsheet Sisters",
+    "title": "Budget dashboard in Excel (free template)",
+    "description": "Budget dashboard in Excel (free template)\n\nFree workbook: https://example.com/rdrSS000001",
+    "categoryId": "22",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrSS000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel dashboard",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT10M40S"
+   },
+   "statistics": {
+    "viewCount": "3100",
+    "likeCount": "103",
+    "commentCount": "8"
+   }
+  },
+  {
+   "id": "rdrSS000002",
+   "snippet": {
+    "publishedAt": "2026-11-20T16:00:00.000Z",
+    "channelId": "UCrdrspreadsheetsistersx",
+    "channelTitle": "Spreadsheet Sisters",
+    "title": "Excel pivot table in 60 seconds #shorts",
+    "description": "Excel pivot table in 60 seconds #shorts\n\nFree workbook: https://example.com/rdrSS000002",
+    "categoryId": "22",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrSS000002/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel pivot table",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT0M58S"
+   },
+   "statistics": {
+    "viewCount": "18000",
+    "likeCount": "600",
+    "commentCount": "45"
+   }
+  },
+  {
+   "id": "rdrKJ000001",
+   "snippet": {
+    "publishedAt": "2026-11-17T18:00:00.000Z",
+    "channelId": "UCsimKenjiExplainsxxxxxx",
+    "channelTitle": "Kenji Explains",
+    "title": "Power Query secrets (part 2)",
+    "description": "Power Query secrets (part 2)\n\nFree workbook: https://example.com/rdrKJ000001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrKJ000001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "power query",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT15M32S"
+   },
+   "statistics": {
+    "viewCount": "120000",
+    "likeCount": "4000",
+    "commentCount": "300"
+   }
+  },
+  {
+   "id": "rdrOLD00001",
+   "snippet": {
+    "publishedAt": "2026-11-09T12:00:00.000Z",
+    "channelId": "UCrdrcellmatesxxxxxxxxxx",
+    "channelTitle": "Cell Mates",
+    "title": "Old XLOOKUP tutorial (before the window)",
+    "description": "Old XLOOKUP tutorial (before the window)\n\nFree workbook: https://example.com/rdrOLD00001",
+    "categoryId": "27",
+    "thumbnails": {
+     "medium": {
+      "url": "https://i.ytimg.com/vi/rdrOLD00001/mqdefault.jpg",
+      "width": 320,
+      "height": 180
+     }
+    },
+    "tags": [
+     "excel xlookup",
+     "excel"
+    ],
+    "liveBroadcastContent": "none"
+   },
+   "contentDetails": {
+    "duration": "PT10M0S"
+   },
+   "statistics": {
+    "viewCount": "9000",
+    "likeCount": "300",
+    "commentCount": "23"
+   }
+  }
+ ]
+}

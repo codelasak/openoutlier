@@ -6,6 +6,8 @@
 //   what works (day/time, length, title words and patterns, Shorts vs long-form),
 //   topic gaps, title / thumbnail changes, my videos vs the niche, breakouts,
 //   channel growth, the weekly digest, the tracked channels and the RSS lag check.
+// Phase 5 adds tabs (Radar, Channel map, Keywords, and similar thumbnails at #/niche/thumbs/<id>),
+// drawn by dashboard/discovery-view.js.
 // The tracking list itself is part of rs:org (src/tracking.js); the one-click helper
 // that starts the Excel niche writes it there.
 (function (root) {
@@ -643,13 +645,48 @@
       return out;
     }
 
+    // ---- phase 5: the discovery tabs (dashboard/discovery-view.js) ------------------------------
+    var DVM = root.OpenOutlierDiscoveryView;
+    var dv = DVM ? DVM.create({ h: h, loadImage: env.loadImage, rerender: env.rerender, getOrg: env.getOrg, saveOrg: env.saveOrg, niche: function () { return ui.niche; } }) : null;
+    var TABS = ['tracking', 'radar', 'map', 'keywords'];
+    function tabOf() {
+      var p = location.hash.replace(/^#\/?/, '').split('/');
+      var t = p[1] || 'tracking';
+      if (t === 'thumbs' && /^[A-Za-z0-9_-]{11}$/.test(p[2] || '')) return { tab: 'thumbs', arg: p[2] };
+      return { tab: TABS.indexOf(t) !== -1 ? t : 'tracking', arg: null };
+    }
+    function tabStrip(cur) {
+      if (!dv) return null;
+      var names = dv.tabs();
+      return h('nav', { class: 'dv-tabs', 'aria-label': L().title }, TABS.map(function (t) {
+        return h('a', { class: 'dv-tab', href: t === 'tracking' ? '#/niche' : '#/niche/' + t, 'aria-current': cur === t ? 'page' : null }, names[t]);
+      }));
+    }
+    function nicheSelect(names, current) {
+      if (!names || names.length < 2) return null;
+      var sel = h('select', { 'aria-label': L().niche, onchange: function () { ui.niche = sel.value; ui.data = null; if (dv) dv.invalidate(); env.rerender(); } },
+        names.map(function (n) { return h('option', { value: n.name || '', selected: (n.name || null) === (current || null), text: (n.name || L().allNiches) + ' (' + n.channels + ')' }); }));
+      return sel;
+    }
+    function renderDiscovery(main, t) {
+      var cur = dv.currentNiche();
+      main.appendChild(h('div', { class: 'view-head' },
+        h('h1', { text: L().title }),
+        h('span', { class: 'sub', text: cur !== undefined ? (cur || L().allNiches) : '' }),
+        h('span', { class: 's-head-actions' }, nicheSelect(dv.niches(), cur))));
+      main.appendChild(tabStrip(t.tab));
+      dv.render(main, t.tab, t.arg);
+    }
+
     // ---- render -------------------------------------------------------------------------------
     function render(main) {
       main.classList.remove('has-panel');
       main.textContent = '';
+      var t = tabOf();
+      if (dv && t.tab !== 'tracking') { renderDiscovery(main, t); return; }
       var d = ui.data;
       var names = d && d.niches || [];
-      var sel = names.length > 1 ? h('select', { 'aria-label': L().niche, onchange: function () { ui.niche = sel.value; refresh(); } },
+      var sel = names.length > 1 ? h('select', { 'aria-label': L().niche, onchange: function () { ui.niche = sel.value; if (dv) dv.invalidate(); refresh(); } },
         names.map(function (n) { return h('option', { value: n.name || '', selected: (n.name || null) === (d.niche || null), text: (n.name || L().allNiches) + ' (' + n.channels + ')' }); })) : null;
       main.appendChild(h('div', { class: 'view-head' },
         h('h1', { text: L().title }),
@@ -657,6 +694,7 @@
         h('span', { class: 's-head-actions' }, sel,
           TR && d && d.channels.length ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: openStart }, L().channelsBtn) : null,
           h('button', { class: 'btn', type: 'button', disabled: ui.loading, onclick: refresh }, ui.loading ? L().loading : L().refresh))));
+      if (!ui.error && dv) main.appendChild(tabStrip('tracking'));
       if (!d && !ui.error) { if (!ui.loading) setTimeout(refresh, 0); return; }
       if (ui.error) {
         main.appendChild(ui.noBridge

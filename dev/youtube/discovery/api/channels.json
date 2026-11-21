@@ -1,0 +1,176 @@
+{
+ "kind": "youtube#channelListResponse",
+ "items": [
+  {
+   "id": "UCrdrsheetwizardxxxxxxxx",
+   "snippet": {
+    "title": "Sheet Wizard",
+    "customUrl": "@sheetwizard",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/sheetwizard=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "4200",
+    "viewCount": "168000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCrdrformulafridayxxxxxx",
+   "snippet": {
+    "title": "Formula Friday",
+    "customUrl": "@formulafriday",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/formulafriday=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "12500",
+    "viewCount": "500000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCrdrcellmatesxxxxxxxxxx",
+   "snippet": {
+    "title": "Cell Mates",
+    "customUrl": "@cellmates",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/cellmates=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "1900",
+    "viewCount": "76000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCrdrgridlogicxxxxxxxxxx",
+   "snippet": {
+    "title": "Grid Logic",
+    "customUrl": "@gridlogic",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/gridlogic=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "7700",
+    "viewCount": "308000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCrdrpivotpointtvxxxxxxx",
+   "snippet": {
+    "title": "Pivot Point TV",
+    "customUrl": "@pivotpointtv",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/pivotpointtv=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "38000",
+    "viewCount": "1520000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCrdrofficeprotipsxxxxxx",
+   "snippet": {
+    "title": "Office Pro Tips",
+    "customUrl": "@officeprotips",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/officeprotips=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "640000",
+    "viewCount": "25600000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCrdrdatadoodlesxxxxxxxx",
+   "snippet": {
+    "title": "Data Doodles",
+    "customUrl": "@datadoodles",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/datadoodles=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "26000",
+    "viewCount": "1040000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCrdrspreadsheetsistersx",
+   "snippet": {
+    "title": "Spreadsheet Sisters",
+    "customUrl": "@spreadsheetsisters",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/spreadsheetsisters=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "9300",
+    "viewCount": "372000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCsimKenjiExplainsxxxxxx",
+   "snippet": {
+    "title": "Kenji Explains",
+    "customUrl": "@kenjiexplains",
+    "publishedAt": "2023-03-01T00:00:00Z",
+    "thumbnails": {
+     "default": {
+      "url": "https://yt3.ggpht.com/KenjiExplains=s88"
+     }
+    }
+   },
+   "statistics": {
+    "subscriberCount": "1100000",
+    "viewCount": "44000000",
+    "videoCount": "80",
+    "hiddenSubscriberCount": false
+   }
+  }
+ ]
+}

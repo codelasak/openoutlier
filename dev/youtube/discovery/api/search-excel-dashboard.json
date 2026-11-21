@@ -1,0 +1,50 @@
+{
+ "kind": "youtube#searchListResponse",
+ "regionCode": "US",
+ "items": [
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrDD000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrdatadoodlesxxxxxxxx",
+    "title": "Power Query for beginners: merge sheets"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrFF000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrformulafridayxxxxxx",
+    "title": "Build this Excel dashboard in 15 minutes"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrCM000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrcellmatesxxxxxxxxxx",
+    "title": "I made an Excel KPI dashboard for my bakery"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrSS000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrspreadsheetsistersx",
+    "title": "Budget dashboard in Excel (free template)"
+   }
+  }
+ ]
+}

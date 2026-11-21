@@ -1,0 +1,39 @@
+{
+ "kind": "youtube#searchListResponse",
+ "regionCode": "US",
+ "items": [
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrKJ000001"
+   },
+   "snippet": {
+    "channelId": "UCsimKenjiExplainsxxxxxx",
+    "title": "Power Query secrets (part 2)"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrDD000001"
+   },
+   "snippet": {
+    "channelId": "UCrdrdatadoodlesxxxxxxxx",
+    "title": "Power Query for beginners: merge sheets"
+   }
+  },
+  {
+   "kind": "youtube#searchResult",
+   "id": {
+    "kind": "youtube#video",
+    "videoId": "rdrGL000002"
+   },
+   "snippet": {
+    "channelId": "UCrdrgridlogicxxxxxxxxxx",
+    "title": "Power Query: clean 10 files in one click"
+   }
+  }
+ ]
+}

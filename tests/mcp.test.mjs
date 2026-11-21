@@ -185,7 +185,7 @@ test('settings: feature flags and the extension\'s quota reach the bridge; "Copy
   assert.deepEqual(st.data.features.on, ['hide-shorts']);
   assert.equal(st.data.tracker.enabled, false);
   assert.ok(st.data.tracker.jobs.heartbeat >= 1, 'the server holding the bridge seeded the tracker');
-  assert.equal(st.data.database.schema_version, 4);
+  assert.equal(st.data.database.schema_version, 5);
 
   r = await bridge('/settings/youtube-api-key', { method: 'POST', body: { remove: true } });
   assert.equal((await r.json()).apiKey.configured, false);
@@ -827,4 +827,51 @@ test('content tools (phase 4): /youtube/comments, /youtube/sponsors, sponsors on
   const tool = await call('sponsor_mentions', {});
   assert.ok(Array.isArray(tool.data.brands));
   assert.match(tool.data.rules, /Rule-based/);
+});
+
+test('discovery (phase 5): co-recommendations, similar channels, radar settings and page, keyword ideas offline, provider keys never echoed', async () => {
+  const health = await (await bridge('/health')).json();
+  assert.ok(health.features.includes('discovery') && health.features.includes('providers'));
+  const A = 'UCe2eDiscA000000000000AA';
+  const B = 'UCe2eDiscB000000000000BB';
+  const co = await (await bridge('/youtube/discovery/corec', { method: 'POST', body: { source: A, recs: [{ id: B, name: 'Bee Channel', handle: 'bee' }, { id: 'junk' }] } })).json();
+  assert.deepEqual(co, { ok: true, pairs: 1 });
+  assert.equal((await bridge('/youtube/discovery/corec', { method: 'POST', body: { source: 'bad', recs: [] } })).status, 400);
+  const sim = await (await bridge('/youtube/discovery/similar?as=get&channel=' + A, { method: 'POST', body: {} })).json();
+  assert.equal(sim.similar[0].id, B);
+  assert.equal(sim.similar[0].name, 'Bee Channel');
+  // The radar's settings arrive with the extension's settings; the page shows the cost before it is switched on.
+  const set = await (await bridge('/settings', { method: 'POST', body: { features: {}, radar: { keywords: { '': ['excel xlookup', 'power query'] }, maxSubs: 20000 } } })).json();
+  assert.equal(set.providers.dataforseo.scraping, true);
+  assert.equal(set.providers.socialblade.on, false);
+  const radar = await (await bridge('/youtube/discovery/radar?as=get&niche=', { method: 'POST', body: {} })).json();
+  assert.equal(radar.feature, false);
+  assert.deepEqual(radar.keywords, ['excel xlookup', 'power query']);
+  assert.equal(radar.cost.total, 202);
+  assert.equal(radar.settings.maxSubs, 20000);
+  assert.deepEqual(await (await bridge('/youtube/discovery/radar/run', { method: 'POST', body: {} })).json(), { ok: false, off: true, error: 'The niche radar is switched off.' });
+  // keyword_ideas without autocomplete makes no request; similar_channels through MCP.
+  const kw = await call('keyword_ideas', { autocomplete: false });
+  assert.equal(kw.isError, false, kw.text);
+  assert.equal(kw.data.autocomplete, false);
+  assert.equal(kw.data.fetched, 0);
+  const sc = await call('similar_channels', { channel: A });
+  assert.equal(sc.data.similar[0].id, B);
+  const nr = await call('niche_radar', {});
+  assert.equal(nr.data.feature, false);
+  // Provider keys: saved on the bridge, never in an answer.
+  const saved = await (await bridge('/providers/key', { method: 'POST', body: { id: 'socialblade', key: { clientId: 'cid-e2e', token: 'tok-e2e-SECRET' } } })).json();
+  assert.equal(saved.ok, true);
+  assert.equal(saved.providers.socialblade.configured, true);
+  assert.ok(!JSON.stringify(saved).includes('SECRET'));
+  const list = await (await bridge('/providers?as=get', { method: 'POST', body: {} })).json();
+  assert.ok(!JSON.stringify(list).includes('SECRET'));
+  assert.equal(statSync(join(home, 'providers.json')).mode & 0o777, 0o600);
+  assert.equal((await bridge('/providers/key', { method: 'POST', body: { id: 'socialblade', key: { clientId: 'x' } } })).status, 400);
+  const quote = await (await bridge('/providers/socialblade/quote', { method: 'POST', body: { history: '1y' } })).json();
+  assert.equal(quote.per_channel, 2);
+  const nope = await (await bridge('/providers/socialblade/backfill', { method: 'POST', body: { history: '1y', confirm: quote.credits } })).json();
+  assert.match(nope.error, /switched off/);
+  assert.equal((await bridge('/providers?as=get', { method: 'POST', body: {}, origin: 'https://evil.example' })).status, 403);
+  await bridge('/providers/key', { method: 'POST', body: { id: 'socialblade', remove: true } });
 });

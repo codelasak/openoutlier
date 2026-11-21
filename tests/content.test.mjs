@@ -49,14 +49,14 @@ function fakeApi({ total = 250, error } = {}) {
 
 test('migration 4: comment tables, descriptions, thumbnail snapshots', () => {
   const s = store();
-  assert.equal(SCHEMA_VERSION, 4);
-  assert.equal(Number(s.getMeta('schema_version')), 4);
+  assert.ok(SCHEMA_VERSION >= 4);
+  assert.equal(Number(s.getMeta('schema_version')), SCHEMA_VERSION);
   const cols = (t) => s.db.prepare(`PRAGMA table_info(${t})`).all().map((c) => c.name);
   assert.ok(cols('video_comments').includes('text') && cols('video_comments').includes('fetched_at'));
   assert.ok(cols('comment_sets').includes('total'));
   assert.ok(cols('tracked_videos').includes('description') && cols('tracked_videos').includes('thumb_snap'));
   assert.ok(cols('video_meta_log').includes('thumb_snap'));
-  assert.equal(s.migrate(), 4, 'idempotent');
+  assert.equal(s.migrate(), SCHEMA_VERSION, 'idempotent');
 });
 
 test('captured comments: stored per video, merged by id, purged after 7 days', () => {

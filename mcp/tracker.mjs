@@ -27,12 +27,14 @@
 // data purge (api-retention-30d), and niche tracking (mcp/niche.mjs, phase 1): RSS
 // every 15 min per channel, videos.list on the age tiers, daily channel stats, the
 // one-time backfill, handle resolution and the weekly digest; own-channel history
-// (mcp/own-history.mjs, phase 2): YouTube Analytics backfill, daily, per-video and weekly jobs.
+// (mcp/own-history.mjs, phase 2): YouTube Analytics backfill, daily, per-video and weekly jobs;
+// discovery (mcp/discovery.mjs, phase 5): the niche radar, the thumbnail index, the optional rank check.
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
 import { quotaOf, spendOn, apiKey as defaultApiKey } from './youtube-api.mjs';
 import { NICHE_KINDS, upsertJob } from './niche.mjs';
 import { OWN_KINDS } from './own-history.mjs';
+import { DISCOVERY_KINDS } from './discovery.mjs';
 
 const require = createRequire(import.meta.url);
 const F = require('../src/features.js');
@@ -73,7 +75,8 @@ export const KINDS = {
     }
   },
   ...NICHE_KINDS,
-  ...OWN_KINDS
+  ...OWN_KINDS,
+  ...DISCOVERY_KINDS
 };
 
 /** The resolved feature flags the bridge holds (defaults for anything the extension never sent). */

@@ -2,6 +2,8 @@
 // niche_pulse, video_velocity, breakouts, channel_growth, niche_report. Read-only, from
 // the measurements the bridge's tracker collects (mcp/niche.mjs).
 import { nichePulse, videoVelocity, breakoutList, channelGrowth, nicheReport, trackingSummary } from './niche.mjs';
+import { ready as providerReady } from './providers/index.mjs';
+import { votes as rydVotes } from './providers/ryd.mjs';
 
 export { trackingSummary };
 
@@ -20,7 +22,12 @@ export function registerNicheTools(server, { z, json, safe, store }) {
     description: 'One tracked YouTube video: its views at each checkpoint (1/3/6/12/24/48/72 h, 7/14/30 d) next to its channel\'s expected views (the channel\'s median curve, or the niche curve scaled to the channel until it has 5 videos), the score at each, VPH, the measurement series (RSS, Data API and page readings) and its title / thumbnail change log.',
     inputSchema: { video: z.string().describe('YouTube video id or URL') },
     annotations: { readOnlyHint: true }
-  }, ({ video }) => safe(() => json(videoVelocity(store(), { video }))));
+  }, ({ video }) => safe(async () => {
+    const r = videoVelocity(store(), { video });
+    // Phase 5: with provider-ryd on, Return YouTube Dislike's estimate (the video id goes to returnyoutubedislike.com).
+    if (!r.error && providerReady(store(), 'ryd')) { const v = await rydVotes(r.video && r.video.id || video); if (v) r.dislikes = v; }
+    return json(r);
+  }));
   server.registerTool('breakouts', {
     title: 'Breakouts (fast risers) in tracked niches',
     description: 'Tracked videos that reached the breakout threshold (default 3× their channel\'s expected views) at 6 h or 24 h, newest first, with the score, views and what was expected.',

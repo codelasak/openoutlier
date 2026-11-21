@@ -840,3 +840,23 @@ export function ackAlerts(store, list, now = Date.now()) {
   for (const a of list || []) if (a && VIDEO_ID_RE.test(String(a.video_id)) && Number.isFinite(Number(a.at_h))) n += Number(up.run(now, a.video_id, Number(a.at_h)).changes);
   return n;
 }
+
+/**
+ * Phase 5 (discovery): what a niche's tracked videos say about topics, for the radar's keyword
+ * suggestions and the keyword ideas: title words by velocity lift, topic gaps, and the titles.
+ */
+export function nicheSignals(store, { niche, now = Date.now() } = {}) {
+  const names = nicheNames(store);
+  const pick = niche !== undefined && niche !== null ? niche : (names.find((n) => n.mine) || names[0] || { name: null }).name;
+  const model = loadModel(store, { niche: pick ?? '', now });
+  const sc = scored(model, now);
+  return {
+    niche: pick ?? null,
+    niches: names,
+    channels: model.channels,
+    titles: model.videos.map((v) => v.title).filter(Boolean),
+    texts: model.videos.map((v) => [v.title || ''].concat(v.keywords || []).join(' ')),
+    titleWords: V.wordLift(sc, { limit: 15, minN: 2 }),
+    gaps: V.topicGaps(sc, { limit: 10 })
+  };
+}

@@ -67,6 +67,7 @@
             if (m.type === 'reelscope:yt-analytics') return demoAnalytics(m, qs.get('ytanalytics'));
             if (m.type === 'reelscope:own') return demoOwn(m, qs.get('ytanalytics'));
             if (m.type === 'reelscope:niche') return demoNiche(m, qs.get('niche'));
+            if (m.type === 'reelscope:discovery') return demoDiscovery(m, qs);
             if (m.type === 'reelscope:bridge-key') {
               await new Promise(function (r) { setTimeout(r, 300); });
               if (!store['rs:bridge'].connected) return { ok: false, error: 'The OpenOutlier bridge on your Mac isn\'t running, so there is nowhere to copy the key to.' };
@@ -116,6 +117,89 @@
           p.digest_preview.top = []; p.digest_preview.totals.uploads = 0; p.digest_preview.totals.breakouts = 0; p.digest_preview.best_slot = {};
         }
         return p;
+      }
+
+
+      // Phase 5 (discovery): ?radar=off (configured, switched off: the cost preview) | empty (on, no keywords) | new (configured,
+      // not run yet) | default (this morning's run). Answers from dev/make-discovery-fixture.mjs (the real bridge code).
+      // ?providers=keys (Social Blade + DataForSEO keys set) | on (and switched on); ?niche=off also stops these (no bridge).
+      var discFx = {};
+      async function discFixture(name) {
+        if (!discFx[name]) discFx[name] = await (await fetch('/dev/youtube/discovery/' + name + '.json')).json();
+        var f = JSON.parse(JSON.stringify(discFx[name]));
+        var shift = f.now ? Date.now() - f.now : 0;
+        (function walk(o) {
+          if (Array.isArray(o)) { o.forEach(walk); return; }
+          if (!o || typeof o !== 'object') return;
+          Object.keys(o).forEach(function (k) {
+            var v = o[k];
+            if (typeof v === 'number' && v > 1.6e12 && v < 2.2e12 && /(at|^now|published_at)$/.test(k)) o[k] = v + shift;
+            else if (v && typeof v === 'object') walk(v);
+          });
+        })(f);
+        return f;
+      }
+      window.__provKeys = window.__provKeys || {};
+      function provStatus() {
+        var feats = (store['rs:settings'] && store['rs:settings'].features) || {};
+        var meta = {
+          ryd: ['Return YouTube Dislike', [], false, { en: 'Free (100 requests a minute per client)', tr: 'Bedava (istemci başına dakikada 100 istek)' }],
+          socialblade: ['Social Blade Business API', ['clientId', 'token'], false, { en: 'Prepaid credits: 1 per channel for 30 days of history, 2 for a year, 3 for 3 years (100 credits ≈ $50)', tr: 'Önceden ödenen kredi: kanal başına 30 günlük geçmiş 1, bir yıl 2, 3 yıl 3 kredi (100 kredi ≈ $50)' }],
+          dataforseo: ['DataForSEO (YouTube SERP)', ['login', 'password'], true, { en: 'Pay as you go: about $0.002 per keyword check (live mode); $50 minimum top-up that doesn\'t expire', tr: 'Kullandıkça öde: kelime kontrolü başına yaklaşık $0,002 (canlı mod); en az $50 yüklenir, süresi dolmaz' }]
+        };
+        var out = {};
+        Object.keys(meta).forEach(function (id) {
+          var x = meta[id];
+          out[id] = { name: x[0], on: feats['provider-' + id] === true, needs_key: x[1].length > 0, configured: x[1].length ? !!window.__provKeys[id] : true, scraping: x[2], fields: x[1], cost: x[3] };
+        });
+        return out;
+      }
+      async function syncProviders() {
+        var p = provStatus();
+        var b = Object.assign({}, store['rs:bridge']);
+        if (!b.connected) return;
+        b.providers = {};
+        Object.keys(p).forEach(function (k) { b.providers[k] = { on: p[k].on, configured: p[k].configured, scraping: p[k].scraping }; });
+        await chrome.storage.local.set({ 'rs:bridge': b });
+      }
+      async function demoDiscovery(m, qs) {
+        await new Promise(function (r) { setTimeout(r, 300); });
+        if (qs.get('niche') === 'off' || (store['rs:bridge'] && !store['rs:bridge'].connected)) return { ok: false, noBridge: true, error: 'Discovery runs in the OpenOutlier bridge on your Mac, and it isn\'t running.' };
+        var s = store['rs:settings'] || {};
+        var feats = s.features || {};
+        var mode = qs.get('radar');
+        if (m.what === 'radar') {
+          var r = await discFixture('radar');
+          r.feature = feats['niche-radar'] === true;
+          r.api_key = !!(store['rs:bridge'] && store['rs:bridge'].bridgeApiKey);
+          var rd = s.radar || {};
+          r.keywords = (rd.keywords && rd.keywords.Excel) || [];
+          r.cost = { searches: r.keywords.length, search: r.keywords.length * 100, videos: Math.ceil(r.keywords.length * 25 / 50), channels: Math.ceil(r.keywords.length * 25 / 50) };
+          r.cost.total = r.cost.search + r.cost.videos + r.cost.channels;
+          r.suggestions = r.suggestions.filter(function (x) { return r.keywords.indexOf(x.keyword) === -1; });
+          if (mode === 'off' || mode === 'new' || mode === 'empty' || window.__radarRuns === 0) { r.breakouts = []; r.rising = []; r.results = 0; r.runs = []; r.next_run_at = r.feature ? Date.now() + 40e3 : null; }
+          return r;
+        }
+        if (m.what === 'radar-run') { window.__radarRuns = 1; return { ok: true, at: Date.now() }; }
+        if (m.what === 'map') { var mp = await discFixture('map'); mp.feature = feats['channel-similar'] !== false; return mp; }
+        if (m.what === 'keywords') {
+          var k = await discFixture(m.lang === 'tr' ? 'keywords-tr' : 'keywords');
+          var rk = (s.radar && s.radar.keywords && s.radar.keywords.Excel) || [];
+          k.radar_keywords = rk;
+          k.ideas.forEach(function (i) { i.on_radar = rk.indexOf(i.keyword) !== -1; });
+          if (m.seed) { k.seeds = [m.seed].concat(k.seeds.slice(0, 4)); }
+          if (m.expand) { k.expand = m.expand; ['a', 'b', 'c', 'd', 'f', 'p', 's', 't'].forEach(function (c, i) { k.ideas.splice(8 + i, 0, { keyword: m.expand + ' ' + ['automation', 'basics', 'cheat sheet', 'dax', 'formulas', 'practice', 'shortcuts', 'templates'][i], sources: ['autocomplete'], seeds: [m.expand], ranks: null, lift: null, on_radar: false }); }); k.fetched = 24; }
+          if (feats['keyword-ideas'] === false) { k.feature = false; k.autocomplete = false; k.ideas = k.ideas.filter(function (i) { return i.sources.indexOf('autocomplete') === -1 || i.sources.length > 1; }); k.fetched = 0; k.cached = 0; }
+          return k;
+        }
+        if (m.what === 'thumbs') { var t = await discFixture('thumbs'); return t; }
+        if (m.what === 'similar') return discFixture(m.channel && /sheetwizard/i.test(m.channel) ? 'similar-sheetwizard' : 'similar-kenji');
+        if (m.what === 'providers') return { ok: true, providers: provStatus() };
+        if (m.what === 'provider-key') { if (m.remove) delete window.__provKeys[m.id]; else window.__provKeys[m.id] = true; await syncProviders(); return { ok: true, providers: provStatus() }; }
+        if (m.what === 'sb-quote') { var per = { '30d': 1, '1y': 2, '3y': 3 }[m.history] || 2; var chs = Array.from({ length: 15 }, function (_, i) { return 'UCsimdemo' + i; }); return { ok: true, provider: 'Social Blade Business API', history: m.history || '1y', per_channel: per, channels: chs, free: chs.slice(0, 2), credits: 13 * per, est_usd: 13 * per * 0.5 }; }
+        if (m.what === 'sb-backfill') { await new Promise(function (r) { setTimeout(r, 700); }); return { ok: true, history: m.history, credits_used: m.confirm, credits_left: 100 - m.confirm, channels: Array.from({ length: 15 }, function (_, i) { return { channel_id: 'UCsimdemo' + i, days: m.history === '3y' ? 1095 : m.history === '30d' ? 30 : 365 }; }) }; }
+        if (m.what === 'dfs-check') return { ok: true, checked: ((s.radar && s.radar.rankKeywords) || []).map(function (k, i) { return { keyword: k, rank: i % 2 ? null : 7 + i }; }), cost: 0.004 };
+        return { ok: false, error: 'bad request' };
       }
 
       // My YouTube channel / Kanalım (#/my-youtube): ?ytanalytics=setup | connect | connected (one channel on its way to the YPP) |
@@ -301,6 +385,27 @@
         store['rs:yt-api-quota'] = { day: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()), units: 37 };
       }
 
+      // Phase 5: the radar's settings and switches (see demoDiscovery above).
+      (function () {
+        var q = new URLSearchParams(location.search);
+        var mode = q.get('radar');
+        var st5 = store['rs:settings'] = store['rs:settings'] || {};
+        st5.features = Object.assign({}, st5.features);
+        if (mode !== 'off' && mode !== 'empty') st5.features['niche-radar'] = true;
+        if (mode === 'empty') st5.features['niche-radar'] = true;
+        if (mode !== 'empty') st5.radar = { keywords: { Excel: ['excel xlookup', 'excel dashboard', 'excel pivot table', 'power query'] }, maxSubs: 50000, minRatio: 1, minViews: 1000, perKeyword: 25, region: 'US', lang: 'en', rankKeywords: q.get('providers') === 'on' ? ['excel pivot table', 'excel xlookup'] : [] };
+        if (mode === 'new') window.__radarRuns = 0;
+        var pv = q.get('providers');
+        if (pv === 'keys' || pv === 'on') window.__provKeys = { socialblade: true, dataforseo: true };
+        if (pv === 'on') { st5.features['provider-socialblade'] = true; st5.features['provider-dataforseo'] = true; }
+        if (q.has('off')) q.get('off').split(',').forEach(function (f) { st5.features[f] = false; });
+        if (q.has('on')) q.get('on').split(',').forEach(function (f) { st5.features[f] = true; });
+        if (store['rs:bridge'] && store['rs:bridge'].connected) {
+          var feats = st5.features;
+          store['rs:bridge'].providers = { ryd: { on: !!feats['provider-ryd'], configured: true, scraping: false }, socialblade: { on: !!feats['provider-socialblade'], configured: !!(window.__provKeys || {}).socialblade, scraping: false }, dataforseo: { on: !!feats['provider-dataforseo'], configured: !!(window.__provKeys || {}).dataforseo, scraping: true } };
+        }
+      })();
+
       // "My account": open with ?studio=<address of a chatmany worker or a local stand-in> to link it.
       var studio = new URLSearchParams(location.search).get('studio');
       if (studio) store['rs:studio'] = { baseUrl: studio, token: 'demo' };
@@ -333,7 +438,7 @@
         });
         store['rs:org'] = o;
       }
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/src/discovery.js', '/dashboard/discovery-view.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

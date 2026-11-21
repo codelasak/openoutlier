@@ -26,6 +26,8 @@ import { Tracker, trackerStatus } from './tracker.mjs';
 import { registerNicheTools, INSTRUCTIONS as NICHE_INSTRUCTIONS, trackingSummary } from './niche-tools.mjs';
 import { registerContentTools, INSTRUCTIONS as CONTENT_INSTRUCTIONS } from './content.mjs';
 import { registerOwnTools } from './own-tools.mjs';
+import { registerDiscoveryTools, INSTRUCTIONS as DISCOVERY_INSTRUCTIONS } from './discovery.mjs';
+import { status as providerStatus } from './providers/index.mjs';
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
@@ -70,7 +72,8 @@ const server = new McpServer(
       'YouTube extras (optional, each off until the user sets it up): get_transcript (captions via yt-dlp, with the first ~30 s as hook), youtube_api_stats (exact stats through the user\'s own YouTube Data API key; makes no request without one).',
       YT_ANALYTICS_INSTRUCTIONS,
       NICHE_INSTRUCTIONS,
-      CONTENT_INSTRUCTIONS
+      CONTENT_INSTRUCTIONS,
+      DISCOVERY_INSTRUCTIONS
     ].join('\n')
   }
 );
@@ -487,7 +490,9 @@ server.registerTool('bridge_status', {
     features: (() => { const f = store().getMeta('features', null); return f ? { off: Object.keys(f).filter((k) => f[k] === false), on: Object.keys(f).filter((k) => f[k] === true), note: 'Only the ones changed from the default (src/features.js).' } : { note: 'The extension has not sent its feature settings yet; the defaults apply.' }; })(),
     tracker: tracker ? tracker.status() : trackerStatus(store()),
     // Niche tracking: channels, last RSS read, breakouts, and the RSS-vs-API lag check (rss_lag.how_to_read).
-    niche_tracking: (() => { try { return trackingSummary(store()); } catch (e) { return { error: e.message }; } })()
+    niche_tracking: (() => { try { return trackingSummary(store()); } catch (e) { return { error: e.message }; } })(),
+    // Phase 5: the optional third-party providers (on / key set / scraping-based), never the keys.
+    providers: (() => { try { return providerStatus(store()); } catch (e) { return { error: e.message }; } })()
   });
 }));
 
@@ -516,6 +521,7 @@ registerStudioTools(server, { z, json, safe });
 registerYouTubeApiTool(server, { z, json, safe });
 registerNicheTools(server, { z, json, safe, store });
 registerContentTools(server, { z, json, safe, store });
+registerDiscoveryTools(server, { z, json, safe, store });
 registerOwnTools(server, { z, json, safe, store });
 registerTranscriptTool(server, { z, json, safe, fail, youtubeIdOf, findReel, readLibrary });
 // The bridge port Google's sign-in redirects to; it must be a bridge that knows the callback.

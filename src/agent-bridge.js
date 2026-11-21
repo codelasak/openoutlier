@@ -193,7 +193,8 @@
     var F = self.OpenOutlierFeatures;
     var r = await chrome.storage.local.get([SETTINGS_KEY, QUOTA_KEY]);
     var s = r[SETTINGS_KEY] || {};
-    var body = JSON.stringify({ features: F ? F.sanitize(s.features) : {}, quota: r[QUOTA_KEY] || null, niche: s.niche && typeof s.niche === 'object' ? s.niche : null });
+    var body = JSON.stringify({ features: F ? F.sanitize(s.features) : {}, quota: r[QUOTA_KEY] || null, niche: s.niche && typeof s.niche === 'object' ? s.niche : null,
+      radar: s.radar && typeof s.radar === 'object' ? s.radar : null });
     if (!force && body === lastSettings.body && Date.now() - lastSettings.at < SETTINGS_EVERY) return;
     var res = await post(found.port, '/settings', JSON.parse(body));
     lastSettings = { body: body, at: Date.now() };
@@ -270,6 +271,8 @@
       bridgeApiKeySource: res.apiKey && res.apiKey.source || null,
       oauthConnected: !!(res.oauth && res.oauth.connected),
       bridgeQuota: res.bridgeQuota || null,
+      // Phase 5: which optional providers are on and have a key (never the key itself).
+      providers: res.providers && typeof res.providers === 'object' ? Object.keys(res.providers).reduce(function (o, k) { var p = res.providers[k]; o[k] = { on: !!p.on, configured: !!p.configured, scraping: !!p.scraping }; return o; }, {}) : null,
       settingsAt: Date.now()
     });
   }
@@ -639,10 +642,70 @@
     return { ok: false, error: 'bad request' };
   }
 
+
+  // ---- phase 5: discovery (mcp/discovery.mjs) and the optional providers (mcp/providers/) -------
+  // msg.what: radar | radar-run | map | keywords | similar | thumbs | corec | providers | provider-key |
+  // sb-quote | sb-backfill | dfs-check. Reads are quiet without a (new enough) bridge for the in-page
+  // parts (similar, corec); the Library pages get the reason.
+  var OLD_BRIDGE_DISCOVERY = 'The OpenOutlier bridge that is running is older than this extension and has no discovery tools. ' +
+    'Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge (or restart Claude if it runs the bridge).';
+  var UC_RE = /^UC[A-Za-z0-9_-]{22}$/;
+  async function discovery(msg) {
+    var found = await findServer(await getState());
+    if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE_NICHE };
+    var feats = found.health.features || [];
+    var prov = /^(providers|provider-key|sb-|dfs-)/.test(String(msg.what || ''));
+    if (feats.indexOf(prov ? 'providers' : 'discovery') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE_DISCOVERY };
+    var q = new URLSearchParams();
+    if (typeof msg.niche === 'string') q.set('niche', msg.niche.slice(0, 80));
+    var get = async function (path) {
+      var res = await read(found.port, path + (String(q) ? '?' + q : ''), 60000);
+      var j = await res.json().catch(function () { return {}; });
+      if (!res.ok && j.ok === undefined) return { ok: false, error: j.error || 'HTTP ' + res.status };
+      return j;
+    };
+    switch (msg.what) {
+      case 'radar': return get('/youtube/discovery/radar');
+      case 'radar-run': return post(found.port, '/youtube/discovery/radar/run', {});
+      case 'map': return get('/youtube/discovery/map');
+      case 'keywords':
+        ['seed', 'expand'].forEach(function (k) { if (typeof msg[k] === 'string' && msg[k].trim()) q.set(k, msg[k].trim().slice(0, 100)); });
+        if (/^[a-z]{2}$/.test(String(msg.hl || ''))) q.set('hl', msg.hl);
+        if (/^[A-Z]{2}$/.test(String(msg.gl || ''))) q.set('gl', msg.gl);
+        if (msg.lang === 'tr') q.set('lang', 'tr');
+        return get('/youtube/discovery/keywords');
+      case 'similar':
+        if (!UC_RE.test(String(msg.channel || ''))) return { ok: false, error: 'bad request' };
+        q.set('channel', msg.channel);
+        return get('/youtube/discovery/similar');
+      case 'thumbs':
+        if (!/^[A-Za-z0-9_-]{11}$/.test(String(msg.id || ''))) return { ok: false, error: 'Not a YouTube video id.' };
+        q.set('id', msg.id);
+        return get('/youtube/discovery/thumbs');
+      case 'corec':
+        if (!UC_RE.test(String(msg.source || '')) || !Array.isArray(msg.recs)) return { ok: false, error: 'bad request' };
+        return post(found.port, '/youtube/discovery/corec', { source: msg.source, recs: msg.recs.slice(0, 40).map(function (r) {
+          return { id: UC_RE.test(String(r && r.id || '')) ? r.id : null, name: r && r.name ? String(r.name).slice(0, 120) : null, handle: r && r.handle ? String(r.handle).slice(0, 60) : null };
+        }).filter(function (r) { return r.id; }) });
+      case 'providers': return get('/providers');
+      case 'provider-key': {
+        var res = await fetch('http://127.0.0.1:' + found.port + '/providers/key', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(msg.remove ? { id: msg.id, remove: true } : { id: msg.id, key: msg.key }) });
+        var j = await res.json().catch(function () { return {}; });
+        pushSettingsSoon();
+        return j;
+      }
+      case 'sb-quote': return post(found.port, '/providers/socialblade/quote', { channels: msg.channels, history: msg.history });
+      case 'sb-backfill': return post(found.port, '/providers/socialblade/backfill', { channels: msg.channels, history: msg.history, confirm: msg.confirm });
+      case 'dfs-check': return post(found.port, '/providers/dataforseo/check', {});
+    }
+    return { ok: false, error: 'bad request' };
+  }
+
   chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (!msg || sender.id !== chrome.runtime.id) return;
     var fn = msg.type === 'reelscope:yt-content' ? content : msg.type === 'reelscope:yt-cards' ? cards : msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
-      : msg.type === 'reelscope:bridge-key' ? bridgeKey : msg.type === 'reelscope:niche' ? niche : msg.type === 'reelscope:own' ? own : null;
+      : msg.type === 'reelscope:bridge-key' ? bridgeKey : msg.type === 'reelscope:niche' ? niche : msg.type === 'reelscope:own' ? own : msg.type === 'reelscope:discovery' ? discovery : null;
     if (!fn) return;
     fn(msg).then(sendResponse, function (e) {
       sendResponse({ ok: false, error: /Failed to fetch|NetworkError/i.test(String(e && e.message)) ? NO_BRIDGE : String(e && e.message || e) });

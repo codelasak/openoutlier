@@ -25,15 +25,19 @@
       },
       need: {
         apiKey: 'Needs a YouTube Data API key', bridge: 'The bridge on this Mac isn\'t connected', bridgeKey: 'The bridge has no API key',
-        oauth: 'Your YouTube channel isn\'t connected', tracker: 'Needs niche tracking, which is off'
+        oauth: 'Your YouTube channel isn\'t connected', tracker: 'Needs niche tracking, which is off', providerKey: 'No key for this provider yet'
       },
-      fix: { apiKey: 'Add key', bridge: 'How to set up', bridgeKey: 'Add key', copyKey: 'Copy key to bridge', oauth: 'Connect', tracker: 'Turn on' },
+      fix: { apiKey: 'Add key', bridge: 'How to set up', bridgeKey: 'Add key', copyKey: 'Copy key to bridge', oauth: 'Connect', tracker: 'Turn on', providerKey: 'Add key' },
       note: {
         thirdParty: ['Sends the video id to ', '. The counts are estimates.'],
         ytRequest: 'OpenOutlier asks YouTube itself: at most 10 requests a minute, cached for 7 days.',
         mcp: 'The analysis part runs in Claude through MCP; no AI key in the extension.',
         estimate: 'A rough estimate, not your real revenue.',
-        optApiKey: 'Works without; shows more with an API key.'
+        optApiKey: 'Works without; shows more with an API key.',
+        quota: 'Spends Data API units every day; the cost per run is shown in Niche tracking → Radar before it runs, and it stops before the daily budget.',
+        scraping: 'Scraping-based: the provider scrapes YouTube, which YouTube\'s API policy doesn\'t allow next to an API key. Its data is labelled separately.',
+        paid: 'Paid: the provider charges per call. Nothing is sent until you add a key.',
+        suggest: 'Asks Google\'s autocomplete (unofficial) through the bridge: at most 10 requests in 10 s, cached 7 days.'
       },
       switchOn: 'On', switchOff: 'Off'
     },
@@ -53,15 +57,19 @@
       },
       need: {
         apiKey: 'YouTube Data API anahtarı gerekli', bridge: 'Bu Mac\'teki bridge bağlı değil', bridgeKey: 'Bridge\'de API anahtarı yok',
-        oauth: 'YouTube kanalın bağlı değil', tracker: 'Niş takibi gerekli, şu an kapalı'
+        oauth: 'YouTube kanalın bağlı değil', tracker: 'Niş takibi gerekli, şu an kapalı', providerKey: 'Bu servis için henüz anahtar yok'
       },
-      fix: { apiKey: 'Anahtar ekle', bridge: 'Nasıl kurulur', bridgeKey: 'Anahtar ekle', copyKey: 'Anahtarı bridge\'e kopyala', oauth: 'Bağla', tracker: 'Aç' },
+      fix: { apiKey: 'Anahtar ekle', bridge: 'Nasıl kurulur', bridgeKey: 'Anahtar ekle', copyKey: 'Anahtarı bridge\'e kopyala', oauth: 'Bağla', tracker: 'Aç', providerKey: 'Anahtar ekle' },
       note: {
         thirdParty: ['Video ID\'si ', ' servisine gider. Sayılar tahminidir.'],
         ytRequest: 'OpenOutlier YouTube\'a kendisi sorar: dakikada en fazla 10 istek, 7 gün önbellek.',
         mcp: 'Analiz kısmı Claude\'da, MCP üzerinden çalışır; eklentide AI anahtarı yok.',
         estimate: 'Kaba bir tahmin, gerçek gelirin değil.',
-        optApiKey: 'Anahtarsız da çalışır; API anahtarıyla daha fazlasını gösterir.'
+        optApiKey: 'Anahtarsız da çalışır; API anahtarıyla daha fazlasını gösterir.',
+        quota: 'Her gün Data API birimi harcar; çalışma başına maliyet çalışmadan önce Niş Takibi → Radar\'da görünür, günlük bütçeye gelmeden durur.',
+        scraping: 'Scraping tabanlı: servis YouTube\'u kazıyarak veri topluyor; YouTube\'un API politikası bunu bir API anahtarıyla aynı uygulamada yasaklıyor. Verisi ayrı etiketlenir.',
+        paid: 'Ücretli: servis çağrı başına ücret alır. Anahtar eklemeden hiçbir şey gönderilmez.',
+        suggest: 'Google\'ın otomatik tamamlamasına (resmi değil) bridge üzerinden sorar: 10 saniyede en çok 10 istek, 7 gün önbellek.'
       },
       switchOn: 'Açık', switchOff: 'Kapalı'
     }
@@ -160,6 +168,7 @@
           }),
           notes.map(function (n) {
             var text = L.note[n];
+            if (n === 'scraping') return h('p', { class: 'ft-note ft-note-scraping' }, h('b', { class: 'ft-badge', text: lang === 'tr' ? 'scraping' : 'scraping' }), ' ', text);
             if (!Array.isArray(text)) return h('p', { class: 'ft-note' }, text);
             return h('p', { class: 'ft-note' }, text[0], h('a', { href: f.link, target: '_blank', rel: 'noopener noreferrer', text: f.link.replace(/^https:\/\/|\/$/g, '') }), text[1]);
           })),

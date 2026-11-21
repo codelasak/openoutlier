@@ -14,7 +14,9 @@ const PLAN_IDS = [
   'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'channel-similar', 'channel-sponsors', 'channel-rpm',
   'video-card', 'video-monetization', 'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
   'shorts-overlay', 'thumb-compress', 'thumb-preview',
-  'tracker', 'breakout-alerts', 'weekly-digest', 'niche-radar', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d'
+  'tracker', 'breakout-alerts', 'weekly-digest', 'niche-radar', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d',
+  // Phase 5: keyword ideas (6.6) and the optional providers (8.2).
+  'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'
 ];
 
 test('every feature in the plan is defined once, with TR/EN text, a known group and requirements', () => {
@@ -22,7 +24,7 @@ test('every feature in the plan is defined once, with TR/EN text, a known group 
   assert.deepEqual([...ids].sort(), [...PLAN_IDS].sort());
   assert.equal(new Set(ids).size, ids.length, 'ids are unique');
   const groups = F.GROUPS.map((g) => g.id);
-  const REQ = ['apiKey', 'bridge', 'bridgeKey', 'oauth', 'tracker'];
+  const REQ = ['apiKey', 'bridge', 'bridgeKey', 'oauth', 'tracker', 'providerKey'];
   for (const f of F.FEATURES) {
     assert.ok(groups.includes(f.group), f.id + ' group');
     for (const l of ['tr', 'en']) {
@@ -51,20 +53,26 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   // Milestone notifications are optional (plan 3.2: "Bildirim isteğe bağlı").
   assert.equal(d['own-milestones'], false);
   // The rest start on.
-  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'own-milestones'].includes(x))) assert.equal(d[id], true, id);
+  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'own-milestones', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'].includes(x))) assert.equal(d[id], true, id);
+  // Phase 5: keyword ideas start on (no quota, rate-limited); every optional provider starts off (budget $0, plan 10).
+  assert.equal(d['keyword-ideas'], true);
+  for (const id of ['provider-ryd', 'provider-socialblade', 'provider-dataforseo']) assert.equal(d[id], false, id);
+  assert.ok(F.get('provider-dataforseo').notes.includes('scraping'), 'DataForSEO is marked scraping-based');
+  assert.ok(!F.get('provider-socialblade').notes.includes('scraping'));
+  assert.ok(F.get('niche-radar').notes.includes('quota'));
   // The dislike feature credits its source.
   assert.equal(F.get('dislikes').link, 'https://returnyoutubedislike.com/');
   assert.ok(F.get('dislikes').notes.includes('thirdParty'));
   // Phase 0: the 30-day purge; phase 1: niche tracking, the Track button, growth, title history, breakouts, the digest;
   // phase 2: own-channel history; phase 3: the in-page badges and cards; phase 4: the content tools. The rest are "coming soon".
-  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), [
+  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id).sort(), [
     'card-vph', 'card-outlier', 'card-subs', 'card-velocity', 'feed-filters', 'hide-shorts', 'channel-sort',
     'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'channel-sponsors', 'video-card', 'video-monetization',
     'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
-    'shorts-overlay', 'thumb-compress', 'thumb-preview', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']);
-  assert.deepEqual(F.FEATURES.filter((f) => f.phase === 3 && !f.available).map((f) => f.id), ['channel-rpm'], 'only the RPM estimate of phase 3 is left');
-  assert.deepEqual(F.FEATURES.filter((f) => f.phase === 4 && !f.available).map((f) => f.id), [], 'phase 4 is complete');
-  assert.deepEqual(F.FEATURES.filter((f) => !f.available).map((f) => f.id), ['channel-similar', 'channel-rpm', 'niche-radar'], 'phase 5 (and the RPM estimate) left');
+    'shorts-overlay', 'thumb-compress', 'thumb-preview', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']
+    .concat(['channel-similar', 'channel-rpm', 'niche-radar', 'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo']).sort());
+  // Phase 5: nothing is "coming soon" any more.
+  assert.deepEqual(F.FEATURES.filter((f) => !f.available).map((f) => f.id), [], 'every feature is built');
   // Subscriber counts work without a key (page data, saved channels); the key adds channels.list.
   assert.deepEqual(F.get('card-subs').requires, []);
   assert.ok(F.get('card-subs').optional.includes('apiKey'));
@@ -217,7 +225,7 @@ test('browser: two quick switches are both kept (writes go one at a time)', asyn
 test('browser: env() says what is set up, from the popup key and the bridge state', async () => {
   const key = 'AIza' + 'x'.repeat(35);
   const none = browser({});
-  assert.deepEqual({ ...(await none.F.env()) }, { apiKey: false, bridge: false, bridgeKey: undefined, oauth: undefined, bridgeSettings: false });
+  assert.deepEqual({ ...(await none.F.env()) }, { apiKey: false, bridge: false, bridgeKey: undefined, oauth: undefined, providers: undefined, bridgeSettings: false });
   // No bridge: only "bridge" is reported missing, not its key as well.
   assert.deepEqual([...none.F.missing('tracker', await none.F.env(), none.F.defaults())], ['bridge']);
   const older = browser({ 'rs:settings': { youtubeApiKey: key }, 'rs:bridge': { connected: true } });
@@ -231,4 +239,13 @@ test('browser: env() says what is set up, from the popup key and the bridge stat
   assert.equal(e2.oauth, false);
   const offSwitch = browser({ 'rs:settings': { agentBridge: false }, 'rs:bridge': { connected: true, bridgeApiKey: true } });
   assert.equal((await offSwitch.F.env()).bridge, false, '"Save to this Mac" off means no bridge');
+});
+
+test('phase 5: a provider\'s missing key is reported only when the bridge says so', () => {
+  const flags = F.resolve({ 'provider-socialblade': true, 'provider-dataforseo': true });
+  assert.deepEqual(F.missing('provider-socialblade', { bridge: true }, flags), [], 'unknown provider state: nothing reported');
+  assert.deepEqual(F.missing('provider-socialblade', { bridge: true, providers: { socialblade: { configured: false } } }, flags), ['providerKey']);
+  assert.deepEqual(F.missing('provider-dataforseo', { bridge: true, providers: { dataforseo: { configured: true } } }, flags), []);
+  assert.deepEqual(F.missing('provider-ryd', { bridge: true, providers: { ryd: { configured: true } } }, flags), []);
+  assert.deepEqual(F.missing('niche-radar', { bridge: true, bridgeKey: false }, F.resolve({ 'niche-radar': true })), ['bridgeKey']);
 });

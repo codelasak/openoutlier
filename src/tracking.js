@@ -72,7 +72,7 @@
     var niche = nicheOf(org || {}, id);
     var mine = !!(e && e.mine);
     if (e && e.on === false) return { on: false, via: null, niche: niche, mine: mine, excluded: !!niche };
-    if (e && e.on) return { on: true, via: niche ? 'niche' : 'button', niche: niche || (folderOf(org, id) ? folderName(org, folderOf(org, id)) : null), mine: mine, excluded: false };
+    if (e && e.on) return { on: true, via: niche ? 'niche' : 'button', niche: niche || (folderOf(org, id) ? folderName(org, folderOf(org, id)) : null) || (e.niche ? String(e.niche) : null), mine: mine, excluded: false };
     if (niche) return { on: true, via: 'niche', niche: niche, mine: mine, excluded: false };
     return { on: false, via: null, niche: null, mine: mine, excluded: false };
   }
@@ -90,6 +90,24 @@
     // Turning off a channel that only the button tracked: forget the entry (unless it is marked mine).
     if (!e.on && !st.niche && !e.mine) delete org.tracked[id];
     else org.tracked[id] = e;
+    return org;
+  }
+
+  /**
+   * Phase 5's one-click Track (niche radar, channel map): track a channel, usually not saved in the
+   * Library, inside a niche (a folder or "#tag" name), so it shows up with that niche's channels.
+   * info: { channelId, name }. Mutates org.
+   */
+  function trackInNiche(org, id, info, niche, now) {
+    if (!isYouTube(id)) return org;
+    org.tracked = org.tracked || {};
+    var e = Object.assign({}, org.tracked[id]);
+    e.on = true;
+    e.at = now || Date.now();
+    if (niche) e.niche = String(niche).slice(0, 80);
+    if (info && CHANNEL_ID_RE.test(String(info.channelId || ''))) e.channelId = info.channelId;
+    if (info && info.name) e.name = String(info.name).slice(0, 120);
+    org.tracked[id] = e;
     return org;
   }
 
@@ -190,7 +208,7 @@
 
   return {
     EXCEL_CHANNELS: EXCEL_CHANNELS, MINE: MINE, STARTER_FOLDER: STARTER_FOLDER,
-    niches: niches, isNiche: isNiche, setNiche: setNiche, nicheOf: nicheOf, status: status, toggle: toggle, setMine: setMine,
+    niches: niches, isNiche: isNiche, setNiche: setNiche, nicheOf: nicheOf, status: status, toggle: toggle, setMine: setMine, trackInNiche: trackInNiche,
     desired: desired, matchName: matchName, suggest: suggest, applySuggestion: applySuggestion, norm: norm
   };
 });
