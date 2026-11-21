@@ -28,6 +28,15 @@
         oauth: 'Your YouTube channel isn\'t connected', tracker: 'Needs niche tracking, which is off', providerKey: 'No key for this provider yet'
       },
       fix: { apiKey: 'Add key', bridge: 'How to set up', bridgeKey: 'Add key', copyKey: 'Copy key to bridge', oauth: 'Connect', tracker: 'Turn on', providerKey: 'Add key' },
+      // One line per group when several switches wait for the same thing.
+      needMany: {
+        apiKey: { one: '{n} feature needs a YouTube Data API key', other: '{n} features need a YouTube Data API key' },
+        bridge: { one: '{n} feature needs the bridge on this Mac', other: '{n} features need the bridge on this Mac' },
+        bridgeKey: { one: '{n} feature is waiting for an API key on the bridge', other: '{n} features are waiting for an API key on the bridge' },
+        oauth: { one: '{n} feature needs your YouTube channel connected', other: '{n} features need your YouTube channel connected' },
+        tracker: { one: '{n} feature needs niche tracking, which is off', other: '{n} features need niche tracking, which is off' }
+      },
+      waiting: 'waiting: see above',
       note: {
         thirdParty: ['Sends the video id to ', '. The counts are estimates.'],
         ytRequest: 'OpenOutlier asks YouTube itself: at most 10 requests a minute, cached for 7 days.',
@@ -60,6 +69,14 @@
         oauth: 'YouTube kanalın bağlı değil', tracker: 'Niş takibi gerekli, şu an kapalı', providerKey: 'Bu servis için henüz anahtar yok'
       },
       fix: { apiKey: 'Anahtar ekle', bridge: 'Nasıl kurulur', bridgeKey: 'Anahtar ekle', copyKey: 'Anahtarı bridge\'e kopyala', oauth: 'Bağla', tracker: 'Aç', providerKey: 'Anahtar ekle' },
+      needMany: {
+        apiKey: '{n} özellik YouTube Data API anahtarı bekliyor',
+        bridge: '{n} özellik bu Mac\'teki bridge\'i bekliyor',
+        bridgeKey: '{n} özellik bridge\'de API anahtarı bekliyor',
+        oauth: '{n} özellik YouTube kanalının bağlanmasını bekliyor',
+        tracker: '{n} özellik niş takibini bekliyor (şu an kapalı)'
+      },
+      waiting: 'bekliyor: yukarıya bak',
       note: {
         thirdParty: ['Video ID\'si ', ' servisine gider. Sayılar tahminidir.'],
         ytRequest: 'OpenOutlier YouTube\'a kendisi sorar: dakikada en fazla 10 istek, 7 gün önbellek.',
@@ -132,12 +149,25 @@
       if (!list.length) return;
       var nOn = list.filter(function (f) { return flags[f.id]; }).length;
       var gid = 'ft-g-' + g.id + '-' + (++uid);
+      // The same missing piece on two or more switches of a group: one banner instead of a warning per row
+      // (provider keys stay on their own row: each provider has its own key).
+      var waits = {};
+      list.forEach(function (f) {
+        if (!flags[f.id]) return;
+        F.missing(f.id, env, flags).forEach(function (m) { if (m !== 'providerKey') (waits[m] = waits[m] || []).push(f.id); });
+      });
+      var banner = Object.keys(waits).filter(function (m) { return waits[m].length >= 2; });
       wrap.appendChild(h('section', { class: 'ft-group', 'aria-labelledby': gid },
         h('div', { class: 'ft-group-head' },
           h('h3', { id: gid, text: g.label[lang] }),
           h('span', { class: 'ft-count', text: nOn + ' ' + L.of + ' ' + list.length + ' ' + L.on })),
         g.hint ? h('p', { class: 'ft-group-hint', text: g.hint[lang] }) : null,
-        h('ul', { class: 'ft-list' }, list.map(function (f) { return row(f); }))));
+        banner.map(function (m) {
+          var code = m === 'bridgeKey' && env.apiKey ? 'copyKey' : m;
+          return h('p', { class: 'ft-warn ft-warn-group' }, px(PX_WARN), h('span', { text: F.plural(waits[m].length, L.needMany[m], lang) }),
+            opts.onFix ? h('button', { class: 'ft-fix', type: 'button', onclick: function () { opts.onFix(code, waits[m][0]); } }, L.fix[code] + ' →') : null);
+        }),
+        h('ul', { class: 'ft-list' }, list.map(function (f) { return row(f, banner); }))));
     });
 
     if (opts.onReset || opts.message) {
@@ -147,19 +177,21 @@
     }
     return wrap;
 
-    function row(f) {
+    function row(f, grouped) {
       var on = !!flags[f.id];
       var id = 'ft-' + f.id + '-' + (++uid);
-      var miss = on ? F.missing(f.id, env, flags) : [];
+      var allMiss = on ? F.missing(f.id, env, flags) : [];
+      var miss = allMiss.filter(function (m) { return (grouped || []).indexOf(m) === -1; });
       var notes = f.notes.slice();
       if (f.optional.indexOf('apiKey') !== -1 && env.apiKey === false) notes.push('optApiKey');
       var input = h('input', { type: 'checkbox', role: 'switch', id: id, 'aria-describedby': id + '-d', onchange: function (e) { opts.onToggle(f.id, e.target.checked); } });
       input.checked = on;
-      return h('li', { class: 'ft-row' + (on ? ' is-on' : ' is-off') + (f.available ? '' : ' is-soon') + (miss.length ? ' is-blocked' : ''), 'data-feature': f.id },
+      return h('li', { class: 'ft-row' + (on ? ' is-on' : ' is-off') + (f.available ? '' : ' is-soon') + (allMiss.length ? ' is-blocked' : ''), 'data-feature': f.id },
         h('div', { class: 'ft-text' },
           h('div', { class: 'ft-title' },
             h('label', { for: id, text: f.label[lang] }),
-            f.available ? null : h('span', { class: 'ft-soon', title: L.soonTip.replace('{n}', f.phase), text: L.soon })),
+            f.available ? null : h('span', { class: 'ft-soon', title: L.soonTip.replace('{n}', f.phase), text: L.soon }),
+            allMiss.length > miss.length ? h('span', { class: 'ft-wait', text: L.waiting }) : null),
           h('p', { class: 'ft-desc', id: id + '-d', text: f.desc[lang] }),
           miss.map(function (m) {
             var code = m === 'bridgeKey' && env.apiKey ? 'copyKey' : m;
@@ -168,7 +200,7 @@
           }),
           notes.map(function (n) {
             var text = L.note[n];
-            if (n === 'scraping') return h('p', { class: 'ft-note ft-note-scraping' }, h('b', { class: 'ft-badge', text: lang === 'tr' ? 'scraping' : 'scraping' }), ' ', text);
+            if (n === 'scraping') return h('p', { class: 'ft-note ft-note-scraping' }, h('b', { class: 'ft-badge', lang: 'en', text: 'scraping' }), ' ', text);
             if (!Array.isArray(text)) return h('p', { class: 'ft-note' }, text);
             return h('p', { class: 'ft-note' }, text[0], h('a', { href: f.link, target: '_blank', rel: 'noopener noreferrer', text: f.link.replace(/^https:\/\/|\/$/g, '') }), text[1]);
           })),

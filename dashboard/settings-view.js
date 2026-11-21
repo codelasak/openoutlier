@@ -15,7 +15,7 @@
     en: {
       title: 'Settings', sub: 'Features, keys and the bridge',
       features: 'Features',
-      lang: 'Language', langHint: 'For the Features list and this page. Auto follows YouTube\'s language on YouTube and Chrome\'s here.',
+      lang: 'Language', langHint: 'For the Library, the YouTube panel and cards, and the popup. Auto follows YouTube\'s language on YouTube and Chrome\'s here.',
       langAuto: 'Auto', apiTitle: 'YouTube Data API key',
       apiText: 'Your own key from Google Cloud (YouTube Data API v3). Free quota: 10,000 units a day. Without a key OpenOutlier never calls the API.',
       apiSaved: 'Saved (…{k}).', apiNone: 'No key in this browser.', apiReplace: 'Paste a new key to replace it', save: 'Save', removeKey: 'Remove the key',
@@ -32,20 +32,20 @@
       bridgeMore: 'README → "Connect AI agents". The bridge answers only this extension, on 127.0.0.1.',
       srcFile: 'from the key file', srcEnv: 'from OPENOUTLIER_YOUTUBE_API_KEY',
       prov: {
-        title: 'Optional providers', text: 'Third-party APIs, all off. A provider makes no request until its switch is on (Features → Optional providers) and its key is here. Keys go to the bridge only (~/.openoutlier/providers.json, readable only by you, never in backups) and are never shown again.',
+        title: 'Provider keys', text: 'Third-party APIs, all off. A provider makes no request until its feature is on (Features → Optional providers) and its API key is here. Keys go to the bridge only (~/.openoutlier/providers.json, readable only by you, never in backups) and are never shown again.',
         noBridge: 'Keys are kept by the bridge on this Mac, and it isn\'t connected.', on: 'on', off: 'off', keySet: 'key set', noKey: 'no key', noKeyNeeded: 'no key needed',
         scraping: 'scraping-based', scrapingTip: 'The provider scrapes YouTube. YouTube\'s API policy (§III.E.6) doesn\'t allow that data next to an API key in the same app, so it is a separate switch and its rows are labelled.',
         paid: 'paid', free: 'free', save: 'Save key', remove: 'Remove key', savedMsg: 'Saved on the bridge.', removedMsg: 'Removed from the bridge.',
         fields: { clientId: 'Client ID', token: 'Token', login: 'API login', password: 'API password' },
-        sbHistory: 'History', sb30: '30 days (1 credit)', sb1y: '1 year (2 credits)', sb3y: '3 years (3 credits)', sbQuote: 'Show the cost', sbQuoteLine: '{n} tracked channels × {p} credits = {c} credits (about ${u}).', sbFree: '{n} asked in the last 30 days: free.',
-        sbGo: 'Backfill for {c} credits', sbDone: 'Backfilled {n} channels ({d} days); {u} credits used.', sbLeft: '{l} credits left.', sbOff: 'Turn on Social Blade in Features to backfill.',
-        dfsLine: '{n} keywords tracked for rank (Niche tracking → Keywords), about ${c} a day.', dfsCheck: 'Check now', dfsDone: 'Checked {n} keywords.', dfsNone: 'Pick keywords in Niche tracking → Keywords → Track rank.'
+        sbHistory: 'History', sb30: '30 days (1 credit)', sb1y: '1 year (2 credits)', sb3y: '3 years (3 credits)', sbQuote: 'Show the cost', sbQuoteLine: { one: '{n} tracked channel × {p} credits = {c} credits (about ${u}).', other: '{n} tracked channels × {p} credits = {c} credits (about ${u}).' }, sbFree: { one: '{n} asked in the last 30 days: free.', other: '{n} asked in the last 30 days: free.' },
+        sbGo: 'Backfill for {c} credits', sbDone: { one: 'Backfilled {n} channel ({d} days); {u} credits used.', other: 'Backfilled {n} channels ({d} days); {u} credits used.' }, sbLeft: '{l} credits left.', sbOff: 'Turn on Social Blade in Features to backfill.',
+        dfsLine: { one: '{n} keyword tracked for rank (Niche tracking → Keywords), about ${c} a day.', other: '{n} keywords tracked for rank (Niche tracking → Keywords), about ${c} a day.' }, dfsCheck: 'Check now', dfsDone: { one: 'Checked {n} keyword.', other: 'Checked {n} keywords.' }, dfsNone: 'Pick keywords in Niche tracking → Keywords → Track rank.'
       }
     },
     tr: {
       title: 'Ayarlar', sub: 'Özellikler, anahtarlar ve bridge',
       features: 'Özellikler',
-      lang: 'Dil', langHint: 'Özellikler listesi ve bu sayfa için. Otomatik: YouTube\'da YouTube\'un dili, burada Chrome\'un dili.',
+      lang: 'Dil', langHint: 'Kütüphane, YouTube paneli ve kartları, popup için. Otomatik: YouTube\'da YouTube\'un dili, burada Chrome\'un dili.',
       langAuto: 'Otomatik', apiTitle: 'YouTube Data API anahtarı',
       apiText: 'Google Cloud\'dan kendi anahtarın (YouTube Data API v3). Bedava kota günde 10.000 birim. Anahtar yoksa OpenOutlier API\'yi hiç çağırmaz.',
       apiSaved: 'Kayıtlı (…{k}).', apiNone: 'Bu tarayıcıda anahtar yok.', apiReplace: 'Değiştirmek için yeni anahtarı yapıştır', save: 'Kaydet', removeKey: 'Anahtarı sil',
@@ -62,7 +62,7 @@
       bridgeMore: 'README → "Connect AI agents". Bridge yalnız bu eklentiye, 127.0.0.1 üzerinden cevap verir.',
       srcFile: 'anahtar dosyasından', srcEnv: 'OPENOUTLIER_YOUTUBE_API_KEY\'den',
       prov: {
-        title: 'İsteğe bağlı servisler', text: 'Üçüncü parti API\'ler, hepsi kapalı. Bir servis, anahtarı açılıp (Özellikler → İsteğe bağlı servisler) anahtarı buraya eklenmeden hiçbir istek atmaz. Anahtarlar sadece bridge\'e gider (~/.openoutlier/providers.json, yalnız sen okuyabilirsin, yedeklere girmez) ve bir daha gösterilmez.',
+        title: 'Servis anahtarları', text: 'Üçüncü parti API\'ler, hepsi kapalı. Bir servis, özelliği açılıp (Özellikler → İsteğe bağlı servisler) API anahtarı buraya eklenmeden hiçbir istek atmaz. Anahtarlar sadece bridge\'e gider (~/.openoutlier/providers.json, yalnız sen okuyabilirsin, yedeklere girmez) ve bir daha gösterilmez.',
         noBridge: 'Anahtarları bu Mac\'teki bridge tutar ve bridge bağlı değil.', on: 'açık', off: 'kapalı', keySet: 'anahtar var', noKey: 'anahtar yok', noKeyNeeded: 'anahtar gerekmez',
         scraping: 'scraping tabanlı', scrapingTip: 'Servis YouTube\'u kazıyor. YouTube\'un API politikası (§III.E.6) bu veriyi aynı uygulamada bir API anahtarıyla kullanmaya izin vermiyor; bu yüzden ayrı bir ayar ve satırları ayrı etiketli.',
         paid: 'ücretli', free: 'bedava', save: 'Anahtarı kaydet', remove: 'Anahtarı sil', savedMsg: 'Bridge\'e kaydedildi.', removedMsg: 'Bridge\'den silindi.',
@@ -193,7 +193,11 @@
 
 
     // ---- phase 5: optional providers (mcp/providers/) ----------------------------------------------------
-    function fill2(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
+    // A string, or plural forms ({ one, other }) picked by o.n (B5).
+    function fill2(s, o) {
+      if (s && typeof s === 'object') { var rule = 'other'; try { rule = new Intl.PluralRules(F.locale()).select(Number(o.n)); } catch (e) { /* other */ } s = s[rule] != null ? s[rule] : s.other; }
+      return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; });
+    }
     var pv = { drafts: {}, msg: {}, sbHistory: '1y', quote: null, busy: false };
     async function provCall(what, extra) {
       pv.busy = true;
@@ -218,7 +222,8 @@
           h('b', { text: info ? info.name : f.label[lg] }),
           h('span', { class: 'set-pill' + (on ? ' is-on' : ''), text: on ? P.on : P.off }),
           info ? h('span', { class: 'set-pill' + (info.configured && info.needs_key ? ' is-ok' : ''), text: !info.needs_key ? P.noKeyNeeded : info.configured ? P.keySet : P.noKey }) : null,
-          scraping ? h('span', { class: 'set-pill is-warn', title: P.scrapingTip, text: P.scraping }) : null,
+          // The English word stays English under TR uppercase ("SCRAPING", not "SCRAPİNG").
+          scraping ? h('span', { class: 'set-pill is-warn', title: P.scrapingTip }, h('span', { lang: 'en', text: 'scraping' }), P.scraping.replace(/^scraping/, '')) : null,
           h('span', { class: 'set-pill is-soft', text: paid ? P.paid : P.free }));
         var rows = [head];
         if (info && info.cost) rows.push(h('p', { class: 'muted small', text: info.cost[lg] || info.cost.en }));

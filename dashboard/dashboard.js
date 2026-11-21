@@ -198,11 +198,66 @@
       .sort(function (a, b) { return (accounts[b].updatedAt || 0) - (accounts[a].updatedAt || 0); });
   }
   function scopeTitle(r) {
-    if (r.kind === 'unsorted') return 'Unsorted';
-    if (r.kind === 'folder') return folderName(r.id) || 'Folder';
+    if (r.kind === 'unsorted') return CL().unsorted;
+    if (r.kind === 'folder') return folderName(r.id) || CL().folder;
     if (r.kind === 'tag') return '#' + r.id;
     if (r.kind === 'platform') return PLATFORM_NAMES[r.id] || 'Instagram';
-    return 'All accounts';
+    return CL().allAccounts;
+  }
+
+  // ---- the Library's own chrome (sidebar, top bar) in the UI language (Settings → Dil) ----------
+  var CHROME = {
+    en: {
+      mentions: 'Mentions', mentionsNew: { one: '{n} new', other: '{n} new' }, myAccount: 'My Instagram account', allAccounts: 'All accounts', topPosts: 'Top posts',
+      unsorted: 'Unsorted', folder: 'Folder', compare: 'Compare platforms', folders: 'Folders', tags: 'Tags', newFolder: 'New folder',
+      noFolders: 'No folders yet. Use + to add one.', noTags: 'Add tags on an account page.', showSmall: 'Show accounts with fewer than 5 posts',
+      tip: 'Tip: drag an account card onto a folder.', search: 'Search accounts', backup: 'Back up', backupTip: 'Download all saved data and folders as one JSON file',
+      restore: 'Restore', restoreTip: 'Restore from an OpenOutlier (or ReelScope) backup file', library: 'Library', home: 'OpenOutlier Library: all accounts',
+      views: 'Views', rename: 'Rename folder', del: 'Delete folder', delConfirm: 'Delete the folder "{f}"? Its accounts move to Unsorted (no data is deleted).'
+    },
+    tr: {
+      mentions: 'Bahsedilmeler', mentionsNew: '{n} yeni', myAccount: 'Instagram hesabım', allAccounts: 'Tüm hesaplar', topPosts: 'En iyi gönderiler',
+      unsorted: 'Klasörsüz', folder: 'Klasör', compare: 'Platformları karşılaştır', folders: 'Klasörler', tags: 'Etiketler', newFolder: 'Yeni klasör',
+      noFolders: 'Henüz klasör yok. + ile ekle.', noTags: 'Etiketleri hesap sayfasında ekle.', showSmall: '5\'ten az gönderisi olan hesapları göster',
+      tip: 'İpucu: bir hesap kartını klasörün üstüne sürükle.', search: 'Hesap ara', backup: 'Yedekle', backupTip: 'Bütün kayıtlı veriyi ve klasörleri tek bir JSON dosyası olarak indir',
+      restore: 'Geri yükle', restoreTip: 'Bir OpenOutlier (ya da ReelScope) yedek dosyasından geri yükle', library: 'Kütüphane', home: 'OpenOutlier Kütüphane: tüm hesaplar',
+      views: 'Görünümler', rename: 'Klasörü yeniden adlandır', del: 'Klasörü sil', delConfirm: '"{f}" klasörü silinsin mi? Hesapları Klasörsüz\'e geçer (veri silinmez).'
+    }
+  };
+  function uiLang() { return self.OpenOutlierFeatures && self.OpenOutlierFeatures.uiLang() === 'tr' ? 'tr' : 'en'; }
+  function CL() { return CHROME[uiLang()]; }
+  /** B3: the document's language follows the UI language (CSS uppercase: "BU HAFTAKİ", not "BU HAFTAKI"); the static chrome follows too. */
+  function applyChrome() {
+    var l = uiLang();
+    document.documentElement.lang = l;
+    if (applyChrome.done === l) return;
+    applyChrome.done = l;
+    var c = CL();
+    var set = function (sel, fn) { var el = document.querySelector(sel); if (el) fn(el); };
+    set('.brand', function (el) { el.setAttribute('aria-label', c.home); });
+    set('.brand-sub', function (el) { el.textContent = c.library; });
+    set('#search', function (el) { el.placeholder = c.search; el.setAttribute('aria-label', c.search); });
+    set('#backup', function (el) { el.textContent = c.backup; el.title = c.backupTip; });
+    set('label:has(#restore)', function (el) { el.title = c.restoreTip; el.firstChild.nodeValue = c.restore; });
+    set('#nav-library', function (el) { el.setAttribute('aria-label', c.views); });
+    set('#nav-folders', function (el) { el.setAttribute('aria-label', c.folders); });
+    set('#nav-tags', function (el) { el.setAttribute('aria-label', c.tags); });
+    var heads = document.querySelectorAll('.side-head > span');
+    if (heads[0]) heads[0].textContent = c.folders;
+    if (heads[1]) heads[1].textContent = c.tags;
+    set('#new-folder', function (el) { el.title = c.newFolder; el.setAttribute('aria-label', c.newFolder); });
+    set('.side-option', function (el) { el.lastChild.nodeValue = ' ' + c.showSmall; });
+    set('.side-hint', function (el) { el.textContent = c.tip; });
+  }
+  /** B2: on phones the sidebar is a row of chips; keep the current one in view. */
+  function revealCurrentChip() {
+    var side = document.querySelector('.side');
+    if (!side || side.scrollWidth <= side.clientWidth + 1) return;
+    var cur = side.querySelector('.nav-item[aria-current="true"]');
+    if (!cur) return;
+    var left = cur.offsetLeft - (side.clientWidth - cur.offsetWidth) / 2;
+    if (Math.abs(side.scrollLeft - left) > 4) side.scrollTo({ left: Math.max(0, left), behavior: revealCurrentChip.done ? 'smooth' : 'auto' });
+    revealCurrentChip.done = true;
   }
 
   // ---- images (cached, so covers keep working after Instagram's links expire) ---
@@ -401,6 +456,7 @@
   var PX = {
     bell: 'M7 1h2v2H7zM5 3h6v2H5zM4 5h8v5H4zM3 10h10v2H3zM6 13h4v2H6z',
     user: 'M6 2h4v5H6zM4 9h8v2H4zM2 11h12v3H2z',
+    play: 'M1 3h14v10H1zM3 5v6h10V5zM6 6h2v4H6zM8 7h2v2H8z',
     all: 'M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z',
     top: 'M2 12h3v3H2zM6 8h3v7H6zM10 3h3v12h-3z',
     folder: 'M1 3h6v2h8v9H1z',
@@ -457,16 +513,18 @@
     var lib = document.getElementById('nav-library');
     lib.textContent = '';
     var unreadMentions = mentionsView.unread();
-    lib.appendChild(navItem('Mentions', unreadMentions ? unreadMentions + ' new' : null, '#/mentions', r.kind === 'mentions', { icon: 'bell', badge: !!unreadMentions }));
-    lib.appendChild(navItem('My account', null, '#/studio', r.kind === 'studio', { icon: 'user' }));
-    lib.appendChild(navItem(ytChannelView.navLabel ? ytChannelView.navLabel() : 'My YouTube channel', null, '#/my-youtube', r.kind === 'my-youtube', { icon: 'user' }));
+    applyChrome();
+    var c = CL();
+    lib.appendChild(navItem(c.mentions, unreadMentions ? self.OpenOutlierFeatures.plural(unreadMentions, c.mentionsNew, uiLang()) : null, '#/mentions', r.kind === 'mentions', { icon: 'bell', badge: !!unreadMentions }));
+    lib.appendChild(navItem(c.myAccount, null, '#/studio', r.kind === 'studio', { icon: 'user' }));
+    lib.appendChild(navItem(ytChannelView.navLabel ? ytChannelView.navLabel() : 'My YouTube channel', null, '#/my-youtube', r.kind === 'my-youtube', { icon: 'play' }));
     if (nicheView) lib.appendChild(navItem(nicheView.navLabel(), nicheAlerts.unseen ? String(nicheAlerts.unseen) : null, '#/niche', r.kind === 'niche', { icon: 'trend', badge: !!nicheAlerts.unseen }));
     var F4 = self.OpenOutlierFeatures;
     if (swipeView && (!F4 || F4.isOn('swipe-save') || swipeView.count())) lib.appendChild(navItem(swipeView.navLabel(), swipeView.count() || null, '#/swipe', r.kind === 'swipe', { icon: 'swipe' }));
     if (thumbTestView && (!F4 || F4.isOn('thumb-preview'))) lib.appendChild(navItem(thumbTestView.navLabel(), null, '#/thumb-test', r.kind === 'thumb-test', { icon: 'thumbs' }));
-    lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all' && r.tab !== 'reels', { icon: 'all' }));
-    lib.appendChild(navItem('Top posts', null, '#/all/reels', r.kind === 'all' && r.tab === 'reels', { icon: 'top' }));
-    lib.appendChild(navItem('Unsorted', all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null, icon: 'inbox' }));
+    lib.appendChild(navItem(c.allAccounts, all.length, '#/all', r.kind === 'all' && r.tab !== 'reels', { icon: 'all' }));
+    lib.appendChild(navItem(c.topPosts, null, '#/all/reels', r.kind === 'all' && r.tab === 'reels', { icon: 'top' }));
+    lib.appendChild(navItem(c.unsorted, all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null, icon: 'inbox' }));
     var nBy = { instagram: 0, tiktok: 0, youtube: 0, reddit: 0 };
     all.forEach(function (u) { nBy[platformOf(u)]++; });
     // Platform filter: shown once the library has more than one platform.
@@ -475,26 +533,26 @@
         if (nBy[k]) lib.appendChild(navItem(PLATFORM_NAMES[k], nBy[k], '#/platform/' + k, r.kind === 'platform' && r.id === k, { icon: null }));
       });
     }
-    if (cmpPlatforms().length > 1) lib.appendChild(navItem('Compare platforms', null, '#/compare', r.kind === 'compare', { icon: 'compare' }));
+    if (cmpPlatforms().length > 1) lib.appendChild(navItem(c.compare, null, '#/compare', r.kind === 'compare', { icon: 'compare' }));
     if (settingsView) lib.appendChild(navItem(settingsView.title(), null, '#/settings', r.kind === 'settings', { icon: 'gear' }));
 
     var nf_ = document.getElementById('nav-folders');
     nf_.textContent = '';
-    if (!org.folders.length) nf_.appendChild(h('p', { class: 'nav-empty', text: 'No folders yet. Use + to add one.' }));
+    if (!org.folders.length) nf_.appendChild(h('p', { class: 'nav-empty', text: c.noFolders }));
     org.folders.forEach(function (f) {
       var count = Object.keys(accounts).filter(function (u) { return folderOf(u) === f.id; }).length;
       var current = (r.kind === 'folder' && r.id === f.id) || (r.kind === 'account' && folderOf(r.id) === f.id);
       nf_.appendChild(h('div', { class: 'nav-row' },
         navItem(f.name, count, '#/folder/' + encodeURIComponent(f.id), current, { dropFolder: f.id, icon: 'folder' }),
         h('span', { class: 'row-tools' },
-          h('button', { class: 'icon-btn', type: 'button', title: 'Rename folder', 'aria-label': 'Rename folder ' + f.name, onclick: function (e) {
+          h('button', { class: 'icon-btn', type: 'button', title: c.rename, 'aria-label': c.rename + ' ' + f.name, onclick: function (e) {
             e.stopPropagation();
-            var name = prompt('Rename folder', f.name);
+            var name = prompt(c.rename, f.name);
             if (name && name.trim()) { f.name = name.trim().slice(0, 60); saveOrg().then(render); }
           } }, '✎'),
-          h('button', { class: 'icon-btn', type: 'button', title: 'Delete folder', 'aria-label': 'Delete folder ' + f.name, onclick: function (e) {
+          h('button', { class: 'icon-btn', type: 'button', title: c.del, 'aria-label': c.del + ' ' + f.name, onclick: function (e) {
             e.stopPropagation();
-            if (!confirm('Delete the folder "' + f.name + '"? Its accounts move to Unsorted (no data is deleted).')) return;
+            if (!confirm(c.delConfirm.replace('{f}', f.name))) return;
             org.folders = org.folders.filter(function (x) { return x.id !== f.id; });
             Object.keys(org.accounts).forEach(function (u) { if (org.accounts[u].folder === f.id) org.accounts[u].folder = null; });
             saveOrg().then(function () { go('#/all'); });
@@ -504,11 +562,12 @@
     var nt = document.getElementById('nav-tags');
     nt.textContent = '';
     var tags = allTags();
-    if (!tags.length) nt.appendChild(h('p', { class: 'nav-empty', text: 'Add tags on an account page.' }));
+    if (!tags.length) nt.appendChild(h('p', { class: 'nav-empty', text: c.noTags }));
     tags.forEach(function (t) {
       nt.appendChild(navItem(t.tag, t.count, '#/tag/' + encodeURIComponent(t.tag), r.kind === 'tag' && r.id === t.tag, { icon: '#' }));
     });
     document.getElementById('show-small').checked = showSmall;
+    requestAnimationFrame(revealCurrentChip);
   }
 
   // ---- main views -----------------------------------------------------------
@@ -912,7 +971,7 @@
     else if (r.kind === 'thumb-test' && thumbTestView) thumbTestView.render(main);
     else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'niche' && nicheView ? nicheView.title() : r.kind === 'swipe' && swipeView ? swipeView.title() : r.kind === 'thumb-test' && thumbTestView ? thumbTestView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
+    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? CL().mentions : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'niche' && nicheView ? nicheView.title() : r.kind === 'swipe' && swipeView ? swipeView.title() : r.kind === 'thumb-test' && thumbTestView ? thumbTestView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
   }
 
   // ---- wiring ---------------------------------------------------------------
