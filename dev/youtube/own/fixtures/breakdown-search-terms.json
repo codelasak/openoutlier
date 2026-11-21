@@ -1,0 +1,9 @@
+{
+  "kind": "youtubeAnalytics#resultTable",
+  "columnHeaders": [
+    { "name": "insightTrafficSourceDetail", "columnType": "DIMENSION", "dataType": "STRING" },
+    { "name": "views", "columnType": "METRIC", "dataType": "INTEGER" },
+    { "name": "estimatedMinutesWatched", "columnType": "METRIC", "dataType": "FLOAT" }
+  ],
+  "rows": [["excel pivot table", 41, 120.5], ["xlookup", 19, 44.0], ["pivot table excel", 12, 30.2]]
+}

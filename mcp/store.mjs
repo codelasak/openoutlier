@@ -171,6 +171,53 @@ CREATE TABLE IF NOT EXISTS niche_reports (
 );
 `;
 
+// Phase 2 (own-channel history, docs/youtube-niche-plan.md 3): the connected channels
+// and how far their history is collected, the channel's own videos (title, publish
+// time, format) and milestones (with when the extension showed them).
+const SCHEMA_OWN_HISTORY = `
+CREATE TABLE IF NOT EXISTS own_channels (
+  channel_id         TEXT PRIMARY KEY,  -- UC…
+  title              TEXT,
+  handle             TEXT,
+  thumb              TEXT,
+  created            TEXT,              -- channel creation day (YYYY-MM-DD)
+  connected_at       INTEGER,
+  subs               INTEGER,           -- latest subscriberCount (Data API; rounded above 1,000)
+  views_total        INTEGER,
+  videos             INTEGER,
+  backfill_from      TEXT,              -- oldest day the backfill has reached (it walks back from today)
+  backfill_done      INTEGER NOT NULL DEFAULT 0,
+  last_daily_at      INTEGER,
+  last_videos_at     INTEGER,
+  last_weekly_at     INTEGER,
+  revenue_state      TEXT,              -- ok | none (no revenue yet) | not_monetized | needs_scope
+  reach_state        TEXT,              -- ok | unsupported (thumbnail impressions by day)
+  ct_state           TEXT,              -- ok | unsupported (views by content type: Shorts / videos / live)
+  last_error         TEXT,
+  active             INTEGER NOT NULL DEFAULT 1,
+  updated_at         INTEGER
+);
+CREATE TABLE IF NOT EXISTS own_videos (
+  video_id     TEXT PRIMARY KEY,
+  channel_id   TEXT NOT NULL,
+  title        TEXT,
+  published_at INTEGER,
+  duration     INTEGER,
+  type         TEXT,                    -- video | short | live
+  updated_at   INTEGER
+);
+CREATE INDEX IF NOT EXISTS own_videos_by_channel ON own_videos (channel_id, published_at);
+CREATE TABLE IF NOT EXISTS own_milestones (
+  channel_id  TEXT NOT NULL,
+  key         TEXT NOT NULL,            -- subs:100, views:10000, video:10000 …
+  reached_day TEXT,
+  data        TEXT,                     -- JSON
+  created_at  INTEGER NOT NULL,
+  notified_at INTEGER,
+  PRIMARY KEY (channel_id, key)
+);
+`;
+
 /** Ordered, each run once (meta schema_version); `up` must be safe to run again anyway. */
 export const MIGRATIONS = [
   { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) },
@@ -185,6 +232,14 @@ export const MIGRATIONS = [
       st.addColumn('tracked_channels', 'last_error', 'TEXT');
       st.addColumn('video_meta_log', 'thumb_url', 'TEXT');
       st.addColumn('video_meta_log', 'source', 'TEXT');
+    }
+  },
+  {
+    version: 3, name: 'own-channel history: connected channels, their videos, milestones, channel of each video row',
+    up: (st) => {
+      st.db.exec(SCHEMA_OWN_HISTORY);
+      st.addColumn('own_video_daily', 'channel_id', 'TEXT');
+      st.db.exec('CREATE INDEX IF NOT EXISTS own_video_daily_by_channel ON own_video_daily (channel_id, day)');
     }
   }
 ];
@@ -221,6 +276,7 @@ export class Store {
     // database or a downgrade-then-upgrade still ends up complete.
     this.db.exec(SCHEMA_YOUTUBE_NICHE);
     this.db.exec(SCHEMA_NICHE_TRACKING);
+    this.db.exec(SCHEMA_OWN_HISTORY);
     let v = Number(this.getMeta('schema_version', 0)) || 0;
     for (const m of MIGRATIONS) {
       if (m.version <= v) continue;

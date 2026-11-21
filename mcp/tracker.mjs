@@ -26,11 +26,13 @@
 // Kinds: a heartbeat (no-op, proves the scheduler runs), the optional 30-day API
 // data purge (api-retention-30d), and niche tracking (mcp/niche.mjs, phase 1): RSS
 // every 15 min per channel, videos.list on the age tiers, daily channel stats, the
-// one-time backfill, handle resolution and the weekly digest.
+// one-time backfill, handle resolution and the weekly digest; own-channel history
+// (mcp/own-history.mjs, phase 2): YouTube Analytics backfill, daily, per-video and weekly jobs.
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
 import { quotaOf, spendOn, apiKey as defaultApiKey } from './youtube-api.mjs';
 import { NICHE_KINDS, upsertJob } from './niche.mjs';
+import { OWN_KINDS } from './own-history.mjs';
 
 const require = createRequire(import.meta.url);
 const F = require('../src/features.js');
@@ -70,7 +72,8 @@ export const KINDS = {
       return { data: removed };
     }
   },
-  ...NICHE_KINDS
+  ...NICHE_KINDS,
+  ...OWN_KINDS
 };
 
 /** The resolved feature flags the bridge holds (defaults for anything the extension never sent). */
@@ -138,10 +141,11 @@ export class Tracker {
   }
 
   /** Make sure every singleton kind has its row (an existing row keeps its schedule). */
-  seed() {
+  seed({ late = false } = {}) {
     const has = this.store.db.prepare('SELECT 1 FROM tracker_jobs WHERE id = ?');
     for (const [name, kind] of Object.entries(this.kinds)) {
-      if (kind.singleton && !has.get(name)) this.schedule(name, { kind: name, next_at: (kind.first ? kind.first(this.now()) : this.now()) + this.jitter(kind) });
+      if (late && !kind.seedIf) continue;
+      if (kind.singleton && !has.get(name) && (!kind.seedIf || kind.seedIf())) this.schedule(name, { kind: name, next_at: (kind.first ? kind.first(this.now()) : this.now()) + this.jitter(kind) });
     }
   }
 
@@ -190,6 +194,7 @@ export class Tracker {
     const out = { ran: [], failed: [], deferred: [], lease: true };
     if (!this.acquire()) { out.lease = false; return out; }
     const flags = featureFlags(this.store);
+    this.seed({ late: true }); // singletons that became possible since the start (e.g. an OAuth client set up later)
     const names = Object.keys(this.kinds).filter((k) => this.enabled(k, flags));
     this.lastTick = { at: this.now(), enabled: names };
     if (!names.length) return out;

@@ -24,6 +24,7 @@ import { registerAnalyticsTools, INSTRUCTIONS as YT_ANALYTICS_INSTRUCTIONS } fro
 import { registerYouTubeApiTool, apiKeyInfo as youtubeApiKeyInfo, quota as youtubeApiQuota } from './youtube-api.mjs';
 import { Tracker, trackerStatus } from './tracker.mjs';
 import { registerNicheTools, INSTRUCTIONS as NICHE_INSTRUCTIONS, trackingSummary } from './niche-tools.mjs';
+import { registerOwnTools } from './own-tools.mjs';
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
@@ -512,6 +513,7 @@ server.registerTool('reel_history', {
 registerStudioTools(server, { z, json, safe });
 registerYouTubeApiTool(server, { z, json, safe });
 registerNicheTools(server, { z, json, safe, store });
+registerOwnTools(server, { z, json, safe, store });
 registerTranscriptTool(server, { z, json, safe, fail, youtubeIdOf, findReel, readLibrary });
 // The bridge port Google's sign-in redirects to; it must be a bridge that knows the callback.
 registerAnalyticsTools(server, { z, json, safe, bridgePort: async () => {

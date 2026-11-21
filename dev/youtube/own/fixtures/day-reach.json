@@ -1,0 +1,9 @@
+{
+  "kind": "youtubeAnalytics#resultTable",
+  "columnHeaders": [
+    { "name": "day", "columnType": "DIMENSION", "dataType": "STRING" },
+    { "name": "videoThumbnailImpressions", "columnType": "METRIC", "dataType": "INTEGER" },
+    { "name": "videoThumbnailImpressionsClickRate", "columnType": "METRIC", "dataType": "FLOAT" }
+  ],
+  "rows": [["2026-11-16", 2900, 0.0455], ["2026-11-17", 2100, 0.0419]]
+}

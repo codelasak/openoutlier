@@ -14,7 +14,7 @@ const PLAN_IDS = [
   'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'channel-similar', 'channel-sponsors', 'channel-rpm',
   'video-card', 'video-monetization', 'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
   'shorts-overlay', 'thumb-compress', 'thumb-preview',
-  'tracker', 'breakout-alerts', 'weekly-digest', 'niche-radar', 'own-history', 'own-revenue', 'api-retention-30d'
+  'tracker', 'breakout-alerts', 'weekly-digest', 'niche-radar', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d'
 ];
 
 test('every feature in the plan is defined once, with TR/EN text, a known group and requirements', () => {
@@ -48,14 +48,16 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   assert.equal(d['api-retention-30d'], false);
   // Off in the plan's table.
   for (const id of ['hide-shorts', 'channel-rpm', 'niche-radar']) assert.equal(d[id], false, id);
+  // Milestone notifications are optional (plan 3.2: "Bildirim isteğe bağlı").
+  assert.equal(d['own-milestones'], false);
   // The rest start on.
-  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar'].includes(x))) assert.equal(d[id], true, id);
+  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'own-milestones'].includes(x))) assert.equal(d[id], true, id);
   // The dislike feature credits its source.
   assert.equal(F.get('dislikes').link, 'https://returnyoutubedislike.com/');
   assert.ok(F.get('dislikes').notes.includes('thirdParty'));
   // Phase 0 builds the retention purge; the rest are "coming soon".
   // Phase 0: the 30-day purge; phase 1: niche tracking, the Track button, growth, title history, breakouts, the digest.
-  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), ['channel-growth', 'channel-track', 'title-history', 'tracker', 'breakout-alerts', 'weekly-digest', 'api-retention-30d']);
+  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), ['channel-growth', 'channel-track', 'title-history', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']);
 });
 
 test('stored choices: unknown keys and non-booleans are dropped, missing keys fall back to the default', () => {

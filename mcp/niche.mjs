@@ -608,6 +608,34 @@ function mineVsNiche(model, now) {
   return { channels: mine.map((c) => ({ channel_id: c.channel_id, name: c.name, subs: c.subs })), videos: out };
 }
 
+/**
+ * For the Kanalım page's video report card (phase 2): the niche's median views at 48 h, 7 d and
+ * 30 d per format, among channels the size of `channelId` (⅓× to 3× subscribers, the same peers as
+ * mineVsNiche) or the whole niche, plus the channel's own tracked checkpoints per video.
+ * → null when the channel isn't tracked.
+ */
+export function peerMedians(store, channelId, { now = Date.now() } = {}) {
+  const ch = store.db.prepare('SELECT * FROM tracked_channels WHERE channel_id = ? AND active = 1').get(channelId);
+  if (!ch) return null;
+  const model = loadModel(store, { niche: ch.niche ?? '', now });
+  const me = model.chById.get(channelId) || ch;
+  const others = model.channels.filter((c) => c.channel_id !== channelId);
+  const similar = others.filter((o) => me.subs > 0 && o.subs > 0 && o.subs >= me.subs / 3 && o.subs <= me.subs * 3);
+  const peers = similar.length >= 2 ? similar : others;
+  const peerIds = new Set(peers.map((p) => p.channel_id));
+  const out = { niche: model.niche, scope: similar.length >= 2 ? 'similar' : 'niche', channels: peers.length, long: {}, short: {}, videos: {} };
+  for (const f of ['long', 'short']) {
+    const pv = model.videos.filter((v) => peerIds.has(v.channel_id) && (v.type === 'short' ? 'short' : 'long') === f);
+    for (const h of [48, 168, 720]) {
+      const m = V.median(pv.map((v) => v.cp[h]));
+      out[f][h] = m == null ? null : Math.round(m);
+    }
+    out[f].n = pv.filter((v) => v.cp[48] != null).length;
+  }
+  for (const v of model.videos.filter((x) => x.channel_id === channelId)) out.videos[v.id] = { 48: v.cp[48], 168: v.cp[168], 720: v.cp[720], latest: v.latest ? v.latest.views : null };
+  return out;
+}
+
 function breakoutRows(store, model, now, days = 14) {
   const ids = [...model.byId.keys()];
   if (!ids.length) return [];

@@ -24,6 +24,7 @@ import * as YA from './youtube-analytics.mjs';
 import { apiKeyInfo, saveApiKey, removeApiKey, setExtensionQuota, quota as apiQuota, bridgeQuotaState, A as YAPI } from './youtube-api.mjs';
 import { store } from './library.mjs';
 import * as NICHE from './niche.mjs';
+import * as OWN from './own-history.mjs';
 import { createRequire } from 'node:module';
 
 const Features = createRequire(import.meta.url)('../src/features.js');
@@ -37,7 +38,8 @@ const VERSION = '0.1.0';
 // What this bridge can do beyond sync + commands (the extension checks before offering YouTube video downloads).
 // 'settings': POST /settings (feature flags + quota) and /settings/youtube-api-key; 'tracker': mcp/tracker.mjs;
 // 'niche': niche tracking (the org's tracking list, /youtube/niche/*, breakout alerts in the settings answer).
-const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche'];
+// 'own-history': own-channel history (phase 2: several channels, /youtube/own/*, milestones in the settings answer).
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
@@ -94,6 +96,8 @@ async function handle(req, res, port) {
   // Only accepted with the one-time state that this computer created (mcp/youtube-analytics.mjs).
   if (req.method === 'GET' && url.pathname === YA.CALLBACK_PATH) {
     const page = await YA.callbackPage(url);
+    // A new or reconnected channel: its history jobs start on the tracker's next tick.
+    if (page.status === 200) { try { OWN.collectNow(store(), null); } catch { /* no tracker rows yet */ } }
     res.writeHead(page.status, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'", 'referrer-policy': 'no-referrer' });
     return res.end(page.html);
   }
@@ -198,6 +202,23 @@ async function handle(req, res, port) {
     const body = await readBody(req);
     return send(res, 200, { ok: true, acked: NICHE.ackAlerts(store(), Array.isArray(body.alerts) ? body.alerts.slice(0, 200) : []) }, origin);
   }
+  // Kanalım (mcp/own-history.mjs): the stored daily history of the connected channels.
+  if (method === 'GET' && url.pathname === '/youtube/own/page') {
+    const ch = url.searchParams.get('channel') || '';
+    let status = null;
+    try { status = await YA.status(); } catch { /* token side unknown */ }
+    const flags = Features.resolve(store().getMeta('features', null));
+    return send(res, 200, OWN.ownPage(store(), { channel: ch === 'all' || /^UC[A-Za-z0-9_-]{22}$/.test(ch) ? ch : undefined, status, flags }), origin);
+  }
+  if (req.method === 'POST' && url.pathname === '/youtube/own/refresh') {
+    const body = await readBody(req);
+    const ch = typeof body.channel === 'string' && /^UC[A-Za-z0-9_-]{22}$/.test(body.channel) ? body.channel : null;
+    return send(res, 200, { ok: true, scheduled: OWN.collectNow(store(), ch) }, origin);
+  }
+  if (req.method === 'POST' && url.pathname === '/youtube/own/milestones/ack') {
+    const body = await readBody(req);
+    return send(res, 200, { ok: true, acked: OWN.ackMilestones(store(), Array.isArray(body.milestones) ? body.milestones.slice(0, 200) : []) }, origin);
+  }
   // My YouTube channel (YouTube Analytics API, the user's own OAuth client).
   if (url.pathname.startsWith('/youtube/analytics/')) {
     const r = await YA.handleRoute(method, url, { port });
@@ -218,7 +239,7 @@ function nicheStatus() {
 async function settingsAnswer() {
   const key = apiKeyInfo();
   let oauth = { configured: false, connected: false };
-  try { const a = await YA.status(); oauth = { configured: !!a.configured, connected: !!a.connected }; } catch { /* unknown */ }
+  try { const a = await YA.status(); oauth = { configured: !!a.configured, connected: !!a.connected, channels: (a.channels || []).length, needs_reconsent: !!a.needs_reconsent, reconnect: !!a.reconnect }; } catch { /* unknown */ }
   return {
     ok: true,
     features: Features.resolve(store().getMeta('features', null)),
@@ -227,7 +248,9 @@ async function settingsAnswer() {
     quota: apiQuota(),
     bridgeQuota: bridgeQuotaState() || null,
     // Breakouts the extension hasn't shown as a Chrome notification yet (it acks them).
-    niche: (() => { try { return { tracked: store().db.prepare('SELECT COUNT(*) AS n FROM tracked_channels WHERE active = 1').get().n, alerts: NICHE.pendingAlerts(store()), settings: NICHE.nicheSettings(store()) }; } catch { return null; } })()
+    niche: (() => { try { return { tracked: store().db.prepare('SELECT COUNT(*) AS n FROM tracked_channels WHERE active = 1').get().n, alerts: NICHE.pendingAlerts(store()), settings: NICHE.nicheSettings(store()) }; } catch { return null; } })(),
+    // New milestones of the connected channels (the extension notifies when own-milestones is on, and acks).
+    own: (() => { try { return { channels: OWN.ownChannels(store()).length, milestones: OWN.pendingMilestones(store()) }; } catch { return null; } })()
   };
 }
 

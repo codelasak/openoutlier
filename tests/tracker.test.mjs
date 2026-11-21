@@ -57,7 +57,7 @@ test('heartbeat: seeded once, runs when due, next run = every + jitter; nothing 
   const tr = new Tracker({ store: s, now: c.now, random: seq(0.5), apiKey: () => null });
   tr.seed();
   tr.seed(); // idempotent
-  assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM tracker_jobs').get().n, Object.values(KINDS).filter((k) => k.singleton).length);
+  assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM tracker_jobs').get().n, Object.values(KINDS).filter((k) => k.singleton && (!k.seedIf || k.seedIf())).length, 'own-channels waits for an OAuth client');
   const hb = tr.job('heartbeat');
   assert.equal(hb.next_at, START + 30_000, 'first run after half the jitter (random 0.5 × 60 s)');
 
@@ -74,7 +74,7 @@ test('heartbeat: seeded once, runs when due, next run = every + jitter; nothing 
   const st = tr.status();
   assert.equal(st.enabled, true);
   assert.equal(st.last_heartbeat_at, new Date(c.t).toISOString());
-  assert.deepEqual(st.enabled_kinds, ['heartbeat', 'rss', 'digest'], 'retention is off by default, API kinds need a key (RSS and the digest don\'t)');
+  assert.deepEqual(st.enabled_kinds, ['heartbeat', 'rss', 'digest', 'own-channels', 'own-backfill', 'own-daily', 'own-videos', 'own-weekly'], 'retention is off by default, API kinds need a key (RSS, the digest and the Analytics jobs don\'t)');
   s.close();
 });
 

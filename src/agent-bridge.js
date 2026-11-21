@@ -199,6 +199,27 @@
     lastSettings = { body: body, at: Date.now() };
     await saveSettingsAnswer(res);
     if (res.niche && Array.isArray(res.niche.alerts) && res.niche.alerts.length) await showBreakouts(found.port, res.niche.alerts);
+    if (res.own && Array.isArray(res.own.milestones) && res.own.milestones.length) await showMilestones(found.port, res.own.milestones);
+  }
+
+  // ---- own-channel milestones → Chrome notification (only with own-milestones on; acked either way) ----
+  async function showMilestones(port, list) {
+    var F = self.OpenOutlierFeatures;
+    var on = false;
+    try { if (F) { await F.ready; on = F.isOn('own-milestones'); } } catch (e) { /* default off */ }
+    if (on) {
+      var tr = F && F.uiLang && F.uiLang() === 'tr';
+      var n = function (v) { return Number(v).toLocaleString(tr ? 'tr-TR' : 'en-US'); };
+      var line = function (m) {
+        var kind = { subs: tr ? 'abone' : 'subscribers', views: tr ? 'toplam izlenme' : 'total views', hours: tr ? 'saat izlenme' : 'watch hours', video: tr ? 'izlenmeli ilk video' : 'views on one video' }[m.kind] || '';
+        return n(m.value) + ' ' + kind + (m.video && m.video.title ? ': ' + String(m.video.title).slice(0, 60) : '');
+      };
+      try {
+        chrome.notifications.create('openoutlier-milestone-' + Date.now(), { type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon128.png'),
+          title: (tr ? 'Kilometre taşı: ' : 'Milestone: ') + (list[0].title || 'YouTube'), message: list.slice(0, 4).map(line).join('\n'), priority: 1 });
+      } catch (e) { /* notifications unavailable */ }
+    }
+    await post(port, '/youtube/own/milestones/ack', { milestones: list.map(function (m) { return { channel_id: m.channel_id, key: m.key }; }) }).catch(function () {});
   }
 
   // ---- breakouts → Chrome notification + the Library's list ----------------------------
@@ -237,8 +258,8 @@
 
   if (chrome.notifications && chrome.notifications.onClicked) {
     chrome.notifications.onClicked.addListener(function (id) {
-      if (id.indexOf('openoutlier-breakout-') !== 0) return;
-      chrome.tabs.create({ url: chrome.runtime.getURL('dashboard/dashboard.html#/niche') });
+      if (id.indexOf('openoutlier-breakout-') !== 0 && id.indexOf('openoutlier-milestone-') !== 0) return;
+      chrome.tabs.create({ url: chrome.runtime.getURL('dashboard/dashboard.html#/' + (id.indexOf('openoutlier-milestone-') === 0 ? 'my-youtube' : 'niche')) });
       chrome.notifications.clear(id);
     });
   }
@@ -536,6 +557,8 @@
     if (msg.days) q.set('days', String(Math.min(3650, Math.max(1, Number(msg.days) || 28))));
     if (msg.limit) q.set('limit', String(Math.min(200, Math.max(1, Number(msg.limit) || 50))));
     if (msg.id) { if (!/^[A-Za-z0-9_-]{11}$/.test(String(msg.id))) return { ok: false, error: 'Not a YouTube video id.' }; q.set('id', msg.id); }
+    // Which connected channel (phase 2: one token per channel); none = the first connected.
+    if (msg.channel) { if (!/^UC[A-Za-z0-9_-]{22}$/.test(String(msg.channel))) return { ok: false, error: 'Not a YouTube channel id.' }; q.set('channel', msg.channel); }
     var found = await findServer(await getState());
     if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE_ANALYTICS };
     if ((found.health.features || []).indexOf('youtube-analytics') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE_ANALYTICS };
@@ -548,10 +571,25 @@
     return j;
   }
 
+  // ---- the Library's Kanalım page: the stored history of the connected channels (mcp/own-history.mjs).
+  var OLD_BRIDGE_OWN = 'The OpenOutlier bridge that is running is older than this extension and keeps no channel history yet. ' +
+    'Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge (or restart Claude if it runs the bridge).';
+  async function own(msg) {
+    var found = await findServer(await getState());
+    if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE_ANALYTICS };
+    if ((found.health.features || []).indexOf('own-history') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE_OWN };
+    var ch = /^UC[A-Za-z0-9_-]{22}$/.test(String(msg.channel || '')) || msg.channel === 'all' ? msg.channel : null;
+    if (msg.path === '/youtube/own/refresh') return post(found.port, '/youtube/own/refresh', { channel: ch });
+    var res = await read(found.port, '/youtube/own/page' + (ch ? '?channel=' + encodeURIComponent(ch) : ''), 60000);
+    var j = await res.json().catch(function () { return {}; });
+    if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
+    return j;
+  }
+
   chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (!msg || sender.id !== chrome.runtime.id) return;
     var fn = msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
-      : msg.type === 'reelscope:bridge-key' ? bridgeKey : msg.type === 'reelscope:niche' ? niche : null;
+      : msg.type === 'reelscope:bridge-key' ? bridgeKey : msg.type === 'reelscope:niche' ? niche : msg.type === 'reelscope:own' ? own : null;
     if (!fn) return;
     fn(msg).then(sendResponse, function (e) {
       sendResponse({ ok: false, error: /Failed to fetch|NetworkError/i.test(String(e && e.message)) ? NO_BRIDGE : String(e && e.message || e) });

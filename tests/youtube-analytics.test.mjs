@@ -18,6 +18,7 @@ const { startBridge } = await import('../mcp/bridge.mjs');
 const CLIENT = { installed: { client_id: '1234-abc.apps.googleusercontent.com', client_secret: 'GOCSPX-test-secret', redirect_uris: ['http://localhost'] } };
 const NOW = Date.UTC(2026, 10, 18, 12);
 const vid = (i) => 'yTown' + String(i).padStart(6, '0');
+const ME = 'UC' + 'm'.repeat(22);
 
 /** A fake Google for OAuth + Analytics + Data API; logs requests. */
 function fakeGoogle({ reachFails = false, refreshFails = false } = {}) {
@@ -105,8 +106,8 @@ test('connect: PKCE + state + offline access to the bridge\'s loopback, then the
   // The verifier sent now matches the challenge sent to the browser earlier.
   const challenge = createHash('sha256').update(form.get('code_verifier')).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   assert.equal(challenge, u.searchParams.get('code_challenge'));
-  assert.equal(statSync(YA.TOKEN_FILE).mode & 0o777, 0o600);
-  const tok = JSON.parse(readFileSync(YA.TOKEN_FILE, 'utf8'));
+  assert.equal(statSync(YA.tokenFile(ME)).mode & 0o777, 0o600);
+  const tok = JSON.parse(readFileSync(YA.tokenFile(ME), 'utf8'));
   assert.equal(tok.refresh_token, 'rt-1');
   // The state is single-use.
   assert.equal((await YA.finishConnect(new URLSearchParams({ code: 'good-code', state }), { fetch: g.fetch, now: NOW + 2000 })).ok, false);
@@ -167,7 +168,7 @@ test('tokens: refreshed when expired; a revoked sign-in says to reconnect; disco
   await YA.channelReport({ fetch: g.fetch, now: NOW + 2 * 3600e3 });
   const ref = g.calls.find((c) => c.url === YA.TOKEN_URL);
   assert.equal(new URLSearchParams(ref.init.body).get('grant_type'), 'refresh_token');
-  assert.equal(JSON.parse(readFileSync(YA.TOKEN_FILE, 'utf8')).access_token, 'at-2');
+  assert.equal(JSON.parse(readFileSync(YA.tokenFile(ME), 'utf8')).access_token, 'at-2');
 
   const bad = fakeGoogle({ refreshFails: true });
   await assert.rejects(YA.channelReport({ fetch: bad.fetch, now: NOW + 10 * 3600e3 }), (e) => e.code === 'reconnect' && /7-day/.test(e.message));
@@ -200,5 +201,5 @@ test('bridge: the Google callback page and the extension-only analytics routes',
     await new Promise((r) => b.server.close(r));
   }
   await YA.disconnect({ fetch: fakeGoogle().fetch });
-  assert.ok(!existsSync(YA.TOKEN_FILE));
+  assert.ok(!existsSync(YA.tokenFile(ME)));
 });

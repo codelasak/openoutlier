@@ -1,0 +1,9 @@
+{
+  "kind": "youtubeAnalytics#resultTable",
+  "columnHeaders": [
+    { "name": "insightTrafficSourceType", "columnType": "DIMENSION", "dataType": "STRING" },
+    { "name": "views", "columnType": "METRIC", "dataType": "INTEGER" },
+    { "name": "estimatedMinutesWatched", "columnType": "METRIC", "dataType": "FLOAT" }
+  ],
+  "rows": [["YT_SEARCH", 210, 640.1], ["RELATED_VIDEO", 140, 401.0], ["SHORTS", 95, 40.2], ["SUBSCRIBER", 31, 88.5], ["EXT_URL", 12, 30.0]]
+}

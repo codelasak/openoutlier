@@ -19,6 +19,8 @@ const X = createRequire(import.meta.url)('../src/extract.js');
 const FIRST = 47911; // test range, away from the real one
 const EXT_ORIGIN = 'chrome-extension://' + 'a'.repeat(32);
 const home = mkdtempSync(join(tmpdir(), 'openoutlier-test-'));
+// Modules this test imports itself (library, own-history) must see the same throwaway home, never ~/.openoutlier.
+process.env.OPENOUTLIER_HOME = home;
 
 // A program that is NOT OpenOutlier sitting on the first port: the server must skip it.
 const squatter = http.createServer((req, res) => { res.end('hello from another app'); });
@@ -183,7 +185,7 @@ test('settings: feature flags and the extension\'s quota reach the bridge; "Copy
   assert.deepEqual(st.data.features.on, ['hide-shorts']);
   assert.equal(st.data.tracker.enabled, false);
   assert.ok(st.data.tracker.jobs.heartbeat >= 1, 'the server holding the bridge seeded the tracker');
-  assert.equal(st.data.database.schema_version, 2);
+  assert.equal(st.data.database.schema_version, 3);
 
   r = await bridge('/settings/youtube-api-key', { method: 'POST', body: { remove: true } });
   assert.equal((await r.json()).apiKey.configured, false);
@@ -696,4 +698,82 @@ test('library: YouTube ids, labels and URL parsing', async () => {
     assert.equal(L.youtubeIdOf(u), 'yTdemo00029', u);
   }
   assert.equal(L.youtubeIdOf('yTdemo00029'), null); // bare ids could be Instagram shortcodes
+});
+
+test('own-channel history (phase 2): the Kanalım page route, collect-now, milestone acks and the four tools with a channel parameter', async () => {
+  const { writeFileSync } = await import('node:fs');
+  const { Store } = await import('../mcp/store.mjs');
+  const OWN = await import('../mcp/own-history.mjs');
+  const SIM = await import('../dev/own-sim.mjs');
+  const F = createRequire(import.meta.url)('../src/features.js');
+  const health = await (await bridge('/health')).json();
+  assert.ok(health.features.includes('own-history'));
+  // Nothing connected: the tools say how.
+  const none = await call('my_channel_history', {});
+  assert.equal(none.data.error, 'No channel history yet.');
+  assert.match(none.data.hint, /connect_youtube_channel/);
+  const page0 = await (await bridge('/youtube/own/page?as=get', { method: 'POST', body: {} })).json();
+  assert.equal(page0.ok, true);
+  assert.equal(page0.page, null);
+  assert.equal((await bridge('/youtube/own/page', { origin: 'https://evil.example' })).status, 403);
+
+  // Two channels' history, collected by the real jobs against the simulated Google, into this server's database.
+  const NOW = Date.now();
+  const a = SIM.simChannel(SIM.SPECS.excelbugs, NOW);
+  const b = SIM.simChannel(SIM.SPECS.quran, NOW);
+  writeFileSync(join(home, 'youtube-oauth.json'), JSON.stringify({ installed: { client_id: '1-x.apps.googleusercontent.com', client_secret: 's' } }));
+  writeFileSync(join(home, `youtube-token-${a.spec.id}.json`), JSON.stringify(SIM.tokenFor(a, { connectedAt: '2026-10-01T00:00:00Z' })), { mode: 0o600 });
+  writeFileSync(join(home, `youtube-token-${b.spec.id}.json`), JSON.stringify(SIM.tokenFor(b, { connectedAt: '2026-11-01T00:00:00Z', monetary: false })), { mode: 0o600 });
+  const g = SIM.fakeGoogle({ [a.spec.id]: a, [b.spec.id]: b }, { monetary: { [b.spec.id]: false } });
+  const s = new Store(home);
+  const ctx = { store: s, now: NOW, fetch: g.fetch, flags: F.resolve(null), log: () => {}, chunksPerRun: 20 };
+  for (const c of [a, b]) {
+    s.db.prepare('INSERT OR REPLACE INTO own_channels (channel_id, title, handle, created, connected_at, active) VALUES (?, ?, ?, ?, ?, 1)').run(c.spec.id, c.spec.title, c.spec.handle, c.created, c === a ? 1 : 2);
+    const job = (k) => ({ id: k + ':' + c.spec.id, channel_id: c.spec.id });
+    await OWN.backfillJob(ctx, job('own-backfill'));
+    await OWN.dailyJob(ctx, job('own-daily'));
+    await OWN.videosJob(ctx, job('own-videos'));
+    await OWN.weeklyJob({ ...ctx, weeksPerRun: 4 }, job('own-weekly'));
+  }
+
+  const page = await (await bridge('/youtube/own/page?as=get', { method: 'POST', body: {} })).json();
+  assert.equal(page.channel, a.spec.id, 'default: the first connected');
+  assert.deepEqual(page.channels.map((c) => [c.title, c.needs_reconsent]), [['Excel Bugs (demo)', false], ['Quran Recitations (demo)', true]]);
+  assert.ok(page.page.daily.length > 300 && page.page.compare[28].views.cur > 0);
+  const quran = await (await bridge('/youtube/own/page?as=get&channel=' + b.spec.id, { method: 'POST', body: {} })).json();
+  assert.equal(quran.page.title, 'Quran Recitations (demo)');
+  assert.equal(quran.page.revenue.state, 'needs_scope');
+  const all = await (await bridge('/youtube/own/page?as=get&channel=all', { method: 'POST', body: {} })).json();
+  assert.equal(all.channel, 'all');
+  assert.equal(all.page.per_channel.length, 2);
+  const refresh = await (await bridge('/youtube/own/refresh', { method: 'POST', body: { channel: b.spec.id } })).json();
+  assert.equal(refresh.ok, true);
+  assert.equal((await (await bridge('/youtube/own/milestones/ack', { method: 'POST', body: { milestones: [{ channel_id: a.spec.id, key: 'subs:10' }, { channel_id: 'bad', key: 'x' }] } })).json()).acked, 0, 'already shown ones aren\'t acked twice');
+  const settings = await (await bridge('/settings', { method: 'POST', body: {} })).json();
+  assert.deepEqual(settings.own, { channels: 2, milestones: [] });
+
+  const h = await call('my_channel_history', { days: 28, granularity: 'week' });
+  assert.equal(h.data.channel, 'Excel Bugs (demo)');
+  assert.ok(h.data.series.length >= 4 && h.data.series.length <= 6);
+  assert.ok(h.data.compare.last_28_days.views.cur > 0);
+  const hq = await call('my_channel_history', { channel: '@quranrecitationsdemo', days: 7 });
+  assert.equal(hq.data.channel_id, b.spec.id);
+  assert.equal(hq.data.series.length, 7);
+  const bad = await call('my_channel_history', { channel: 'no such channel' });
+  assert.match(bad.data.error, /No connected channel matches/);
+  const v = await call('my_video_history', { channel: 'excel bugs' });
+  assert.ok(v.data.videos.length > 3);
+  assert.ok(v.data.channel_median.long[48] > 0);
+  const one = await call('my_video_history', { video: v.data.videos[2].id });
+  assert.ok(one.data.daily.length > 0);
+  assert.equal(one.data.video.id, v.data.videos[2].id);
+  const terms = await call('my_search_terms', { channel: 'Quran' });
+  assert.equal(terms.data.channel, 'Quran Recitations (demo)');
+  assert.equal(terms.data.terms[0].term, 'surah rahman');
+  const y = await call('my_ypp_progress', {});
+  assert.equal(y.data.subs.target, 1000);
+  assert.ok(y.data.paths.length === 2 && y.data.eta_days !== undefined);
+  const yq = await call('my_ypp_progress', { channel: b.spec.id });
+  assert.ok(yq.data.paths.find((p) => p.id === 'shorts').metric.current > 1e6);
+  s.close();
 });
