@@ -20,6 +20,7 @@
   var P = self.ReelScopePanel;
   var O = self.ReelScopeOverlay;
   var M = self.ReelScopeMetrics;
+  var FT = self.OpenOutlierFeatures; // feature on/off (src/features.js); later phases ask FT.isOn(id) before mounting
   var KEY_PREFIX = 'rs:p:';
   var MIN_POSTS = 5;
   var GRID_TABS = ['videos', 'shorts', 'streams'];
@@ -611,8 +612,40 @@
     onOpenDashboard: function () {
       var id = currentAccount();
       chrome.runtime.sendMessage({ type: 'reelscope:open-dashboard', hash: id ? '#/account/' + encodeURIComponent(id) : '' });
-    }
+    },
+    features: !!FT,
+    onFeatureToggle: function (id, on) { FT.set(id, on); },
+    onFeatureReset: function () { FT.reset().then(function () { featureState.message = FT.uiLang() === 'tr' ? 'Varsayılanlar geri yüklendi.' : 'Defaults restored.'; scheduleRender(); }); },
+    onFeatureFix: fixFeature
   });
+
+  // ---- Features tab -----------------------------------------------------------
+  // Flags and what is set up come from storage; a change anywhere (this tab, another
+  // tab, the Library, the popup) re-renders without a reload.
+  var featureState = { flags: FT ? FT.flags() : null, env: {}, message: '' };
+  function loadFeatureState() {
+    if (!FT) return Promise.resolve();
+    return FT.env().then(function (env) { featureState.flags = FT.flags(); featureState.env = env; scheduleRender(); });
+  }
+  function fixFeature(code) {
+    var tr = FT.uiLang() === 'tr';
+    if (code === 'tracker') { FT.set('tracker', true); return; }
+    if (code === 'copyKey') {
+      featureState.message = tr ? 'Anahtar bridge\'e kopyalanıyor…' : 'Copying the key to the bridge…';
+      scheduleRender();
+      chrome.runtime.sendMessage({ type: 'reelscope:bridge-key', action: 'copy' }).then(function (r) {
+        featureState.message = r && r.ok ? (tr ? 'Anahtar bridge\'e kopyalandı.' : 'The key is on the bridge now.') : ((tr ? 'Kopyalanamadı: ' : 'Could not copy: ') + ((r && r.error) || '?'));
+        loadFeatureState();
+      }, function (e) { featureState.message = String(e && e.message || e); scheduleRender(); });
+      return;
+    }
+    // API key, bridge setup: Library → Settings; YouTube Analytics: Library → My YouTube channel.
+    chrome.runtime.sendMessage({ type: 'reelscope:open-dashboard', hash: code === 'oauth' ? '#/my-youtube' : '#/settings' });
+  }
+  if (FT) {
+    FT.ready.then(loadFeatureState);
+    FT.onChange(function () { featureState.message = ''; loadFeatureState(); });
+  }
 
   /** The page's main player: the watch page's, or the Short that is on screen. */
   function mainVideo() {
@@ -695,6 +728,7 @@
         notice: notice || null,
         exact: exact,
         api: api.configured ? api : null,
+        features: featureState,
         auto: { running: auto.running, label: auto.label || (prof && prof.videos ? countFor(id) + ' of ~' + prof.videos + ' videos collected' : '') }
       });
       overlay.refresh();

@@ -21,7 +21,8 @@ import { startJob, waitJob, isVideoId as isYouTubeVideoId, tildify, locateYtDlp,
 import { registerStudioTools, INSTRUCTIONS as STUDIO_INSTRUCTIONS } from './studio.mjs';
 import { registerTranscriptTool } from './youtube-transcript.mjs';
 import { registerAnalyticsTools, INSTRUCTIONS as YT_ANALYTICS_INSTRUCTIONS } from './youtube-analytics.mjs';
-import { registerYouTubeApiTool, apiKey as youtubeApiKey, quota as youtubeApiQuota } from './youtube-api.mjs';
+import { registerYouTubeApiTool, apiKeyInfo as youtubeApiKeyInfo, quota as youtubeApiQuota } from './youtube-api.mjs';
+import { Tracker, trackerStatus } from './tracker.mjs';
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
@@ -457,7 +458,7 @@ server.registerTool('command_status', {
 
 server.registerTool('bridge_status', {
   title: 'Connection status',
-  description: 'Whether the OpenOutlier extension is connected to this server, when the library was last synced, the last backup, and whether yt-dlp + ffmpeg (for YouTube video downloads) are installed.',
+  description: 'Whether the OpenOutlier extension is connected to this server, when the library was last synced, the last backup, whether yt-dlp + ffmpeg (for YouTube video downloads) are installed, the YouTube Data API key and today\'s quota use (bridge + extension together), the feature switches the user changed, and the background tracker (jobs, last heartbeat).',
   inputSchema: {},
   annotations: { readOnlyHint: true }
 }, () => safe(() => {
@@ -476,7 +477,10 @@ server.registerTool('bridge_status', {
       const ff = findExecutable('ffmpeg');
       return { yt_dlp: y.bin || null, ffmpeg: ff, ready: !!(y.bin && ff), hint: y.bin && ff ? undefined : (y.error ? y.error.message + ' ' : '') + INSTALL_HINT };
     })(),
-    youtube_data_api: youtubeApiKey() ? { configured: true, ...youtubeApiQuota() } : { configured: false }
+    // One count for the key's Google Cloud project: this bridge's calls plus the extension's (it reports them with its settings).
+    youtube_data_api: (() => { const k = youtubeApiKeyInfo(); return { configured: !!k.key, key_source: k.source || undefined, ...youtubeApiQuota() }; })(),
+    features: (() => { const f = store().getMeta('features', null); return f ? { off: Object.keys(f).filter((k) => f[k] === false), on: Object.keys(f).filter((k) => f[k] === true), note: 'Only the ones changed from the default (src/features.js).' } : { note: 'The extension has not sent its feature settings yet; the defaults apply.' }; })(),
+    tracker: tracker ? tracker.status() : trackerStatus(store())
   });
 }));
 
@@ -520,6 +524,12 @@ registerAnalyticsTools(server, { z, json, safe, bridgePort: async () => {
 
 // ---- start ----------------------------------------------------------------
 let bridge = await startBridge();
+// Background jobs (mcp/tracker.mjs) run where the bridge port is held; a lease in the database keeps it to one process.
+var tracker = null;
+function startTracker() {
+  if (!tracker && bridge.server) tracker = new Tracker({ store: store(), log: (...a) => log('[tracker]', ...a) }).start();
+}
+startTracker();
 // If another instance owns the bridge and later quits, take over.
 setInterval(async () => {
   if (bridge.server) return;
@@ -528,6 +538,7 @@ setInterval(async () => {
     if ((await r.json()).app === 'reelscope') return;
   } catch { /* gone */ }
   bridge = await startBridge();
+  startTracker();
 }, 30000).unref();
 
 await server.connect(new StdioServerTransport());

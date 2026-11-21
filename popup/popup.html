@@ -44,8 +44,20 @@
         <button id="ytapi-save" class="btn btn-small" type="submit">Save</button>
       </form>
       <p class="muted small" id="ytapi-msg" aria-live="polite"></p>
+      <div class="bridgekey" id="ytapi-bridge" hidden>
+        <p class="muted small" id="ytapi-bridge-state"></p>
+        <div class="keyactions">
+          <button id="ytapi-copy" class="btn btn-small" type="button">Copy key to bridge</button>
+          <button id="ytapi-uncopy" class="btn btn-ghost" type="button" hidden>Remove from bridge</button>
+        </div>
+      </div>
       <button id="ytapi-remove" class="btn btn-ghost" type="button" hidden>Remove the key</button>
     </details>
+
+    <button id="features" class="btn" type="button">
+      <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M1 3h8v2H1zM11 2h2v4h-2zM13 3h2v2h-2zM1 11h2v2H1zM3 10h2v4H3zM7 11h8v2H7z" fill="currentColor"/></svg>
+      <span>YouTube features</span><span class="aside-muted">turn on / off</span>
+    </button>
 
     <h2 class="label">Saved accounts &amp; subreddits</h2>
     <ul id="profiles"></ul>

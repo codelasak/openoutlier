@@ -13,6 +13,7 @@ function openLibrary(hash) {
 }
 document.getElementById('library').addEventListener('click', function () { openLibrary(''); });
 document.getElementById('mentions').addEventListener('click', function () { openLibrary('#/mentions'); });
+document.getElementById('features').addEventListener('click', function () { openLibrary('#/settings'); });
 chrome.storage.local.get(['rs:mentions', 'rs:watches']).then(function (r) {
   var m = r['rs:mentions'] || {};
   var unread = Object.keys(m.items || {}).filter(function (id) { return !(m.read || {})[id]; }).length;
@@ -140,9 +141,11 @@ chrome.storage.onChanged.addListener(function (c) { if (c['rs:bridge']) renderAg
 renderProfiles();
 
 // ---- optional YouTube Data API key ------------------------------------------------
-// Stored in rs:settings.youtubeApiKey (this browser only, never synced to the
-// bridge). Saving asks Chrome for access to www.googleapis.com, the only host
-// the key is sent to.
+// Stored in rs:settings.youtubeApiKey (this browser). It reaches the bridge on this
+// Mac only when you press "Copy key to bridge" (for background jobs; the bridge
+// keeps it in ~/.openoutlier/youtube-api-key, readable only by you). Saving asks
+// Chrome for access to www.googleapis.com, the only other host the key is sent to.
+// Units used today: this browser's plus the bridge's (rs:bridge.bridgeQuota).
 (function () {
   var A = self.OpenOutlierYouTubeApi;
   var API_ORIGIN = 'https://www.googleapis.com/*';
@@ -153,16 +156,47 @@ renderProfiles();
   var state = document.getElementById('ytapi-state');
   var remove = document.getElementById('ytapi-remove');
 
-  async function show(note) {
-    var r = await chrome.storage.local.get([SETTINGS_KEY, 'rs:yt-api-quota']);
+  var bridgeBox = document.getElementById('ytapi-bridge');
+  var bridgeState = document.getElementById('ytapi-bridge-state');
+  var copyBtn = document.getElementById('ytapi-copy');
+  var uncopyBtn = document.getElementById('ytapi-uncopy');
+
+  var sticky = { text: '', until: 0 }; // a copy result outlives the storage update that follows it
+  async function show(note, bridgeNote) {
+    if (bridgeNote) sticky = { text: bridgeNote, until: Date.now() + 15000 };
+    else if (Date.now() < sticky.until) bridgeNote = sticky.text;
+    var r = await chrome.storage.local.get([SETTINGS_KEY, 'rs:yt-api-quota', 'rs:bridge']);
     var key = (r[SETTINGS_KEY] || {}).youtubeApiKey;
-    var used = A.usedToday(r['rs:yt-api-quota']);
+    var b = r['rs:bridge'] || {};
+    var mine = A.usedToday(r['rs:yt-api-quota']);
+    var onBridge = A.usedToday(b.bridgeQuota);
+    var used = mine + onBridge;
     var on = A.isKey(key);
-    state.textContent = on ? 'on · ' + nf.format(used) + ' / ' + nf.format(A.DAILY_QUOTA) + ' units today' : 'optional, off';
+    state.textContent = on ? 'on · ' + nf.format(used) + ' / ' + nf.format(A.DAILY_QUOTA) + ' units today' : b.bridgeApiKey ? 'on the bridge only' : 'optional, off';
     input.placeholder = on ? 'Saved (…' + key.slice(-4) + '). Paste a new key to replace it.' : 'AIza…';
     remove.hidden = !on;
-    msg.textContent = note != null ? note : on ? 'Quota used today: ' + nf.format(used) + ' of ' + nf.format(A.DAILY_QUOTA) + ' units (resets at midnight Pacific time). Use "Exact stats via API" in a YouTube channel\'s panel.' : '';
+    msg.textContent = note != null ? note : on || onBridge ? 'Quota used today: ' + nf.format(used) + ' of ' + nf.format(A.DAILY_QUOTA) + ' units' +
+      (onBridge ? ' (' + nf.format(mine) + ' in this browser, ' + nf.format(onBridge) + ' by the bridge)' : '') + '; resets at midnight Pacific time. Use "Exact stats via API" in a YouTube channel\'s panel.' : '';
+
+    // The bridge's copy, for background jobs (niche tracking).
+    var connected = agentsBox.checked && b.connected;
+    bridgeBox.hidden = !on && !b.bridgeApiKey;
+    copyBtn.hidden = !on || !connected;
+    copyBtn.textContent = b.bridgeApiKey ? 'Copy again' : 'Copy key to bridge';
+    uncopyBtn.hidden = !connected || !b.bridgeApiKey || b.bridgeApiKeySource !== 'file';
+    bridgeState.textContent = bridgeNote || (!connected ? 'The bridge on this Mac isn\'t connected. Background jobs (niche tracking) need it, with its own copy of the key.'
+      : b.bridgeApiKey ? (b.bridgeApiKeySource === 'env' ? 'The bridge has a key from OPENOUTLIER_YOUTUBE_API_KEY.' : 'The bridge has a copy of the key for background jobs.')
+        : b.settingsAt ? 'The bridge has no key yet, so background jobs can\'t use the API.' : 'Checking the bridge…');
   }
+
+  async function bridgeKey(action) {
+    copyBtn.disabled = uncopyBtn.disabled = true;
+    var r = await chrome.runtime.sendMessage({ type: 'reelscope:bridge-key', action: action }).catch(function (e) { return { ok: false, error: e.message }; });
+    copyBtn.disabled = uncopyBtn.disabled = false;
+    show(null, r && r.ok ? (action === 'remove' ? 'Removed from the bridge.' : 'Copied. The bridge keeps it in ~/.openoutlier/youtube-api-key (only you can read it).') : 'Could not ' + (action === 'remove' ? 'remove' : 'copy') + ': ' + ((r && r.error) || 'no answer'));
+  }
+  copyBtn.addEventListener('click', function () { bridgeKey('copy'); });
+  uncopyBtn.addEventListener('click', function () { bridgeKey('remove'); });
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -180,6 +214,6 @@ renderProfiles();
     chrome.permissions.remove({ origins: [API_ORIGIN] }).catch(function () {});
     show('Removed. OpenOutlier no longer calls the YouTube Data API.');
   });
-  chrome.storage.onChanged.addListener(function (c) { if (c['rs:yt-api-quota']) show(); });
+  chrome.storage.onChanged.addListener(function (c) { if (c['rs:yt-api-quota'] || c['rs:bridge']) show(); });
   show();
 })();

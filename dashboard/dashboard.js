@@ -155,6 +155,7 @@
     if (kind === 'mentions') return { kind: 'mentions' };
     if (kind === 'studio') return { kind: 'studio' };
     if (kind === 'my-youtube') return { kind: 'my-youtube' };
+    if (kind === 'settings') return { kind: 'settings' };
     if (kind === 'compare') return { kind: 'compare', a: parts[1] || null, b: parts[2] || null };
     if (kind === 'folder' || kind === 'tag') return { kind: kind, id: parts[1], tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
     if (kind === 'unsorted') return { kind: 'unsorted', tab: parts[1] === 'reels' ? 'reels' : 'accounts' };
@@ -349,6 +350,8 @@
   }
   var ytChannelView = self.OpenOutlierYouTubeChannelView.create({ h: h, fmt: fmt, rerender: function () { if (route().kind === 'my-youtube') { renderSidebar(route()); ytChannelView.render(main); document.title = ytChannelView.title() + ' · OpenOutlier'; } } });
   var accountPanel = P.create(Object.assign({}, common, { onApiStats: ytApiRun }));
+  // Settings → Features (src/features.js + features-view.js), the API key and the bridge.
+  var settingsView = self.OpenOutlierSettingsView ? self.OpenOutlierSettingsView.create({ h: h, rerender: function () { if (route().kind === 'settings') { renderSidebar(route()); settingsView.render(main); document.title = settingsView.title() + ' · OpenOutlier'; } } }) : null;
   var mentionsView = self.ReelScopeMentionsView.create({ h: h, ago: ago, rerender: function () { if (route().kind === 'mentions') { renderSidebar(route()); mentionsView.render(main); } } });
   var studioView = self.ReelScopeStudioView.create({ h: h, ago: ago, fmt: fmt, rerender: function () { if (route().kind === 'studio') { renderSidebar(route()); studioView.render(main); document.title = studioView.title() + ' · OpenOutlier'; } } });
   var reelsPanel = P.create(Object.assign({}, common, { preEnriched: true, showOwner: true, defaultSort: 'viralScore', listTabLabel: 'Posts' }));
@@ -362,6 +365,7 @@
     folder: 'M1 3h6v2h8v9H1z',
     inbox: 'M1 2h14v12H1zM3 4v4h3v2h4V8h3V4z',
     compare: 'M10 2h2v2h2v2H2V4h8zM2 10h12v2h-2v2h-2v-2H2z',
+    gear: 'M5 4h6v2H5zM5 10h6v2H5zM4 6h2v4H4zM10 6h2v4h-2zM7 1h2v3H7zM7 12h2v3H7zM1 7h3v2H1zM12 7h3v2h-3zM3 3h2v2H3zM11 3h2v2h-2zM3 11h2v2H3zM11 11h2v2h-2z',
     back: 'M6 3h2v2H6zM4 5h2v2H4zM2 7h12v2H2zM4 9h2v2H4zM6 11h2v2H6z'
   };
   function px(name, size) {
@@ -424,6 +428,7 @@
       });
     }
     if (cmpPlatforms().length > 1) lib.appendChild(navItem('Compare platforms', null, '#/compare', r.kind === 'compare', { icon: 'compare' }));
+    if (settingsView) lib.appendChild(navItem(settingsView.title(), null, '#/settings', r.kind === 'settings', { icon: 'gear' }));
 
     var nf_ = document.getElementById('nav-folders');
     nf_.textContent = '';
@@ -809,9 +814,10 @@
     else if (r.kind === 'mentions') mentionsView.render(main);
     else if (r.kind === 'studio') studioView.render(main);
     else if (r.kind === 'my-youtube') ytChannelView.render(main);
+    else if (r.kind === 'settings' && settingsView) settingsView.render(main);
     else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
+    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
   }
 
   // ---- wiring ---------------------------------------------------------------
@@ -821,7 +827,7 @@
   });
   document.getElementById('search').addEventListener('input', function (e) {
     search = e.target.value.trim();
-    if (route().kind === 'account' || route().kind === 'mentions' || route().kind === 'studio' || route().kind === 'my-youtube' || route().kind === 'compare') go(lastScopeHash); else render();
+    if (['account', 'mentions', 'studio', 'my-youtube', 'settings', 'compare'].indexOf(route().kind) !== -1) go(lastScopeHash); else render();
   });
   document.getElementById('show-small').addEventListener('change', function (e) {
     showSmall = e.target.checked;
@@ -888,10 +894,10 @@
     if (area !== 'local') return;
     if (!Object.keys(changes).some(function (k) { return k.indexOf('rs:') === 0; })) return;
     clearTimeout(reloadTimer);
-    reloadTimer = setTimeout(function () { Promise.all([load(), loadYtApi()]).then(render); }, 600);
+    reloadTimer = setTimeout(function () { Promise.all([load(), loadYtApi(), settingsView ? settingsView.load() : null]).then(render); }, 600);
   });
   window.addEventListener('hashchange', render);
 
-  await Promise.all([load(), loadYtApi()]);
+  await Promise.all([load(), loadYtApi(), settingsView ? settingsView.load() : null]);
   render();
 })();

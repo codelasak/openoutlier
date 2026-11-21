@@ -21,6 +21,11 @@ import {
 } from './library.mjs';
 import { startJob, jobStatus, isVideoId, isAccountId } from './youtube-dl.mjs';
 import * as YA from './youtube-analytics.mjs';
+import { apiKeyInfo, saveApiKey, removeApiKey, setExtensionQuota, quota as apiQuota, bridgeQuotaState, A as YAPI } from './youtube-api.mjs';
+import { store } from './library.mjs';
+import { createRequire } from 'node:module';
+
+const Features = createRequire(import.meta.url)('../src/features.js');
 
 // OPENOUTLIER_PORT (or the former REELSCOPE_PORT) moves the start of the range (the extension scans 47811–47820).
 const FIRST_PORT = Number(setting('PORT')) || 47811;
@@ -29,7 +34,8 @@ const CONFIG_FILE = join(HOME, 'config.json');
 const MAX_BODY = 200 * 1024 * 1024;
 const VERSION = '0.1.0';
 // What this bridge can do beyond sync + commands (the extension checks before offering YouTube video downloads).
-const FEATURES = ['youtube-download', 'youtube-analytics'];
+// 'settings': POST /settings (feature flags + quota) and /settings/youtube-api-key; 'tracker': mcp/tracker.mjs.
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
@@ -119,6 +125,31 @@ async function handle(req, res, port) {
     const lib = await applySync({ full: !!body.full, accounts: body.accounts, org: body.org, watches: body.watches, mentions: body.mentions });
     return send(res, 200, { ok: true, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length }, origin);
   }
+  // Feature flags (src/features.js) and the extension's Data API unit count. Answers what the
+  // bridge has set up, so the Features tab can say what is missing. Never echoes the key.
+  if (req.method === 'POST' && url.pathname === '/settings') {
+    const body = await readBody(req);
+    const st = store();
+    if (body.features && typeof body.features === 'object') {
+      const next = Features.sanitize(body.features);
+      if (JSON.stringify(next) !== JSON.stringify(st.getMeta('features', null))) st.setMeta('features', next);
+    }
+    if (body.quota) setExtensionQuota(body.quota);
+    return send(res, 200, await settingsAnswer(), origin);
+  }
+  if (req.method === 'POST' && url.pathname === '/settings/youtube-api-key') {
+    const body = await readBody(req);
+    if (body.remove === true) {
+      removeApiKey();
+      log('removed the YouTube Data API key file');
+      return send(res, 200, { ok: true, ...(await settingsAnswer()) }, origin);
+    }
+    const key = typeof body.key === 'string' ? body.key.trim() : '';
+    if (!YAPI.isKey(key)) return send(res, 400, { error: 'That is not a YouTube Data API key.' }, origin);
+    saveApiKey(key);
+    log('saved the YouTube Data API key for background jobs');
+    return send(res, 200, { ok: true, ...(await settingsAnswer()) }, origin);
+  }
   if (method === 'GET' && url.pathname === '/commands') {
     return send(res, 200, { commands: await takePendingCommands() }, origin);
   }
@@ -150,6 +181,20 @@ async function handle(req, res, port) {
     if (r) return send(res, r[0], r[1], origin);
   }
   return send(res, 404, { error: 'not found' }, origin);
+}
+
+async function settingsAnswer() {
+  const key = apiKeyInfo();
+  let oauth = { configured: false, connected: false };
+  try { const a = await YA.status(); oauth = { configured: !!a.configured, connected: !!a.connected }; } catch { /* unknown */ }
+  return {
+    ok: true,
+    features: Features.resolve(store().getMeta('features', null)),
+    apiKey: { configured: !!key.key, source: key.source },
+    oauth,
+    quota: apiQuota(),
+    bridgeQuota: bridgeQuotaState() || null
+  };
 }
 
 async function probe(port) {

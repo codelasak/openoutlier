@@ -144,6 +144,54 @@ test('extension can sync and agents can read it', async () => {
   assert.ok(found.data.matched > 0);
 });
 
+test('settings: feature flags and the extension\'s quota reach the bridge; "Copy key to bridge" writes a private key file', async () => {
+  const health = await (await fetch(`http://127.0.0.1:${port}/health`)).json();
+  assert.ok(health.features.includes('settings') && health.features.includes('tracker'));
+  assert.equal((await bridge('/settings', { method: 'POST', body: {}, origin: 'https://evil.example' })).status, 403);
+
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
+  let r = await bridge('/settings', { method: 'POST', body: { features: { 'hide-shorts': true, tracker: false, 'not-a-feature': true, dislikes: 'x' }, quota: { day, units: 37 } } });
+  assert.equal(r.status, 200);
+  let j = await r.json();
+  assert.equal(j.features['hide-shorts'], true);
+  assert.equal(j.features.tracker, false);
+  assert.equal(j.features.dislikes, true, 'bad values fall back to the default');
+  assert.equal(j.features['not-a-feature'], undefined);
+  assert.deepEqual(j.apiKey, { configured: false, source: null });
+  assert.equal(j.oauth.connected, false);
+  assert.equal(j.quota.extension, 37);
+  assert.equal(j.quota.used_today, 37);
+
+  // Not a key: refused, nothing written.
+  assert.equal((await bridge('/settings/youtube-api-key', { method: 'POST', body: { key: 'nope' } })).status, 400);
+  assert.ok(!existsSync(join(home, 'youtube-api-key')));
+  const key = 'AIza' + 'T'.repeat(35);
+  r = await bridge('/settings/youtube-api-key', { method: 'POST', body: { key } });
+  j = await r.json();
+  assert.equal(r.status, 200);
+  assert.deepEqual(j.apiKey, { configured: true, source: 'file' });
+  assert.ok(!JSON.stringify(j).includes(key), 'the key is never echoed');
+  assert.equal(readFileSync(join(home, 'youtube-api-key'), 'utf8').trim(), key);
+  assert.equal(statSync(join(home, 'youtube-api-key')).mode & 0o777, 0o600);
+
+  const st = await call('bridge_status');
+  assert.equal(st.data.youtube_data_api.configured, true);
+  assert.equal(st.data.youtube_data_api.key_source, 'file');
+  assert.equal(st.data.youtube_data_api.extension, 37);
+  assert.equal(st.data.youtube_data_api.used_today, 37, 'one count: bridge + extension');
+  assert.deepEqual(st.data.features.off, ['tracker']);
+  assert.deepEqual(st.data.features.on, ['hide-shorts']);
+  assert.equal(st.data.tracker.enabled, false);
+  assert.ok(st.data.tracker.jobs.heartbeat >= 1, 'the server holding the bridge seeded the tracker');
+  assert.equal(st.data.database.schema_version, 1);
+
+  r = await bridge('/settings/youtube-api-key', { method: 'POST', body: { remove: true } });
+  assert.equal((await r.json()).apiKey.configured, false);
+  assert.ok(!existsSync(join(home, 'youtube-api-key')));
+  // Back to the defaults for the tests below.
+  await bridge('/settings', { method: 'POST', body: { features: {} } });
+});
+
 test('get_reel exposes the mp4 link and its expiry; download_reel saves it', async () => {
   const code = base[0].code + 'demo.kitchen'.length;
   const reel = await call('get_reel', { code: `https://www.instagram.com/reel/${code}/` });

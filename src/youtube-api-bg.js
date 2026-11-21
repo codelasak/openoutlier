@@ -11,7 +11,8 @@
 // Results are merged into chrome.storage with Y.merge (exact beats rounded), the
 // same rules the content script and the MCP store use; the open YouTube tab
 // picks them up through storage.onChanged. Units used today (Pacific day) are
-// kept in rs:yt-api-quota.
+// kept in rs:yt-api-quota and reported to the bridge (src/agent-bridge.js), which
+// answers with its own count, so both sides show the same total.
 'use strict';
 
 (function () {
@@ -30,9 +31,13 @@
     return A.isKey(k) ? k.trim() : null;
   }
 
+  /** Units used today: this browser's plus the bridge's (rs:bridge.bridgeQuota, from its /settings answer),
+   *  since the same key spends one Google Cloud project's quota. */
   async function quota() {
-    var r = await chrome.storage.local.get(QUOTA_KEY);
-    return { used: A.usedToday(r[QUOTA_KEY]), limit: A.DAILY_QUOTA, day: A.quotaDay() };
+    var r = await chrome.storage.local.get([QUOTA_KEY, 'rs:bridge']);
+    var mine = A.usedToday(r[QUOTA_KEY]);
+    var bridge = A.usedToday((r['rs:bridge'] || {}).bridgeQuota);
+    return { used: mine + bridge, extension: mine, bridge: bridge, limit: A.DAILY_QUOTA, day: A.quotaDay() };
   }
 
   // Unit counting is serialized so two quick calls can't lose one.

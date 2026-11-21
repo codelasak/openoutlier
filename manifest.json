@@ -95,6 +95,8 @@
       "js": [
         "src/metrics.js",
         "src/youtube.js",
+        "src/features.js",
+        "src/features-view.js",
         "src/brand.js",
         "src/panel.js",
         "src/overlay.js",

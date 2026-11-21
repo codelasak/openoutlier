@@ -1,7 +1,8 @@
 // OpenOutlier MCP – the optional YouTube Data API key (phase 5).
 //
-// OPENOUTLIER_YOUTUBE_API_KEY turns it on. Without it, nothing in this file
-// makes a request: the tool answers how to set it up.
+// OPENOUTLIER_YOUTUBE_API_KEY, or the file ~/.openoutlier/youtube-api-key (mode
+// 600; the extension's "Copy key to bridge" writes it), turns it on. Without a
+// key, nothing in this file makes a request: the tool answers how to set it up.
 //
 // • exact stats for saved videos: videos.list, 50 ids per call = 1 quota unit;
 // • a channel's uploads: channels.list (1) + playlistItems.list (1 per 50) +
@@ -9,31 +10,74 @@
 // Records go into the library with Store.mergePost (src/youtube.js merge:
 // exact beats rounded, exact dates beat relative ones). Units used today
 // (Pacific day, when Google resets the quota) are kept in the database's meta
-// table as youtube_api_quota. The extension counts its own key separately.
+// table as youtube_api_quota. The extension counts its own calls and reports them
+// with its settings (meta youtube_api_quota_ext), so quota() is the total of both:
+// the same key spends the same Google Cloud project's quota.
 import { createRequire } from 'node:module';
+import { readFileSync, writeFileSync, renameSync, chmodSync, unlinkSync, statSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { setting } from './env.mjs';
-import { store, readLibrary, isYouTubeId } from './library.mjs';
+import { store, readLibrary, isYouTubeId, HOME } from './library.mjs';
 
 const require = createRequire(import.meta.url);
 export const A = require('../src/youtube-api.js');
 const Y = require('../src/youtube.js');
 
 const QUOTA_META = 'youtube_api_quota';
-export const SETUP_HINT = 'Optional: create an API key in Google Cloud (enable "YouTube Data API v3", then APIs & Services → Credentials → Create credentials → API key, restricted to that API) and set OPENOUTLIER_YOUTUBE_API_KEY for the MCP server (README → "YouTube Data API key"). Without it, use refresh_reel / download_reel / collect_profile for exact stats.';
+const EXT_QUOTA_META = 'youtube_api_quota_ext';
+export const SETUP_HINT = 'Optional: create an API key in Google Cloud (enable "YouTube Data API v3", then APIs & Services → Credentials → Create credentials → API key, restricted to that API), then press "Copy key to bridge" in the OpenOutlier popup, or set OPENOUTLIER_YOUTUBE_API_KEY for the MCP server (README → "YouTube Data API key"). Without it, use refresh_reel / download_reel / collect_profile for exact stats.';
 
-export function apiKey() {
-  const k = setting('YOUTUBE_API_KEY');
-  return A.isKey(k) ? k.trim() : null;
+/** The key file the extension's "Copy key to bridge" writes (only the user can read it). */
+export function keyFile(home = HOME) { return join(home, 'youtube-api-key'); }
+
+/** Where the key comes from: 'env' (OPENOUTLIER_YOUTUBE_API_KEY wins), 'file', or null. */
+export function apiKeyInfo(home = HOME) {
+  const e = setting('YOUTUBE_API_KEY');
+  if (A.isKey(e)) return { key: e.trim(), source: 'env' };
+  try {
+    const f = keyFile(home);
+    const st = statSync(f);
+    if (st.mode & 0o077) { try { chmodSync(f, 0o600); } catch { /* ignore */ } }
+    const k = readFileSync(f, 'utf8').trim();
+    if (A.isKey(k)) return { key: k, source: 'file' };
+  } catch { /* no file */ }
+  return { key: null, source: null };
+}
+export function apiKey(home = HOME) { return apiKeyInfo(home).key; }
+
+/** Save the key for the bridge (mode 600, written atomically). Returns false for something that isn't a key. */
+export function saveApiKey(key, home = HOME) {
+  if (!A.isKey(key)) return false;
+  mkdirSync(home, { recursive: true });
+  const f = keyFile(home);
+  const tmp = f + '.' + process.pid + '.tmp';
+  writeFileSync(tmp, key.trim() + '\n', { mode: 0o600 });
+  chmodSync(tmp, 0o600);
+  renameSync(tmp, f);
+  return true;
+}
+export function removeApiKey(home = HOME) {
+  try { unlinkSync(keyFile(home)); return true; } catch { return false; }
 }
 
-export function quota(now = Date.now()) {
-  return { used_today: A.usedToday(store().getMeta(QUOTA_META), now), daily_limit: A.DAILY_QUOTA, resets: 'midnight Pacific time' };
+/** The extension's own count for today ({ day, units } from rs:yt-api-quota), sent with its settings. */
+export function setExtensionQuota(state) {
+  if (!state || typeof state !== 'object' || typeof state.day !== 'string' || !Number.isFinite(state.units)) return;
+  store().setMeta(EXT_QUOTA_META, { day: state.day.slice(0, 10), units: Math.max(0, Math.round(state.units)) });
 }
+export function bridgeQuotaState() { return store().getMeta(QUOTA_META); }
 
-function spend(n) {
-  const st = store();
-  st.setMeta(QUOTA_META, A.addUnits(st.getMeta(QUOTA_META), n));
+/** Units used today in a given Store: the bridge's (and the MCP tools') plus the extension's, which share the key's project. */
+export function quotaOf(st, now = Date.now()) {
+  const bridge = A.usedToday(st.getMeta(QUOTA_META), now);
+  const extension = A.usedToday(st.getMeta(EXT_QUOTA_META), now);
+  return { used_today: bridge + extension, bridge, extension, daily_limit: A.DAILY_QUOTA, day: A.quotaDay(now), resets: 'midnight Pacific time' };
 }
+export function spendOn(st, n, now = Date.now()) {
+  st.setMeta(QUOTA_META, A.addUnits(st.getMeta(QUOTA_META), n, now));
+}
+export function quota(now = Date.now()) { return quotaOf(store(), now); }
+export function spend(n, now = Date.now()) { spendOn(store(), n, now); }
 
 /** Save API records under `account` (merge rules from src/youtube.js). → { added, updated } */
 export function saveRecords(account, records) {

@@ -18,6 +18,12 @@
 //   tab, each a fresh page load so YouTube inlines that tab's first page).
 //   refresh_youtube opens one watch / Shorts page in a muted background tab and
 //   waits for its exact stats, like "Get exact stats" (youtube-exact.js).
+// • Sends the feature switches (src/features.js) and today's Data API unit count
+//   to POST /settings; the answer (does the bridge have an API key, is My YouTube
+//   channel connected, the bridge's own unit count) goes into rs:bridge for the
+//   Features tab and the popup. "Copy key to bridge" (reelscope:bridge-key) sends
+//   the key from rs:settings to the bridge, which stores it in
+//   ~/.openoutlier/youtube-api-key for background jobs.
 // Turn it off in the popup ("Connect to AI agents").
 'use strict';
 
@@ -132,6 +138,7 @@
       } else {
         await setState({ port: found.port, connected: true, lastError: null, lastBackupAt: found.health.lastBackupAt || null, lastBackupOk: found.health.lastBackupOk });
       }
+      await pushSettings(found);
       await pollCommands(found.port);
       await expireStale();
     } catch (e) {
@@ -169,8 +176,66 @@
     }
   }
 
+  // ---- feature switches + quota → the bridge ---------------------------------------
+  var QUOTA_KEY = 'rs:yt-api-quota';
+  var lastSettings = { body: '', at: 0 };
+  var SETTINGS_EVERY = 5 * 60 * 1000; // also refreshes what the bridge reports (key, OAuth)
+
+  async function pushSettings(found, force) {
+    if ((found.health.features || []).indexOf('settings') === -1) return; // an older bridge
+    var F = self.OpenOutlierFeatures;
+    var r = await chrome.storage.local.get([SETTINGS_KEY, QUOTA_KEY]);
+    var s = r[SETTINGS_KEY] || {};
+    var body = JSON.stringify({ features: F ? F.sanitize(s.features) : {}, quota: r[QUOTA_KEY] || null });
+    if (!force && body === lastSettings.body && Date.now() - lastSettings.at < SETTINGS_EVERY) return;
+    var res = await post(found.port, '/settings', JSON.parse(body));
+    lastSettings = { body: body, at: Date.now() };
+    await saveSettingsAnswer(res);
+  }
+
+  function saveSettingsAnswer(res) {
+    return setState({
+      bridgeApiKey: !!(res.apiKey && res.apiKey.configured),
+      bridgeApiKeySource: res.apiKey && res.apiKey.source || null,
+      oauthConnected: !!(res.oauth && res.oauth.connected),
+      bridgeQuota: res.bridgeQuota || null,
+      settingsAt: Date.now()
+    });
+  }
+
+  var settingsTimer = null;
+  function pushSettingsSoon() {
+    clearTimeout(settingsTimer);
+    settingsTimer = setTimeout(async function () {
+      if (!(await enabled())) return;
+      var state = await getState();
+      if (!state.connected || !state.port) return;
+      var h = await health(state.port);
+      if (h) pushSettings({ port: state.port, health: h }, true).catch(function () {});
+    }, 1500);
+  }
+
+  /** "Copy key to bridge" / "Remove from bridge". The key never leaves this worker except to the paired bridge. */
+  async function bridgeKey(msg) {
+    var found = await findServer(await getState());
+    if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE_SETTINGS };
+    if ((found.health.features || []).indexOf('settings') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE_SETTINGS };
+    var body;
+    if (msg.action === 'remove') body = { remove: true };
+    else {
+      var r = await chrome.storage.local.get(SETTINGS_KEY);
+      var key = r[SETTINGS_KEY] && r[SETTINGS_KEY].youtubeApiKey;
+      if (typeof key !== 'string' || !/^[A-Za-z0-9_-]{30,60}$/.test(key.trim())) return { ok: false, error: 'No YouTube Data API key is saved in this browser. Add one in the popup first.' };
+      body = { key: key.trim() };
+    }
+    var res = await post(found.port, '/settings/youtube-api-key', body);
+    await saveSettingsAnswer(res);
+    return { ok: true, configured: !!(res.apiKey && res.apiKey.configured), source: res.apiKey && res.apiKey.source || null };
+  }
+
   chrome.storage.onChanged.addListener(function (changes, area) {
     if (area !== 'local') return;
+    if (changes[QUOTA_KEY]) pushSettingsSoon();
     var users = Object.keys(changes).filter(function (k) { return k.indexOf(KEY_PREFIX) === 0; }).map(function (k) { return k.slice(KEY_PREFIX.length); });
     var org = !!changes[ORG_KEY];
     var watches = !!changes[WATCHES_KEY];
@@ -384,6 +449,11 @@
   var OLD_BRIDGE_ANALYTICS = 'The OpenOutlier bridge that is running is older than this extension and has no YouTube Analytics. ' +
     'Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge (or restart Claude if it runs the bridge).';
 
+  var NO_BRIDGE_SETTINGS = 'The OpenOutlier bridge on your Mac isn\'t running, so there is nowhere to copy the key to. ' +
+    'Start it once with: sh mcp/launchd/install.sh (in the OpenOutlier folder; it then stays on). See the README, "Connect AI agents".';
+  var OLD_BRIDGE_SETTINGS = 'The OpenOutlier bridge that is running is older than this extension and can\'t take feature settings or an API key. ' +
+    'Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge (or restart Claude if it runs the bridge).';
+
   async function ytAnalytics(msg) {
     var method = msg.method === 'POST' ? 'POST' : 'GET';
     var path = String(msg.path || '');
@@ -406,7 +476,8 @@
 
   chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (!msg || sender.id !== chrome.runtime.id) return;
-    var fn = msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics : null;
+    var fn = msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
+      : msg.type === 'reelscope:bridge-key' ? bridgeKey : null;
     if (!fn) return;
     fn(msg).then(sendResponse, function (e) {
       sendResponse({ ok: false, error: /Failed to fetch|NetworkError/i.test(String(e && e.message)) ? NO_BRIDGE : String(e && e.message || e) });

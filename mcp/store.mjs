@@ -57,6 +57,90 @@ CREATE TABLE IF NOT EXISTS snapshots (
 CREATE INDEX IF NOT EXISTS snapshots_by_code ON snapshots (code, seen_at);
 `;
 
+// YouTube niche tracking and own-channel history (docs/youtube-niche-plan.md 2.2, 3.1).
+// Every statement is IF NOT EXISTS, so running it again is harmless; MIGRATIONS
+// below records which steps ran (meta schema_version) for later ALTERs.
+const SCHEMA_YOUTUBE_NICHE = `
+CREATE TABLE IF NOT EXISTS tracked_channels (
+  channel_id     TEXT PRIMARY KEY,      -- UC…
+  account_id     TEXT,                  -- yt/handle (or yt/UC…) in the library, when saved there
+  niche          TEXT,                  -- folder / tag name marked as a tracked niche
+  mine           INTEGER NOT NULL DEFAULT 0,
+  added_at       INTEGER NOT NULL,
+  rss_checked_at INTEGER,
+  active         INTEGER NOT NULL DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS tracked_channels_by_niche ON tracked_channels (niche, active);
+CREATE TABLE IF NOT EXISTS video_stats (
+  video_id TEXT NOT NULL,
+  ts       INTEGER NOT NULL,            -- ms
+  views INTEGER, likes INTEGER, comments INTEGER,
+  source   TEXT NOT NULL,               -- api | rss | page
+  PRIMARY KEY (video_id, ts)
+);
+CREATE INDEX IF NOT EXISTS video_stats_by_source ON video_stats (source, ts);
+CREATE TABLE IF NOT EXISTS video_meta_log (
+  video_id   TEXT NOT NULL,
+  ts         INTEGER NOT NULL,
+  title      TEXT,
+  thumb_hash TEXT,                      -- perceptual hash: the URL can stay while the image changes
+  duration   INTEGER,
+  PRIMARY KEY (video_id, ts)
+);
+CREATE TABLE IF NOT EXISTS channel_stats (
+  channel_id TEXT NOT NULL,
+  day        TEXT NOT NULL,             -- YYYY-MM-DD
+  subs INTEGER, views INTEGER, videos INTEGER,
+  source     TEXT NOT NULL DEFAULT 'api',
+  PRIMARY KEY (channel_id, day)
+);
+CREATE TABLE IF NOT EXISTS tracker_jobs (
+  id           TEXT PRIMARY KEY,        -- 'heartbeat', 'video:<id>', 'channel:<UC…>' …
+  kind         TEXT NOT NULL,
+  video_id     TEXT,
+  channel_id   TEXT,
+  published_at INTEGER,
+  next_at      INTEGER NOT NULL,
+  tier         TEXT,
+  last_run_at  INTEGER,
+  last_ok      INTEGER,
+  last_error   TEXT,
+  runs         INTEGER NOT NULL DEFAULT 0,
+  fails        INTEGER NOT NULL DEFAULT 0,
+  data         TEXT                     -- JSON, job specific
+);
+CREATE INDEX IF NOT EXISTS tracker_jobs_due ON tracker_jobs (next_at);
+CREATE INDEX IF NOT EXISTS tracker_jobs_by_video ON tracker_jobs (video_id);
+CREATE TABLE IF NOT EXISTS own_daily (
+  channel_id TEXT NOT NULL,
+  day        TEXT NOT NULL,
+  metric     TEXT NOT NULL,             -- JSON
+  updated_at INTEGER,
+  PRIMARY KEY (channel_id, day)
+);
+CREATE TABLE IF NOT EXISTS own_video_daily (
+  video_id   TEXT NOT NULL,
+  day        TEXT NOT NULL,
+  metric     TEXT NOT NULL,             -- JSON
+  updated_at INTEGER,
+  PRIMARY KEY (video_id, day)
+);
+CREATE TABLE IF NOT EXISTS own_breakdowns (
+  channel_id TEXT NOT NULL,
+  week       TEXT NOT NULL,             -- YYYY-MM-DD of the week's Monday
+  kind       TEXT NOT NULL,             -- traffic | search_terms | countries | age_gender | devices | subscribed | playback
+  data       TEXT NOT NULL,             -- JSON
+  updated_at INTEGER,
+  PRIMARY KEY (channel_id, week, kind)
+);
+`;
+
+/** Ordered, each run once (meta schema_version); `up` must be safe to run again anyway. */
+export const MIGRATIONS = [
+  { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) }
+];
+export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
+
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
 
 export class Store {
@@ -69,12 +153,90 @@ export class Store {
     if (fresh) { try { chmodSync(this.file, 0o600); } catch { /* ignore */ } }
     this.db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000; PRAGMA synchronous = NORMAL; PRAGMA foreign_keys = OFF;');
     this.db.exec(SCHEMA);
+    this.migrate();
     if (this.getMeta('syncId') == null) this.setMeta('syncId', randomUUID());
     this.cache = { revision: -1, lib: null };
     this.migrateJson();
   }
 
   close() { try { this.db.close(); } catch { /* ignore */ } }
+
+  /**
+   * Bring the schema up to date. Each step runs in its own transaction and is
+   * recorded in meta schema_version; the tables it creates are IF NOT EXISTS, so a
+   * database that already has them (or a second process racing this one) is fine.
+   * Existing tables and rows are never dropped.
+   */
+  migrate() {
+    // The tables themselves are cheap to (re)declare; do it every time so a half-copied
+    // database or a downgrade-then-upgrade still ends up complete.
+    this.db.exec(SCHEMA_YOUTUBE_NICHE);
+    let v = Number(this.getMeta('schema_version', 0)) || 0;
+    for (const m of MIGRATIONS) {
+      if (m.version <= v) continue;
+      this.db.exec('BEGIN IMMEDIATE');
+      try {
+        if ((Number(this.getMeta('schema_version', 0)) || 0) < m.version) {
+          m.up(this);
+          this.setMeta('schema_version', m.version);
+        }
+        this.db.exec('COMMIT');
+      } catch (e) {
+        this.db.exec('ROLLBACK');
+        throw e;
+      }
+      v = m.version;
+    }
+    return v;
+  }
+
+  /** Add a column when it is missing (for later migrations). */
+  addColumn(table, column, decl) {
+    const cols = this.db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+    if (!cols.includes(column)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`);
+  }
+
+  // ---- YouTube niche tracking (mcp/tracker.mjs) ---------------------------------
+
+  /** Record measurements: [{ video_id, ts, views, likes, comments, source }]. Same video + ts twice: the first wins. */
+  addVideoStats(rows) {
+    const ins = this.db.prepare('INSERT OR IGNORE INTO video_stats (video_id, ts, views, likes, comments, source) VALUES (?, ?, ?, ?, ?, ?)');
+    let n = 0;
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      for (const r of rows || []) {
+        if (!r || !r.video_id || !['api', 'rss', 'page'].includes(r.source)) continue;
+        n += Number(ins.run(String(r.video_id), num(r.ts) || Date.now(), num(r.views), num(r.likes), num(r.comments), r.source).changes);
+      }
+      this.db.exec('COMMIT');
+    } catch (e) {
+      this.db.exec('ROLLBACK');
+      throw e;
+    }
+    return n;
+  }
+
+  /** Measurements of one video, oldest first. */
+  videoStats(videoId) {
+    return this.db.prepare('SELECT ts, views, likes, comments, source FROM video_stats WHERE video_id = ? ORDER BY ts').all(String(videoId));
+  }
+
+  /**
+   * The api-retention-30d setting (off by default): delete Data API measurements of
+   * other people's videos and channels older than `days`. RSS and page measurements
+   * stay, and so does everything about channels marked mine (their videos are found
+   * through tracker_jobs and through the library posts of the account they map to).
+   */
+  purgeApiData(now = Date.now(), days = 30) {
+    const before = now - days * 864e5;
+    const beforeDay = new Date(before).toISOString().slice(0, 10);
+    const videos = this.db.prepare(`DELETE FROM video_stats WHERE source = 'api' AND ts < ?
+      AND video_id NOT IN (SELECT j.video_id FROM tracker_jobs j JOIN tracked_channels c ON c.channel_id = j.channel_id WHERE c.mine = 1 AND j.video_id IS NOT NULL)
+      AND video_id NOT IN (SELECT p.code FROM posts p JOIN tracked_channels c ON c.account_id = p.account_id WHERE c.mine = 1)`).run(before).changes;
+    const channels = this.db.prepare(`DELETE FROM channel_stats WHERE source = 'api' AND day < ?
+      AND channel_id NOT IN (SELECT channel_id FROM tracked_channels WHERE mine = 1)`).run(beforeDay).changes;
+    return { video_stats: Number(videos), channel_stats: Number(channels) };
+  }
 
   getMeta(key, fallback = null) {
     const row = this.db.prepare('SELECT value FROM meta WHERE key = ?').get(key);
@@ -261,7 +423,10 @@ export class Store {
     return {
       accounts: one('SELECT COUNT(*) AS n FROM accounts'),
       posts: one('SELECT COUNT(*) AS n FROM posts'),
-      snapshots: one('SELECT COUNT(*) AS n FROM snapshots')
+      snapshots: one('SELECT COUNT(*) AS n FROM snapshots'),
+      tracked_channels: one('SELECT COUNT(*) AS n FROM tracked_channels'),
+      video_stats: one('SELECT COUNT(*) AS n FROM video_stats'),
+      schema_version: Number(this.getMeta('schema_version', 0)) || 0
     };
   }
 

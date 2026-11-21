@@ -225,6 +225,8 @@
    *   loadImage(img, url) → optional custom image loader (dashboard cache)
    *   onExactStats(posts) / onExactCancel() → YouTube "Get exact stats" (posts: the scored list of the open format);
    *     progress comes back in update({ exact: { running, label } })
+   *   features: true → a Features tab (src/features-view.js); update({ features: { flags, env, message } })
+   *     feeds it, onFeatureToggle(id, on) / onFeatureFix(code, id) / onFeatureReset() act on it
    *   onApiStats('exact' | 'uploads') → YouTube with the user's Data API key; shown only while
    *     update({ api: { configured, used, limit, running, label } }) has an api object
    * }
@@ -293,7 +295,10 @@
 
     var tabs = {};
     var tabBar = h('div', { class: 'tabs', role: 'tablist' });
-    [['reels', opts.listTabLabel || 'Reels'], ['analytics', 'Analytics'], ['export', 'Export']].forEach(function (t) {
+    var tabList = [['reels', opts.listTabLabel || 'Reels'], ['analytics', 'Analytics'], ['export', 'Export']];
+    // YouTube: every switchable feature (src/features.js), in the page's language.
+    if (opts.features && root.OpenOutlierFeaturesView) tabList.push(['features', root.OpenOutlierFeatures.uiLang() === 'tr' ? 'Özellikler' : 'Features']);
+    tabList.forEach(function (t) {
       tabs[t[0]] = h('button', { class: 'tab', type: 'button', role: 'tab', onclick: function () {
         if (ui.tab !== t[0]) body.scrollTop = 0;
         ui.tab = t[0];
@@ -446,10 +451,18 @@
       // Re-rendering replaces the body, so keep scroll position and focus.
       var scrollTop = body.scrollTop;
       var active = shadow.activeElement;
-      var focusKey = active && body.contains(active) ? active.getAttribute('aria-label') : null;
+      var focusKey = active && body.contains(active) ? (ui.tab === 'features' && active.closest('[data-feature]') ? active.closest('[data-feature]').getAttribute('data-feature') : active.getAttribute('aria-label')) : null;
       var caret = focusKey && active.selectionStart != null ? active.selectionStart : null;
 
       body.textContent = '';
+      if (ui.tab === 'features' && tabs.features) {
+        // Not tied to the collected posts: works on any YouTube page, even before anything is saved.
+        detailEl.hidden = true;
+        body.appendChild(renderFeatures());
+        body.scrollTop = scrollTop;
+        if (focusKey) { var f = body.querySelector('[data-feature="' + focusKey.replace(/"/g, '') + '"] input'); if (f) f.focus(); }
+        return;
+      }
       if (state.notice) body.appendChild(h('p', { class: 'note', role: 'status', text: state.notice }));
       if (!total) { body.appendChild(emptyState()); detailEl.hidden = true; return; }
       var data = filtered();
@@ -568,6 +581,18 @@
           'Show ' + Math.min(PAGE, list.length - ui.shown) + ' more'));
       }
       return wrap;
+    }
+
+    /** The Features tab: state.features = { flags, env, message } from the content script. */
+    function renderFeatures() {
+      var fs = state.features || {};
+      return root.OpenOutlierFeaturesView.render({
+        h: h, compact: true, lang: root.OpenOutlierFeatures.uiLang(),
+        flags: fs.flags, env: fs.env, message: fs.message,
+        onToggle: function (id, on) { opts.onFeatureToggle(id, on); },
+        onFix: opts.onFeatureFix ? function (code, id) { opts.onFeatureFix(code, id); } : null,
+        onReset: opts.onFeatureReset || null
+      });
     }
 
     /** YouTube: "Get exact stats" for the top outliers (opens their pages one by one in a background tab). */

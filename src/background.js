@@ -2,7 +2,7 @@
 // scripts can't download cross-origin CDN files themselves); the MCP bridge and
 // the Reddit Mentions checker live in their own files (imported below).
 'use strict';
-importScripts('metrics.js', 'youtube.js', 'agent-bridge.js', 'mentions.js', 'mentions-bg.js', 'youtube-exact.js', 'youtube-api.js', 'youtube-api-bg.js'); // fileBaseName + local MCP bridge + Reddit mentions + YouTube "Get exact stats" + the optional Data API key
+importScripts('metrics.js', 'youtube.js', 'features.js', 'agent-bridge.js', 'mentions.js', 'mentions-bg.js', 'youtube-exact.js', 'youtube-api.js', 'youtube-api-bg.js'); // fileBaseName + local MCP bridge + Reddit mentions + YouTube "Get exact stats" + the optional Data API key
 
 var ALLOWED_HOST = /(^|\.)(cdninstagram\.com|fbcdn\.net)$/i;
 var TIKTOK_HOST = /(^|\.)(tiktokcdn(-[a-z]+)?\.com|tiktok\.com|tiktokv\.com|ibyteimg\.com|ibytedtos\.com|byteoversea\.com|muscdn\.com)$/i;

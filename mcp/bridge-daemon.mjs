@@ -5,13 +5,22 @@
 // the port, this daemon waits and takes over when it goes away.
 import { startBridge } from './bridge.mjs';
 import { store, DB_FILE } from './library.mjs';
+import { Tracker } from './tracker.mjs';
 
 const log = (...a) => console.error(new Date().toISOString(), '[openoutlier-bridge]', ...a);
 
 store(); // open (and migrate) the database right away
 log('database', DB_FILE, JSON.stringify(store().stats()));
 
+// Background jobs (mcp/tracker.mjs) run in whichever process holds the bridge port.
+let tracker = null;
+function startTracker() {
+  if (tracker) return;
+  tracker = new Tracker({ store: store(), log: (...a) => log('[tracker]', ...a) }).start();
+}
+
 let bridge = await startBridge();
+if (bridge.server) startTracker();
 setInterval(async () => {
   if (bridge.server) return;
   try {
@@ -23,11 +32,13 @@ setInterval(async () => {
     // An older MCP server may have written library.json while it held the port.
     store().migrateJson();
     log('took over the bridge on port', bridge.port, JSON.stringify(store().stats()));
+    startTracker();
   }
 }, 30000);
 
 function stop(sig) {
   log('stopping on', sig);
+  try { tracker?.stop(); } catch { /* ignore */ }
   try { bridge.server?.close(); } catch { /* ignore */ }
   try { store().close(); } catch { /* ignore */ }
   process.exit(0);

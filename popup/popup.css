@@ -88,3 +88,8 @@ footer { display: flex; justify-content: space-between; align-items: center; pad
 .keyrow input { flex: 1; min-width: 0; height: 30px; padding: 0 8px; border: 1.5px solid var(--line-2); border-radius: 4px; background: var(--card); }
 .btn-small { width: auto; height: 30px; }
 .small { font-size: 12px; }
+
+.bridgekey { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.bridgekey > p { margin: 0 0 6px; }
+.keyactions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.btn .aside-muted { margin-left: auto; font-size: 11px; font-weight: 500; color: var(--muted); }
