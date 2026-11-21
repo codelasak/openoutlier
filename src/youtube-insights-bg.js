@@ -31,6 +31,8 @@
   var CH_TTL = WEEK;
   var CH_MISS_TTL = I.DAY;   // a channel YouTube didn't return: ask again tomorrow
   var MON_TTL = WEEK;
+  // "Couldn't tell" (consent wall, network, a signed-in page without ad config) is retried soon.
+  var MON_UNKNOWN_TTL = 6 * 3600000;
   var RYD_TTL = I.DAY;
   var MAX_CH = 4000;
   var MAX_MON = 3000;
@@ -150,9 +152,44 @@
       if (res.state === 'unknown' && res.reason === 'consent') {
         var r2 = await fetch(url, { credentials: 'include', cache: 'no-store' });
         res = I.monetizationFromHtml(await r2.text());
+        // With the user's cookies a YouTube Premium session gets no ad config at all: no ad marker
+        // there doesn't mean "not monetized", so only a positive answer counts.
+        if (res.state === 'no') res = { state: 'unknown', reason: 'signed-in' };
       }
     } catch (e) { res = { state: 'unknown', reason: 'network' }; }
     return res.state;
+  }
+
+  /** A cached verdict, with the short lifetime for "unknown". */
+  function monGet(cache, key, now) {
+    var e = cache && cache[key];
+    return I.cacheGet(cache, key, e && e.v && e.v.state === 'unknown' ? MON_UNKNOWN_TTL : MON_TTL, now);
+  }
+  // Every entry is stored with the long TTL (cachePut prunes the others by it); monGet ages "unknown" out early.
+  function monPut(key, value) { return update(MON_KEY, function (m) { return I.cachePut(m, key, value, MON_TTL, Date.now(), MAX_MON); }); }
+
+  async function runJob(job) {
+    var on = await flagOn(job.kind === 'channel' ? 'channel-monetization' : 'video-monetization');
+    if (!on) return;
+    var cache = await readMap(MON_KEY);
+    var states = [];
+    for (var i = 0; i < job.ids.length; i++) {
+      var vid = job.ids[i];
+      var hit = monGet(cache, 'v:' + vid, Date.now());
+      var st = hit ? hit.state : await checkVideo(vid);
+      if (!hit && st !== 'unknown') cache = await monPut('v:' + vid, { state: st });
+      states.push(st);
+      // A channel is monetized as soon as one sampled video shows ads: no need to fetch the rest.
+      if (job.kind === 'channel' && st === 'yes') break;
+    }
+    if (job.kind === 'channel') {
+      var verdict = I.channelVerdict(states);
+      verdict.sampled = job.ids.length;
+      await monPut(job.key, verdict);
+    } else if (states[0] === 'unknown') {
+      // Remember "couldn't check" for a few hours so a reload doesn't fetch again at once.
+      await monPut(job.key, { state: 'unknown' });
+    }
   }
 
   async function runQueue() {
@@ -161,28 +198,8 @@
     try {
       while (queue.length) {
         var job = queue.shift();
-        var on = await flagOn(job.kind === 'channel' ? 'channel-monetization' : 'video-monetization');
-        if (!on) { delete queued[job.key]; continue; }
-        var cache = await readMap(MON_KEY);
-        var states = [];
-        for (var i = 0; i < job.ids.length; i++) {
-          var vid = job.ids[i];
-          var hit = I.cacheGet(cache, 'v:' + vid, MON_TTL, Date.now());
-          var st = hit ? hit.state : await checkVideo(vid);
-          if (!hit && st !== 'unknown') cache = await update(MON_KEY, function (m) { return I.cachePut(m, 'v:' + vid, { state: st }, MON_TTL, Date.now(), MAX_MON); });
-          states.push(st);
-          // A channel is monetized as soon as one sampled video shows ads: no need to fetch the rest.
-          if (job.kind === 'channel' && st === 'yes') break;
-        }
-        if (job.kind === 'channel') {
-          var verdict = I.channelVerdict(states);
-          verdict.sampled = job.ids.length;
-          await update(MON_KEY, function (m) { return I.cachePut(m, job.key, verdict, verdict.state === 'unknown' ? I.DAY : MON_TTL, Date.now(), MAX_MON); });
-        } else if (states[0] === 'unknown') {
-          // Remember "couldn't check" for a while so a reload doesn't fetch again at once.
-          await update(MON_KEY, function (m) { return I.cachePut(m, job.key, { state: 'unknown' }, MON_TTL, Date.now(), MAX_MON); });
-        }
-        delete queued[job.key];
+        // One failing job (storage full, a thrown fetch) must not leave its key "checking" or stop the queue.
+        try { await runJob(job); } catch (e) { /* the badge shows unknown; the next page view asks again */ } finally { delete queued[job.key]; }
       }
     } finally { running = false; }
   }
@@ -200,7 +217,7 @@
       if (!/^[A-Za-z0-9_-]{11}$/.test(String(msg.id || ''))) return { ok: false, error: 'bad id' };
       var k = 'v:' + msg.id;
       var e = cache[k];
-      var v = I.cacheGet(cache, k, MON_TTL, now);
+      var v = monGet(cache, k, now);
       if (v) return { ok: true, state: v.state, at: e.at };
       if (!queued[k]) { queued[k] = true; queue.push({ kind: 'video', key: k, ids: [msg.id] }); runQueue(); }
       return { ok: true, state: 'checking', ahead: queue.length };
@@ -208,7 +225,7 @@
     if (!/^UC[A-Za-z0-9_-]{22}$/.test(String(msg.channel || ''))) return { ok: false, error: 'bad channel' };
     var ck = 'c:' + msg.channel;
     var ce = cache[ck];
-    var cv = I.cacheGet(cache, ck, cache[ck] && cache[ck].v && cache[ck].v.state === 'unknown' ? I.DAY : MON_TTL, now);
+    var cv = monGet(cache, ck, now);
     if (cv) return Object.assign({ ok: true, at: ce.at }, cv);
     var ids = (Array.isArray(msg.ids) ? msg.ids : []).filter(function (x) { return /^[A-Za-z0-9_-]{11}$/.test(String(x)); }).slice(0, 5);
     if (!ids.length) return { ok: true, state: msg.shortsOnly ? 'shorts-only' : 'unknown' };

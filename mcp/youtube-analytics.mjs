@@ -35,6 +35,10 @@ export const CONFIG_FILE = join(HOME, 'youtube-oauth.json');
 export const LEGACY_TOKEN_FILE = join(HOME, 'youtube-token.json');
 export const TOKEN_FILE = LEGACY_TOKEN_FILE; // (old name, kept for callers that only check it)
 const TOKEN_RE = /^youtube-token-(UC[A-Za-z0-9_-]{22})\.json$/;
+// A sign-in whose channel lookup failed waits in its own file (never on top of another channel's
+// not-yet-moved youtube-token.json) until the next successful lookup adopts it.
+const PENDING_TOKEN_RE = /^youtube-token-pending-[a-f0-9]{8,32}\.json$/;
+const pendingTokenFile = () => join(HOME, `youtube-token-pending-${randomBytes(6).toString('hex')}.json`);
 const CHANNEL_ID_RE = /^UC[A-Za-z0-9_-]{22}$/;
 /** One token file per connected channel (phase 2: Hands on Excel + a second channel). */
 export const tokenFile = (channelId) => join(HOME, `youtube-token-${channelId}.json`);
@@ -117,8 +121,14 @@ export async function listTokens() {
     const t = await readJson(join(HOME, n));
     if (t && t.refresh_token) out.push({ ...t, channel: { ...(t.channel || {}), channel_id: m[1] } });
   }
+  // Tokens whose channel isn't known yet: the old single file, and sign-ins whose lookup failed.
+  for (const n of names) {
+    if (!PENDING_TOKEN_RE.test(n)) continue;
+    const t = await readJson(join(HOME, n));
+    if (t && t.refresh_token) out.push({ ...t, legacy: true, file: join(HOME, n) });
+  }
   const legacy = await readJson(LEGACY_TOKEN_FILE);
-  if (legacy && legacy.refresh_token) out.push({ ...legacy, legacy: true });
+  if (legacy && legacy.refresh_token) out.push({ ...legacy, legacy: true, file: LEGACY_TOKEN_FILE });
   out.sort((a, b) => (Date.parse(a.connected_at || 0) || 0) - (Date.parse(b.connected_at || 0) || 0) || String(a.channel && a.channel.channel_id).localeCompare(String(b.channel && b.channel.channel_id)));
   return out;
 }
@@ -144,10 +154,13 @@ export function pickToken(tokens, ref) {
 export async function readToken(channel) {
   return pickToken(await listTokens(), channel);
 }
+/** Save a token: its channel's file, else the unidentified file it came from, else a new pending file. → the path */
 async function writeToken(t) {
-  const { legacy, ...clean } = t;
+  const { legacy, file, ...clean } = t;
   const id = clean.channel && clean.channel.channel_id;
-  await writeFile0600(CHANNEL_ID_RE.test(String(id || '')) ? tokenFile(id) : LEGACY_TOKEN_FILE, clean);
+  const target = CHANNEL_ID_RE.test(String(id || '')) ? tokenFile(id) : file || pendingTokenFile();
+  await writeFile0600(target, clean);
+  return target;
 }
 /** Whether a token carries the revenue scope (sign-ins from before phase 2 don't). */
 export const hasMonetary = (t) => String(t && t.scope || '').split(/\s+/).includes(MONETARY_SCOPE);
@@ -227,7 +240,7 @@ export async function finishConnect(params, { fetch: doFetch = globalThis.fetch,
   const missing = SCOPES.filter((s) => !granted.includes(s));
   const token = { refresh_token: tok.refresh_token, access_token: tok.access_token, expires_at: now + (tok.expires_in || 3600) * 1000, scope: tok.scope || SCOPES.join(' '), connected_at: new Date(now).toISOString() };
   let channel = null;
-  try { channel = await myChannel({ fetch: doFetch, now, accessToken: tok.access_token }); } catch { /* kept in the old single file until the channel is known */ }
+  try { channel = await myChannel({ fetch: doFetch, now, accessToken: tok.access_token }); } catch { /* saved as youtube-token-pending-*.json until a lookup succeeds (adoptLegacyToken) */ }
   let added = true;
   if (channel) {
     const prev = await readJson(tokenFile(channel.channel_id));
@@ -247,20 +260,32 @@ export async function finishConnect(params, { fetch: doFetch = globalThis.fetch,
   };
 }
 
-/** A token whose channel wasn't known when it was saved: look it up and move it to its own file. */
+/**
+ * Tokens whose channel wasn't known when they were saved (the old youtube-token.json, and
+ * youtube-token-pending-*.json from sign-ins whose lookup failed): look each up and move it to its
+ * channel's file, unless that channel already has a newer sign-in. → true when one moved
+ */
 export async function adoptLegacyToken(opts = {}) {
   const t = await readJson(LEGACY_TOKEN_FILE);
-  if (!t || !t.refresh_token || (t.channel && t.channel.channel_id)) return migrateLegacyToken();
-  const channel = await myChannel({ ...opts, channel: undefined, legacy: true });
-  const cur = await readJson(LEGACY_TOKEN_FILE);
-  await writeToken({ ...cur, channel });
-  await fs.rm(LEGACY_TOKEN_FILE, { force: true });
-  return true;
+  if (t && t.refresh_token && t.channel && t.channel.channel_id) await migrateLegacyToken();
+  const waiting = (await listTokens()).filter((x) => x.legacy && x.file && !(x.channel && CHANNEL_ID_RE.test(String(x.channel.channel_id || ''))));
+  let moved = false;
+  for (const w of waiting) {
+    const channel = await myChannel({ ...opts, channel: undefined, file: w.file });
+    const cur = await readJson(w.file);
+    if (!cur) continue;
+    const have = await readJson(tokenFile(channel.channel_id));
+    if (!have || !have.refresh_token || (Date.parse(have.connected_at || 0) || 0) <= (Date.parse(cur.connected_at || 0) || 0)) await writeToken({ ...cur, channel });
+    await fs.rm(w.file, { force: true });
+    moved = true;
+  }
+  return moved;
 }
 
 /** A valid access token for one channel (refreshed when it's about to expire). */
-export async function accessToken({ fetch: doFetch = globalThis.fetch, now = Date.now(), channel, legacy } = {}) {
-  const t = legacy ? { ...(await readJson(LEGACY_TOKEN_FILE)), legacy: true } : await readToken(channel);
+export async function accessToken({ fetch: doFetch = globalThis.fetch, now = Date.now(), channel, legacy, file } = {}) {
+  const from = file || (legacy ? LEGACY_TOKEN_FILE : null);
+  const t = from ? { ...(await readJson(from)), legacy: true, file: from } : await readToken(channel);
   if (!t || !t.refresh_token) throw Object.assign(new Error('Your YouTube channel is not connected.'), { code: 'not_connected', hint: loadClient() ? 'Connect it from the Library (My YouTube channel) or with connect_youtube_channel.' : SETUP_HINT });
   if (t.access_token && t.expires_at > now + 60000) return t.access_token;
   const client = loadClient();
@@ -287,7 +312,7 @@ export async function disconnect({ fetch: doFetch = globalThis.fetch, channel } 
   if (!t) return { ok: true, connected: false };
   if (t.refresh_token) await doFetch(`${REVOKE_URL}?token=${encodeURIComponent(t.refresh_token)}`, { method: 'POST' }).catch(() => {});
   const id = t.channel && t.channel.channel_id;
-  await fs.rm(t.legacy || !id ? LEGACY_TOKEN_FILE : tokenFile(id), { force: true });
+  await fs.rm(t.file || (id ? tokenFile(id) : LEGACY_TOKEN_FILE), { force: true });
   const left = await listTokens();
   return { ok: true, disconnected: id || null, connected: left.length > 0, channels: left.length };
 }

@@ -92,6 +92,42 @@ test('multi-token migration: the old youtube-token.json moves to youtube-token-<
   assert.equal((await YA.readToken()).channel.title, 'Hands on Excel');
 });
 
+test('a sign-in whose channel lookup fails waits in a pending file, never on top of another channel\'s old token; the next lookup adopts both (review A7)', async () => {
+  await rmTokens();
+  const a = SIM.simChannel(SIM.SPECS.handsonexcel, NOW);
+  const b = SIM.simChannel(SIM.SPECS.quran, NOW);
+  const g = SIM.fakeGoogle({ [a.spec.id]: a, [b.spec.id]: b });
+  // Channel A: an old single-file sign-in whose channel was never looked up.
+  const oldA = { refresh_token: 'rt-' + a.spec.id, access_token: 'at-' + a.spec.id, expires_at: NOW + 3600e3, scope: YA.ANALYTICS_SCOPE + ' ' + YA.YOUTUBE_SCOPE, connected_at: '2026-10-01T10:00:00.000Z' };
+  writeFileSync(YA.LEGACY_TOKEN_FILE, JSON.stringify(oldA), { mode: 0o600 });
+  // Channel B signs in; Google's channels.list fails right then.
+  const r = await YA.beginConnect({ port: 47999, now: NOW });
+  const state = new URL(r.url).searchParams.get('state');
+  const flaky = async (url, init) => (String(url).includes('/youtube/v3/channels') ? { ok: false, status: 503, json: async () => ({ error: { code: 503, message: 'backend error' } }) } : g.fetch(url, init));
+  const done = await YA.finishConnect(new URLSearchParams({ code: 'code-' + b.spec.id, state }), { fetch: flaky, now: NOW + 1000 });
+  assert.equal(done.ok, true);
+  assert.equal(done.channel, null);
+  assert.equal(JSON.parse(readFileSync(YA.LEGACY_TOKEN_FILE, 'utf8')).refresh_token, oldA.refresh_token, 'channel A\'s old token is untouched');
+  const pending = readdirSync(home).filter((f) => /^youtube-token-pending-[a-f0-9]+\.json$/.test(f));
+  assert.equal(pending.length, 1);
+  assert.equal(statSync(join(home, pending[0])).mode & 0o777, 0o600);
+  const listed = await YA.listTokens();
+  assert.equal(listed.length, 2, 'both sign-ins are listed');
+  assert.ok(listed.every((t) => t.legacy && t.file));
+  assert.ok((await YA.status()).channels.every((c) => c.pending_lookup));
+  // Using the pending token refreshes it in place (not into youtube-token.json).
+  assert.equal(await YA.accessToken({ file: join(home, pending[0]), now: NOW + 7200e3, fetch: g.fetch }), 'at-' + b.spec.id);
+  assert.equal(JSON.parse(readFileSync(YA.LEGACY_TOKEN_FILE, 'utf8')).refresh_token, oldA.refresh_token);
+  // The next successful lookup (the own-channels job) moves each to its channel's file.
+  assert.equal(await YA.adoptLegacyToken({ fetch: g.fetch, now: NOW + 2000 }), true);
+  assert.ok(!existsSync(YA.LEGACY_TOKEN_FILE));
+  assert.equal(readdirSync(home).filter((f) => /pending/.test(f)).length, 0);
+  assert.equal(JSON.parse(readFileSync(YA.tokenFile(a.spec.id), 'utf8')).refresh_token, 'rt-' + a.spec.id);
+  assert.equal(JSON.parse(readFileSync(YA.tokenFile(b.spec.id), 'utf8')).refresh_token, 'rt-' + b.spec.id);
+  assert.deepEqual((await YA.listTokens()).map((t) => t.channel.channel_id).sort(), [a.spec.id, b.spec.id].sort());
+  assert.equal(await YA.adoptLegacyToken({ fetch: g.fetch, now: NOW + 3000 }), false, 'nothing left to adopt');
+});
+
 test('two channels: add with another Google account, pick by id / @handle / name, default = first connected; reconnect keeps the order; disconnect one', async () => {
   await rmTokens();
   const a = SIM.simChannel(SIM.SPECS.handsonexcel, NOW);

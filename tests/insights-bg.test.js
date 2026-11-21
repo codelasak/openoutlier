@@ -24,7 +24,7 @@ function worker(opts = {}) {
   class FakeDate extends RealDate { constructor(...a) { super(...(a.length ? a : [clock.t])); } static now() { return clock.t; } }
   const store = (m) => ({
     get: async (k) => { const out = {}; for (const x of [].concat(k)) if (x in m) out[x] = JSON.parse(JSON.stringify(m[x])); return out; },
-    set: async (o) => { for (const [k, v] of Object.entries(o)) m[k] = JSON.parse(JSON.stringify(v)); }
+    set: async (o) => { if (opts.failSet && opts.failSet(o)) throw new Error('QUOTA_BYTES quota exceeded'); for (const [k, v] of Object.entries(o)) m[k] = JSON.parse(JSON.stringify(v)); }
   });
   const chrome = {
     runtime: { id: 'ext', onMessage: { addListener: (fn) => listeners.push(fn) } },
@@ -111,6 +111,33 @@ test('monetization: "checking" first, the verdict lands in the cache, then comes
   assert.equal(c.fetches.length, 2);
   assert.equal((await c.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'consentVidx' })).state, 'unknown');
   assert.equal(c.fetches.length, 2);
+});
+
+test('monetization: a signed-in retry without ad config is "unknown", not "no"; unknown is retried after 6 h (review A6)', async () => {
+  let n = 0;
+  const w = worker({ fetch: async () => ({ ok: true, status: 200, text: async () => (n++ % 2 === 0 ? fx('watch-consent.html') : fx('watch-not-monetized.html')) }) });
+  assert.equal((await w.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'premiumVidx' })).state, 'checking');
+  assert.ok(await until(() => w.local['rs:yt-mon-cache'] && w.local['rs:yt-mon-cache']['v:premiumVidx']));
+  assert.equal(w.fetches.length, 2, 'cookie-less, then once with cookies');
+  assert.equal(w.local['rs:yt-mon-cache']['v:premiumVidx'].v.state, 'unknown', 'a Premium session has no ad config: not a 7-day "no"');
+  assert.equal((await w.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'premiumVidx' })).state, 'unknown');
+  w.clock.t += 7 * 3600000;
+  assert.equal((await w.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'premiumVidx' })).state, 'checking', 'asked again after the short TTL');
+});
+
+test('monetization: a job whose storage write throws does not stick in "checking" and the queue keeps draining (review A5)', async () => {
+  let fail = true;
+  const w = worker({
+    failSet: (o) => { if (fail && o['rs:yt-mon-cache'] && o['rs:yt-mon-cache']['v:brokenVidxx']) { fail = false; return true; } return false; },
+    fetch: async () => ({ ok: true, status: 200, text: async () => fx('watch-monetized.html') })
+  });
+  assert.equal((await w.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'brokenVidxx' })).state, 'checking');
+  assert.equal((await w.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'nextVideoxx' })).state, 'checking');
+  assert.ok(await until(() => w.local['rs:yt-mon-cache'] && w.local['rs:yt-mon-cache']['v:nextVideoxx']), 'the next job still ran');
+  // The failed one is not stuck: asking again queues a new check, which now succeeds.
+  assert.equal((await w.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'brokenVidxx' })).state, 'checking');
+  assert.ok(await until(() => w.local['rs:yt-mon-cache'] && w.local['rs:yt-mon-cache']['v:brokenVidxx']));
+  assert.equal((await w.send({ type: 'reelscope:yt-monetization', kind: 'video', id: 'brokenVidxx' })).state, 'yes');
 });
 
 test('monetization: a channel samples its videos and stops at the first ad; Shorts-only channels can\'t be checked', async () => {
