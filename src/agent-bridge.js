@@ -71,17 +71,24 @@
     }
   }
 
+  // Old MCP servers (one per Claude session, started before an update) can keep answering on a
+  // second port with older code. The saved port is kept only while it serves everything this
+  // extension knows about; otherwise every port is checked and the most capable bridge wins
+  // (ties: the lowest port, normally the launchd daemon's 47811).
+  var WANT_FEATURES = ['settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools', 'discovery', 'providers'];
+  function capability(h) {
+    var f = (h && h.features) || [];
+    return WANT_FEATURES.filter(function (x) { return f.indexOf(x) !== -1; }).length;
+  }
   async function findServer(state) {
     if (state.port) {
       var h = await health(state.port);
-      if (h) return { port: state.port, health: h };
+      if (h && capability(h) === WANT_FEATURES.length) return { port: state.port, health: h };
     }
-    for (var i = 0; i < PORTS.length; i++) {
-      if (PORTS[i] === state.port) continue;
-      var h2 = await health(PORTS[i]);
-      if (h2) return { port: PORTS[i], health: h2 };
-    }
-    return null;
+    var all = await Promise.all(PORTS.map(function (p) { return health(p).then(function (x) { return x ? { port: p, health: x } : null; }); }));
+    var best = null;
+    all.forEach(function (s) { if (s && (!best || capability(s.health) > capability(best.health))) best = s; });
+    return best;
   }
 
   async function post(port, path, body) {
