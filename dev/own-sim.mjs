@@ -43,7 +43,7 @@ export const SPECS = {
   excelbugs: {
     id: 'UCdemoExcelBugsChannel01', title: 'Excel Bugs (demo)', handle: 'ExcelBugsDemo', created: '2024-06-01', ctr: 0.047, rpm: 0, subsRate: 0.0036, shortSubsRate: 0.0007,
     longPct: 41, shortPct: 79, longDur: 340, shortDur: 29, terms: EXCEL_TERMS, traffic: { YT_SEARCH: 0.36, RELATED_VIDEO: 0.24, SUBSCRIBER: 0.09, SHORTS: 0.17, NO_LINK_OTHER: 0.06, EXT_URL: 0.05, PLAYLIST: 0.03 },
-    countries: { US: 0.31, IN: 0.16, GB: 0.08, PH: 0.06, CA: 0.05, AU: 0.04, DE: 0.04, TR: 0.03, NG: 0.03 }, everyLong: 9, everyShort: 4, longStrength: 640, shortStrength: 900, growth: 1.6,
+    countries: { US: 0.31, IN: 0.16, GB: 0.08, PH: 0.06, CA: 0.05, AU: 0.04, DE: 0.04, TR: 0.03, NG: 0.03 }, everyLong: 9, everyShort: 4, longStrength: 700, shortStrength: 900, growth: 2.6,
     titleWords: ['XLOOKUP', 'Pivot Tables', 'Power Query', 'Dashboard', 'Conditional Formatting', 'FILTER function', 'Data Validation', 'Charts', 'LAMBDA', 'Checkboxes']
   },
   sheetsensei: {

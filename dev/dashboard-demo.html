@@ -65,6 +65,7 @@
               return { ok: true, updated: n, units: Math.ceil(Object.keys(rec.posts).length / 50), quota: { used: window.__ytUnits, limit: 10000 } };
             }
             if (m.type === 'reelscope:yt-analytics') return demoAnalytics(m, qs.get('ytanalytics'));
+            if (m.type === 'reelscope:own') return demoOwn(m, qs.get('ytanalytics'));
             if (m.type === 'reelscope:niche') return demoNiche(m, qs.get('niche'));
             if (m.type === 'reelscope:bridge-key') {
               await new Promise(function (r) { setTimeout(r, 300); });
@@ -111,9 +112,47 @@
         return p;
       }
 
-      function demoAnalytics(m, mode) {
-        var connected = mode === 'connected' || window.__ytConnected;
-        if (m.path === '/youtube/analytics/status') return mode ? { ok: true, configured: mode !== 'setup', connected: !!connected, channel: connected ? { title: 'Excel Bugs (demo)', handle: 'ExcelBugsDemo', subscribers: 18400 } : null } : { ok: false, noBridge: true, error: 'My YouTube channel runs through the OpenOutlier bridge on your Mac (it keeps the Google sign-in), and the bridge isn\'t running.' };
+      // My YouTube channel / Kanalım (#/my-youtube): ?ytanalytics=setup | connect | connected (one channel on its way to the YPP) |
+      // two (Hands on Excel + a Quran channel, with the combined view) | tiny (a brand-new channel) | monetized | reconnect
+      // (an old sign-in without the revenue scope + an expired one) | collecting (history still loading) | oldbridge.
+      // Pages come from dev/make-own-fixture.mjs (the real bridge code over a simulated Google). No ?ytanalytics = no bridge.
+      var ownFixtures = {};
+      async function ownFixture(mode) {
+        var name = { connected: 'connected', two: 'two', tiny: 'tiny', monetized: 'monetized', reconnect: 'reconnect', collecting: 'collecting', oldbridge: 'connected' }[mode];
+        if (!name) return null;
+        if (!ownFixtures[name]) ownFixtures[name] = await (await fetch('/dev/youtube/own/' + name + '.json')).json();
+        var f = JSON.parse(JSON.stringify(ownFixtures[name]));
+        // The fixture was computed at f.now: move its times to now so "updated 2 h ago" reads right.
+        var shift = Date.now() - f.now;
+        (function walk(o) {
+          if (Array.isArray(o)) { o.forEach(walk); return; }
+          if (!o || typeof o !== 'object') return;
+          Object.keys(o).forEach(function (k) {
+            var v = o[k];
+            if (typeof v === 'number' && v > 1.6e12 && v < 2.2e12 && /(_at|^at|^now|^ts|published_at)$/.test(k)) o[k] = v + shift;
+            else if (v && typeof v === 'object') walk(v);
+          });
+        })(f);
+        return f;
+      }
+      async function demoOwn(m, mode) {
+        await new Promise(function (r) { setTimeout(r, 300); });
+        if (!mode) return { ok: false, noBridge: true, error: 'no bridge (demo)' };
+        if (mode === 'oldbridge') return { ok: false, oldBridge: true, error: 'old bridge (demo)' };
+        if (m.path === '/youtube/own/refresh') return { ok: true, scheduled: 3 };
+        var f = await ownFixture(mode);
+        if (!f) return { ok: true, channels: [], page: null };
+        var ids = Object.keys(f.pages).filter(function (k) { return k !== 'all'; });
+        var key = m.channel && f.pages[m.channel] ? m.channel : ids[0];
+        return f.pages[key];
+      }
+      async function demoAnalytics(m, mode) {
+        var connected = mode && mode !== 'setup' && mode !== 'connect' || window.__ytConnected;
+        if (m.path === '/youtube/analytics/status') {
+          if (!mode) return { ok: false, noBridge: true, error: 'My YouTube channel runs through the OpenOutlier bridge on your Mac (it keeps the Google sign-in), and the bridge isn\'t running.' };
+          var fx = connected && await ownFixture(mode === 'connect' || mode === 'setup' ? 'connected' : mode);
+          return fx ? fx.status : { ok: true, configured: mode !== 'setup', connected: false, channels: [] };
+        }
         if (m.path === '/youtube/analytics/connect') { setTimeout(function () { window.__ytConnected = true; }, 2000); return { ok: true, url: 'about:blank' }; }
         if (m.path === '/youtube/analytics/disconnect') { window.__ytConnected = false; return { ok: true }; }
         if (m.path === '/youtube/analytics/channel') return { ok: true, channel: { title: 'Excel Bugs (demo)', handle: 'ExcelBugsDemo', subscribers: 18400 }, totals: { views: 412000, engaged_views: 351000, watch_minutes: 610000, avg_view_duration_s: 41, avg_view_pct: 71.4, subscribers_gained: 930, subscribers_lost: 85, likes: 21000, comments: 940, shares: 3100 } };
@@ -243,7 +282,7 @@
       // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
       var realFetch = window.fetch;
       window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/dashboard/niche-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/dashboard/niche-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

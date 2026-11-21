@@ -8,8 +8,12 @@
 //   ({"installed": {"client_id": …, "client_secret": …}}) or {client_id, client_secret}.
 // Connecting: a Google sign-in page (PKCE, read-only scopes) that redirects to
 // the local bridge (http://127.0.0.1:<port>/youtube/oauth/callback), which
-// trades the code for a refresh token kept in <home>/youtube-token.json
-// (mode 0600). Requests go only to Google (accounts.google.com,
+// trades the code for a refresh token kept in <home>/youtube-token-<UC…>.json
+// (mode 0600), one file per connected channel (phase 2 of docs/youtube-niche-plan.md:
+// the user's channel and a family member's; the first connected is the default, and
+// the single youtube-token.json of earlier versions moves over on first use). Scopes:
+// read-only Analytics, revenue (yt-analytics-monetary, so sign-ins from before phase 2
+// show needs_reconsent) and the channel's video list. Requests go only to Google (accounts.google.com,
 // oauth2.googleapis.com, youtubeanalytics.googleapis.com, www.googleapis.com).
 //
 // What it reads, per video: views, engagedViews, averageViewDuration,

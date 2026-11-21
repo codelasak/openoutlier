@@ -355,7 +355,7 @@
       render();
     }, function (e) { ytApi.running = false; ytApi.label = 'Could not start: ' + e.message; render(); });
   }
-  var ytChannelView = self.OpenOutlierYouTubeChannelView.create({ h: h, fmt: fmt, rerender: function () { if (route().kind === 'my-youtube') { renderSidebar(route()); ytChannelView.render(main); document.title = ytChannelView.title() + ' · OpenOutlier'; } } });
+  var ytChannelView = self.OpenOutlierYouTubeChannelView.create({ h: h, fmt: fmt, loadImage: function (el, url) { thumbs.load(el, url); }, rerender: function () { if (route().kind === 'my-youtube') { renderSidebar(route()); ytChannelView.render(main); document.title = ytChannelView.title() + ' · OpenOutlier'; } } });
   var accountPanel = P.create(Object.assign({}, common, { onApiStats: ytApiRun }));
   // Settings → Features (src/features.js + features-view.js), the API key and the bridge.
   var settingsView = self.OpenOutlierSettingsView ? self.OpenOutlierSettingsView.create({ h: h, rerender: function () { if (route().kind === 'settings') { renderSidebar(route()); settingsView.render(main); document.title = settingsView.title() + ' · OpenOutlier'; } } }) : null;
@@ -438,7 +438,7 @@
     var unreadMentions = mentionsView.unread();
     lib.appendChild(navItem('Mentions', unreadMentions ? unreadMentions + ' new' : null, '#/mentions', r.kind === 'mentions', { icon: 'bell', badge: !!unreadMentions }));
     lib.appendChild(navItem('My account', null, '#/studio', r.kind === 'studio', { icon: 'user' }));
-    lib.appendChild(navItem('My YouTube channel', null, '#/my-youtube', r.kind === 'my-youtube', { icon: 'user' }));
+    lib.appendChild(navItem(ytChannelView.navLabel ? ytChannelView.navLabel() : 'My YouTube channel', null, '#/my-youtube', r.kind === 'my-youtube', { icon: 'user' }));
     if (nicheView) lib.appendChild(navItem(nicheView.navLabel(), nicheAlerts.unseen ? String(nicheAlerts.unseen) : null, '#/niche', r.kind === 'niche', { icon: 'trend', badge: !!nicheAlerts.unseen }));
     lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all' && r.tab !== 'reels', { icon: 'all' }));
     lib.appendChild(navItem('Top posts', null, '#/all/reels', r.kind === 'all' && r.tab === 'reels', { icon: 'top' }));
