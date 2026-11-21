@@ -37,7 +37,7 @@
       noNiche: 'Track your channel in Niche tracking to compare with the niche.', h48: '48 h', d7: '7 d', d30: '30 d', total: 'Total', due: 'on {d}', long: 'Video', short: 'Short', live: 'Live',
       reportEmpty: 'No uploads in the last 90 days. Your next upload shows up here from its first days.', medianNote: { one: 'Median from {n} video', other: 'Median from {n} videos' }, tooFew: 'too few videos for a median yet',
       vsChannel: '{x} your median', vsNiche: '{x} the niche', watchedPct: '{p} watched',
-      search: 'Search terms that found you', searchSub: 'YouTube searches that led to your videos, last {w} weeks. Good words for your next titles and descriptions.',
+      search: 'Search terms that found you', searchSub: { one: 'YouTube searches that led to your videos, last {w} week. Good words for your next titles and descriptions.', other: 'YouTube searches that led to your videos, last {w} weeks. Good words for your next titles and descriptions.' },
       searchEmpty: 'No search views yet. YouTube lists a term once a few people find you through it (it hides rare ones), so small channels see few.',
       lastWeek: 'last week', newTerm: 'new', showAll: 'Show all {n}', showFewer: 'Show fewer', terms4w: '{w} wk',
       traffic: 'Traffic sources', geo: 'Geography', demo: 'Audience', devices: 'Devices', subscribed: 'Subscribed', playback: 'Where they watch', last4: { one: 'Last {w} week', other: 'Last {w} weeks' }, viewsN: { one: '{n} view', other: '{n} views' }, lastW: { one: 'Last {w} week, share of views', other: 'Last {w} weeks, share of views' }, audEmpty: 'Fills in after the first complete week of views.',
@@ -594,7 +594,7 @@
       var t = p.search_terms || { terms: [] };
       var list = t.terms || [];
       var w = t.window_weeks || 4;
-      if (!list.length) return card('kc-terms', L().search, fill(L().searchSub, { w: w }), empty(L().searchEmpty));
+      if (!list.length) return card('kc-terms', L().search, fill(L().searchSub, { w: w }, w), empty(L().searchEmpty));
       var max = Math.max.apply(null, list.map(function (x) { return x.views; }).concat([1]));
       var shown = ui.termsAll ? list : list.slice(0, 10);
       var body = h('ol', { class: 'kc-terms-list' }, shown.map(function (x, i) {
@@ -609,7 +609,7 @@
       }));
       var more = list.length > 10 ? h('button', { class: 'btn btn-ghost kc-more', type: 'button', onclick: function () { ui.termsAll = !ui.termsAll; env.rerender(); } }, ui.termsAll ? L().showFewer : fill(L().showAll, { n: list.length })) : null;
       var head = h('div', { class: 'kc-terms-head', 'aria-hidden': 'true' }, h('span'), h('span'), h('span'), h('span', { text: fill(L().terms4w, { w: w }) }), h('span', { text: L().lastWeek }), h('span'));
-      return card('kc-terms', L().search, fill(L().searchSub, { w: w }), h('div', null, head, body, more));
+      return card('kc-terms', L().search, fill(L().searchSub, { w: w }, w), h('div', null, head, body, more));
     }
 
     function barsList(rows, labelOf, opts) {
