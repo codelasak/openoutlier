@@ -183,7 +183,7 @@ test('settings: feature flags and the extension\'s quota reach the bridge; "Copy
   assert.deepEqual(st.data.features.on, ['hide-shorts']);
   assert.equal(st.data.tracker.enabled, false);
   assert.ok(st.data.tracker.jobs.heartbeat >= 1, 'the server holding the bridge seeded the tracker');
-  assert.equal(st.data.database.schema_version, 1);
+  assert.equal(st.data.database.schema_version, 2);
 
   r = await bridge('/settings/youtube-api-key', { method: 'POST', body: { remove: true } });
   assert.equal((await r.json()).apiKey.configured, false);
@@ -205,6 +205,61 @@ test('get_reel exposes the mp4 link and its expiry; download_reel saves it', asy
   const file = dl.data.saved[0].path;
   assert.match(file, /views_.*likes_.*comments_.*pct_post_.*\.mp4$/);
   assert.ok(existsSync(file) && statSync(file).size === 2048);
+});
+
+test('niche tracking: the org\'s tracking list reaches tracked_channels, settings, the Niche page, breakout acks and the MCP tools', async () => {
+  const health = await (await bridge('/health')).json();
+  assert.ok(health.features.includes('niche'));
+  // An empty niche: the tools say what to do.
+  const empty = await call('niche_pulse', {});
+  assert.equal(empty.data.tracked, false);
+  assert.match(empty.data.hint, /tracked niche/);
+  // Mark a folder as a tracked niche, with one channel in it and my own channel by its UC id.
+  const UC = 'UCdemoExcelChannel000001';
+  const MINE = 'UChandsOnExcelDemo000002';
+  const org = { folders: [{ id: 'fx', name: 'Excel' }], accounts: { 'yt/exceldemoacademy': { folder: 'fx', tags: [] } }, niches: { folders: ['fx'], tags: [] },
+    tracked: { 'yt/handsonexcel': { on: true, mine: true, channelId: MINE, name: 'Hands on Excel' } } };
+  // The channel isn't saved in the library (a Track-button channel carries its UC id), so the account lists stay as they are.
+  org.tracked['yt/exceldemoacademy'] = { on: true, channelId: UC, name: 'Excel Demo Academy' };
+  const r = await (await bridge('/sync', { method: 'POST', body: { full: false, accounts: {}, org } })).json();
+  assert.deepEqual([r.tracking.active, r.tracking.added], [2, 2]);
+  const st = await call('bridge_status');
+  assert.equal(st.data.niche_tracking.channels, 2);
+  assert.equal(st.data.niche_tracking.mine, 1);
+  assert.equal(st.data.niche_tracking.rss_lag.verdict, 'collecting');
+  assert.match(st.data.niche_tracking.rss_lag.how_to_read, /lag/);
+  assert.ok(st.data.tracker.jobs.rss >= 2 && st.data.tracker.jobs.backfill >= 2);
+  // Breakout threshold from the extension's settings; the answer carries pending alerts.
+  const s = await (await bridge('/settings', { method: 'POST', body: { niche: { breakoutRatio: 4, fastStart: false, junk: 1 } } })).json();
+  assert.deepEqual(s.niche.settings, { breakoutRatio: 4, fastStart: false });
+  assert.deepEqual(s.niche.alerts, []);
+  assert.equal(s.niche.tracked, 2);
+  await bridge('/settings', { method: 'POST', body: { niche: { breakoutRatio: 3, fastStart: true } } });
+  // The Niche page (empty curves for now) and a video that isn't tracked.
+  const page = await (await bridge('/youtube/niche/page?as=get&tz=180', { method: 'POST', body: {} })).json();
+  assert.equal(page.ok, true);
+  assert.equal(page.niche, 'Excel');
+  assert.equal(page.channels.length, 2);
+  assert.equal(page.status.tracker, true);
+  assert.deepEqual(page.week, []);
+  assert.equal((await bridge('/youtube/niche/video?as=get&id=yTnothing01', { method: 'POST', body: {} })).status, 404);
+  assert.equal((await bridge('/youtube/niche/page', { origin: 'https://evil.example' })).status, 403);
+  const ack = await (await bridge('/youtube/niche/alerts/ack', { method: 'POST', body: { alerts: [{ video_id: 'yTnothing01', at_h: 6 }] } })).json();
+  assert.equal(ack.acked, 0);
+  // The tools answer on the (still empty) niche.
+  const pulse = await call('niche_pulse', { days: 7 });
+  assert.equal(pulse.data.niche, 'Excel');
+  assert.equal(pulse.data.channels, 2);
+  assert.match((await call('video_velocity', { video: 'yTnothing01' })).text, /not tracked/);
+  assert.equal((await call('breakouts', {})).data.threshold, 3);
+  const growth = await call('channel_growth', {});
+  assert.equal(growth.data.channels.length, 2);
+  const rep = await call('niche_report', {});
+  assert.equal(rep.data.stored, false);
+  assert.equal(rep.data.totals.channels, 2);
+  // Off the list again: inactive, nothing more to do.
+  const off = await (await bridge('/sync', { method: 'POST', body: { full: false, accounts: {}, org: { folders: [], accounts: {} } } })).json();
+  assert.equal(off.tracking.removed, 2);
 });
 
 test('agent commands reach the extension and come back', async () => {

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?playlist_id=UULFdemoExcelChannel000001"/>
+ <id>yt:playlist:UULFdemoExcelChannel000001</id>
+ <yt:playlistId>UULFdemoExcelChannel000001</yt:playlistId>
+ <yt:channelId>UCdemoExcelChannel000001</yt:channelId>
+ <title>Videos</title>
+ <link rel="alternate" href="https://www.youtube.com/playlist?list=UULFdemoExcelChannel000001"/>
+ <author>
+  <name>Excel Demo Academy</name>
+  <uri>https://www.youtube.com/channel/UCdemoExcelChannel000001</uri>
+ </author>
+ <published>2019-03-02T10:11:12+00:00</published>
+ <entry>
+  <id>yt:video:yTnicheL001</id>
+  <yt:videoId>yTnicheL001</yt:videoId>
+  <yt:channelId>UCdemoExcelChannel000001</yt:channelId>
+  <title>XLOOKUP &amp; FILTER: 7 tricks you&#39;ll use every day</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=yTnicheL001"/>
+  <author>
+   <name>Excel Demo Academy</name>
+   <uri>https://www.youtube.com/channel/UCdemoExcelChannel000001</uri>
+  </author>
+  <published>2026-11-20T15:00:07+00:00</published>
+  <updated>2026-11-21T09:41:55+00:00</updated>
+  <media:group>
+   <media:title>XLOOKUP &amp; FILTER: 7 tricks you&#39;ll use every day</media:title>
+   <media:content url="https://www.youtube.com/v/yTnicheL001?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/yTnicheL001/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Download the practice file: https://example.com/file
+Chapters:
+0:00 Intro</media:description>
+   <media:community>
+    <media:starRating count="1843" average="5.00" min="1" max="5"/>
+    <media:statistics views="48213"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:yTnicheL002</id>
+  <yt:videoId>yTnicheL002</yt:videoId>
+  <yt:channelId>UCdemoExcelChannel000001</yt:channelId>
+  <title>Pivot Tables for Beginners (2026)</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=yTnicheL002"/>
+  <author><name>Excel Demo Academy</name><uri>https://www.youtube.com/channel/UCdemoExcelChannel000001</uri></author>
+  <published>2026-11-13T14:30:00+00:00</published>
+  <updated>2026-11-21T08:02:10+00:00</updated>
+  <media:group>
+   <media:title>Pivot Tables for Beginners (2026)</media:title>
+   <media:content url="https://www.youtube.com/v/yTnicheL002?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i3.ytimg.com/vi/yTnicheL002/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Everything about pivot tables.</media:description>
+   <media:community>
+    <media:starRating count="920" average="5.00" min="1" max="5"/>
+    <media:statistics views="31007"/>
+   </media:community>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:yTnicheL003</id>
+  <yt:videoId>yTnicheL003</yt:videoId>
+  <yt:channelId>UCdemoExcelChannel000001</yt:channelId>
+  <title>Power Query in 10 minutes</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=yTnicheL003"/>
+  <author><name>Excel Demo Academy</name><uri>https://www.youtube.com/channel/UCdemoExcelChannel000001</uri></author>
+  <published>2026-10-30T16:00:00+00:00</published>
+  <updated>2026-11-20T22:10:00+00:00</updated>
+  <media:group>
+   <media:title>Power Query in 10 minutes</media:title>
+   <media:content url="https://www.youtube.com/v/yTnicheL003?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i1.ytimg.com/vi/yTnicheL003/hqdefault.jpg" width="480" height="360"/>
+   <media:description></media:description>
+   <media:community>
+    <media:starRating count="0" average="0.00" min="1" max="5"/>
+    <media:statistics views="0"/>
+   </media:community>
+  </media:group>
+ </entry>
+</feed>

@@ -54,7 +54,8 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   assert.equal(F.get('dislikes').link, 'https://returnyoutubedislike.com/');
   assert.ok(F.get('dislikes').notes.includes('thirdParty'));
   // Phase 0 builds the retention purge; the rest are "coming soon".
-  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), ['api-retention-30d']);
+  // Phase 0: the 30-day purge; phase 1: niche tracking, the Track button, growth, title history, breakouts, the digest.
+  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), ['channel-growth', 'channel-track', 'title-history', 'tracker', 'breakout-alerts', 'weekly-digest', 'api-retention-30d']);
 });
 
 test('stored choices: unknown keys and non-booleans are dropped, missing keys fall back to the default', () => {

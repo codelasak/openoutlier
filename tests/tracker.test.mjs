@@ -74,7 +74,7 @@ test('heartbeat: seeded once, runs when due, next run = every + jitter; nothing 
   const st = tr.status();
   assert.equal(st.enabled, true);
   assert.equal(st.last_heartbeat_at, new Date(c.t).toISOString());
-  assert.deepEqual(st.enabled_kinds, ['heartbeat'], 'retention is off by default, API kinds need a key');
+  assert.deepEqual(st.enabled_kinds, ['heartbeat', 'rss', 'digest'], 'retention is off by default, API kinds need a key (RSS and the digest don\'t)');
   s.close();
 });
 

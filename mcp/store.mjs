@@ -135,9 +135,58 @@ CREATE TABLE IF NOT EXISTS own_breakdowns (
 );
 `;
 
+// Phase 1 (niche tracking): the videos the tracker knows (title, publish time, format,
+// thumbnail and its perceptual hash), breakout alerts and the weekly digests.
+const SCHEMA_NICHE_TRACKING = `
+CREATE TABLE IF NOT EXISTS tracked_videos (
+  video_id         TEXT PRIMARY KEY,
+  channel_id       TEXT NOT NULL,
+  published_at     INTEGER,
+  type             TEXT,                -- video | short | live
+  title            TEXT,
+  thumb            TEXT,
+  duration         INTEGER,             -- seconds (Data API)
+  keywords         TEXT,                -- JSON array of tags (Data API)
+  first_seen       INTEGER NOT NULL,
+  found_by         TEXT,                -- rss | backfill | page
+  thumb_hash       TEXT,                -- latest perceptual hash (mcp/thumbhash.mjs)
+  thumb_checked_at INTEGER,
+  updated_at       INTEGER
+);
+CREATE INDEX IF NOT EXISTS tracked_videos_by_channel ON tracked_videos (channel_id, published_at);
+CREATE TABLE IF NOT EXISTS niche_alerts (
+  video_id    TEXT NOT NULL,
+  at_h        INTEGER NOT NULL,         -- the checkpoint (6 or 24 h)
+  score       REAL NOT NULL,            -- views ÷ expected
+  views       INTEGER,
+  expected    INTEGER,
+  created_at  INTEGER NOT NULL,
+  notified_at INTEGER,                  -- when the extension showed the Chrome notification
+  PRIMARY KEY (video_id, at_h)
+);
+CREATE TABLE IF NOT EXISTS niche_reports (
+  week       TEXT PRIMARY KEY,          -- YYYY-MM-DD of the Monday
+  data       TEXT NOT NULL,             -- JSON
+  created_at INTEGER NOT NULL
+);
+`;
+
 /** Ordered, each run once (meta schema_version); `up` must be safe to run again anyway. */
 export const MIGRATIONS = [
-  { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) }
+  { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) },
+  {
+    version: 2, name: 'niche tracking: tracked videos, alerts, digests, channel names, thumbnail URLs',
+    up: (st) => {
+      st.db.exec(SCHEMA_NICHE_TRACKING);
+      st.addColumn('tracked_channels', 'name', 'TEXT');
+      st.addColumn('tracked_channels', 'handle', 'TEXT');
+      st.addColumn('tracked_channels', 'subs', 'INTEGER');
+      st.addColumn('tracked_channels', 'backfilled_at', 'INTEGER');
+      st.addColumn('tracked_channels', 'last_error', 'TEXT');
+      st.addColumn('video_meta_log', 'thumb_url', 'TEXT');
+      st.addColumn('video_meta_log', 'source', 'TEXT');
+    }
+  }
 ];
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
 
@@ -171,6 +220,7 @@ export class Store {
     // The tables themselves are cheap to (re)declare; do it every time so a half-copied
     // database or a downgrade-then-upgrade still ends up complete.
     this.db.exec(SCHEMA_YOUTUBE_NICHE);
+    this.db.exec(SCHEMA_NICHE_TRACKING);
     let v = Number(this.getMeta('schema_version', 0)) || 0;
     for (const m of MIGRATIONS) {
       if (m.version <= v) continue;
@@ -294,6 +344,11 @@ export class Store {
 
     let posts = 0;
     let snapshots = 0;
+    let pageStats = 0;
+    // Exact counts the extension saw on YouTube pages of tracked channels are free extra
+    // measurements for the velocity curves (plan 5): video_stats with source 'page'.
+    const tracked = this.trackedSets();
+    const pageStat = this.db.prepare('INSERT OR IGNORE INTO video_stats (video_id, ts, views, likes, comments, source) VALUES (?, ?, ?, ?, ?, ?)');
     this.db.exec('BEGIN IMMEDIATE');
     try {
       for (const [id, rec] of Object.entries(accounts || {})) {
@@ -318,6 +373,10 @@ export class Store {
             // First sighting: when the extension saw it. Later changes: now.
             snap.run(id, code, prev ? now : (num(p.seenAt) || now), ...counts);
             snapshots++;
+            if (tracked && isYouTubePost(id, p) && p.viewsApprox === false && counts[0] != null && (tracked.accounts.has(id) || tracked.channels.has(p.ownerId))) {
+              const seen = num(p.seenAt);
+              pageStats += Number(pageStat.run(code, seen && seen <= now ? seen : now, counts[0], counts[1], p.commentsApprox ? null : counts[2], 'page').changes);
+            }
           }
         }
       }
@@ -331,7 +390,14 @@ export class Store {
       this.db.exec('ROLLBACK');
       throw e;
     }
-    return { posts, snapshots };
+    return { posts, snapshots, page_stats: pageStats };
+  }
+
+  /** Account ids and channel ids of active tracked channels (null when none: the sync skips the check). */
+  trackedSets() {
+    const rows = this.db.prepare('SELECT channel_id, account_id FROM tracked_channels WHERE active = 1').all();
+    if (!rows.length) return null;
+    return { accounts: new Set(rows.map((r) => r.account_id).filter(Boolean)), channels: new Set(rows.map((r) => r.channel_id)) };
   }
 
   /**
@@ -426,6 +492,7 @@ export class Store {
       snapshots: one('SELECT COUNT(*) AS n FROM snapshots'),
       tracked_channels: one('SELECT COUNT(*) AS n FROM tracked_channels'),
       video_stats: one('SELECT COUNT(*) AS n FROM video_stats'),
+      tracked_videos: one('SELECT COUNT(*) AS n FROM tracked_videos'),
       schema_version: Number(this.getMeta('schema_version', 0)) || 0
     };
   }

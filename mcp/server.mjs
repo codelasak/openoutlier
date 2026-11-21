@@ -23,6 +23,7 @@ import { registerTranscriptTool } from './youtube-transcript.mjs';
 import { registerAnalyticsTools, INSTRUCTIONS as YT_ANALYTICS_INSTRUCTIONS } from './youtube-analytics.mjs';
 import { registerYouTubeApiTool, apiKeyInfo as youtubeApiKeyInfo, quota as youtubeApiQuota } from './youtube-api.mjs';
 import { Tracker, trackerStatus } from './tracker.mjs';
+import { registerNicheTools, INSTRUCTIONS as NICHE_INSTRUCTIONS, trackingSummary } from './niche-tools.mjs';
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
@@ -65,7 +66,8 @@ const server = new McpServer(
       'collect_profile / collect_subreddit ask the extension to collect an Instagram profile, a TikTok profile (tt/name), a YouTube channel (yt/name: its Videos tab, then its Shorts tab) or a subreddit in a background Chrome tab or small window (logged-in session); they need Chrome running.',
       STUDIO_INSTRUCTIONS,
       'YouTube extras (optional, each off until the user sets it up): get_transcript (captions via yt-dlp, with the first ~30 s as hook), youtube_api_stats (exact stats through the user\'s own YouTube Data API key; makes no request without one).',
-      YT_ANALYTICS_INSTRUCTIONS
+      YT_ANALYTICS_INSTRUCTIONS,
+      NICHE_INSTRUCTIONS
     ].join('\n')
   }
 );
@@ -458,7 +460,7 @@ server.registerTool('command_status', {
 
 server.registerTool('bridge_status', {
   title: 'Connection status',
-  description: 'Whether the OpenOutlier extension is connected to this server, when the library was last synced, the last backup, whether yt-dlp + ffmpeg (for YouTube video downloads) are installed, the YouTube Data API key and today\'s quota use (bridge + extension together), the feature switches the user changed, and the background tracker (jobs, last heartbeat).',
+  description: 'Whether the OpenOutlier extension is connected to this server, when the library was last synced, the last backup, whether yt-dlp + ffmpeg (for YouTube video downloads) are installed, the YouTube Data API key and today\'s quota use (bridge + extension together), the feature switches the user changed, the background tracker (jobs, last heartbeat) and niche tracking (channels, last RSS read, breakouts in the last 7 days, and rss_lag: how far RSS view counts trail the Data API, with how_to_read).',
   inputSchema: {},
   annotations: { readOnlyHint: true }
 }, () => safe(() => {
@@ -480,7 +482,9 @@ server.registerTool('bridge_status', {
     // One count for the key's Google Cloud project: this bridge's calls plus the extension's (it reports them with its settings).
     youtube_data_api: (() => { const k = youtubeApiKeyInfo(); return { configured: !!k.key, key_source: k.source || undefined, ...youtubeApiQuota() }; })(),
     features: (() => { const f = store().getMeta('features', null); return f ? { off: Object.keys(f).filter((k) => f[k] === false), on: Object.keys(f).filter((k) => f[k] === true), note: 'Only the ones changed from the default (src/features.js).' } : { note: 'The extension has not sent its feature settings yet; the defaults apply.' }; })(),
-    tracker: tracker ? tracker.status() : trackerStatus(store())
+    tracker: tracker ? tracker.status() : trackerStatus(store()),
+    // Niche tracking: channels, last RSS read, breakouts, and the RSS-vs-API lag check (rss_lag.how_to_read).
+    niche_tracking: (() => { try { return trackingSummary(store()); } catch (e) { return { error: e.message }; } })()
   });
 }));
 
@@ -507,6 +511,7 @@ server.registerTool('reel_history', {
 
 registerStudioTools(server, { z, json, safe });
 registerYouTubeApiTool(server, { z, json, safe });
+registerNicheTools(server, { z, json, safe, store });
 registerTranscriptTool(server, { z, json, safe, fail, youtubeIdOf, findReel, readLibrary });
 // The bridge port Google's sign-in redirects to; it must be a bridge that knows the callback.
 registerAnalyticsTools(server, { z, json, safe, bridgePort: async () => {

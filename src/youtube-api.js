@@ -140,6 +140,7 @@
       avatar: bestThumb(sn.thumbnails),
       subscribers: st.hiddenSubscriberCount ? null : int(st.subscriberCount),
       videos: int(st.videoCount),
+      views: int(st.viewCount),
       uploads: typeof uploads === 'string' ? uploads : null
     };
   }

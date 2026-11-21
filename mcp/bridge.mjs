@@ -23,6 +23,7 @@ import { startJob, jobStatus, isVideoId, isAccountId } from './youtube-dl.mjs';
 import * as YA from './youtube-analytics.mjs';
 import { apiKeyInfo, saveApiKey, removeApiKey, setExtensionQuota, quota as apiQuota, bridgeQuotaState, A as YAPI } from './youtube-api.mjs';
 import { store } from './library.mjs';
+import * as NICHE from './niche.mjs';
 import { createRequire } from 'node:module';
 
 const Features = createRequire(import.meta.url)('../src/features.js');
@@ -34,8 +35,9 @@ const CONFIG_FILE = join(HOME, 'config.json');
 const MAX_BODY = 200 * 1024 * 1024;
 const VERSION = '0.1.0';
 // What this bridge can do beyond sync + commands (the extension checks before offering YouTube video downloads).
-// 'settings': POST /settings (feature flags + quota) and /settings/youtube-api-key; 'tracker': mcp/tracker.mjs.
-const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker'];
+// 'settings': POST /settings (feature flags + quota) and /settings/youtube-api-key; 'tracker': mcp/tracker.mjs;
+// 'niche': niche tracking (the org's tracking list, /youtube/niche/*, breakout alerts in the settings answer).
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
@@ -123,7 +125,10 @@ async function handle(req, res, port) {
   if (req.method === 'POST' && url.pathname === '/sync') {
     const body = await readBody(req);
     const lib = await applySync({ full: !!body.full, accounts: body.accounts, org: body.org, watches: body.watches, mentions: body.mentions });
-    return send(res, 200, { ok: true, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length }, origin);
+    // The tracking list lives in the org record (src/tracking.js): keep tracked_channels and its jobs in step.
+    let tracking = null;
+    try { tracking = NICHE.syncTracked(store(), lib); } catch (e) { log('niche tracking sync failed:', e.message); }
+    return send(res, 200, { ok: true, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length, tracking }, origin);
   }
   // Feature flags (src/features.js) and the extension's Data API unit count. Answers what the
   // bridge has set up, so the Features tab can say what is missing. Never echoes the key.
@@ -135,6 +140,10 @@ async function handle(req, res, port) {
       if (JSON.stringify(next) !== JSON.stringify(st.getMeta('features', null))) st.setMeta('features', next);
     }
     if (body.quota) setExtensionQuota(body.quota);
+    if (body.niche) {
+      const n = NICHE.sanitizeSettings(body.niche);
+      if (n && JSON.stringify(n) !== JSON.stringify(st.getMeta(NICHE.SETTINGS_META, null))) st.setMeta(NICHE.SETTINGS_META, n);
+    }
     return send(res, 200, await settingsAnswer(), origin);
   }
   if (req.method === 'POST' && url.pathname === '/settings/youtube-api-key') {
@@ -175,12 +184,35 @@ async function handle(req, res, port) {
     const st = jobStatus(jm[1]);
     return st ? send(res, 200, { ok: true, ...st }, origin) : send(res, 404, { error: 'unknown job (the bridge may have restarted)' }, origin);
   }
+  // Niche tracking (mcp/niche.mjs): the Library's Niş Takibi page, one video's curve, breakout acks.
+  if (method === 'GET' && url.pathname === '/youtube/niche/page') {
+    const niche = url.searchParams.has('niche') ? url.searchParams.get('niche') : undefined;
+    const tz = Number(url.searchParams.get('tz'));
+    return send(res, 200, NICHE.nichePage(store(), { niche, tzOffsetMin: Number.isFinite(tz) && Math.abs(tz) <= 14 * 60 ? tz : undefined, status: nicheStatus() }), origin);
+  }
+  if (method === 'GET' && url.pathname === '/youtube/niche/video') {
+    const r = NICHE.videoVelocity(store(), { video: url.searchParams.get('id') || '' });
+    return send(res, r.error ? 404 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r }, origin);
+  }
+  if (req.method === 'POST' && url.pathname === '/youtube/niche/alerts/ack') {
+    const body = await readBody(req);
+    return send(res, 200, { ok: true, acked: NICHE.ackAlerts(store(), Array.isArray(body.alerts) ? body.alerts.slice(0, 200) : []) }, origin);
+  }
   // My YouTube channel (YouTube Analytics API, the user's own OAuth client).
   if (url.pathname.startsWith('/youtube/analytics/')) {
     const r = await YA.handleRoute(method, url, { port });
     if (r) return send(res, r[0], r[1], origin);
   }
   return send(res, 404, { error: 'not found' }, origin);
+}
+
+/** What the Niche page says about the background jobs (is the tracker able to run, the quota). */
+function nicheStatus() {
+  const flags = Features.resolve(store().getMeta('features', null));
+  const key = apiKeyInfo();
+  const st = store().getMeta('tracker_state', null);
+  return { tracker: !!flags.tracker, breakout_alerts: !!flags['breakout-alerts'], weekly_digest: !!flags['weekly-digest'], api_key: !!key.key,
+    last_tick_at: st && st.lastTickAt || null, quota: apiQuota() };
 }
 
 async function settingsAnswer() {
@@ -193,7 +225,9 @@ async function settingsAnswer() {
     apiKey: { configured: !!key.key, source: key.source },
     oauth,
     quota: apiQuota(),
-    bridgeQuota: bridgeQuotaState() || null
+    bridgeQuota: bridgeQuotaState() || null,
+    // Breakouts the extension hasn't shown as a Chrome notification yet (it acks them).
+    niche: (() => { try { return { tracked: store().db.prepare('SELECT COUNT(*) AS n FROM tracked_channels WHERE active = 1').get().n, alerts: NICHE.pendingAlerts(store()), settings: NICHE.nicheSettings(store()) }; } catch { return null; } })()
   };
 }
 

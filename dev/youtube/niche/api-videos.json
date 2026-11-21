@@ -1,0 +1,39 @@
+{
+  "kind": "youtube#videoListResponse",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "id": "yTnicheL001",
+      "snippet": {
+        "publishedAt": "2026-11-20T15:00:07Z",
+        "channelId": "UCdemoExcelChannel000001",
+        "title": "XLOOKUP & FILTER: 7 tricks you'll use every day",
+        "description": "Download the practice file: https://example.com/file",
+        "thumbnails": { "high": { "url": "https://i.ytimg.com/vi/yTnicheL001/hqdefault.jpg", "width": 480, "height": 360 }, "maxres": { "url": "https://i.ytimg.com/vi/yTnicheL001/maxresdefault.jpg", "width": 1280, "height": 720 } },
+        "channelTitle": "Excel Demo Academy",
+        "tags": ["xlookup", "filter function", "excel tips"],
+        "categoryId": "27",
+        "liveBroadcastContent": "none"
+      },
+      "contentDetails": { "duration": "PT12M41S", "caption": "true" },
+      "statistics": { "viewCount": "49580", "likeCount": "1871", "favoriteCount": "0", "commentCount": "214" }
+    },
+    {
+      "kind": "youtube#video",
+      "id": "yTnicheS001",
+      "snippet": {
+        "publishedAt": "2026-11-21T07:15:00Z",
+        "channelId": "UCdemoExcelChannel000001",
+        "title": "Ctrl+E does WHAT? 🤯 #excel #shorts",
+        "description": "Flash Fill in one keystroke.",
+        "thumbnails": { "high": { "url": "https://i.ytimg.com/vi/yTnicheS001/hqdefault.jpg", "width": 480, "height": 360 } },
+        "channelTitle": "Excel Demo Academy",
+        "categoryId": "27",
+        "liveBroadcastContent": "none"
+      },
+      "contentDetails": { "duration": "PT38S", "caption": "false" },
+      "statistics": { "viewCount": "23411", "likeCount": "622", "favoriteCount": "0", "commentCount": "31" }
+    }
+  ],
+  "pageInfo": { "totalResults": 2, "resultsPerPage": 2 }
+}

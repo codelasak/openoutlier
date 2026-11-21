@@ -1,0 +1,19 @@
+{
+  "kind": "youtube#channelListResponse",
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "id": "UCdemoExcelChannel000001",
+      "snippet": { "title": "Excel Demo Academy", "customUrl": "@exceldemoacademy", "thumbnails": { "high": { "url": "https://yt3.ggpht.com/demo=s240" } } },
+      "contentDetails": { "relatedPlaylists": { "uploads": "UUdemoExcelChannel000001" } },
+      "statistics": { "viewCount": "48210334", "subscriberCount": "412000", "hiddenSubscriberCount": false, "videoCount": "623" }
+    },
+    {
+      "kind": "youtube#channel",
+      "id": "UChandsOnExcelDemo000002",
+      "snippet": { "title": "Hands on Excel", "customUrl": "@handsonexcel" },
+      "contentDetails": { "relatedPlaylists": { "uploads": "UUhandsOnExcelDemo000002" } },
+      "statistics": { "viewCount": "92110", "subscriberCount": "1240", "hiddenSubscriberCount": false, "videoCount": "41" }
+    }
+  ]
+}
