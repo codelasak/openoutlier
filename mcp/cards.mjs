@@ -22,6 +22,9 @@ const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 const CHANNEL_ID_RE = /^UC[A-Za-z0-9_-]{22}$/;
 export const MAX_VIDEOS = 300;
 export const MAX_CHANNELS = 100;
+// Card lookups read the latest counts straight from video_stats; only the velocity score comes
+// from the niche model, which may be up to this old (instead of rebuilt after every tracker write).
+export const CARD_MODEL_MAX_AGE = 5 * 60_000;
 
 function fmtOf(v) { return v && v.type === 'short' ? 'short' : 'long'; }
 function round(x, d = 2) { return x == null || !Number.isFinite(x) ? null : Math.round(x * 10 ** d) / 10 ** d; }
@@ -30,7 +33,7 @@ function round(x, d = 2) { return x == null || !Number.isFinite(x) ? null : Math
 function modelFor(store, channelId, now, memo) {
   const ch = store.db.prepare('SELECT niche FROM tracked_channels WHERE channel_id = ?').get(channelId);
   const key = ch ? ch.niche ?? '' : '';
-  if (!memo.has(key)) memo.set(key, loadModel(store, { niche: key, now }));
+  if (!memo.has(key)) memo.set(key, loadModel(store, { niche: key, now, maxAge: CARD_MODEL_MAX_AGE }));
   return memo.get(key);
 }
 

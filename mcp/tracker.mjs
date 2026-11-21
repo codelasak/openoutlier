@@ -32,7 +32,7 @@
 import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
 import { quotaOf, spendOn, apiKey as defaultApiKey } from './youtube-api.mjs';
-import { NICHE_KINDS, upsertJob } from './niche.mjs';
+import { NICHE_KINDS, NICHE_AFTER_TICK, upsertJob } from './niche.mjs';
 import { OWN_KINDS } from './own-history.mjs';
 import { DISCOVERY_KINDS } from './discovery.mjs';
 
@@ -119,6 +119,8 @@ export class Tracker {
     this.leaseMs = opts.leaseMs || 10 * MIN;
     this.owner = opts.owner || `${process.pid}:${randomUUID().slice(0, 8)}`;
     this.ctxExtra = opts.ctx || {}; // extra fields for job contexts (tests: thumbTools, backfillMax …)
+    // Work collected from every job of a tick and done once after it: name → (ctx, [payload …]).
+    this.afterTick = opts.afterTick || NICHE_AFTER_TICK;
     this.inFlight = null;
     this.timer = null;
     this.lastTick = null;
@@ -210,9 +212,11 @@ export class Tracker {
       runs = runs + 1, fails = 0, data = COALESCE(?, data) WHERE id = ?`);
     const failed = this.store.db.prepare('UPDATE tracker_jobs SET next_at = ?, last_ok = 0, last_error = ?, runs = runs + 1, fails = fails + 1 WHERE id = ?');
     const defer = this.store.db.prepare('UPDATE tracker_jobs SET next_at = ? WHERE id = ?');
+    const later = new Map();
     const makeCtx = (now, job, flags) => ({
       ...this.ctxExtra,
       now, store: this.store, log: this.log, fetch: this.fetch, apiKey: this.apiKey(), job, flags, random: this.random,
+      after: (name, payload) => { if (!later.has(name)) later.set(name, []); later.get(name).push(payload); },
       schedule: (id, fields) => this.schedule(id, fields),
       quota: {
         ...this.quota(),
@@ -250,6 +254,12 @@ export class Tracker {
       }
     }
     for (const name of batched) await this.runBatches(name, flags, makeCtx, out, { claim, done, failed, defer });
+    out.after = {};
+    for (const [name, payloads] of later) {
+      const fn = this.afterTick[name];
+      if (!fn) continue;
+      try { out.after[name] = await fn(makeCtx(this.now(), null, flags), payloads); } catch (e) { this.log('after-tick', name, 'failed:', e.message); }
+    }
     this.store.setMeta(STATE_META, { lastTickAt: this.lastTick.at, ran: out.ran.length, failed: out.failed.length, deferred: out.deferred.length, owner: this.owner });
     return out;
   }

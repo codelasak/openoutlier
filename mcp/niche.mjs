@@ -154,8 +154,14 @@ function upsertVideo(store, v, now, foundBy) {
     store.db.prepare(`INSERT INTO tracked_videos (video_id, channel_id, published_at, type, title, thumb, duration, keywords, description, first_seen, found_by, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(v.video_id, v.channel_id, v.published_at ?? null, v.type || null, v.title || null, v.thumb || null,
       v.duration ?? null, v.keywords ? JSON.stringify(v.keywords) : null, v.description || null, now, foundBy, now);
+    store.bumpStatsRev();
     return { added: true, prev: null };
   }
+  const kw = v.keywords ? JSON.stringify(v.keywords) : null;
+  const typeNext = v.type === 'live' || !prev.type ? v.type || null : null;
+  // Only a change the niche model reads invalidates its memo (the RSS job rewrites every entry every 15 min).
+  if ((v.published_at != null && v.published_at !== prev.published_at) || (typeNext && typeNext !== prev.type) || (v.title && v.title !== prev.title)
+    || (v.thumb && v.thumb !== prev.thumb) || (v.duration != null && v.duration !== prev.duration) || (kw && kw !== prev.keywords)) store.bumpStatsRev();
   store.db.prepare(`UPDATE tracked_videos SET published_at = COALESCE(?, published_at), type = COALESCE(?, type), title = COALESCE(?, title),
     thumb = COALESCE(?, thumb), duration = COALESCE(?, duration), keywords = COALESCE(?, keywords), description = COALESCE(?, description), updated_at = ? WHERE video_id = ?`)
     .run(v.published_at ?? null, v.type === 'live' || !prev.type ? v.type || null : null, v.title || null, v.thumb || null, v.duration ?? null,
@@ -203,11 +209,11 @@ async function rssJob(ctx, job) {
   for (const e of entries) {
     const r = upsertVideo(store, { ...e, channel_id: cid }, now, 'rss');
     // A Short can also appear in the long-form feed of channels YouTube hasn't split yet: Shorts feed wins.
-    if (!r.added && e.type === 'short' && r.prev.type !== 'short') store.db.prepare("UPDATE tracked_videos SET type = 'short' WHERE video_id = ?").run(e.video_id);
+    if (!r.added && e.type === 'short' && r.prev.type !== 'short') { store.db.prepare("UPDATE tracked_videos SET type = 'short' WHERE video_id = ?").run(e.video_id); store.bumpStatsRev(); }
     if (r.added) { added++; scheduleVideo(store, { ...e, channel_id: cid }, now, settings, ctx.random, true); }
     else if (!hasJob(store, 'video:' + e.video_id)) scheduleVideo(store, { ...e, channel_id: cid }, now, settings, ctx.random);
     // Premieres and scheduled videos show 0 views until they start.
-    if (e.views != null && !(e.views === 0 && now - e.published_at < 10 * MIN)) stats.push({ video_id: e.video_id, ts: now, views: e.views, likes: e.likes, source: 'rss' });
+    if (e.views != null && !(e.views === 0 && now - e.published_at < 10 * MIN)) stats.push({ video_id: e.video_id, ts: now, views: e.views, likes: e.likes, source: 'rss', published_at: e.published_at });
     const c = noteMeta(store, e.video_id, { title: e.title, thumbUrl: e.thumb }, now, 'rss');
     if (c) changes.push({ video_id: e.video_id, field: c });
   }
@@ -232,7 +238,7 @@ async function rssJob(ctx, job) {
   }
   store.db.prepare('UPDATE tracked_channels SET rss_checked_at = ?, name = COALESCE(name, ?), last_error = ? WHERE channel_id = ?')
     .run(now, feeds.channelName || null, feeds.errors.length ? feeds.errors.join('; ').slice(0, 300) : null, cid);
-  const alerts = checkBreakouts(ctx, entries.filter((e) => now - e.published_at < 30 * HOUR).map((e) => e.video_id));
+  const alerts = queueBreakouts(ctx, entries.filter((e) => now - e.published_at < 30 * HOUR).map((e) => e.video_id));
   return { data: { long: feeds.long.length, short: feeds.short.length, new: added, stats: stats.length, hashed, changes, alerts, errors: feeds.errors.length ? feeds.errors : undefined } };
 }
 
@@ -261,7 +267,7 @@ async function videoBatch(ctx, jobs) {
     results[j.id] = { next_at: m.next_at, tier: m.tier, data: null };
   }
   store.addVideoStats(stats);
-  checkBreakouts(ctx, jobs.filter((j) => j.published_at && now - j.published_at < 30 * HOUR).map((j) => j.video_id));
+  queueBreakouts(ctx, jobs.filter((j) => j.published_at && now - j.published_at < 30 * HOUR).map((j) => j.video_id));
   return results;
 }
 
@@ -356,6 +362,18 @@ async function digestJob(ctx) {
   return { data: { week: prev.week, uploads: data.totals.uploads } };
 }
 
+/**
+ * Breakout checks run once per niche per tracker tick (the tracker calls NICHE_AFTER_TICK.breakouts
+ * with every job's candidates), not once per RSS job: each check rebuilds the niche model.
+ * Without a tracker (a job run by hand) the check runs right away. → alerts added now (0 when queued)
+ */
+function queueBreakouts(ctx, ids) {
+  if (!ids.length) return 0;
+  if (typeof ctx.after === 'function') { ctx.after('breakouts', ids); return 0; }
+  return checkBreakouts(ctx, ids);
+}
+export const NICHE_AFTER_TICK = { breakouts: (ctx, lists) => checkBreakouts(ctx, lists.flat()) };
+
 export const NICHE_KINDS = {
   rss: { feature: 'tracker', every: 15 * MIN, jitter: 2 * MIN, units: 0, run: rssJob },
   video: {
@@ -388,12 +406,15 @@ export function nicheNames(store) {
  * Points are limited to each video's first 31 days (the curves stop at 30 d); the
  * latest reading of every video comes separately.
  */
-export function loadModel(store, { niche, now = Date.now(), fresh = false } = {}) {
+export function loadModel(store, { niche, now = Date.now(), fresh = false, maxAge = 0 } = {}) {
   const key = store.file + '|' + (niche ?? '*');
   const hit = memo.get(key);
-  const statN = store.db.prepare('SELECT COUNT(*) AS n, MAX(ts) AS t FROM video_stats').get();
-  const sig = statN.n + ':' + statN.t + ':' + store.db.prepare('SELECT COUNT(*) AS n FROM tracked_videos').get().n;
-  if (!fresh && hit && hit.sig === sig && now - hit.at < MEMO_MS) return hit.model;
+  // The signature is a write counter (store.statsRev: new video_stats rows, tracked_videos changes),
+  // so a read costs one meta lookup. Read paths (the YouTube card lookups while the user scrolls)
+  // pass maxAge to reuse a model that is a little behind instead of rebuilding after every write.
+  const sig = store.statsRev();
+  const age = hit ? now - hit.at : Infinity;
+  if (!fresh && hit && age >= 0 && ((hit.sig === sig && age < MEMO_MS) || age < maxAge)) return hit.model;
   const where = niche === undefined || niche === null || niche === '*' ? '' : niche === '' ? ' AND niche IS NULL' : ' AND niche = ?';
   const args = where.includes('?') ? [niche] : [];
   const channels = store.db.prepare('SELECT * FROM tracked_channels WHERE active = 1' + where + ' ORDER BY mine DESC, name').all(...args);

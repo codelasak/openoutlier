@@ -374,8 +374,50 @@ export const MIGRATIONS = [
   {
     version: 5, name: 'discovery: co-recommendations, seen channels, niche radar, thumbnail hashes, autocomplete cache, provider rank checks',
     up: (st) => st.db.exec(SCHEMA_DISCOVERY)
+  },
+  {
+    version: 6, name: 'video_stats: collapse runs of unchanged RSS readings (curves unchanged), stats revision counter',
+    up: (st) => { collapseRssRuns(st); st.setMeta('stats_rev', (Number(st.getMeta('stats_rev', 0)) || 0) + 1); }
   }
 ];
+
+// ---- unchanged RSS readings ---------------------------------------------------------------
+// The RSS job reads every tracked channel's feeds every 15 min; most of the time a video's
+// views and likes haven't moved. When a new RSS reading equals the last three rows of its video,
+// the middle one of those (B in A · B · C · new) is deleted if it came from RSS: a flat run keeps
+// its first row, its last two, and one row at least every RSS_GAP_YOUNG (videos younger than 30
+// days: src/velocity.js counts a bracket ≤ 2 h as known) or RSS_GAP_OLD (older: the curves stop at
+// 30 days). B sits between two rows with its own value, so linear interpolation is the same at
+// every moment and every checkpoint stays known; keeping the last two (not one) also survives
+// velocity.series merging a later API reading taken in the same second as the run's last row.
+export const RSS_GAP_YOUNG = 2 * 36e5;
+export const RSS_GAP_OLD = 864e5;
+const RSS_YOUNG_MS = 30 * 864e5;
+const sameReading = (a, b) => !!(a && b) && a.views === b.views && (a.likes ?? null) === (b.likes ?? null);
+export function rssGap(publishedAt, ts) { return publishedAt && ts - publishedAt > RSS_YOUNG_MS ? RSS_GAP_OLD : RSS_GAP_YOUNG; }
+/** [A, B, C] = the three rows before an RSS reading r, oldest first: may B go? */
+function collapsible(a, b, c, r, publishedAt) {
+  return r.source === 'rss' && r.views != null && b && b.source === 'rss' && sameReading(a, r) && sameReading(b, r) && sameReading(c, r)
+    && c.ts - a.ts <= rssGap(publishedAt, r.ts);
+}
+
+/** Migration 6: delete the middle rows of existing runs, with the same rule the writer uses. → rows deleted */
+export function collapseRssRuns(st) {
+  const pub = new Map(st.db.prepare('SELECT video_id, published_at FROM tracked_videos').all().map((r) => [r.video_id, r.published_at]));
+  const del = st.db.prepare('DELETE FROM video_stats WHERE video_id = ? AND ts = ?');
+  const doomed = [];
+  let video = null;
+  let kept = [];
+  for (const r of st.db.prepare('SELECT video_id, ts, views, likes, source FROM video_stats ORDER BY video_id, ts').iterate()) {
+    if (r.video_id !== video) { video = r.video_id; kept = []; }
+    const k = kept.length;
+    if (k >= 3 && collapsible(kept[k - 3], kept[k - 2], kept[k - 1], r, pub.get(r.video_id))) { doomed.push([r.video_id, kept[k - 2].ts]); kept.splice(k - 2, 1); }
+    kept.push(r);
+  }
+  for (const [id, ts] of doomed) del.run(id, ts);
+  return doomed.length;
+}
+
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : null);
@@ -439,16 +481,31 @@ export class Store {
 
   // ---- YouTube niche tracking (mcp/tracker.mjs) ---------------------------------
 
-  /** Record measurements: [{ video_id, ts, views, likes, comments, source }]. Same video + ts twice: the first wins. */
+  /**
+   * Record measurements: [{ video_id, ts, views, likes, comments, source, published_at? }].
+   * Same video + ts twice: the first wins. An RSS reading equal to the video's last three rows
+   * replaces the middle one of them (see collapseRssRuns); `published_at` picks the gap (2 h
+   * young, 1 day after 30 days). → rows added (a replaced row counts 0)
+   */
   addVideoStats(rows) {
     const ins = this.db.prepare('INSERT OR IGNORE INTO video_stats (video_id, ts, views, likes, comments, source) VALUES (?, ?, ?, ?, ?, ?)');
+    const lastThree = this.db.prepare('SELECT ts, views, likes, source FROM video_stats WHERE video_id = ? AND ts < ? ORDER BY ts DESC LIMIT 3');
+    const del = this.db.prepare('DELETE FROM video_stats WHERE video_id = ? AND ts = ?');
     let n = 0;
     this.db.exec('BEGIN IMMEDIATE');
     try {
       for (const r of rows || []) {
         if (!r || !r.video_id || !['api', 'rss', 'page'].includes(r.source)) continue;
-        n += Number(ins.run(String(r.video_id), num(r.ts) || Date.now(), num(r.views), num(r.likes), num(r.comments), r.source).changes);
+        const id = String(r.video_id);
+        const row = { ts: num(r.ts) || Date.now(), views: num(r.views), likes: num(r.likes), source: r.source };
+        const [c, b, a] = row.source === 'rss' && row.views != null ? lastThree.all(id, row.ts) : [];
+        const replaces = a && collapsible(a, b, c, row, num(r.published_at));
+        const added = Number(ins.run(id, row.ts, row.views, row.likes, num(r.comments), row.source).changes);
+        if (added && replaces) del.run(id, b.ts);
+        else n += added;
       }
+      // Only new information invalidates the niche model's memo, not a run growing longer.
+      if (n) this.bumpStatsRev();
       this.db.exec('COMMIT');
     } catch (e) {
       this.db.exec('ROLLBACK');
@@ -456,6 +513,10 @@ export class Store {
     }
     return n;
   }
+
+  /** A counter bumped on every new video_stats row and tracked_videos change: the niche model's memo signature. */
+  statsRev() { return Number(this.getMeta('stats_rev', 0)) || 0; }
+  bumpStatsRev() { this.setMeta('stats_rev', this.statsRev() + 1); }
 
   /** Measurements of one video, oldest first. */
   videoStats(videoId) {
