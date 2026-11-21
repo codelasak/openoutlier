@@ -52,6 +52,7 @@ const VERSION = '0.1.0';
 const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools', 'discovery', 'providers'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
+const seenWrittenAt = {}; // port → when "extension last seen" was last written to status.json
 
 async function readConfig() {
   try { return JSON.parse(await fs.readFile(CONFIG_FILE, 'utf8')); } catch { return {}; }
@@ -127,7 +128,12 @@ async function handle(req, res, port) {
     return res.end();
   }
 
-  await writeStatus({ extensionId: m[1], extensionSeenAt: Date.now(), port });
+  // "Extension last seen": at most every 10 s per port, and never a reason to fail the request
+  // (the in-page cards send many requests at once).
+  if (Date.now() - (seenWrittenAt[port] || 0) > 10_000) {
+    seenWrittenAt[port] = Date.now();
+    writeStatus({ extensionId: m[1], extensionSeenAt: Date.now(), port }).catch((e) => log('status write failed:', e.message));
+  }
 
   // Chrome leaves the Origin header off an extension's GET requests to hosts it has permission
   // for, so a GET from the real extension never gets past the check above (it only ever arrived

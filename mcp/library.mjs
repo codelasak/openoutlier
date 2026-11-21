@@ -23,8 +23,10 @@ export async function ensureHome() {
   await fs.mkdir(COMMANDS_DIR, { recursive: true });
 }
 
+let tmpSeq = 0;
 async function writeJsonAtomic(file, value) {
-  const tmp = file + '.' + process.pid + '.tmp';
+  // A unique temp name per write: concurrent requests in one process must not rename each other's file.
+  const tmp = `${file}.${process.pid}.${++tmpSeq}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(value));
   await fs.rename(tmp, file);
 }
