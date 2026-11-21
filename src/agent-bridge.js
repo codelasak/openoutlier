@@ -612,9 +612,36 @@
     return j;
   }
 
+  /**
+   * Phase 4's content tools (mcp/content.mjs): msg.what = 'comments' (the comments a watch page loaded,
+   * for get_comments; the bridge keeps them 7 days) or 'sponsors' ({ channel: UC… }, the channel card).
+   * Quietly empty without a (new enough) bridge.
+   */
+  async function content(msg) {
+    var st = await getState();
+    if (!st.connected) return { ok: false, noBridge: true };
+    var found = await findServer(st);
+    if (!found) return { ok: false, noBridge: true };
+    if ((found.health.features || []).indexOf('content-tools') === -1) return { ok: false, oldBridge: true };
+    if (msg.what === 'comments') {
+      if (!/^[A-Za-z0-9_-]{11}$/.test(String(msg.video || ''))) return { ok: false, error: 'bad request' };
+      var list = (Array.isArray(msg.comments) ? msg.comments : []).slice(-2000).map(function (c) {
+        return { id: c.id, author: c.author, authorId: c.authorId, text: String(c.text || '').slice(0, 5000), likes: c.likes, replies: c.replies, published: c.published, reply: !!c.reply, parent: c.parent, pinned: !!c.pinned, hearted: !!c.hearted, creator: !!c.creator };
+      });
+      return post(found.port, '/youtube/comments', { video: msg.video, title: msg.title ? String(msg.title).slice(0, 300) : null, channel_id: /^UC[A-Za-z0-9_-]{22}$/.test(String(msg.channel_id || '')) ? msg.channel_id : null, total: msg.total, comments: list });
+    }
+    if (msg.what === 'sponsors' && /^UC[A-Za-z0-9_-]{22}$/.test(String(msg.channel || ''))) {
+      var res = await read(found.port, '/youtube/sponsors?channel=' + msg.channel, 20000);
+      var j = await res.json().catch(function () { return {}; });
+      if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
+      return j;
+    }
+    return { ok: false, error: 'bad request' };
+  }
+
   chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (!msg || sender.id !== chrome.runtime.id) return;
-    var fn = msg.type === 'reelscope:yt-cards' ? cards : msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
+    var fn = msg.type === 'reelscope:yt-content' ? content : msg.type === 'reelscope:yt-cards' ? cards : msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
       : msg.type === 'reelscope:bridge-key' ? bridgeKey : msg.type === 'reelscope:niche' ? niche : msg.type === 'reelscope:own' ? own : null;
     if (!fn) return;
     fn(msg).then(sendResponse, function (e) {

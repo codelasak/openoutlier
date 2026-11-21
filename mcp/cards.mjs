@@ -115,6 +115,7 @@ export function videoCard(store, { video, now = Date.now() } = {}) {
   if (last) out.latest = { views: last.views, likes: last.likes, comments: last.comments, ts: last.ts, source: last.source };
   if (!t) return out;
   out.tracked = true;
+  out.history = titleHistory(store, id, t.published_at, all, now);
   out.published_at = t.published_at;
   out.type = t.type;
   if (t.published_at) {
@@ -132,6 +133,28 @@ export function videoCard(store, { video, now = Date.now() } = {}) {
     }
   }
   return out;
+}
+
+/**
+ * Title and thumbnail changes of a tracked video (title-history, phase 1's video_meta_log), newest first:
+ * [{ at, field: 'title' | 'thumb', before, after, before_snap, after_snap, vph_before, vph_after }].
+ * vph_* = views per hour in the 24 h before / after the change (from the tracker's measurements).
+ */
+export function titleHistory(store, id, publishedAt, stats, now = Date.now()) {
+  const log = store.db.prepare('SELECT ts, title, thumb_hash, thumb_snap FROM video_meta_log WHERE video_id = ? ORDER BY ts').all(id);
+  if (log.length < 2) return [];
+  const pts = (stats || store.videoStats(id)).filter((p) => p.views != null);
+  const out = [];
+  for (let i = 1; i < log.length; i++) {
+    const a = log[i - 1];
+    const b = log[i];
+    const field = a.title !== b.title ? 'title' : 'thumb';
+    const s = publishedAt ? V.slopeAround(pts, publishedAt, b.ts, 24) : { before: null, after: null };
+    out.push({ at: b.ts, field, before: field === 'title' ? a.title : null, after: field === 'title' ? b.title : null,
+      before_snap: field === 'thumb' ? a.thumb_snap || null : null, after_snap: field === 'thumb' ? b.thumb_snap || null : null,
+      vph_before: s.before == null ? null : Math.round(s.before), vph_after: s.after == null || now - b.ts < 24 * HOUR ? null : Math.round(s.after) });
+  }
+  return out.reverse().slice(0, 10);
 }
 
 /** The user's own upload: YouTube Analytics totals from own_video_daily, or null. */

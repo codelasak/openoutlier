@@ -126,11 +126,24 @@ export async function hashImage(buf, tools = {}) {
 }
 
 /** Download a thumbnail (i.ytimg.com only) and hash it. → hash | null */
-export async function hashThumb(url, { fetch: doFetch = globalThis.fetch, tools = {} } = {}) {
+export async function hashThumb(url, opts = {}) {
+  const r = await thumbAndSnap(url, opts);
+  return r ? r.hash : null;
+}
+
+export const SNAP_MAX = 90 * 1024;
+/**
+ * Download a thumbnail (i.ytimg.com only), hash it and, with keep, also return the image as a
+ * data: URL (≤ SNAP_MAX bytes) so the title history can show what it looked like before a change
+ * (YouTube serves a new image behind the same URL). → { hash, snap } | null
+ */
+export async function thumbAndSnap(url, { fetch: doFetch = globalThis.fetch, tools = {}, keep = false } = {}) {
   if (!/^https:\/\/i[0-9]?\.ytimg\.com\//.test(String(url || ''))) return null;
   const res = await doFetch(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) return null;
   const buf = Buffer.from(await res.arrayBuffer());
   if (!buf.length) return null;
-  return hashImage(buf, tools);
+  const hash = await hashImage(buf, tools);
+  const type = buf[0] === 0x89 ? 'image/png' : buf[0] === 0x52 && buf[8] === 0x57 ? 'image/webp' : 'image/jpeg';
+  return { hash, snap: keep && buf.length <= SNAP_MAX ? `data:${type};base64,${buf.toString('base64')}` : null };
 }

@@ -1,0 +1,813 @@
+{
+ "scope": {
+  "niche": "Excel"
+ },
+ "days": 365,
+ "scanned": 60,
+ "channels_scanned": 15,
+ "short_links": 14,
+ "brands": [
+  {
+   "key": "brilliant",
+   "brand": "Brilliant",
+   "kinds": [
+    "sponsor",
+    "brand-link",
+    "discount"
+   ],
+   "videos": 8,
+   "channels": [
+    {
+     "id": "UCsimExcelCampusxxxxxxxx",
+     "name": "Excel Campus",
+     "videos": 2
+    },
+    {
+     "id": "UCsimlearnskillsdailyxxx",
+     "name": "Learn Skills Daily",
+     "videos": 2
+    },
+    {
+     "id": "UCsimMyOnlineTrainingHub",
+     "name": "MyOnlineTrainingHub",
+     "videos": 2
+    },
+    {
+     "id": "UCsimbrightmindshubxxxxx",
+     "name": "Bright Minds Hub",
+     "videos": 1
+    },
+    {
+     "id": "UCsimexceldictionaryxxxx",
+     "name": "Excel Dictionary",
+     "videos": 1
+    }
+   ],
+   "codes": [],
+   "domains": [
+    "brilliant.org"
+   ],
+   "first_at": "2026-07-05",
+   "last_at": "2026-11-04",
+   "examples": [
+    {
+     "id": "yTsim0x1",
+     "title": "video 1",
+     "channel": "Bright Minds Hub",
+     "published_at": 1793102400000,
+     "kind": "sponsor",
+     "text": "Today's sponsor is Brilliant. Go to https://brilliant.org/BrightMindsHub/ for 20% off an…",
+     "code": null
+    },
+    {
+     "id": "yTsim3x0",
+     "title": "video 0",
+     "channel": "Excel Campus",
+     "published_at": 1793793600000,
+     "kind": "sponsor",
+     "text": "Today's sponsor is Brilliant. Go to https://brilliant.org/ExcelCampus/ for 20% off an an…",
+     "code": null
+    },
+    {
+     "id": "yTsim3x3",
+     "title": "video 3",
+     "channel": "Excel Campus",
+     "published_at": 1787832000000,
+     "kind": "sponsor",
+     "text": "Today's sponsor is Brilliant. Go to https://brilliant.org/ExcelCampus/ for 20% off an an…",
+     "code": null
+    }
+   ]
+  },
+  {
+   "key": "kutools",
+   "brand": "Kutools",
+   "kinds": [
+    "sponsor",
+    "code",
+    "discount",
+    "affiliate"
+   ],
+   "videos": 7,
+   "channels": [
+    {
+     "id": "UCsimexcelchampionxxxxxx",
+     "name": "Excel Champion",
+     "videos": 2
+    },
+    {
+     "id": "UCsimsimonsezitxxxxxxxxx",
+     "name": "Simon Sez IT",
+     "videos": 2
+    },
+    {
+     "id": "UCsimCodyBaldwinxxxxxxxx",
+     "name": "Cody Baldwin",
+     "videos": 1
+    },
+    {
+     "id": "UCsimKenjiExplainsxxxxxx",
+     "name": "Kenji Explains",
+     "videos": 1
+    },
+    {
+     "id": "UCsimLeilaGharanixxxxxxx",
+     "name": "Leila Gharani",
+     "videos": 1
+    }
+   ],
+   "codes": [
+    "CODYBALD20",
+    "EXCELCHA20",
+    "KENJIEXP20",
+    "LEILAGHA20",
+    "SIMONSEZ20"
+   ],
+   "domains": [
+    "kutools.com"
+   ],
+   "first_at": "2026-07-08",
+   "last_at": "2026-10-30",
+   "examples": [
+    {
+     "id": "yTsim1x1",
+     "title": "video 1",
+     "channel": "Cody Baldwin",
+     "published_at": 1792670400000,
+     "kind": "sponsor",
+     "text": "Thanks to Kutools for sponsoring! Use code CODYBALD20 for 20% off: https://www.kutools.com/?…",
+     "code": null
+    },
+    {
+     "id": "yTsim4x0",
+     "title": "video 0",
+     "channel": "Excel Champion",
+     "published_at": 1793361600000,
+     "kind": "sponsor",
+     "text": "Thanks to Kutools for sponsoring! Use code EXCELCHA20 for 20% off: https://www.kutools.com/?…",
+     "code": null
+    },
+    {
+     "id": "yTsim4x3",
+     "title": "video 3",
+     "channel": "Excel Champion",
+     "published_at": 1787400000000,
+     "kind": "sponsor",
+     "text": "Thanks to Kutools for sponsoring! Use code EXCELCHA20 for 20% off: https://www.kutools.com/?…",
+     "code": null
+    }
+   ]
+  },
+  {
+   "key": "skillshare",
+   "brand": "Skillshare",
+   "kinds": [
+    "sponsor",
+    "utm"
+   ],
+   "videos": 6,
+   "channels": [
+    {
+     "id": "UCsimlearnskillsdailyxxx",
+     "name": "Learn Skills Daily",
+     "videos": 2
+    },
+    {
+     "id": "UCsimbrightmindshubxxxxx",
+     "name": "Bright Minds Hub",
+     "videos": 1
+    },
+    {
+     "id": "UCsimExcelCampusxxxxxxxx",
+     "name": "Excel Campus",
+     "videos": 1
+    },
+    {
+     "id": "UCsimexceldictionaryxxxx",
+     "name": "Excel Dictionary",
+     "videos": 1
+    },
+    {
+     "id": "UCsimMyOnlineTrainingHub",
+     "name": "MyOnlineTrainingHub",
+     "videos": 1
+    }
+   ],
+   "codes": [],
+   "domains": [
+    "skl.sh"
+   ],
+   "first_at": "2026-07-28",
+   "last_at": "2026-11-19",
+   "examples": [
+    {
+     "id": "yTsim0x0",
+     "title": "video 0",
+     "channel": "Bright Minds Hub",
+     "published_at": 1795089600000,
+     "kind": "sponsor",
+     "text": "This video is sponsored by Skillshare. The first 500 people get a free month: https://skl.sh/brig…",
+     "code": null
+    },
+    {
+     "id": "yTsim3x2",
+     "title": "video 2",
+     "channel": "Excel Campus",
+     "published_at": 1789819200000,
+     "kind": "sponsor",
+     "text": "This video is sponsored by Skillshare. The first 500 people get a free month: https://skl.sh/exce…",
+     "code": null
+    },
+    {
+     "id": "yTsim6x1",
+     "title": "video 1",
+     "channel": "Excel Dictionary",
+     "published_at": 1790510400000,
+     "kind": "sponsor",
+     "text": "This video is sponsored by Skillshare. The first 500 people get a free month: https://skl.sh/exce…",
+     "code": null
+    }
+   ]
+  },
+  {
+   "key": "nordvpn",
+   "brand": "NordVPN",
+   "kinds": [
+    "sponsor",
+    "discount",
+    "brand-link",
+    "code"
+   ],
+   "videos": 6,
+   "channels": [
+    {
+     "id": "UCsimexcelchampionxxxxxx",
+     "name": "Excel Champion",
+     "videos": 2
+    },
+    {
+     "id": "UCsimCodyBaldwinxxxxxxxx",
+     "name": "Cody Baldwin",
+     "videos": 1
+    },
+    {
+     "id": "UCsimKenjiExplainsxxxxxx",
+     "name": "Kenji Explains",
+     "videos": 1
+    },
+    {
+     "id": "UCsimLeilaGharanixxxxxxx",
+     "name": "Leila Gharani",
+     "videos": 1
+    },
+    {
+     "id": "UCsimsimonsezitxxxxxxxxx",
+     "name": "Simon Sez IT",
+     "videos": 1
+    }
+   ],
+   "codes": [
+    "EXCEL"
+   ],
+   "domains": [
+    "nordvpn.com"
+   ],
+   "first_at": "2026-07-07",
+   "last_at": "2026-11-14",
+   "examples": [
+    {
+     "id": "yTsim1x0",
+     "title": "video 0",
+     "channel": "Cody Baldwin",
+     "published_at": 1794657600000,
+     "kind": "sponsor",
+     "text": "Thanks to NordVPN for sponsoring today's video! Get 68% off: https://nordvpn.com/codybaldwin…",
+     "code": null
+    },
+    {
+     "id": "yTsim4x2",
+     "title": "video 2",
+     "channel": "Excel Champion",
+     "published_at": 1789387200000,
+     "kind": "sponsor",
+     "text": "Thanks to NordVPN for sponsoring today's video! Get 68% off: https://nordvpn.com/excelchampi…",
+     "code": null
+    },
+    {
+     "id": "yTsim4x5",
+     "title": "video 5",
+     "channel": "Excel Champion",
+     "published_at": 1783425600000,
+     "kind": "sponsor",
+     "text": "Thanks to NordVPN for sponsoring today's video! Get 68% off: https://nordvpn.com/excelchampi…",
+     "code": null
+    }
+   ]
+  },
+  {
+   "key": "amazon",
+   "brand": "Amazon",
+   "kinds": [
+    "affiliate"
+   ],
+   "videos": 6,
+   "channels": [
+    {
+     "id": "UCsimTechnologyforTeache",
+     "name": "Technology for Teachers and Students",
+     "videos": 2
+    },
+    {
+     "id": "UCsimeasyclicklearningxx",
+     "name": "Easy Click Learning",
+     "videos": 1
+    },
+    {
+     "id": "UCsimexcelchampsxxxxxxxx",
+     "name": "Excel Champs",
+     "videos": 1
+    },
+    {
+     "id": "UCsimKevinStratvertxxxxx",
+     "name": "Kevin Stratvert",
+     "videos": 1
+    },
+    {
+     "id": "UCsimmarganalyticsxxxxxx",
+     "name": "Marg Analytics",
+     "videos": 1
+    }
+   ],
+   "codes": [],
+   "domains": [
+    "amzn.to",
+    "amazon.com"
+   ],
+   "first_at": "2026-07-03",
+   "last_at": "2026-10-25",
+   "examples": [
+    {
+     "id": "yTsim2x1",
+     "title": "video 1",
+     "channel": "Easy Click Learning",
+     "published_at": 1792238400000,
+     "kind": "affiliate",
+     "text": "…iate links, I earn a small commission): https://amzn.to/3x19Kb https://www.amazon.com/dp/B0C19?tag=easyclicklearning-20",
+     "code": null
+    },
+    {
+     "id": "yTsim5x0",
+     "title": "video 0",
+     "channel": "Excel Champs",
+     "published_at": 1792929600000,
+     "kind": "affiliate",
+     "text": "…iate links, I earn a small commission): https://amzn.to/3x12Kb https://www.amazon.com/dp/B0C12?tag=excelchamps-20",
+     "code": null
+    },
+    {
+     "id": "yTsim8x2",
+     "title": "video 2",
+     "channel": "Kevin Stratvert",
+     "published_at": 1787659200000,
+     "kind": "affiliate",
+     "text": "…iate links, I earn a small commission): https://amzn.to/3x15Kb https://www.amazon.com/dp/B0C15?tag=kevinstratvert-20",
+     "code": null
+    }
+   ]
+  },
+  {
+   "key": "microsoft",
+   "brand": "Microsoft",
+   "kinds": [
+    "sponsor",
+    "utm"
+   ],
+   "videos": 7,
+   "channels": [
+    {
+     "id": "UCsimexcelchampionxxxxxx",
+     "name": "Excel Champion",
+     "videos": 2
+    },
+    {
+     "id": "UCsimKenjiExplainsxxxxxx",
+     "name": "Kenji Explains",
+     "videos": 2
+    },
+    {
+     "id": "UCsimsimonsezitxxxxxxxxx",
+     "name": "Simon Sez IT",
+     "videos": 2
+    },
+    {
+     "id": "UCsimCodyBaldwinxxxxxxxx",
+     "name": "Cody Baldwin",
+     "videos": 1
+    }
+   ],
+   "codes": [],
+   "domains": [
+    "aka.ms"
+   ],
+   "first_at": "2026-06-15",
+   "last_at": "2026-10-15",
+   "examples": [
+    {
+     "id": "yTsim1x2",
+     "title": "video 2",
+     "channel": "Cody Baldwin",
+     "published_at": 1790683200000,
+     "kind": "sponsor",
+     "text": "In partnership with Microsoft. Copilot in Excel: https://aka.ms/copilot-excel?utm_source=…",
+     "code": null
+    },
+    {
+     "id": "yTsim4x1",
+     "title": "video 1",
+     "channel": "Excel Champion",
+     "published_at": 1791374400000,
+     "kind": "sponsor",
+     "text": "In partnership with Microsoft. Copilot in Excel: https://aka.ms/copilot-excel?utm_source=…",
+     "code": null
+    },
+    {
+     "id": "yTsim4x4",
+     "title": "video 4",
+     "channel": "Excel Champion",
+     "published_at": 1785412800000,
+     "kind": "sponsor",
+     "text": "In partnership with Microsoft. Copilot in Excel: https://aka.ms/copilot-excel?utm_source=…",
+     "code": null
+    }
+   ]
+  },
+  {
+   "key": "ablebits",
+   "brand": "Ablebits",
+   "kinds": [
+    "utm"
+   ],
+   "videos": 6,
+   "channels": [
+    {
+     "id": "UCsimExcelCampusxxxxxxxx",
+     "name": "Excel Campus",
+     "videos": 2
+    },
+    {
+     "id": "UCsimlearnskillsdailyxxx",
+     "name": "Learn Skills Daily",
+     "videos": 2
+    },
+    {
+     "id": "UCsimexceldictionaryxxxx",
+     "name": "Excel Dictionary",
+     "videos": 1
+    },
+    {
+     "id": "UCsimMyOnlineTrainingHub",
+     "name": "MyOnlineTrainingHub",
+     "videos": 1
+    }
+   ],
+   "codes": [],
+   "domains": [
+    "ablebits.com"
+   ],
+   "first_at": "2026-06-12",
+   "last_at": "2026-10-20",
+   "examples": [
+    {
+     "id": "yTsim3x1",
+     "title": "video 1",
+     "channel": "Excel Campus",
+     "published_at": 1791806400000,
+     "kind": "utm",
+     "text": "Ablebits add-ins: https://www.ablebits.com/?utm_source=youtube&utm_campaign=lookup",
+     "code": null
+    },
+    {
+     "id": "yTsim3x4",
+     "title": "video 4",
+     "channel": "Excel Campus",
+     "published_at": 1785844800000,
+     "kind": "utm",
+     "text": "Ablebits add-ins: https://www.ablebits.com/?utm_source=youtube&utm_campaign=lookup",
+     "code": null
+    },
+    {
+     "id": "yTsim6x0",
+     "title": "video 0",
+     "channel": "Excel Dictionary",
+     "published_at": 1792497600000,
+     "kind": "utm",
+     "text": "Ablebits add-ins: https://www.ablebits.com/?utm_source=youtube&utm_campaign=lookup",
+     "code": null
+    }
+   ]
+  }
+ ],
+ "channels": [
+  {
+   "id": "UCsimexcelchampionxxxxxx",
+   "name": "Excel Champion",
+   "scanned": 6,
+   "with_mentions": 6,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "kutools",
+     "brand": "Kutools",
+     "videos": 2
+    },
+    {
+     "key": "microsoft",
+     "brand": "Microsoft",
+     "videos": 2
+    },
+    {
+     "key": "nordvpn",
+     "brand": "NordVPN",
+     "videos": 2
+    }
+   ]
+  },
+  {
+   "id": "UCsimlearnskillsdailyxxx",
+   "name": "Learn Skills Daily",
+   "scanned": 6,
+   "with_mentions": 6,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "skillshare",
+     "brand": "Skillshare",
+     "videos": 2
+    },
+    {
+     "key": "brilliant",
+     "brand": "Brilliant",
+     "videos": 2
+    },
+    {
+     "key": "ablebits",
+     "brand": "Ablebits",
+     "videos": 2
+    }
+   ]
+  },
+  {
+   "id": "UCsimExcelCampusxxxxxxxx",
+   "name": "Excel Campus",
+   "scanned": 5,
+   "with_mentions": 5,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "brilliant",
+     "brand": "Brilliant",
+     "videos": 2
+    },
+    {
+     "key": "ablebits",
+     "brand": "Ablebits",
+     "videos": 2
+    },
+    {
+     "key": "skillshare",
+     "brand": "Skillshare",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimsimonsezitxxxxxxxxx",
+   "name": "Simon Sez IT",
+   "scanned": 5,
+   "with_mentions": 5,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "kutools",
+     "brand": "Kutools",
+     "videos": 2
+    },
+    {
+     "key": "microsoft",
+     "brand": "Microsoft",
+     "videos": 2
+    },
+    {
+     "key": "nordvpn",
+     "brand": "NordVPN",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimKenjiExplainsxxxxxx",
+   "name": "Kenji Explains",
+   "scanned": 4,
+   "with_mentions": 4,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "microsoft",
+     "brand": "Microsoft",
+     "videos": 2
+    },
+    {
+     "key": "nordvpn",
+     "brand": "NordVPN",
+     "videos": 1
+    },
+    {
+     "key": "kutools",
+     "brand": "Kutools",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimMyOnlineTrainingHub",
+   "name": "MyOnlineTrainingHub",
+   "scanned": 4,
+   "with_mentions": 4,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "brilliant",
+     "brand": "Brilliant",
+     "videos": 2
+    },
+    {
+     "key": "ablebits",
+     "brand": "Ablebits",
+     "videos": 1
+    },
+    {
+     "key": "skillshare",
+     "brand": "Skillshare",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimCodyBaldwinxxxxxxxx",
+   "name": "Cody Baldwin",
+   "scanned": 3,
+   "with_mentions": 3,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "nordvpn",
+     "brand": "NordVPN",
+     "videos": 1
+    },
+    {
+     "key": "kutools",
+     "brand": "Kutools",
+     "videos": 1
+    },
+    {
+     "key": "microsoft",
+     "brand": "Microsoft",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimexceldictionaryxxxx",
+   "name": "Excel Dictionary",
+   "scanned": 3,
+   "with_mentions": 3,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "ablebits",
+     "brand": "Ablebits",
+     "videos": 1
+    },
+    {
+     "key": "skillshare",
+     "brand": "Skillshare",
+     "videos": 1
+    },
+    {
+     "key": "brilliant",
+     "brand": "Brilliant",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimTechnologyforTeache",
+   "name": "Technology for Teachers and Students",
+   "scanned": 6,
+   "with_mentions": 2,
+   "disclosure": 2,
+   "brands": [
+    {
+     "key": "amazon",
+     "brand": "Amazon",
+     "videos": 2
+    }
+   ]
+  },
+  {
+   "id": "UCsimbrightmindshubxxxxx",
+   "name": "Bright Minds Hub",
+   "scanned": 2,
+   "with_mentions": 2,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "skillshare",
+     "brand": "Skillshare",
+     "videos": 1
+    },
+    {
+     "key": "brilliant",
+     "brand": "Brilliant",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimLeilaGharanixxxxxxx",
+   "name": "Leila Gharani",
+   "scanned": 2,
+   "with_mentions": 2,
+   "disclosure": 0,
+   "brands": [
+    {
+     "key": "nordvpn",
+     "brand": "NordVPN",
+     "videos": 1
+    },
+    {
+     "key": "kutools",
+     "brand": "Kutools",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimKevinStratvertxxxxx",
+   "name": "Kevin Stratvert",
+   "scanned": 5,
+   "with_mentions": 1,
+   "disclosure": 1,
+   "brands": [
+    {
+     "key": "amazon",
+     "brand": "Amazon",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimeasyclicklearningxx",
+   "name": "Easy Click Learning",
+   "scanned": 4,
+   "with_mentions": 1,
+   "disclosure": 1,
+   "brands": [
+    {
+     "key": "amazon",
+     "brand": "Amazon",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimmarganalyticsxxxxxx",
+   "name": "Marg Analytics",
+   "scanned": 3,
+   "with_mentions": 1,
+   "disclosure": 1,
+   "brands": [
+    {
+     "key": "amazon",
+     "brand": "Amazon",
+     "videos": 1
+    }
+   ]
+  },
+  {
+   "id": "UCsimexcelchampsxxxxxxxx",
+   "name": "Excel Champs",
+   "scanned": 2,
+   "with_mentions": 1,
+   "disclosure": 1,
+   "brands": [
+    {
+     "key": "amazon",
+     "brand": "Amazon",
+     "videos": 1
+    }
+   ]
+  }
+ ],
+ "rules": "Rule-based (src/sponsors.js)"
+}

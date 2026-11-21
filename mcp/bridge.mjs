@@ -26,6 +26,7 @@ import { store } from './library.mjs';
 import * as NICHE from './niche.mjs';
 import * as OWN from './own-history.mjs';
 import * as CARDS from './cards.mjs';
+import * as CONTENT from './content.mjs';
 import { createRequire } from 'node:module';
 
 const Features = createRequire(import.meta.url)('../src/features.js');
@@ -41,7 +42,8 @@ const VERSION = '0.1.0';
 // 'niche': niche tracking (the org's tracking list, /youtube/niche/*, breakout alerts in the settings answer).
 // 'own-history': own-channel history (phase 2: several channels, /youtube/own/*, milestones in the settings answer).
 // 'cards': phase 3's in-page badges and cards (/youtube/cards, /youtube/channel-card, /youtube/video-card).
-const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards'];
+// 'content-tools': phase 4 (/youtube/comments, /youtube/sponsors, title history in /youtube/video-card, sponsors on the niche page).
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
@@ -194,7 +196,12 @@ async function handle(req, res, port) {
   if (method === 'GET' && url.pathname === '/youtube/niche/page') {
     const niche = url.searchParams.has('niche') ? url.searchParams.get('niche') : undefined;
     const tz = Number(url.searchParams.get('tz'));
-    return send(res, 200, NICHE.nichePage(store(), { niche, tzOffsetMin: Number.isFinite(tz) && Math.abs(tz) <= 14 * 60 ? tz : undefined, status: nicheStatus() }), origin);
+    const page = NICHE.nichePage(store(), { niche, tzOffsetMin: Number.isFinite(tz) && Math.abs(tz) <= 14 * 60 ? tz : undefined, status: nicheStatus() });
+    // Phase 4: who the niche's channels promote (channel-sponsors).
+    if (Features.resolve(store().getMeta('features', null))['channel-sponsors']) {
+      try { const sp = CONTENT.sponsorMentions(store(), { niche: page.niche != null ? page.niche : niche, days: 365, limit: 30 }); if (!sp.error) page.sponsors = sp; } catch (e) { log('sponsor scan failed:', e.message); }
+    }
+    return send(res, 200, page, origin);
   }
   if (method === 'GET' && url.pathname === '/youtube/niche/video') {
     const r = NICHE.videoVelocity(store(), { video: url.searchParams.get('id') || '' });
@@ -215,6 +222,17 @@ async function handle(req, res, port) {
   }
   if (method === 'GET' && url.pathname === '/youtube/video-card') {
     const r = CARDS.videoCard(store(), { video: url.searchParams.get('id') || '' });
+    return send(res, r.error ? 400 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r }, origin);
+  }
+  // Content tools (mcp/content.mjs): comments the extension captured (kept 7 days), sponsor scans.
+  if (req.method === 'POST' && url.pathname === '/youtube/comments') {
+    const body = await readBody(req);
+    if (!Features.resolve(store().getMeta('features', null))['comment-tools']) return send(res, 200, { ok: false, off: true }, origin);
+    const r = CONTENT.putComments(store(), { video: body.video, title: body.title, channel_id: body.channel_id, total: body.total, comments: Array.isArray(body.comments) ? body.comments.slice(0, CONTENT.MAX_PER_VIDEO) : [] });
+    return send(res, r.ok ? 200 : 400, r, origin);
+  }
+  if (method === 'GET' && url.pathname === '/youtube/sponsors') {
+    const r = CONTENT.channelSponsors(store(), { channel: url.searchParams.get('channel') || '' });
     return send(res, r.error ? 400 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r }, origin);
   }
   // Kanalım (mcp/own-history.mjs): the stored daily history of the connected channels.

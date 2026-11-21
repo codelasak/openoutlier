@@ -1,0 +1,201 @@
+{
+ "onResponseReceivedEndpoints": [
+  {
+   "reloadContinuationItemsCommand": {
+    "continuationItems": [
+     {
+      "commentsHeaderRenderer": {
+       "countText": {
+        "runs": [
+         {
+          "text": "1.204"
+         },
+         {
+          "text": " yorum"
+         }
+        ]
+       }
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "comment": {
+        "commentRenderer": {
+         "commentId": "UgzOld0001",
+         "authorText": {
+          "simpleText": "@kanal_sahibi"
+         },
+         "authorEndpoint": {
+          "browseEndpoint": {
+           "browseId": "UCdemoExcelChannel000000"
+          }
+         },
+         "contentText": {
+          "runs": [
+           {
+            "text": "Dosya açıklamada. Sıradaki video için ne istersiniz?"
+           }
+          ]
+         },
+         "publishedTimeText": {
+          "runs": [
+           {
+            "text": "3 gün önce"
+           }
+          ]
+         },
+         "voteCount": {
+          "simpleText": "1,2 B"
+         },
+         "replyCount": 18,
+         "authorIsChannelOwner": true,
+         "pinnedCommentBadge": {
+          "pinnedCommentBadgeRenderer": {
+           "label": {
+            "runs": [
+             {
+              "text": "Sabitlendi"
+             }
+            ]
+           }
+          }
+         },
+         "actionButtons": {
+          "commentActionButtonsRenderer": {
+           "creatorHeart": {
+            "creatorHeartRenderer": {
+             "isHearted": false
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "comment": {
+        "commentRenderer": {
+         "commentId": "UgzOld0002",
+         "authorText": {
+          "simpleText": "@ayse.k"
+         },
+         "authorEndpoint": {
+          "browseEndpoint": {
+           "browseId": "UCb000000000000000000002"
+          }
+         },
+         "contentText": {
+          "runs": [
+           {
+            "text": "Çok net anlattınız, elinize sağlık!"
+           }
+          ]
+         },
+         "publishedTimeText": {
+          "runs": [
+           {
+            "text": "2 gün önce"
+           }
+          ]
+         },
+         "voteCount": {
+          "simpleText": "245"
+         },
+         "authorIsChannelOwner": false,
+         "actionButtons": {
+          "commentActionButtonsRenderer": {
+           "creatorHeart": {
+            "creatorHeartRenderer": {
+             "isHearted": true
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "comment": {
+        "commentRenderer": {
+         "commentId": "UgzOld0003",
+         "authorText": {
+          "simpleText": "@mert_e"
+         },
+         "authorEndpoint": {
+          "browseEndpoint": {
+           "browseId": "UCb000000000000000000003"
+          }
+         },
+         "contentText": {
+          "runs": [
+           {
+            "text": "Excel 2019 kullanıyorum, bu fonksiyon bende yok mu?"
+           }
+          ]
+         },
+         "publishedTimeText": {
+          "runs": [
+           {
+            "text": "1 gün önce (düzenlendi)"
+           }
+          ]
+         },
+         "voteCount": {
+          "simpleText": "88"
+         },
+         "replyCount": 2,
+         "authorIsChannelOwner": false,
+         "actionButtons": {
+          "commentActionButtonsRenderer": {
+           "creatorHeart": {
+            "creatorHeartRenderer": {
+             "isHearted": false
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "appendContinuationItemsAction": {
+    "continuationItems": [
+     {
+      "commentRenderer": {
+       "commentId": "UgzOld0003.9zRep001",
+       "authorText": {
+        "simpleText": "@kanal_sahibi"
+       },
+       "contentText": {
+        "runs": [
+         {
+          "text": "Yok maalesef, İNDİS + KAÇINCI kullanabilirsin."
+         }
+        ]
+       },
+       "publishedTimeText": {
+        "runs": [
+         {
+          "text": "1 gün önce"
+         }
+        ]
+       },
+       "voteCount": {
+        "simpleText": "40"
+       },
+       "authorIsChannelOwner": true
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

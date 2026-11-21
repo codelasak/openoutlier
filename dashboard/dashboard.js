@@ -128,6 +128,8 @@
     // Niche tracking keeps its list in the same record (src/tracking.js).
     if (o && o.niches) org.niches = o.niches;
     if (o && o.tracked) org.tracked = o.tracked;
+    // The swipe file (src/swipe.js, phase 4) lives in the same record.
+    if (o && o.swipe) org.swipe = o.swipe;
     nicheAlerts = all['rs:niche-alerts'] || { items: [], unseen: 0 };
     await mentionsView.load();
     await studioView.load();
@@ -163,6 +165,8 @@
     if (kind === 'my-youtube') return { kind: 'my-youtube' };
     if (kind === 'settings') return { kind: 'settings' };
     if (kind === 'niche') return { kind: 'niche' };
+    if (kind === 'swipe') return { kind: 'swipe' };
+    if (kind === 'thumb-test') return { kind: 'thumb-test' };
     if (kind === 'compare') return { kind: 'compare', a: parts[1] || null, b: parts[2] || null };
     if (kind === 'folder' || kind === 'tag') return { kind: kind, id: parts[1], tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
     if (kind === 'unsorted') return { kind: 'unsorted', tab: parts[1] === 'reels' ? 'reels' : 'accounts' };
@@ -374,6 +378,21 @@
       });
     }
   }) : null;
+  // Phase 4: the swipe file (#/swipe) and the thumbnail & title tester (#/thumb-test).
+  var swipeView = self.OpenOutlierSwipeView ? self.OpenOutlierSwipeView.create({
+    h: h,
+    loadImage: function (el, url) { thumbs.load(el, url); },
+    rerender: function () { if (route().kind === 'swipe') { renderSidebar(route()); swipeView.render(main); document.title = swipeView.title() + ' · OpenOutlier'; } },
+    getOrg: function () { return org; },
+    saveOrg: function (next) { org = next; return saveOrg(); }
+  }) : null;
+  var thumbTestView = self.OpenOutlierThumbTestView ? self.OpenOutlierThumbTestView.create({
+    h: h,
+    loadImage: function (el, url) { thumbs.load(el, url); },
+    rerender: function () { if (route().kind === 'thumb-test') { renderSidebar(route()); thumbTestView.render(main); document.title = thumbTestView.title() + ' · OpenOutlier'; } },
+    getOrg: function () { return org; },
+    accounts: function () { return accounts; }
+  }) : null;
   var mentionsView = self.ReelScopeMentionsView.create({ h: h, ago: ago, rerender: function () { if (route().kind === 'mentions') { renderSidebar(route()); mentionsView.render(main); } } });
   var studioView = self.ReelScopeStudioView.create({ h: h, ago: ago, fmt: fmt, rerender: function () { if (route().kind === 'studio') { renderSidebar(route()); studioView.render(main); document.title = studioView.title() + ' · OpenOutlier'; } } });
   var reelsPanel = P.create(Object.assign({}, common, { preEnriched: true, showOwner: true, defaultSort: 'viralScore', listTabLabel: 'Posts' }));
@@ -389,7 +408,9 @@
     compare: 'M10 2h2v2h2v2H2V4h8zM2 10h12v2h-2v2h-2v-2H2z',
     gear: 'M5 4h6v2H5zM5 10h6v2H5zM4 6h2v4H4zM10 6h2v4h-2zM7 1h2v3H7zM7 12h2v3H7zM1 7h3v2H1zM12 7h3v2h-3zM3 3h2v2H3zM11 3h2v2h-2zM3 11h2v2H3zM11 11h2v2h-2z',
     back: 'M6 3h2v2H6zM4 5h2v2H4zM2 7h12v2H2zM4 9h2v2H4zM6 11h2v2H6z',
-    trend: 'M1 12h3v3H1zM4 9h3v3H4zM7 10h3v3H7zM10 6h3v3h-3zM12 2h3v3h-3z'
+    trend: 'M1 12h3v3H1zM4 9h3v3H4zM7 10h3v3H7zM10 6h3v3h-3zM12 2h3v3h-3z',
+    swipe: 'M3 1h10v14l-5-3-5 3z',
+    thumbs: 'M1 3h14v10H1zM3 9l3-3 3 3 2-2 3 3v1H3z'
   };
   function px(name, size) {
     var NS = 'http://www.w3.org/2000/svg';
@@ -440,6 +461,9 @@
     lib.appendChild(navItem('My account', null, '#/studio', r.kind === 'studio', { icon: 'user' }));
     lib.appendChild(navItem(ytChannelView.navLabel ? ytChannelView.navLabel() : 'My YouTube channel', null, '#/my-youtube', r.kind === 'my-youtube', { icon: 'user' }));
     if (nicheView) lib.appendChild(navItem(nicheView.navLabel(), nicheAlerts.unseen ? String(nicheAlerts.unseen) : null, '#/niche', r.kind === 'niche', { icon: 'trend', badge: !!nicheAlerts.unseen }));
+    var F4 = self.OpenOutlierFeatures;
+    if (swipeView && (!F4 || F4.isOn('swipe-save') || swipeView.count())) lib.appendChild(navItem(swipeView.navLabel(), swipeView.count() || null, '#/swipe', r.kind === 'swipe', { icon: 'swipe' }));
+    if (thumbTestView && (!F4 || F4.isOn('thumb-preview'))) lib.appendChild(navItem(thumbTestView.navLabel(), null, '#/thumb-test', r.kind === 'thumb-test', { icon: 'thumbs' }));
     lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all' && r.tab !== 'reels', { icon: 'all' }));
     lib.appendChild(navItem('Top posts', null, '#/all/reels', r.kind === 'all' && r.tab === 'reels', { icon: 'top' }));
     lib.appendChild(navItem('Unsorted', all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null, icon: 'inbox' }));
@@ -543,6 +567,7 @@
     main.appendChild(h('div', { class: 'view-head' },
       h('h1', { text: scopeTitle(r) }),
       nicheToggle(r, list),
+      swipeLink(r),
       h('span', { class: 'sub', text: list.length + ' account' + (list.length === 1 ? '' : 's') +
         (by.instagram || (!by.reddit && !by.tiktok && !by.youtube) ? ' · ' + nfFull.format(by.instagram) + ' reels' : '') +
         (by.tiktok ? ' · ' + nfFull.format(by.tiktok) + ' TikTok videos' : '') +
@@ -557,7 +582,7 @@
       return;
     }
     if (!list.length) {
-      main.appendChild(h('div', { class: 'empty' }, h('p', { text: r.kind === 'folder' ? 'This folder is empty. Drag account cards onto it in the sidebar, or pick a folder on an account page.' : 'No accounts match.' })));
+      main.appendChild(h('div', { class: 'empty' }, h('p', { text: r.kind === 'folder' ? (swipeLink(r) ? 'No accounts in this folder: it holds swipe file videos (link above).' : 'This folder is empty. Drag account cards onto it in the sidebar, or pick a folder on an account page.') : 'No accounts match.' })));
       return;
     }
 
@@ -578,6 +603,18 @@
       h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: 'Accounts' }), h('b', { text: nfFull.format(list.length) })),
       h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: 'Last collected' }), h('b', { text: totals.last ? ago(totals.last) : '–' }))));
     main.appendChild(h('div', { class: 'cards' }, list.map(function (u) { return accountCard(accounts[u]); })));
+  }
+
+  // ---- the swipe file items in this folder / with this tag (phase 4), a link to them ---------------
+  function swipeLink(r) {
+    var SW = self.OpenOutlierSwipe;
+    if (!SW || !swipeView || (r.kind !== 'folder' && r.kind !== 'tag')) return null;
+    var n = SW.list(org, r.kind === 'folder' ? { folder: r.id } : { tag: r.id }).length;
+    if (!n) return null;
+    var tr = nicheLang() === 'tr';
+    return h('a', { class: 'btn btn-ghost', href: '#/swipe', onclick: function () {
+      swipeView.filter(r.kind === 'folder' ? { folder: r.id } : { tag: r.id });
+    } }, tr ? 'Swipe file: ' + n + ' video →' : 'Swipe file: ' + n + ' saved →');
   }
 
   // ---- niche tracking: a folder or tag as a tracked niche, a channel's Track / mine ----------
@@ -636,7 +673,7 @@
     var tagInput = h('input', { type: 'text', class: 'tag-input', placeholder: 'Add tag + Enter', list: 'tag-options', 'aria-label': 'Add tag' });
     tagInput.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
-      var t = tagInput.value.trim().toLowerCase().replace(/^#/, '').replace(/[^\p{L}\p{N}_-]+/gu, '-').slice(0, 40);
+      var t = tagInput.value.trim().replace(/İ/g, 'i').toLowerCase().replace(/^#/, '').replace(/[^\p{L}\p{N}_-]+/gu, '-').slice(0, 40);
       if (t && o.tags.indexOf(t) === -1) { o.tags.push(t); saveOrg().then(render); }
       tagInput.value = '';
     });
@@ -871,9 +908,11 @@
     else if (r.kind === 'my-youtube') ytChannelView.render(main);
     else if (r.kind === 'settings' && settingsView) settingsView.render(main);
     else if (r.kind === 'niche' && nicheView) nicheView.render(main);
+    else if (r.kind === 'swipe' && swipeView) swipeView.render(main);
+    else if (r.kind === 'thumb-test' && thumbTestView) thumbTestView.render(main);
     else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'niche' && nicheView ? nicheView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
+    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'niche' && nicheView ? nicheView.title() : r.kind === 'swipe' && swipeView ? swipeView.title() : r.kind === 'thumb-test' && thumbTestView ? thumbTestView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
   }
 
   // ---- wiring ---------------------------------------------------------------
@@ -883,7 +922,7 @@
   });
   document.getElementById('search').addEventListener('input', function (e) {
     search = e.target.value.trim();
-    if (['account', 'mentions', 'studio', 'my-youtube', 'settings', 'niche', 'compare'].indexOf(route().kind) !== -1) go(lastScopeHash); else render();
+    if (['account', 'mentions', 'studio', 'my-youtube', 'settings', 'niche', 'swipe', 'thumb-test', 'compare'].indexOf(route().kind) !== -1) go(lastScopeHash); else render();
   });
   document.getElementById('show-small').addEventListener('change', function (e) {
     showSmall = e.target.checked;
@@ -929,6 +968,8 @@
         var nOur = org.niches || {};
         if (inOrg.niches || org.niches) merged.niches = { folders: (nOur.folders || []).concat((nIn.folders || []).filter(function (x) { return (nOur.folders || []).indexOf(x) === -1; })), tags: (nOur.tags || []).concat((nIn.tags || []).filter(function (x) { return (nOur.tags || []).indexOf(x) === -1; })) };
         if (inOrg.tracked || org.tracked) merged.tracked = Object.assign({}, inOrg.tracked || {}, org.tracked || {});
+        // The swipe file: ours win on the same item unless the backup's copy is newer (src/swipe.js).
+        if ((inOrg.swipe || org.swipe) && self.OpenOutlierSwipe) merged.swipe = self.OpenOutlierSwipe.merge(org.swipe, inOrg.swipe);
         (inOrg.folders || []).forEach(function (f) { if (!merged.folders.some(function (x) { return x.id === f.id; })) merged.folders.push(f); });
         patch[ORG_KEY] = merged;
       }

@@ -91,6 +91,21 @@
   #bottom-row{margin-top:12px;padding:12px;border-radius:12px;background:var(--yt-chip)}
   #bottom-row b{font-weight:500}
   #secondary .chips{position:static;padding:0 0 12px}
+  .tr-sec{display:flex;flex-direction:column;gap:4px;margin-top:14px}
+  .tr-sec small{color:var(--yt-muted)}
+  .tr-btn{align-self:flex-start;height:36px;padding:0 16px;border-radius:18px;border:1px solid var(--yt-line);background:transparent;color:var(--yt-link,#065fd4);font:500 14px Roboto,Arial;cursor:pointer;margin-top:6px}
+  html[dark] .tr-btn{color:#3ea6ff}
+  ytd-engagement-panel-section-list-renderer{display:block;margin:0 0 16px;border:1px solid var(--yt-line);border-radius:12px;max-height:460px;overflow:auto}
+  ytd-engagement-panel-section-list-renderer[visibility=ENGAGEMENT_PANEL_VISIBILITY_HIDDEN]{display:none}
+  ytd-engagement-panel-section-list-renderer #header{position:sticky;top:0;background:var(--yt-bg);padding:12px 16px;border-bottom:1px solid var(--yt-line);font-weight:700}
+  ytd-engagement-panel-section-list-renderer #visibility-button{float:right}
+  ytd-engagement-panel-section-list-renderer #visibility-button button{border:0;background:transparent;color:inherit;font-size:20px;cursor:pointer}
+  ytd-engagement-panel-section-list-renderer h2{display:inline;font-size:16px;margin:0}
+  ytd-transcript-segment-renderer .segment,transcript-segment-view-model{display:flex;gap:16px;padding:8px 16px;font-size:14px}
+  .segment-timestamp,.ytwTranscriptSegmentViewModelTimestamp{background:var(--yt-chip);border-radius:4px;padding:0 4px;font-size:12px;font-weight:500;min-width:36px;text-align:center}
+  .segment-start-offset{display:flex;align-items:flex-start}
+  .ytwTranscriptSegmentViewModelTimestampA11yLabel{display:none}
+  ytd-transcript-section-header-renderer,macro-markers-panel-item-view-model{display:block;padding:12px 16px 4px;font-weight:700}
   #secondary yt-lockup-view-model{margin:0 0 8px}
   /* channel */
   ytd-tabbed-page-header{display:block;max-width:1284px;margin:0 auto}
@@ -246,7 +261,7 @@
       sl.appendChild(contents);
       pageWrap(lang, 'excel pivot table', h('ytd-search', {}, [sl]));
     } else if (surface === 'watch') {
-      var side = h('div', { id: 'secondary' }, [chips(tr ? ['Tümü', 'Excel Demo kanalından', 'İlgili'] : ['All', 'From Excel Demo', 'Related'])].concat(recs.map(function (r) { return lockup(r, lang, { compact: true }); })));
+      var side = h('div', { id: 'secondary' }, [h('div', { id: 'panels' }), chips(tr ? ['Tümü', 'Excel Demo kanalından', 'İlgili'] : ['All', 'From Excel Demo', 'Related'])].concat(recs.map(function (r) { return lockup(r, lang, { compact: true }); })));
       var w = extra.watch || {};
       var primary = h('div', { id: 'primary' }, [
         h('div', { id: 'movie_player' }, [h('video', { muted: '', playsinline: '' })]),
@@ -256,7 +271,11 @@
             h('div', { id: 'owner' }, [h('div', { class: 'av', style: 'background:#1f7a44' }), h('div', {}, [h('b', { text: 'Excel Demo' }), h('small', { text: tr ? '712 B abone' : '712K subscribers' })]), h('button', { class: 'sub-btn', text: tr ? 'Abone ol' : 'Subscribe' })]),
             h('div', { id: 'top-level-buttons-computed' }, [h('span', { class: 'seg' }, [h('span', { text: '👍 13K' }), h('span', { text: '👎' })]), h('span', { class: 'pill', text: tr ? 'Paylaş' : 'Share' }), h('span', { class: 'pill', text: tr ? 'İndir' : 'Download' }), h('span', { class: 'pill', text: '…' })])
           ]),
-          h('div', { id: 'bottom-row' }, [h('b', { text: (tr ? '801.352 görüntüleme  8 May 2025' : '801,352 views  May 8, 2025') }), h('div', { text: tr ? 'XLOOKUP ile VLOOKUP arasındaki fark, 60 saniyede…' : 'The difference between XLOOKUP and VLOOKUP, in 60 seconds…' })])
+          h('div', { id: 'bottom-row' }, [h('b', { text: (tr ? '801.352 görüntüleme  8 May 2025' : '801,352 views  May 8, 2025') }), h('div', { text: tr ? 'XLOOKUP ile VLOOKUP arasındaki fark, 60 saniyede…' : 'The difference between XLOOKUP and VLOOKUP, in 60 seconds…' }),
+            // Phase 4: the description's "Show transcript" section (YouTube's own button opens the transcript panel).
+            extra.noTranscript ? null : h('ytd-video-description-transcript-section-renderer', {}, [h('div', { class: 'tr-sec' }, [h('b', { text: tr ? 'Transkript' : 'Transcript' }),
+              h('small', { text: tr ? 'Transkripti göstererek takip edin.' : 'Follow along using the transcript.' }),
+              h('yt-button-shape', {}, [h('button', { class: 'tr-btn', 'aria-label': tr ? 'Transkripti göster' : 'Show transcript', text: tr ? 'Transkripti göster' : 'Show transcript' })])])])])
         ])])
       ]);
       pageWrap(lang, 'xlookup', h('ytd-watch-flexy', {}, [primary, side]));

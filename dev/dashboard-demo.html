@@ -81,11 +81,17 @@
 
       // Niş Takibi (#/niche): ?niche=off (no bridge) | empty (nothing tracked: the start helper) | new (tracking just started) | default (ten simulated weeks, dev/make-niche-fixture.mjs).
       var nichePage = null;
+      var nicheSponsors = null;
       async function demoNiche(m, mode) {
         await new Promise(function (r) { setTimeout(r, 350); });
         if (mode === 'off') return { ok: false, noBridge: true, error: 'Niche tracking runs in the OpenOutlier bridge on your Mac (it keeps measuring while Chrome is closed), and the bridge isn\'t running.' };
         if (!nichePage) nichePage = await (await fetch('/dev/youtube/niche/page.json')).json();
         var p = JSON.parse(JSON.stringify(nichePage));
+        // Phase 4: who the niche promotes (dev/make-content-fixture.mjs runs src/sponsors.js over made-up descriptions); ?sponsors=empty.
+        if (!nicheSponsors) nicheSponsors = await (await fetch('/dev/youtube/content/niche-sponsors.json')).json();
+        if (!(store['rs:settings'] && store['rs:settings'].features && store['rs:settings'].features['channel-sponsors'] === false)) {
+          p.sponsors = new URLSearchParams(location.search).get('sponsors') === 'empty' ? { scanned: 0, channels_scanned: p.channels.length, short_links: 0, brands: [], channels: [] } : JSON.parse(JSON.stringify(nicheSponsors));
+        }
         // The fixture was computed at p.now: move its times to now so "3 h ago" reads right.
         var shift = Date.now() - p.now;
         (function walk(o) {
@@ -170,6 +176,11 @@
         return { ok: false, error: 'demo: ' + m.path };
       }
 
+      // Demo only: blob downloads (exports, frames) are recorded instead of landing in ~/Downloads.
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest && e.target.closest('a[download]');
+        if (a && /^blob:/.test(a.href)) { e.preventDefault(); window.__demoBlocked = (window.__demoBlocked || []).concat([a.getAttribute('download')]); }
+      }, true);
       // Fake accounts.
       var text = await (await fetch('/dev/graphql/query.json')).text();
       var base = ReelScopeExtract.parseText(text);
@@ -225,6 +236,10 @@
         ytBugs[code] = q;
       });
       store['rs:p:yt/excel.bugs.demo'] = { posts: ytBugs, updatedAt: Date.now() - 600e3, platform: 'youtube', profile: { handle: 'excel.bugs.demo', name: 'Excel Bugs (demo)', subscribers: 18400 } };
+      var DEMO_TITLES = [['XLOOKUP: the only lookup you need', 'xlookup'], ['Pivot tables in 10 minutes', 'pivot'], ['Power Query for beginners (full course)', 'power-query'], ['Stop using VLOOKUP', 'index-match'],
+        ['Build an Excel dashboard from scratch', 'dashboard'], ['LAMBDA: write your own functions', 'lambda'], ['Copilot in Excel: is it any good?', 'copilot'], ['Conditional formatting tricks pros use', 'conditional'],
+        ['Data validation drop-downs, the right way', 'validation'], ['FILTER + SORT: dynamic lists', 'dynamic'], ['Excel budget template (free download)', 'budget'], ['Charts that don\'t look like Excel', 'charts'],
+        ['Gantt chart in 5 minutes', 'gantt'], ['Flash Fill will save you hours', 'flash-fill'], ['REGEX in Excel is finally here', 'regex'], ['VBA for complete beginners', 'vba'], ['20 shortcuts I use every day', 'shortcut'], ['Checkboxes are back in Excel', 'checkbox']];
       // Saved YouTube channels with the names of the Excel niche (and two that aren't Excel), for the Niche page's start helper.
       [['Kevin Stratvert', 'KevinStratvert', 3100000], ['Leila Gharani', 'LeilaGharani', 2900000], ['Kenji Explains', 'KenjiExplains', 1100000], ['MyOnlineTrainingHub', 'MyOnlineTrainingHub', 760000],
         ['Excel Campus', 'ExcelCampus', 980000], ['Simon Sez IT', 'simonsezit', 690000], ['Cody Baldwin', 'CodyBaldwin', 140000], ['Marg Analytics', 'marganalytics', 33000],
@@ -233,7 +248,10 @@
         var posts = {};
         for (var i = 0; i < 6; i++) {
           var code = ('yTch' + ci + 'v' + i + 'xxxxxxxx').slice(0, 11);
-          posts[code] = { code: code, platform: 'youtube', type: i % 3 ? 'video' : 'short', url: 'https://www.youtube.com/watch?v=' + code, owner: id, ownerName: c[0], caption: c[0] + ' video ' + (i + 1), views: Math.round(c[2] * (0.02 + i * 0.01)), viewsApprox: true, files: [] };
+          // Phase 4 (thumbnail tester): real-looking titles and thumbnails (i.ytimg.com URLs, served from dev/youtube/niche/thumbs below).
+          var tt = DEMO_TITLES[(ci * 5 + i) % DEMO_TITLES.length];
+          posts[code] = { code: code, platform: 'youtube', type: i % 3 ? 'video' : 'short', url: 'https://www.youtube.com/watch?v=' + code, owner: id, ownerName: c[0], caption: tt[0], views: Math.round(c[2] * (0.02 + i * 0.01) * (1 + ((ci + i) % 4))), viewsApprox: true, files: [],
+            thumb: 'https://i.ytimg.com/vi/' + code + '/mqdefault.jpg', duration: 300 + ((ci * 7 + i * 13) % 20) * 41, takenAt: Date.now() - (2 + ci * 3 + i * 11) * 864e5, demoThumb: tt[1] };
         }
         store['rs:p:' + id] = { posts: posts, updatedAt: Date.now() - (ci + 2) * 3600e3, platform: 'youtube', profile: { handle: c[1], name: c[0], subscribers: c[2] } };
       });
@@ -247,7 +265,19 @@
         store['rs:niche-alerts'] = { items: [], unseen: nicheMode === 'new' ? 0 : 2 };
       }
 
-      // Fake Reddit keyword watches and mentions.
+      // Phase 4: the swipe file (rs:org.swipe), unless ?swipe=empty.
+      if (new URLSearchParams(location.search).get('swipe') !== 'empty' && self.OpenOutlierSwipe === undefined) {
+        var swNow = Date.now();
+        var swItems = [
+          { video: 'yTdemo00029', type: 'video', title: 'XLOOKUP vs VLOOKUP in 60 seconds', channel: 'Excel Demo', account: 'yt/exceldemo', views: 801352, duration: 64, folder: 'fsw', note: 'Opens on the pain ("if you still use VLOOKUP…") before the promise. Steal the first 3 seconds.', tags: ['hook', 'lookup'], clip: { start: 0, end: 7 }, savedAt: swNow - 3 * 3600e3 },
+          { video: 'yTch1v0xxxx', type: 'video', title: 'Pivot tables in 10 minutes', channel: 'Leila Gharani', account: 'yt/leilagharani', views: 588000, duration: 612, folder: 'fsw', note: 'Split-screen before/after at 2:10 keeps retention flat.', tags: ['pacing', 'b-roll'], clip: { start: 130, end: 162 }, savedAt: swNow - 26 * 3600e3 },
+          { video: 'yTch3v1xxxx', type: 'video', title: 'Build an Excel dashboard from scratch', channel: 'MyOnlineTrainingHub', account: 'yt/myonlinetraininghub', views: 152000, duration: 1340, folder: 'f2', note: 'Thumbnail: finished dashboard + one big number. No face.', tags: ['thumbnail'], savedAt: swNow - 3 * 864e5 },
+          { video: 'yTdemo00035', type: 'short', title: 'Ctrl + T in 10 seconds', channel: 'Excel Demo', account: 'yt/exceldemo', views: 98000, duration: 11, note: 'Loop ending: last frame = first frame.', tags: ['hook', 'shorts'], savedAt: swNow - 5 * 864e5 },
+          { video: 'yTch0v4xxxx', type: 'video', title: 'Copilot in Excel: is it any good?', channel: 'Kevin Stratvert', account: 'yt/kevinstratvert', views: 412000, duration: 845, folder: null, note: 'Title as a question + verdict in the first 20 s.', tags: ['title', 'hook'], clip: { start: 0, end: 21 }, savedAt: swNow - 9 * 864e5 },
+          { video: 'yTch5v2xxxx', type: 'video', title: 'Data validation drop-downs, the right way', channel: 'Simon Sez IT', account: 'yt/simonsezit', views: 64000, duration: 702, folder: 'f2', note: '', tags: ['tutorial'], savedAt: swNow - 16 * 864e5 }
+        ];
+        window.__demoSwipe = swItems;
+      }
       var now = Date.now();
       store['rs:watches'] = [
         { id: 'w1', query: '"excel formula"', subreddits: ['excel', 'spreadsheets'], exclude: ['hiring'], kinds: ['posts', 'comments'], enabled: true },
@@ -275,14 +305,35 @@
       var studio = new URLSearchParams(location.search).get('studio');
       if (studio) store['rs:studio'] = { baseUrl: studio, token: 'demo' };
 
+      // Swipe items go into rs:org once src/swipe.js is loaded (below), so they get the real shape.
       var html = await (await fetch('/dashboard/dashboard.html')).text();
       var doc = new DOMParser().parseFromString(html, 'text/html');
       doc.body.querySelectorAll('script').forEach(function (s) { s.remove(); });
       document.body.insertAdjacentHTML('beforeend', doc.body.innerHTML.replace(/\.\.\/icons\//g, '/icons/'));
       // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
       var realFetch = window.fetch;
-      window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/dashboard/niche-view.js', '/dashboard/dashboard.js']) {
+      // i.ytimg.com thumbnails of the demo's videos come from dev/youtube/niche/thumbs (offline, no tracking).
+      var thumbOf = {};
+      Object.keys(store).forEach(function (k) { var r = store[k]; if (r && r.posts) Object.keys(r.posts).forEach(function (c) { if (r.posts[c].demoThumb) thumbOf[c] = r.posts[c].demoThumb; }); });
+      thumbOf.yTdemo00029 = 'xlookup'; thumbOf.yTdemo00035 = 'shortcut';
+      window.fetch = function (u) {
+        if (u === '../src/panel.css') return realFetch('/src/panel.css');
+        var m = typeof u === 'string' && u.match(/^https:\/\/i\.ytimg\.com\/vi\/([A-Za-z0-9_-]{11})\//);
+        if (m) { var names = ['xlookup', 'pivot', 'dashboard', 'lambda', 'charts', 'budget']; return realFetch('/dev/youtube/niche/thumbs/' + (thumbOf[m[1]] || names[m[1].charCodeAt(5) % names.length]) + '.svg'); }
+        return realFetch.apply(this, arguments);
+      };
+      if (window.__demoSwipe) {
+        await new Promise(function (res) { var sc = document.createElement('script'); sc.src = '/src/swipe.js'; sc.onload = res; document.body.appendChild(sc); });
+        var o = store['rs:org'];
+        o.folders.push({ id: 'fsw', name: 'Hooks' });
+        window.__demoSwipe.forEach(function (it, i) {
+          // The niche channels' demo videos have made-up titles (DEMO_TITLES): use them so title and thumbnail match.
+          Object.keys(store).forEach(function (k) { var rec = store[k]; if (/^yTch/.test(it.video) && rec && rec.posts && rec.posts[it.video]) it.title = rec.posts[it.video].caption; });
+          var r = OpenOutlierSwipe.save(o, Object.assign({ thumb: 'https://i.ytimg.com/vi/' + it.video + '/mqdefault.jpg' }, it, { updatedAt: it.savedAt }), it.savedAt); o = r.org;
+        });
+        store['rs:org'] = o;
+      }
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

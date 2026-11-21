@@ -85,6 +85,7 @@
             // Phase 3 (src/youtube-insights-bg.js, src/agent-bridge.js → mcp/cards.mjs) stand-ins.
             if (m.type === 'reelscope:yt-channels') return demoChannels(m);
             if (m.type === 'reelscope:yt-cards') return demoCards(m);
+            if (m.type === 'reelscope:yt-content') return demoContent(m);
             if (m.type === 'reelscope:yt-monetization') return demoMonetization(m);
             if (m.type === 'reelscope:yt-ryd') { window.__demoRyd = (window.__demoRyd || 0) + 1; await new Promise(function (r) { setTimeout(r, 300); }); return demoQ.get('ryd') === 'fail' ? { ok: false, error: 'network' } : { ok: true, dislikes: 1234, likes: 13398, rating: 4.6 }; }
             if (m.type === 'reelscope:download' && m.what !== 'cover') return { ok: false, queued: 0, errors: ['YouTube video files are downloaded with yt-dlp through the OpenOutlier bridge, not by the extension.'] };
@@ -175,8 +176,25 @@
           var out = { ok: true, tracked: true, vph24: { vph: 412, hours: 24 }, velocity: { at: '7d', hours: 168, score: 2.6, views: 520000, expected: 200000 },
             curve: [{ h: 1, views: 3100, expected: 1500 }, { h: 3, views: 9800, expected: 4200 }, { h: 6, views: 21000, expected: 8100 }, { h: 12, views: 52000, expected: 17000 }, { h: 24, views: 120000, expected: 41000 },
               { h: 48, views: 230000, expected: 80000 }, { h: 72, views: 310000, expected: 112000 }, { h: 168, views: 520000, expected: 200000 }, { h: 336, views: 690000, expected: 260000 }, { h: 720, views: 780000, expected: 300000 }] };
+          // Phase 4 (title-history): a retitle and a new thumbnail; ?history=none for none.
+          if (demoQ.get('history') !== 'none') out.history = [
+            { at: now - 26 * H, field: 'title', before: 'XLOOKUP explained', after: 'XLOOKUP vs VLOOKUP in 60 seconds', vph_before: 310, vph_after: 905 },
+            { at: now - 4 * 864e5, field: 'thumb', before_snap: '/dev/youtube/niche/thumbs/index-match.svg', after_snap: '/dev/youtube/niche/thumbs/xlookup.svg', vph_before: 1240, vph_after: 1010 }];
           if (demoQ.has('own')) out.own = { days: 197, through: new Date(now - 2 * 864e5).toISOString().slice(0, 10), views: 798240, watch_hours: 6120, avg_pct: 71.4, subs_gained: 2311, likes: 13300, comments: 231 };
           return Promise.resolve(out);
+        }
+        return Promise.resolve({ ok: false });
+      }
+      // Phase 4 (src/agent-bridge.js → mcp/content.mjs): comments sent to the bridge, a channel's sponsors.
+      function demoContent(m) {
+        if (m.what === 'comments') { window.__demoCommentPush = { video: m.video, n: (m.comments || []).length, total: m.total }; return Promise.resolve(demoBridge === 'off' ? { ok: false, noBridge: true } : { ok: true, stored: (m.comments || []).length }); }
+        if (m.what === 'sponsors') {
+          if (demoBridge === 'off' || demoQ.get('sponsors') === 'none') return Promise.resolve({ ok: true, tracked: true, scanned: 61, brands: [], disclosure: 0 });
+          return Promise.resolve({ ok: true, tracked: true, scanned: 61, disclosure: 9, brands: [
+            { brand: 'Skillshare', key: 'skillshare', videos: 7, kinds: ['sponsor', 'utm'], codes: [], last_at: '2026-11-12', example: { text: 'This video is sponsored by Skillshare. The first 1,000 people to use the link…' } },
+            { brand: 'Amazon', key: 'amazon', videos: 23, kinds: ['affiliate'], codes: [], last_at: '2026-11-19', example: { text: 'My gear (affiliate links): Keyboard https://amzn.to/3xKbD9q' } },
+            { brand: 'Kutools', key: 'kutools', videos: 4, kinds: ['sponsor', 'code', 'affiliate'], codes: ['EXCELDEMO20'], last_at: '2026-10-30', example: { text: 'Use code EXCELDEMO20 for 20% off Kutools' } },
+            { brand: 'NordVPN', key: 'nordvpn', videos: 2, kinds: ['sponsor', 'brand-link', 'code'], codes: ['EXCELDEMO'], last_at: '2026-09-02', example: null }] });
         }
         return Promise.resolve({ ok: false });
       }
@@ -246,6 +264,72 @@
         });
         return Promise.resolve({ ok: true, total: videos.length });
       }
+      // Phase 4: a playing video whose frames can be captured (a canvas stream: an Excel sheet with a moving
+      // playhead). ?taint plays a clip from another origin instead, so the canvas is tainted (frame capture says so).
+      window.__demoVideo = function (surface) {
+        var v = document.querySelector(surface === 'shorts' ? '#shorts-player video' : '#movie_player video');
+        if (!v) return;
+        v.muted = true;
+        if (demoQ.has('taint')) {
+          v.src = location.protocol + '//' + (location.hostname === 'localhost' ? '127.0.0.1' : 'localhost') + ':' + location.port + '/dev/youtube/content/clip.webm';
+          v.loop = true;
+          v.play().catch(function () {});
+          return;
+        }
+        var c = document.createElement('canvas');
+        var vert = surface === 'shorts';
+        c.width = vert ? 720 : 1280;
+        c.height = vert ? 1280 : 720;
+        var g = c.getContext('2d');
+        var t0 = performance.now();
+        function frame() {
+          var t = (performance.now() - t0) / 1000;
+          g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+          g.fillStyle = '#107C41'; g.fillRect(0, 0, c.width, 64);
+          g.fillStyle = '#fff'; g.font = '600 30px Arial'; g.fillText(vert ? 'Ctrl + T' : 'XLOOKUP vs VLOOKUP', 28, 44);
+          g.fillStyle = '#f3f3f3'; g.fillRect(0, 64, c.width, 46);
+          g.fillStyle = '#222'; g.font = '24px Consolas, Menlo, monospace'; g.fillText('=XLOOKUP(E2, A2:A9, C2:C9, "not in the list")', 24, 96);
+          var cw = vert ? 170 : 200, rh = 52, x0 = 24, y0 = 130;
+          for (var r = 0; r < (vert ? 18 : 10); r++) for (var k = 0; k < (vert ? 4 : 6); k++) {
+            g.strokeStyle = '#d4d4d4'; g.strokeRect(x0 + k * cw, y0 + r * rh, cw, rh);
+            g.fillStyle = r === 0 ? '#222' : '#444'; g.font = (r === 0 ? '600 ' : '') + '22px Arial';
+            var txt = r === 0 ? ['Code', 'Product', 'Price', 'Stock', 'Supplier', 'Look up'][k] : k === 0 ? 'P-' + (100 + r) : k === 2 ? '$' + (12 + r * 3) + '.00' : k === 3 ? String((r * 7) % 40 + 3) : k === 1 ? ['Mouse', 'Cable', 'Hub', 'Stand', 'Lamp', 'Pad', 'Dock', 'Fan', 'Mic'][r - 1] || '' : '';
+            g.fillText(txt || '', x0 + k * cw + 12, y0 + r * rh + 34);
+          }
+          var hl = 1 + Math.floor(t / 2) % 8;
+          g.strokeStyle = '#1E3BFF'; g.lineWidth = 4; g.strokeRect(x0, y0 + hl * rh, cw * 3, rh); g.lineWidth = 1;
+          g.fillStyle = 'rgba(0,0,0,.65)'; g.fillRect(c.width - 150, c.height - 50, 130, 34);
+          g.fillStyle = '#fff'; g.font = '600 20px Arial'; g.fillText('0:' + String(Math.floor(t) % 60).padStart(2, '0'), c.width - 120, c.height - 26);
+          requestAnimationFrame(frame);
+        }
+        frame();
+        v.srcObject = c.captureStream(24);
+        v.play().catch(function () {});
+      };
+      // YouTube's "Show transcript" button: opens the engagement panel after a short delay, like YouTube.
+      // ?transcript=new uses the 2026 view-model layout; =none / =cc have no button (=cc: only the caption track).
+      window.__demoTranscriptButton = function (mode) {
+        var b = document.querySelector('ytd-video-description-transcript-section-renderer button');
+        if (!b) return;
+        b.addEventListener('click', function () {
+          window.__demoTranscriptOpened = (window.__demoTranscriptOpened || 0) + 1;
+          var box = document.getElementById('panels');
+          var have = box.querySelector('ytd-engagement-panel-section-list-renderer');
+          if (have) { have.setAttribute('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_EXPANDED'); return; }
+          realFetch('/dev/youtube/content/transcript-panel' + (mode === 'new' ? '-new' : '') + '.html').then(function (r) { return r.text(); }).then(function (html) {
+            setTimeout(function () {
+              box.insertAdjacentHTML('afterbegin', html);
+              var p = box.querySelector('ytd-engagement-panel-section-list-renderer');
+              p.querySelector('#visibility-button button').addEventListener('click', function () { p.setAttribute('visibility', 'ENGAGEMENT_PANEL_VISIBILITY_HIDDEN'); });
+            }, 400);
+          });
+        });
+      };
+      // Demo only: blob downloads (exports, frames) are recorded instead of landing in ~/Downloads.
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest && e.target.closest('a[download]');
+        if (a && /^blob:/.test(a.href)) { e.preventDefault(); window.__demoBlocked = (window.__demoBlocked || []).concat([a.getAttribute('download')]); }
+      }, true);
       window.__reelscopeSite = 'youtube'; // hook.js: forward /youtubei/v1/ responses on localhost
       window.__demoStore = data;
       window.__demoOpenPanel = function () { listeners.forEach(function (fn) { fn({ type: 'reelscope:toggle' }, {}, function () {}); }); };
@@ -268,11 +352,14 @@
       }
       window.fetch = function (input) {
         var url = typeof input === 'string' ? input : input.url;
+        // Phase 4: the caption track (the transcript's last fallback) answers with the json3 fixture.
+        if (url.indexOf('/api/timedtext') !== -1) { window.__demoTimedtext = (window.__demoTimedtext || 0) + 1; return realFetch(/fmt=json3/.test(url) ? '/dev/youtube/content/captions.json3.json' : '/dev/youtube/content/captions.xml'); }
         if (url.indexOf('/youtubei/v1/') === -1) return realFetch.apply(this, arguments);
         window.__demoApiCalls.push(url);
         var body;
         var dm = url.match(/[?&]demo=([a-z]+)/);
-        if (dm) body = realFetch('/dev/youtube/cards/' + dm[1] + '.json').then(function (r) { return r.text(); });
+        if (dm && /^comments/.test(dm[1])) body = realFetch('/dev/youtube/content/next-comments' + (dm[1] === 'commentsold' ? '-old' : '') + '.json').then(function (r) { return r.text(); });
+        else if (dm) body = realFetch('/dev/youtube/cards/' + dm[1] + '.json').then(function (r) { return r.text(); });
         else if (/browse\?tab=shorts/.test(url)) body = realFetch('/dev/youtube/channel-shorts' + (hl === 'tr' ? '.tr' : '') + '.html').then(function (r) { return r.text(); }).then(inline);
         else if (/browse/.test(url)) body = browseCalls++ ? Promise.resolve('{"onResponseReceivedActions":[{"appendContinuationItemsAction":{"continuationItems":[]}}],"x":"videoId"}') : realFetch('/dev/youtube/browse-videos.json').then(function (r) { return r.text(); });
         else if (/get_watch/.test(url)) body = realFetch('/dev/youtube/get_watch.json').then(function (r) { return r.text(); });
@@ -317,6 +404,8 @@
   <script src="../src/features-view.js"></script>
   <script src="../src/tracking.js"></script>
   <script src="../src/yt-insights.js"></script>
+  <script src="../src/content-tools.js"></script>
+  <script src="../src/swipe.js"></script>
   <script src="../src/brand.js"></script>
   <script src="../src/panel.js"></script>
   <script src="../src/overlay.js"></script>
@@ -328,7 +417,7 @@
       var surface = window.__demoSurface;
       var hl = window.__demoHl;
       var q = new URLSearchParams(location.search);
-      var keep = ['hl', 'dark', 'ytapi', 'bridge', 'mon', 'ryd', 'own', 'slowmon', 'off', 'on', 'formula', 'surface'].filter(function (k) { return q.has(k); }).map(function (k) { return k + (q.get(k) ? '=' + q.get(k) : ''); }).join('&');
+      var keep = ['hl', 'dark', 'ytapi', 'bridge', 'mon', 'ryd', 'own', 'slowmon', 'off', 'on', 'formula', 'surface', 'transcript', 'comments', 'taint', 'swipe', 'history', 'sponsors'].filter(function (k) { return q.has(k); }).map(function (k) { return k + (q.get(k) ? '=' + q.get(k) : ''); }).join('&');
       // ?off= / ?on= / ?formula= are applied in the head script, before src/features.js reads storage.
       function loadScripts(list, done) {
         if (!list.length) { if (done) done(); return; }
@@ -337,7 +426,7 @@
         sc.onload = function () { loadScripts(list.slice(1), done); };
         document.body.appendChild(sc);
       }
-      var CS = ['/src/youtube-content.js', '/src/youtube-cards.js', '/src/youtube-pages.js'];
+      var CS = ['/src/youtube-content.js', '/src/youtube-cards.js', '/src/youtube-pages.js', '/src/youtube-tools.js'];
       var paths = { home: '/', search: '/results?search_query=excel+pivot+table', subscriptions: '/feed/subscriptions', watch: '/watch?v=yTdemo00029', channel: '/@ExcelDemo/videos', shorts: '/shorts/yTdemo00035' };
       var path = paths[surface] || '/';
       // The saved channels (Library) that give the median, with their dates made relative to now.
@@ -366,13 +455,17 @@
         }
         return fetch('/dev/youtube/cards/' + (fixture || 'home') + '.json').then(function (r) { return r.json(); }).then(function (data) {
           history.replaceState(null, '', path + (path.indexOf('?') === -1 ? '?' : '&') + keep);
-          OpenOutlierDemoSurfaces.build(surface, data, { lang: hl });
+          OpenOutlierDemoSurfaces.build(surface, data, { lang: hl, noTranscript: q.get('transcript') === 'none' || q.get('transcript') === 'cc' });
+          if (surface === 'watch' || surface === 'shorts') window.__demoVideo(surface);
+          if (surface === 'watch') window.__demoTranscriptButton(q.get('transcript'));
           loadScripts(CS, function () {
             // YouTube's own requests for this page, through the hook like on youtube.com.
+            // Phase 4: the comments load a moment later (as when you scroll down to them).
+            var comments = function () { if (q.get('comments') !== 'none') setTimeout(function () { fetch('/youtubei/v1/next?demo=' + (q.get('comments') === 'old' ? 'commentsold' : 'comments'), { method: 'POST' }); }, 700); };
             if (surface === 'watch') {
-              fetch('/youtubei/v1/get_watch?prettyPrint=false', { method: 'POST' }).then(function () { return fetch('/youtubei/v1/next?demo=next', { method: 'POST' }); });
+              fetch('/youtubei/v1/get_watch?prettyPrint=false', { method: 'POST' }).then(function () { return fetch('/youtubei/v1/next?demo=next', { method: 'POST' }); }).then(comments);
             } else if (surface === 'shorts') {
-              fetch('/youtubei/v1/reel/reel_item_watch?prettyPrint=false', { method: 'POST' }).then(function () { return fetch('/youtubei/v1/player?short', { method: 'POST' }); });
+              fetch('/youtubei/v1/reel/reel_item_watch?prettyPrint=false', { method: 'POST' }).then(function () { return fetch('/youtubei/v1/player?short', { method: 'POST' }); }).then(comments);
             } else {
               fetch('/youtubei/v1/' + (surface === 'search' ? 'search' : 'browse') + '?demo=' + fixture, { method: 'POST' });
             }

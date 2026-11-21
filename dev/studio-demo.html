@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenOutlier Studio demo</title>
+  <!-- Stands in for studio.youtube.com → a video's Details page: the Thumbnail section with Studio's own
+       file field. Studio's (fake) handler below accepts files up to 2 MB and shows "too large" otherwise,
+       so the demo shows what OpenOutlier's src/studio-thumb.js changes. ?hl=tr, ?dark, ?off=thumb-compress. -->
+  <style>
+    :root { --bg: #fff; --text: #0d0d0d; --muted: #606060; --line: #e5e5e5; --panel: #f9f9f9; --link: #065fd4; }
+    html[dark] { --bg: #1f1f1f; --text: #f1f1f1; --muted: #aaa; --line: #3e3e3e; --panel: #282828; --link: #3ea6ff; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 400 14px/20px Roboto, Arial, sans-serif; }
+    header { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--line); }
+    header b { font: 700 18px "YouTube Sans", Roboto, Arial; letter-spacing: -0.03em; }
+    header i { width: 26px; height: 18px; border-radius: 5px; background: #f00; display: inline-block; }
+    main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; max-width: 1180px; margin: 0 auto; padding: 24px; }
+    @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+    h1 { font: 500 24px/32px "YouTube Sans", Roboto, Arial; margin: 0 0 16px; }
+    .field { border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; margin: 0 0 20px; }
+    .field small { display: block; color: var(--muted); font-size: 12px; }
+    .field div { min-height: 22px; }
+    h2 { font: 500 15px/24px Roboto, Arial; margin: 0; }
+    .sub { color: var(--muted); font-size: 13px; margin: 2px 0 12px; }
+    ytcp-thumbnails-compact-editor { display: block; }
+    .tiles { display: flex; gap: 12px; flex-wrap: wrap; }
+    .tile { width: 158px; aspect-ratio: 16 / 9; border-radius: 4px; overflow: hidden; background: var(--panel); border: 1px dashed var(--muted); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; color: var(--muted); font-size: 12px; cursor: pointer; position: relative; }
+    .tile img { width: 100%; height: 100%; object-fit: cover; }
+    .tile.sel { outline: 2px solid var(--text); outline-offset: 2px; border: 0; }
+    .tile.upl svg { width: 24px; height: 24px; }
+    .err { color: #cc0000; font-size: 12px; margin: 8px 0 0; min-height: 16px; }
+    html[dark] .err { color: #ff7c7c; }
+    .ok { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+    aside .card { background: var(--panel); border-radius: 8px; overflow: hidden; }
+    aside .vid { aspect-ratio: 16 / 9; background: #000; }
+    aside .meta { padding: 12px; font-size: 12px; color: var(--muted); }
+    .demo { margin: 32px 0 0; padding: 12px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); font-size: 12px; }
+    .demo button { font: inherit; margin: 4px 6px 0 0; }
+  </style>
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var data = {};
+      var feats = {};
+      if (q.get('off')) q.get('off').split(',').forEach(function (f) { feats[f] = false; });
+      data['rs:settings'] = { features: feats, uiLang: q.get('hl') === 'tr' ? 'tr' : 'en' };
+      var listeners = [];
+      window.chrome = {
+        storage: {
+          local: {
+            get: async function (k) { var all = JSON.parse(JSON.stringify(data)); if (k == null) return all; var o = {}; [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; }); return o; },
+            set: async function (o) { var c = {}; Object.keys(o).forEach(function (k) { c[k] = { newValue: o[k] }; data[k] = JSON.parse(JSON.stringify(o[k])); }); setTimeout(function () { listeners.forEach(function (fn) { fn(c, 'local'); }); }, 0); }
+          },
+          onChanged: { addListener: function (fn) { listeners.push(fn); } }
+        },
+        runtime: { sendMessage: async function (m) { window.__demoOpened = m.hash; console.log('[demo] would open the Library at', m.hash); } }
+      };
+      if (q.has('dark')) document.documentElement.setAttribute('dark', '');
+      document.documentElement.lang = q.get('hl') === 'tr' ? 'tr' : 'en';
+      // Demo only: blob downloads (exports, frames) are recorded instead of landing in ~/Downloads.
+      document.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest && e.target.closest('a[download]');
+        if (a && /^blob:/.test(a.href)) { e.preventDefault(); window.__demoBlocked = (window.__demoBlocked || []).concat([a.getAttribute('download')]); }
+      }, true);
+      window.__demoStore = data;
+    })();
+  </script>
+</head>
+<body>
+  <header><i></i><b>Studio</b></header>
+  <main>
+    <section>
+      <h1 id="h1">Video details</h1>
+      <div class="field"><small id="lt">Title (required)</small><div>XLOOKUP vs VLOOKUP in 60 seconds</div></div>
+      <div class="field"><small id="ld">Description</small><div>The difference between XLOOKUP and VLOOKUP, in 60 seconds. Practice file: handsonexcel.com</div></div>
+      <ytcp-thumbnails-compact-editor>
+        <h2 id="th">Thumbnail</h2>
+        <p class="sub" id="ts">Set a thumbnail that stands out and draws viewers' attention.</p>
+        <ytcp-thumbnails-compact-editor-uploader>
+          <div class="tiles">
+            <label class="tile upl" id="upl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M12 3v6M9 6l3-3 3 3"/></svg><span id="ul">Upload file</span>
+              <input id="file" type="file" accept="image/jpeg,image/png" hidden>
+            </label>
+            <div class="tile sel" id="auto1" style="background:linear-gradient(135deg,#107C41,#0B0E1A)"></div>
+            <div class="tile" style="background:linear-gradient(135deg,#1E3BFF,#0B0E1A)"></div>
+          </div>
+          <p class="err" id="err" role="alert"></p>
+          <p class="ok" id="ok"></p>
+        </ytcp-thumbnails-compact-editor-uploader>
+      </ytcp-thumbnails-compact-editor>
+      <div class="demo">Demo: <button type="button" id="big">Pick a 5 MB thumbnail</button><button type="button" id="small">Pick a 300 KB thumbnail</button></div>
+    </section>
+    <aside><div class="card"><div class="vid"></div><div class="meta">Video link<br>https://youtu.be/yTdemo00029</div></div></aside>
+  </main>
+  <script>
+    // Studio's own handler (stand-in): files over 2 MB are refused, smaller ones become the selected thumbnail.
+    var tr = document.documentElement.lang === 'tr';
+    if (tr) { document.getElementById('h1').textContent = 'Video ayrıntıları'; document.getElementById('lt').textContent = 'Başlık (zorunlu)'; document.getElementById('ld').textContent = 'Açıklama'; document.getElementById('th').textContent = 'Küçük resim'; document.getElementById('ts').textContent = 'Göze çarpan ve izleyicilerin dikkatini çeken bir küçük resim belirleyin.'; document.getElementById('ul').textContent = 'Dosya yükle'; }
+    var input = document.getElementById('file');
+    input.addEventListener('change', function () {
+      var f = input.files[0];
+      window.__studioSaw = f ? { name: f.name, size: f.size } : null;
+      document.getElementById('err').textContent = '';
+      document.getElementById('ok').textContent = '';
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) { document.getElementById('err').textContent = tr ? 'Dosya 2 MB\'tan büyük.' : 'File is larger than 2 MB.'; return; }
+      var url = URL.createObjectURL(f);
+      var tiles = document.querySelector('.tiles');
+      tiles.querySelectorAll('.sel').forEach(function (t) { t.classList.remove('sel'); });
+      var t = document.createElement('div');
+      t.className = 'tile sel';
+      t.innerHTML = '<img alt="">';
+      t.firstChild.src = url;
+      tiles.insertBefore(t, tiles.children[1]);
+      document.getElementById('ok').textContent = (tr ? 'Seçildi: ' : 'Selected: ') + f.name + ' (' + Math.round(f.size / 1024) + ' KB). ' + (tr ? 'Yayınlamak için Kaydet\'e basın.' : 'Press Save to publish it.');
+    });
+    // A thumbnail-like PNG with fine noise, so it really weighs 3+ MB (PNG barely compresses noise).
+    function makeImage(big) {
+      var c = document.createElement('canvas');
+      c.width = big ? 1920 : 1280;
+      c.height = big ? 1080 : 720;
+      var g = c.getContext('2d');
+      var grad = g.createLinearGradient(0, 0, c.width, c.height);
+      grad.addColorStop(0, '#107C41'); grad.addColorStop(1, '#0B0E1A');
+      g.fillStyle = grad; g.fillRect(0, 0, c.width, c.height);
+      if (big) {
+        var img = g.getImageData(0, 0, c.width, c.height);
+        for (var i = 0; i < img.data.length; i += 4) { var n = (Math.random() - 0.5) * 70; img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n; }
+        g.putImageData(img, 0, 0);
+      }
+      g.fillStyle = '#fff'; g.font = '900 ' + (big ? 170 : 110) + 'px Arial'; g.fillText('XLOOKUP', c.width * 0.06, c.height * 0.45);
+      g.fillStyle = '#C8FF2E'; g.font = '900 ' + (big ? 120 : 80) + 'px Arial'; g.fillText('vs VLOOKUP', c.width * 0.06, c.height * 0.68);
+      return new Promise(function (r) { c.toBlob(r, 'image/png'); });
+    }
+    function pick(big) {
+      makeImage(big).then(function (blob) {
+        var f = new File([blob], big ? 'xlookup-thumbnail-4k.png' : 'xlookup-thumbnail.png', { type: 'image/png' });
+        window.__demoPicked = f.size;
+        var dt = new DataTransfer();
+        dt.items.add(f);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    }
+    document.getElementById('big').onclick = function () { pick(true); };
+    document.getElementById('small').onclick = function () { pick(false); };
+    window.__demoPick = pick;
+  </script>
+  <script src="../src/features.js"></script>
+  <script src="../src/content-tools.js"></script>
+  <script src="../src/studio-thumb.js"></script>
+</body>
+</html>

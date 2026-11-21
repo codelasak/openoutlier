@@ -328,7 +328,8 @@ select:hover, input[type="search"]:hover { border-color: var(--text-2); }
 .ov-btn:hover { background: #1F2640; }
 .ov-btn:focus-visible { outline: 3px solid var(--lime); outline-offset: 1px; }
 .ov-btn .mark { width: 30px; height: 30px; display: block; }
-.ov-logo[aria-pressed="true"] { background: var(--blue); }
+.ov-logo[aria-pressed="true"], .ov-extra[aria-pressed="true"] { background: var(--blue); }
+.ov-btn[hidden] { display: none; }
 .ov-logo .mark-on-blue { display: none; }
 .ov-logo[aria-pressed="true"] .mark-on-ink { display: none; }
 .ov-logo[aria-pressed="true"] .mark-on-blue { display: block; }

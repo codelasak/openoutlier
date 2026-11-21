@@ -24,6 +24,7 @@ import { registerAnalyticsTools, INSTRUCTIONS as YT_ANALYTICS_INSTRUCTIONS } fro
 import { registerYouTubeApiTool, apiKeyInfo as youtubeApiKeyInfo, quota as youtubeApiQuota } from './youtube-api.mjs';
 import { Tracker, trackerStatus } from './tracker.mjs';
 import { registerNicheTools, INSTRUCTIONS as NICHE_INSTRUCTIONS, trackingSummary } from './niche-tools.mjs';
+import { registerContentTools, INSTRUCTIONS as CONTENT_INSTRUCTIONS } from './content.mjs';
 import { registerOwnTools } from './own-tools.mjs';
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
@@ -68,7 +69,8 @@ const server = new McpServer(
       STUDIO_INSTRUCTIONS,
       'YouTube extras (optional, each off until the user sets it up): get_transcript (captions via yt-dlp, with the first ~30 s as hook), youtube_api_stats (exact stats through the user\'s own YouTube Data API key; makes no request without one).',
       YT_ANALYTICS_INSTRUCTIONS,
-      NICHE_INSTRUCTIONS
+      NICHE_INSTRUCTIONS,
+      CONTENT_INSTRUCTIONS
     ].join('\n')
   }
 );
@@ -513,6 +515,7 @@ server.registerTool('reel_history', {
 registerStudioTools(server, { z, json, safe });
 registerYouTubeApiTool(server, { z, json, safe });
 registerNicheTools(server, { z, json, safe, store });
+registerContentTools(server, { z, json, safe, store });
 registerOwnTools(server, { z, json, safe, store });
 registerTranscriptTool(server, { z, json, safe, fail, youtubeIdOf, findReel, readLibrary });
 // The bridge port Google's sign-in redirects to; it must be a bridge that knows the callback.

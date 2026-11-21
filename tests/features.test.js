@@ -56,12 +56,15 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   assert.equal(F.get('dislikes').link, 'https://returnyoutubedislike.com/');
   assert.ok(F.get('dislikes').notes.includes('thirdParty'));
   // Phase 0: the 30-day purge; phase 1: niche tracking, the Track button, growth, title history, breakouts, the digest;
-  // phase 2: own-channel history; phase 3: the in-page badges and cards. The rest are "coming soon".
+  // phase 2: own-channel history; phase 3: the in-page badges and cards; phase 4: the content tools. The rest are "coming soon".
   assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), [
     'card-vph', 'card-outlier', 'card-subs', 'card-velocity', 'feed-filters', 'hide-shorts', 'channel-sort',
-    'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'video-card', 'video-monetization', 'title-history', 'dislikes',
-    'shorts-overlay', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']);
+    'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'channel-sponsors', 'video-card', 'video-monetization',
+    'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
+    'shorts-overlay', 'thumb-compress', 'thumb-preview', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']);
   assert.deepEqual(F.FEATURES.filter((f) => f.phase === 3 && !f.available).map((f) => f.id), ['channel-rpm'], 'only the RPM estimate of phase 3 is left');
+  assert.deepEqual(F.FEATURES.filter((f) => f.phase === 4 && !f.available).map((f) => f.id), [], 'phase 4 is complete');
+  assert.deepEqual(F.FEATURES.filter((f) => !f.available).map((f) => f.id), ['channel-similar', 'channel-rpm', 'niche-radar'], 'phase 5 (and the RPM estimate) left');
   // Subscriber counts work without a key (page data, saved channels); the key adds channels.list.
   assert.deepEqual(F.get('card-subs').requires, []);
   assert.ok(F.get('card-subs').optional.includes('apiKey'));
@@ -97,8 +100,9 @@ test('stored choices: unknown keys and non-booleans are dropped, missing keys fa
 
 test('missing requirements: direct, through the tracker, and unknown state is never reported', () => {
   const flags = F.defaults();
-  assert.deepEqual(F.missing('channel-sponsors', { apiKey: false }, flags), ['apiKey']);
-  assert.deepEqual(F.missing('channel-sponsors', { apiKey: true }, flags), []);
+  // The sponsor scan reads the tracker's descriptions on the bridge (phase 4): the bridge, not a browser key.
+  assert.deepEqual(F.missing('channel-sponsors', { apiKey: false, bridge: true }, flags), []);
+  assert.deepEqual(F.missing('channel-sponsors', { bridge: false }, flags), ['bridge']);
   assert.deepEqual(F.missing('channel-sponsors', {}, flags), [], 'unknown is not missing');
   assert.deepEqual(F.missing('card-subs', { apiKey: false }, flags), [], 'optional: works on page data and saved channels');
   assert.deepEqual(F.missing('tracker', { bridge: true, bridgeKey: false }, flags), ['bridgeKey']);

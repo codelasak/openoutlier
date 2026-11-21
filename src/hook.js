@@ -15,7 +15,8 @@
 //
 // YouTube: /youtubei/v1/browse (channel tabs, home, subscriptions and their continuations), search,
 // get_watch (in-app clicks on a video: [playerResponse, watchNextResponse]),
-// player, next, reel/reel_item_watch and reel/reel_watch_sequence (Shorts).
+// player, next (also the comments as they load), reel/reel_item_watch and reel/reel_watch_sequence
+// (Shorts), and /api/timedtext (the captions the player loads when CC is on: the transcript fallback).
 // They all go through fetch, so this must stay at document_start.
 (function () {
   'use strict';
@@ -26,7 +27,7 @@
   var TIKTOK = /(^|\.)tiktok\.com$/.test(location.hostname) || window.__reelscopeSite === 'tiktok';
   var YOUTUBE = /(^|\.)youtube\.com$/.test(location.hostname) || window.__reelscopeSite === 'youtube';
   var URL_RE = YOUTUBE
-    ? /\/youtubei\/v1\/(browse|next|player|get_watch|search|reel\/reel_item_watch|reel\/reel_watch_sequence)(\?|$)/
+    ? /\/youtubei\/v1\/(browse|next|player|get_watch|search|reel\/reel_item_watch|reel\/reel_watch_sequence)(\?|$)|\/api\/timedtext\?/
     : TIKTOK
       ? /\/api\/(?!comment\/|im\/|user\/(?!detail)|notice\/|upload\/|report|ba\/|v1\/web\/report)/
       : /\/graphql|\/api\/v1\//;
@@ -36,7 +37,9 @@
     // Cheap pre-filter. Instagram media objects always carry a shortcode ("code");
     // TikTok video items always carry createTime and a stats block.
     // YouTube: every useful response names a videoId (watch, Shorts) or a contentId (grid lockups).
-    if (YOUTUBE) return text.indexOf('"videoId"') !== -1 || text.indexOf('"contentId"') !== -1;
+    // Comments (phase 4's comment tools) and the captions the player loads (its transcript fallback) too.
+    if (YOUTUBE) return text.indexOf('"videoId"') !== -1 || text.indexOf('"contentId"') !== -1 || text.indexOf('"commentEntityPayload"') !== -1 ||
+      text.indexOf('"commentRenderer"') !== -1 || (text.indexOf('"wireMagic"') !== -1 && text.indexOf('"events"') !== -1) || text.indexOf('<timedtext') !== -1 || text.indexOf('<transcript') !== -1;
     if (TIKTOK) return text.indexOf('"createTime"') !== -1 && (text.indexOf('"stats"') !== -1 || text.indexOf('"statsV2"') !== -1);
     // Profile facts (followers, posts on the profile) ride on responses that may list no posts.
     return text.indexOf('"code"') !== -1 || text.indexOf('"shortcode"') !== -1 ||

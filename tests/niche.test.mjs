@@ -225,6 +225,11 @@ test('title and thumbnail changes go to video_meta_log (thumbnail by its hash, s
   log = s.db.prepare('SELECT title, thumb_hash FROM video_meta_log WHERE video_id = ? ORDER BY ts').all('yTnicheL001');
   assert.equal(log.length, 2, 'the 1-day-old video got a thumbnail change');
   assert.notEqual(log[0].thumb_hash, log[1].thumb_hash);
+  // Phase 4: each version of a young video's thumbnail keeps a small snapshot, so the title history shows before / after.
+  const snaps = s.db.prepare('SELECT thumb_snap FROM video_meta_log WHERE video_id = ? ORDER BY ts').all('yTnicheL001')
+    .map((r) => r.thumb_snap && Buffer.from(r.thumb_snap.split(',')[1], 'base64').toString());
+  assert.deepEqual(snaps, ['image-v1', 'image-v2']);
+  assert.match(s.db.prepare('SELECT thumb_snap FROM video_meta_log WHERE video_id = ? ORDER BY ts DESC').get('yTnicheL002').thumb_snap, /^data:image\/jpeg;base64,/, 'a title change keeps the image it had');
   assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM video_meta_log WHERE video_id = ?').get('yTnicheL002').n, 2, 'the older one is re-checked daily, not yet');
   // title-history off: no thumbnail downloads.
   s.setMeta('features', { 'title-history': false });

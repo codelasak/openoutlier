@@ -100,12 +100,26 @@
         "src/features-view.js",
         "src/tracking.js",
         "src/yt-insights.js",
+        "src/content-tools.js",
+        "src/swipe.js",
         "src/brand.js",
         "src/panel.js",
         "src/overlay.js",
         "src/youtube-content.js",
         "src/youtube-cards.js",
-        "src/youtube-pages.js"
+        "src/youtube-pages.js",
+        "src/youtube-tools.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://studio.youtube.com/*"
+      ],
+      "js": [
+        "src/features.js",
+        "src/content-tools.js",
+        "src/studio-thumb.js"
       ],
       "run_at": "document_idle"
     },

@@ -36,6 +36,18 @@
         "127.0.0.1"
       ],
       "port": 8795
+    },
+    {
+      "name": "openoutlier-faz4-8797",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8797",
+        "--bind",
+        "127.0.0.1"
+      ],
+      "port": 8797
     }
   ]
 }

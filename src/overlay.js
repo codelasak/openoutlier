@@ -160,6 +160,23 @@
     var dlBtn = h('button', { class: 'ov-btn', type: 'button', title: 'Download video', 'aria-label': 'Download video', onclick: function () { download('media'); } }, icon(I_DOWN));
     var coverBtn = h('button', { class: 'ov-btn', type: 'button', title: 'Download cover image', 'aria-label': 'Download cover image', onclick: function () { download('cover'); } }, icon(I_IMAGE));
     var bar = h('div', { class: 'ov-bar' }, dlBtn, statsBtn, coverBtn);
+    // Buttons other scripts add (YouTube phase 4: frame capture, swipe file, comments on Shorts).
+    var extras = [];
+    function syncExtras() {
+      extras.forEach(function (x) {
+        x.b.hidden = !!(x.o.visible && !x.o.visible());
+        var t = typeof x.o.title === 'function' ? x.o.title() : x.o.title;
+        if (t && x.b.title !== t) { x.b.title = t; x.b.setAttribute('aria-label', t); }
+        if (x.o.pressed) x.b.setAttribute('aria-pressed', x.o.pressed() ? 'true' : 'false');
+      });
+    }
+    function addButton(o) {
+      var b = h('button', { class: 'ov-btn ov-extra', type: 'button', 'data-oo-btn': o.id, onclick: function (ev) { o.onClick(b, ev); } }, icon(o.icon));
+      extras.push({ o: o, b: b });
+      bar.appendChild(b);
+      syncExtras();
+      return b;
+    }
     var card = h('div', { class: 'ov-card' });
     var wrap = h('div', { class: 'ov-wrap', hidden: true }, bar, card);
     shadow.appendChild(wrap);
@@ -191,6 +208,7 @@
     }
 
     function render() {
+      syncExtras();
       var p = code && opts.getPost(code);
       dlBtn.title = p && p.files && p.files.length > 1 ? 'Download all ' + p.files.length + ' files' : (p && p.type !== 'reel' && p.type !== 'video' ? 'Download photo' : 'Download video');
       statsBtn.setAttribute('aria-pressed', open ? 'true' : 'false');
@@ -343,6 +361,10 @@
 
     return {
       host: host,
+      addButton: addButton,
+      /** The toolbar's rectangle on screen (null while hidden), for popovers that hang off it. */
+      barRect: function () { return wrap.hidden ? null : bar.getBoundingClientRect(); },
+      mode: function () { return wrap.classList.contains('is-rail') ? 'rail' : wrap.classList.contains('is-inline') ? 'inline' : 'over'; },
       setCode: function (c) {
         code = c;
         status = '';

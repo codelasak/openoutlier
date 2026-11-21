@@ -1,0 +1,118 @@
+[
+ {
+  "id": "sp01",
+  "channel": "Excel Demo",
+  "text": "This video is sponsored by Skillshare. The first 1,000 people to use the link will get a free trial: https://skl.sh/exceldemo10?utm_source=youtube\n\n📂 Practice file: https://exceldemo.com/files/xlookup",
+  "brands": [
+   "skillshare"
+  ],
+  "codes": []
+ },
+ {
+  "id": "sp02",
+  "channel": "Excel Demo",
+  "text": "Thanks to NordVPN for sponsoring today's video! Get 68% off + 4 extra months: https://nordvpn.com/exceldemo and use code EXCELDEMO at checkout.",
+  "brands": [
+   "nordvpn"
+  ],
+  "codes": [
+   "EXCELDEMO"
+  ]
+ },
+ {
+  "id": "sp03",
+  "channel": "Pivot Point",
+  "text": "My gear (affiliate links, I earn a small commission):\nKeyboard https://amzn.to/3xKbD9q\nMonitor https://www.amazon.com/dp/B0C1234567?tag=pivotpoint-20\nMic https://geni.us/pp-mic",
+  "brands": [
+   "amazon"
+  ],
+  "codes": [],
+  "disclosure": true,
+  "short": 1
+ },
+ {
+  "id": "sp04",
+  "channel": "Cell Craft",
+  "text": "Today's sponsor is Brilliant. Go to https://brilliant.org/CellCraft/ for 20% off an annual premium subscription.",
+  "brands": [
+   "brilliant"
+  ],
+  "codes": []
+ },
+ {
+  "id": "sp05",
+  "channel": "Formül Okulu",
+  "text": "Bu video Kutools sponsorluğunda hazırlandı. %20 indirim için KUTOOLS20 kodunu kullan: https://www.kutools.com/?ref=formulokulu",
+  "brands": [
+   "kutools"
+  ],
+  "codes": [
+   "KUTOOLS20"
+  ]
+ },
+ {
+  "id": "sp06",
+  "channel": "Formül Okulu",
+  "text": "Bu videonun sponsoru Hostinger. HOSTING10 kodu ile %10 indirim: https://www.hostinger.com.tr/formul",
+  "brands": [
+   "hostinger"
+  ],
+  "codes": [
+   "HOSTING10"
+  ]
+ },
+ {
+  "id": "sp07",
+  "channel": "Sheet Academy",
+  "text": "Brought to you by the folks at Notion, the all-in-one workspace.\nTry it: https://ntn.so/sheetacademy",
+  "brands": [
+   "notion"
+  ],
+  "codes": []
+ },
+ {
+  "id": "sp08",
+  "channel": "Sheet Academy",
+  "text": "Ablebits add-ins for Excel: https://www.ablebits.com/?utm_source=youtube&utm_campaign=sheetacademy",
+  "brands": [
+   "ablebits"
+  ],
+  "codes": []
+ },
+ {
+  "id": "fp01",
+  "channel": "Excel Demo",
+  "text": "This video is not sponsored. Follow me on Instagram https://instagram.com/exceldemo?utm_source=ig and join the Discord https://discord.gg/abc123",
+  "brands": [],
+  "codes": []
+ },
+ {
+  "id": "fp02",
+  "channel": "Excel Demo",
+  "text": "In this video I use code to automate Excel with VBA. Use code below to copy it. Press CTRL+T to make a table. 50% of people get this wrong.",
+  "brands": [],
+  "codes": []
+ },
+ {
+  "id": "fp03",
+  "channel": "Pivot Point",
+  "text": "Chapters:\n0:00 Intro\n1:20 Sponsored rows in a pivot table (a dataset example)\n4:10 Microsoft docs: https://support.microsoft.com/en-us/office/xlookup",
+  "brands": [],
+  "codes": []
+ },
+ {
+  "id": "fp04",
+  "channel": "Cell Craft",
+  "text": "Free template: https://cellcraft.io/templates?utm_source=youtube\nSupport the channel on Patreon https://www.patreon.com/cellcraft",
+  "brands": [],
+  "codes": [],
+  "own": true
+ },
+ {
+  "id": "fp05",
+  "channel": "Formül Okulu",
+  "text": "Bu video sponsorlu değil. Kodlar açıklamada: =ÇAPRAZARA(A2;B:B;C:C)",
+  "brands": [],
+  "codes": []
+ }
+]

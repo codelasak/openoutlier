@@ -1,0 +1,935 @@
+{
+ "responseContext": {
+  "serviceTrackingParams": []
+ },
+ "onResponseReceivedEndpoints": [
+  {
+   "reloadContinuationItemsCommand": {
+    "targetId": "comments-section",
+    "slot": "RELOAD_CONTINUATION_SLOT_HEADER",
+    "continuationItems": [
+     {
+      "commentsHeaderRenderer": {
+       "countText": {
+        "runs": [
+         {
+          "text": "234"
+         },
+         {
+          "text": " Comments"
+         }
+        ]
+       },
+       "commentsCount": {
+        "runs": [
+         {
+          "text": "234"
+         }
+        ]
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "reloadContinuationItemsCommand": {
+    "targetId": "comments-section",
+    "slot": "RELOAD_CONTINUATION_SLOT_BODY",
+    "continuationItems": [
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxPin0001",
+         "toolbarStateKey": "tk-UgxPin0001",
+         "commentId": "UgxPin0001",
+         "pinnedText": "Pinned by @ExcelDemo"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_LINKED_COMMENT"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000002",
+         "toolbarStateKey": "tk-UgxA000002",
+         "commentId": "UgxA000002"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000003",
+         "toolbarStateKey": "tk-UgxA000003",
+         "commentId": "UgxA000003"
+        }
+       },
+       "replies": {
+        "commentRepliesRenderer": {
+         "contents": [
+          {
+           "commentViewModel": {
+            "commentKey": "ck-UgxA000003.9zReply0001",
+            "toolbarStateKey": "tk-UgxA000003.9zReply0001",
+            "commentId": "UgxA000003.9zReply0001"
+           }
+          }
+         ]
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000004",
+         "toolbarStateKey": "tk-UgxA000004",
+         "commentId": "UgxA000004"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000005",
+         "toolbarStateKey": "tk-UgxA000005",
+         "commentId": "UgxA000005"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000006",
+         "toolbarStateKey": "tk-UgxA000006",
+         "commentId": "UgxA000006"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000007",
+         "toolbarStateKey": "tk-UgxA000007",
+         "commentId": "UgxA000007"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000008",
+         "toolbarStateKey": "tk-UgxA000008",
+         "commentId": "UgxA000008"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000009",
+         "toolbarStateKey": "tk-UgxA000009",
+         "commentId": "UgxA000009"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000010",
+         "toolbarStateKey": "tk-UgxA000010",
+         "commentId": "UgxA000010"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000011",
+         "toolbarStateKey": "tk-UgxA000011",
+         "commentId": "UgxA000011"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000012",
+         "toolbarStateKey": "tk-UgxA000012",
+         "commentId": "UgxA000012"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000013",
+         "toolbarStateKey": "tk-UgxA000013",
+         "commentId": "UgxA000013"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "commentThreadRenderer": {
+       "commentViewModel": {
+        "commentViewModel": {
+         "commentKey": "ck-UgxA000014",
+         "toolbarStateKey": "tk-UgxA000014",
+         "commentId": "UgxA000014"
+        }
+       },
+       "renderingPriority": "RENDERING_PRIORITY_UNKNOWN"
+      }
+     },
+     {
+      "continuationItemRenderer": {
+       "trigger": "CONTINUATION_TRIGGER_ON_ITEM_SHOWN",
+       "continuationEndpoint": {
+        "continuationCommand": {
+         "token": "Eg0SC3lUZGVtbzAwMDI5"
+        }
+       }
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "frameworkUpdates": {
+  "entityBatchUpdate": {
+   "mutations": [
+    {
+     "entityKey": "ck-UgxPin0001",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxPin0001",
+       "properties": {
+        "commentId": "UgxPin0001",
+        "content": {
+         "content": "Practice file is in the description. Which lookup should I cover next: FILTER or INDEX/MATCH?",
+         "styleRuns": []
+        },
+        "publishedTime": "2 days ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@ExcelDemo",
+        "toolbarStateKey": "tk-UgxPin0001"
+       },
+       "author": {
+        "channelId": "UCdemoExcelChannel000000",
+        "displayName": "@ExcelDemo",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCdemoExcelChannel000000",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": true
+       },
+       "toolbar": {
+        "likeCountNotliked": "842",
+        "likeCountLiked": "842",
+        "replyCount": "31",
+        "likeCountA11y": "842 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxPin0001",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxPin0001",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000002",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000002",
+       "properties": {
+        "commentId": "UgxA000002",
+        "content": {
+         "content": "Finally someone explains why the column number breaks. Saved me hours, thank you!",
+         "styleRuns": []
+        },
+        "publishedTime": "2 days ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@sheetwizard",
+        "toolbarStateKey": "tk-UgxA000002"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000002aa",
+        "displayName": "@sheetwizard",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000002aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "1.2K",
+        "likeCountLiked": "1.2K",
+        "replyCount": "12",
+        "likeCountA11y": "1.2K likes",
+        "creatorThumbnailUrl": "https://yt3.ggpht.example/creator"
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000002",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000002",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_HEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000003",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000003",
+       "properties": {
+        "commentId": "UgxA000003",
+        "content": {
+         "content": "Does XLOOKUP work on Excel 2016? My company is stuck on it.",
+         "styleRuns": []
+        },
+        "publishedTime": "2 days ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@data_dan",
+        "toolbarStateKey": "tk-UgxA000003"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000003aa",
+        "displayName": "@data_dan",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000003aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "311",
+        "likeCountLiked": "311",
+        "replyCount": "9",
+        "likeCountA11y": "311 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000003",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000003",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000004",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000004",
+       "properties": {
+        "commentId": "UgxA000004",
+        "content": {
+         "content": "How do I return two columns at once without spilling over my other data?",
+         "styleRuns": []
+        },
+        "publishedTime": "1 day ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@mira.k",
+        "toolbarStateKey": "tk-UgxA000004"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000004aa",
+        "displayName": "@mira.k",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000004aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "96",
+        "likeCountLiked": "96",
+        "replyCount": "4",
+        "likeCountA11y": "96 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000004",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000004",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000005",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000005",
+       "properties": {
+        "commentId": "UgxA000005",
+        "content": {
+         "content": "Bu formül Mac'te de çalışıyor mu? Türkçe Excel'de adı ÇAPRAZARA sanırım.",
+         "styleRuns": []
+        },
+        "publishedTime": "1 day ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@ahmet_y",
+        "toolbarStateKey": "tk-UgxA000005"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000005aa",
+        "displayName": "@ahmet_y",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000005aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "57",
+        "likeCountLiked": "57",
+        "replyCount": "2",
+        "likeCountA11y": "57 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000005",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000005",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000006",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000006",
+       "properties": {
+        "commentId": "UgxA000006",
+        "content": {
+         "content": "VLOOKUP worked fine for 30 years, this is bullshit marketing for 365.",
+         "styleRuns": []
+        },
+        "publishedTime": "1 day ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@rant_guy",
+        "toolbarStateKey": "tk-UgxA000006"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000006aa",
+        "displayName": "@rant_guy",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000006aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "14",
+        "likeCountLiked": "14",
+        "replyCount": "6",
+        "likeCountA11y": "14 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000006",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000006",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000007",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000007",
+       "properties": {
+        "commentId": "UgxA000007",
+        "content": {
+         "content": "The not-found argument alone is worth switching. No more IFERROR wrappers 🙌",
+         "styleRuns": []
+        },
+        "publishedTime": "1 day ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@lena_sheets",
+        "toolbarStateKey": "tk-UgxA000007"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000007aa",
+        "displayName": "@lena_sheets",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000007aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "403",
+        "likeCountLiked": "403",
+        "replyCount": "",
+        "likeCountA11y": "403 likes",
+        "creatorThumbnailUrl": "https://yt3.ggpht.example/creator"
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000007",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000007",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_HEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000008",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000008",
+       "properties": {
+        "commentId": "UgxA000008",
+        "content": {
+         "content": "Could you do a video on XLOOKUP with multiple criteria?",
+         "styleRuns": []
+        },
+        "publishedTime": "20 hours ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@quiet_analyst",
+        "toolbarStateKey": "tk-UgxA000008"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000008aa",
+        "displayName": "@quiet_analyst",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000008aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "188",
+        "likeCountLiked": "188",
+        "replyCount": "3",
+        "likeCountA11y": "188 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000008",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000008",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000009",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000009",
+       "properties": {
+        "commentId": "UgxA000009",
+        "content": {
+         "content": "Harika anlatım, teşekkürler. Pivot tablo videosu da gelsin lütfen",
+         "styleRuns": []
+        },
+        "publishedTime": "18 hours ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@kemal.t",
+        "toolbarStateKey": "tk-UgxA000009"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000009aa",
+        "displayName": "@kemal.t",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000009aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "35",
+        "likeCountLiked": "35",
+        "replyCount": "",
+        "likeCountA11y": "35 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000009",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000009",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000010",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000010",
+       "properties": {
+        "commentId": "UgxA000010",
+        "content": {
+         "content": "what a waste of time, f*ck this",
+         "styleRuns": []
+        },
+        "publishedTime": "12 hours ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@trolly",
+        "toolbarStateKey": "tk-UgxA000010"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000010aa",
+        "displayName": "@trolly",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000010aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "",
+        "likeCountLiked": "0",
+        "replyCount": "1",
+        "likeCountA11y": "0 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000010",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000010",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000011",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000011",
+       "properties": {
+        "commentId": "UgxA000011",
+        "content": {
+         "content": "Your pacing is perfect. 60 seconds and I actually get it.",
+         "styleRuns": []
+        },
+        "publishedTime": "10 hours ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@pm_jules",
+        "toolbarStateKey": "tk-UgxA000011"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000011aa",
+        "displayName": "@pm_jules",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000011aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "77",
+        "likeCountLiked": "77",
+        "replyCount": "",
+        "likeCountA11y": "77 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000011",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000011",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000012",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000012",
+       "properties": {
+        "commentId": "UgxA000012",
+        "content": {
+         "content": "Neden bende #SPILL! hatası veriyor? Yanında boş hücre var aslında",
+         "styleRuns": []
+        },
+        "publishedTime": "6 hours ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@ozge.d",
+        "toolbarStateKey": "tk-UgxA000012"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000012aa",
+        "displayName": "@ozge.d",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000012aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "22",
+        "likeCountLiked": "22",
+        "replyCount": "1",
+        "likeCountA11y": "22 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000012",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000012",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000013",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000013",
+       "properties": {
+        "commentId": "UgxA000013",
+        "content": {
+         "content": "Wish you showed the approximate match mode too, that's where VLOOKUP users get burned.",
+         "styleRuns": []
+        },
+        "publishedTime": "3 hours ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@biz_ops",
+        "toolbarStateKey": "tk-UgxA000013"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000013aa",
+        "displayName": "@biz_ops",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000013aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "41",
+        "likeCountLiked": "41",
+        "replyCount": "",
+        "likeCountA11y": "41 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000013",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000013",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000014",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000014",
+       "properties": {
+        "commentId": "UgxA000014",
+        "content": {
+         "content": "is there a keyboard shortcut to insert the function faster",
+         "styleRuns": []
+        },
+        "publishedTime": "1 hour ago",
+        "replyLevel": 0,
+        "authorButtonA11y": "@newbie_99",
+        "toolbarStateKey": "tk-UgxA000014"
+       },
+       "author": {
+        "channelId": "UCa0000000000000000014aa",
+        "displayName": "@newbie_99",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCa0000000000000000014aa",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": false
+       },
+       "toolbar": {
+        "likeCountNotliked": "8",
+        "likeCountLiked": "8",
+        "replyCount": "",
+        "likeCountA11y": "8 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000014",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000014",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    },
+    {
+     "entityKey": "ck-UgxA000003.9zReply0001",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "commentEntityPayload": {
+       "key": "ck-UgxA000003.9zReply0001",
+       "properties": {
+        "commentId": "UgxA000003.9zReply0001",
+        "content": {
+         "content": "No: it needs Excel 2021 or 365. INDEX + MATCH does the same on 2016.",
+         "styleRuns": []
+        },
+        "publishedTime": "2 days ago",
+        "replyLevel": 1,
+        "authorButtonA11y": "@ExcelDemo",
+        "toolbarStateKey": "tk-UgxA000003.9zReply0001"
+       },
+       "author": {
+        "channelId": "UCdemoExcelChannel000000",
+        "displayName": "@ExcelDemo",
+        "avatarThumbnailUrl": "https://yt3.ggpht.example/UCdemoExcelChannel000000",
+        "isVerified": false,
+        "isCurrentUser": false,
+        "isCreator": true
+       },
+       "toolbar": {
+        "likeCountNotliked": "120",
+        "likeCountLiked": "120",
+        "replyCount": "",
+        "likeCountA11y": "120 likes",
+        "creatorThumbnailUrl": ""
+       }
+      }
+     }
+    },
+    {
+     "entityKey": "tk-UgxA000003.9zReply0001",
+     "type": "ENTITY_MUTATION_TYPE_REPLACE",
+     "payload": {
+      "engagementToolbarStateEntityPayload": {
+       "key": "tk-UgxA000003.9zReply0001",
+       "likeState": "TOOLBAR_LIKE_STATE_INDIFFERENT",
+       "heartState": "TOOLBAR_HEART_STATE_UNHEARTED"
+      }
+     }
+    }
+   ],
+   "timestamp": {
+    "seconds": "1763700000"
+   }
+  }
+ }
+}

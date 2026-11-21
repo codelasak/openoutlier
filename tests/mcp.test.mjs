@@ -185,7 +185,7 @@ test('settings: feature flags and the extension\'s quota reach the bridge; "Copy
   assert.deepEqual(st.data.features.on, ['hide-shorts']);
   assert.equal(st.data.tracker.enabled, false);
   assert.ok(st.data.tracker.jobs.heartbeat >= 1, 'the server holding the bridge seeded the tracker');
-  assert.equal(st.data.database.schema_version, 3);
+  assert.equal(st.data.database.schema_version, 4);
 
   r = await bridge('/settings/youtube-api-key', { method: 'POST', body: { remove: true } });
   assert.equal((await r.json()).apiKey.configured, false);
@@ -796,4 +796,35 @@ test('in-page badges and cards (phase 3): /youtube/cards, /youtube/channel-card,
   assert.deepEqual([v.ok, v.tracked, v.own], [true, false, null]);
   assert.equal((await bridge('/youtube/video-card?as=get&id=bad', { method: 'POST', body: {} })).status, 400);
   assert.equal((await bridge('/youtube/cards', { method: 'POST', body: {}, origin: 'https://evil.example' })).status, 403);
+});
+
+test('content tools (phase 4): /youtube/comments, /youtube/sponsors, sponsors on the niche page, get_comments and sponsor_mentions', async () => {
+  const health = await (await bridge('/health')).json();
+  assert.ok(health.features.includes('content-tools'));
+  const comments = [
+    { id: 'UgxE2e00001', author: '@a', text: 'Does this work on a Mac?', likes: 12, replies: 1, published: '1 day ago', pinned: true, creator: true },
+    { id: 'UgxE2e00002', author: '@b', text: 'Great video, thanks', likes: 40, replies: 0, published: '1 day ago' }
+  ];
+  const put = await (await bridge('/youtube/comments', { method: 'POST', body: { video: 'yTe2eComm01', title: 'E2E video', total: 2, comments } })).json();
+  assert.deepEqual([put.ok, put.stored, put.total], [true, 2, 2]);
+  assert.equal((await bridge('/youtube/comments', { method: 'POST', body: { video: 'bad', comments } })).status, 400);
+  const got = await call('get_comments', { video: 'https://youtu.be/yTe2eComm01', questions: true });
+  assert.equal(got.data.ok, true);
+  assert.equal(got.data.source, 'captured');
+  assert.deepEqual(got.data.comments.map((c) => c.id), ['UgxE2e00001']);
+  // Turned off in the Features tab: the bridge takes no comments.
+  await bridge('/settings', { method: 'POST', body: { features: { 'comment-tools': false } } });
+  assert.deepEqual(await (await bridge('/youtube/comments', { method: 'POST', body: { video: 'yTe2eComm02', comments } })).json(), { ok: false, off: true });
+  await bridge('/settings', { method: 'POST', body: { features: {} } });
+  // Sponsors: the channel card and the tool (a channel from the niche test, no descriptions yet).
+  const sp = await (await bridge('/youtube/sponsors?as=get&channel=UCdemoExcelChannel000001', { method: 'POST', body: {} })).json();
+  assert.equal(sp.ok, true);
+  assert.equal(typeof sp.tracked, 'boolean');
+  assert.deepEqual(sp.brands, []);
+  assert.equal((await bridge('/youtube/sponsors?as=get&channel=bad', { method: 'POST', body: {} })).status, 400);
+  const page = await (await bridge('/youtube/niche/page?as=get', { method: 'POST', body: {} })).json();
+  assert.ok(page.sponsors && Array.isArray(page.sponsors.brands), 'the Niş Takibi answer carries the sponsor list');
+  const tool = await call('sponsor_mentions', {});
+  assert.ok(Array.isArray(tool.data.brands));
+  assert.match(tool.data.rules, /Rule-based/);
 });

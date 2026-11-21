@@ -218,6 +218,39 @@ CREATE TABLE IF NOT EXISTS own_milestones (
 );
 `;
 
+// Phase 4 (content tools, docs/youtube-niche-plan.md 4): comments the extension captured on watch
+// pages or get_comments fetched (kept 7 days, mcp/content.mjs).
+const SCHEMA_CONTENT_TOOLS = `
+CREATE TABLE IF NOT EXISTS video_comments (
+  video_id    TEXT NOT NULL,
+  comment_id  TEXT NOT NULL,
+  author      TEXT,
+  author_id   TEXT,
+  text        TEXT NOT NULL,
+  likes       INTEGER,
+  replies     INTEGER,
+  published   TEXT,                       -- as YouTube shows it ("2 days ago") or ISO (Data API)
+  is_reply    INTEGER NOT NULL DEFAULT 0,
+  parent_id   TEXT,
+  pinned      INTEGER NOT NULL DEFAULT 0,
+  hearted     INTEGER NOT NULL DEFAULT 0,
+  by_creator  INTEGER NOT NULL DEFAULT 0,
+  pos         INTEGER,                    -- order YouTube showed them in (top comments first)
+  source      TEXT NOT NULL,              -- page | api
+  fetched_at  INTEGER NOT NULL,
+  PRIMARY KEY (video_id, comment_id)
+);
+CREATE INDEX IF NOT EXISTS video_comments_by_age ON video_comments (fetched_at);
+CREATE TABLE IF NOT EXISTS comment_sets (
+  video_id    TEXT PRIMARY KEY,
+  title       TEXT,
+  channel_id  TEXT,
+  total       INTEGER,                    -- the comment count YouTube showed
+  source      TEXT,
+  fetched_at  INTEGER NOT NULL
+);
+`;
+
 /** Ordered, each run once (meta schema_version); `up` must be safe to run again anyway. */
 export const MIGRATIONS = [
   { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) },
@@ -240,6 +273,15 @@ export const MIGRATIONS = [
       st.db.exec(SCHEMA_OWN_HISTORY);
       st.addColumn('own_video_daily', 'channel_id', 'TEXT');
       st.db.exec('CREATE INDEX IF NOT EXISTS own_video_daily_by_channel ON own_video_daily (channel_id, day)');
+    }
+  },
+  {
+    version: 4, name: 'content tools: captured comments, video descriptions (sponsor scan), thumbnail snapshots (title history)',
+    up: (st) => {
+      st.db.exec(SCHEMA_CONTENT_TOOLS);
+      st.addColumn('tracked_videos', 'description', 'TEXT');
+      st.addColumn('tracked_videos', 'thumb_snap', 'TEXT');
+      st.addColumn('video_meta_log', 'thumb_snap', 'TEXT');
     }
   }
 ];
@@ -277,6 +319,7 @@ export class Store {
     this.db.exec(SCHEMA_YOUTUBE_NICHE);
     this.db.exec(SCHEMA_NICHE_TRACKING);
     this.db.exec(SCHEMA_OWN_HISTORY);
+    this.db.exec(SCHEMA_CONTENT_TOOLS);
     let v = Number(this.getMeta('schema_version', 0)) || 0;
     for (const m of MIGRATIONS) {
       if (m.version <= v) continue;

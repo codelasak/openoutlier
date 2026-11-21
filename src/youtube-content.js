@@ -816,6 +816,8 @@
     profiles: profiles,
     ucMap: ucMap,
     findPost: findPost,
+    overlay: overlay,
+    mainVideo: mainVideo,
     pageAccount: function () { return pageAccount(); },
     /** cb() after the saved videos changed (throttled with the panel's render). */
     onChange: function (cb) { libSubs.push(cb); return function () { libSubs = libSubs.filter(function (x) { return x !== cb; }); }; }

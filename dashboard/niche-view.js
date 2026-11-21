@@ -65,7 +65,12 @@
       trackerOff: 'Niche tracking is switched off.', turnOn: 'Turn on', noKey: 'The bridge has no Data API key yet: only RSS runs (no exact counts, comments or lengths).', addKey: 'Copy the key in Settings',
       settings: 'Alert threshold', settingsHint: 'Breakout when a video reaches this multiple of its channel\'s normal at 6 h or 24 h.', fastStart: 'Measure every 30 min in the first 6 hours',
       days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], blocks: ['0–3', '3–6', '6–9', '9–12', '12–15', '15–18', '18–21', '21–24'],
-      evergreen: 'evergreen', spike: 'spike', steady: 'steady', justNow: 'just now', sourceNiche: 'niche curve'
+      evergreen: 'evergreen', spike: 'spike', steady: 'steady', justNow: 'just now', sourceNiche: 'niche curve',
+      sponsors: 'Who promotes what', sponsorsSub: 'Sponsors, discount codes and affiliate links in the tracked channels\' descriptions (last 365 days), most widespread first.',
+      sponsorsEmpty: 'No sponsors or affiliate links found yet. Descriptions come in with each new upload\'s Data API reading and from the channels\' history; short links (bit.ly …) are counted, not followed.',
+      spScanned: '{n} descriptions from {c} channels', spChannels: '{n} channels', spChannel1: '1 channel', spVideos: '{n} videos', spVideo1: '1 video', spLast: 'last {d}', spCodes: 'Codes',
+      spShort: '{n} short links (target not visible)', spDisclose: '{n} disclose affiliate links', spAsk: 'Ask Claude: "sponsor_mentions" (OpenOutlier MCP).',
+      kSponsor: 'sponsor', kAffiliate: 'affiliate', kLink: 'sponsor link', kUtm: 'tracked link', kCode: 'code', kDiscount: 'discount'
     },
     tr: {
       nav: 'Niş Takibi', title: 'Niş Takibi', loading: 'Yükleniyor…', refresh: 'Yenile', channelsBtn: 'Kanallar',
@@ -113,7 +118,12 @@
       trackerOff: 'Niş takibi kapalı.', turnOn: 'Aç', noKey: 'Bridge\'de henüz Data API anahtarı yok: sadece RSS çalışıyor (kesin sayı, yorum ve süre yok).', addKey: 'Anahtarı Ayarlar\'dan kopyala',
       settings: 'Uyarı eşiği', settingsHint: 'Bir video 6. veya 24. saatte kanalının normalinin bu katına ulaşınca hızlı yükselen sayılır.', fastStart: 'İlk 6 saatte 30 dakikada bir ölç',
       days: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'], blocks: ['0–3', '3–6', '6–9', '9–12', '12–15', '15–18', '18–21', '21–24'],
-      evergreen: 'evergreen', spike: 'patlama', steady: 'dengeli', justNow: 'az önce', sourceNiche: 'niş eğrisi'
+      evergreen: 'evergreen', spike: 'patlama', steady: 'dengeli', justNow: 'az önce', sourceNiche: 'niş eğrisi',
+      sponsors: 'Kim neyi tanıtıyor', sponsorsSub: 'Takip edilen kanalların açıklamalarındaki sponsorlar, indirim kodları ve affiliate linkler (son 365 gün), en yaygını başta.',
+      sponsorsEmpty: 'Henüz sponsor ya da affiliate link bulunmadı. Açıklamalar her yeni yüklemenin Data API ölçümüyle ve kanalların geçmişinden gelir; kısa linkler (bit.ly …) sayılır, açılmaz.',
+      spScanned: '{c} kanaldan {n} açıklama', spChannels: '{n} kanal', spChannel1: '1 kanal', spVideos: '{n} video', spVideo1: '1 video', spLast: 'son {d}', spCodes: 'Kodlar',
+      spShort: '{n} kısa link (hedefi görünmüyor)', spDisclose: '{n} açıklama affiliate link olduğunu belirtiyor', spAsk: 'Claude\'a sor: "sponsor_mentions" (OpenOutlier MCP).',
+      kSponsor: 'sponsor', kAffiliate: 'affiliate', kLink: 'sponsor linki', kUtm: 'takipli link', kCode: 'kod', kDiscount: 'indirim'
     }
   };
 
@@ -413,6 +423,38 @@
       })) : empty(L().changesEmpty));
     }
 
+    // Phase 4 (channel-sponsors): src/sponsors.js over the niche's descriptions, from the bridge (mcp/content.mjs).
+    function sponsorsCard(d) {
+      var sp = d.sponsors;
+      if (!sp) return null;
+      var list = (sp.brands || []).slice(0, 12);
+      var sub = L().sponsorsSub;
+      var meta = h('p', { class: 'nv-sub sp-meta' }, fill(L().spScanned, { n: full(sp.scanned), c: full(sp.channels_scanned) }),
+        sp.short_links ? ' · ' + fill(L().spShort, { n: full(sp.short_links) }) : '');
+      if (!list.length) return card('sp-card', L().sponsors, sub, h('div', null, meta, empty(L().sponsorsEmpty)));
+      var KIND = { sponsor: L().kSponsor, affiliate: L().kAffiliate, 'brand-link': L().kLink, utm: L().kUtm, code: L().kCode, discount: L().kDiscount };
+      var max = Math.max.apply(null, list.map(function (b) { return b.videos; }));
+      var body = h('ol', { class: 'sp-list' }, list.map(function (b, i) {
+        var chans = b.channels || [];
+        return h('li', { class: 'sp-row' },
+          h('span', { class: 'nv-rank', text: String(i + 1) }),
+          h('div', { class: 'sp-main' },
+            h('div', { class: 'sp-head' }, h('b', { class: 'sp-brand', text: b.brand }),
+              (b.kinds || []).filter(function (k) { return KIND[k]; }).map(function (k) { return h('span', { class: 'nv-tag is-soft', text: KIND[k] }); })),
+            h('div', { class: 'sp-chans', title: chans.map(function (c) { return c.name + ' (' + c.videos + ')'; }).join('\n') },
+              chans.slice(0, 4).map(function (c) { return c.name; }).join(' · ') + (chans.length > 4 ? ' · +' + (chans.length - 4) : '')),
+            b.codes && b.codes.length ? h('div', { class: 'sp-codes' }, h('span', { class: 'muted', text: L().spCodes }), b.codes.slice(0, 4).map(function (c) { return h('code', { text: c }); })) : null,
+            b.examples && b.examples[0] && b.examples[0].text ? h('p', { class: 'sp-ex', text: '“' + b.examples[0].text + '”' }) : null),
+          h('div', { class: 'sp-nums' },
+            h('span', { class: 'sp-bar', 'aria-hidden': 'true' }, h('i', { style: 'width:' + Math.max(6, b.videos / max * 100).toFixed(1) + '%' })),
+            h('b', { text: chans.length === 1 ? L().spChannel1 : fill(L().spChannels, { n: chans.length }) }),
+            h('span', { text: (b.videos === 1 ? L().spVideo1 : fill(L().spVideos, { n: full(b.videos) })) + (b.last_at ? ' · ' + fill(L().spLast, { d: day(Date.parse(b.last_at + 'T12:00:00Z')) }) : '') })));
+      }));
+      var disc = (sp.channels || []).reduce(function (n, c) { return n + (c.disclosure || 0); }, 0);
+      return card('sp-card', L().sponsors, sub, h('div', null, meta, body,
+        h('p', { class: 'nv-sub sp-foot' }, disc ? fill(L().spDisclose, { n: full(disc) }) + ' · ' : '', L().spAsk)));
+    }
+
     function mineCard(d) {
       var m = d.mine || { channels: [], videos: [] };
       if (!m.channels.length) return card('nv-minecard', L().mine, null, empty(L().mineNone));
@@ -632,7 +674,7 @@
       if (ui.start) main.appendChild(h('div', { class: 'nv-onboard' }, startCard()));
       main.appendChild(kpis(d));
       main.appendChild(h('div', { class: 'nv-grid' },
-        h('div', { class: 'nv-col' }, weekCard(d), curvesCard(d), worksCard(d), h('div', { class: 'nv-two' }, gapsCard(d), changesCard(d))),
+        h('div', { class: 'nv-col' }, weekCard(d), curvesCard(d), worksCard(d), h('div', { class: 'nv-two' }, gapsCard(d), changesCard(d)), sponsorsCard(d)),
         h('div', { class: 'nv-col nv-side' }, breakoutsCard(d), mineCard(d), digestCard(d), growthCard(d), channelsCard(d))));
     }
 

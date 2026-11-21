@@ -19,7 +19,7 @@
 // Everything is kept (decision 2026-11-21); api-retention-30d (tracker.mjs) is the only purge.
 import { createRequire } from 'node:module';
 import { fetchFeeds } from './rss.mjs';
-import { hashThumb, changed as thumbChanged } from './thumbhash.mjs';
+import { thumbAndSnap, changed as thumbChanged } from './thumbhash.mjs';
 
 const require = createRequire(import.meta.url);
 const V = require('../src/velocity.js');
@@ -151,31 +151,35 @@ function scheduleVideo(store, v, now, settings = {}, random = Math.random, soon 
 function upsertVideo(store, v, now, foundBy) {
   const prev = store.db.prepare('SELECT * FROM tracked_videos WHERE video_id = ?').get(v.video_id);
   if (!prev) {
-    store.db.prepare(`INSERT INTO tracked_videos (video_id, channel_id, published_at, type, title, thumb, duration, keywords, first_seen, found_by, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(v.video_id, v.channel_id, v.published_at ?? null, v.type || null, v.title || null, v.thumb || null,
-      v.duration ?? null, v.keywords ? JSON.stringify(v.keywords) : null, now, foundBy, now);
+    store.db.prepare(`INSERT INTO tracked_videos (video_id, channel_id, published_at, type, title, thumb, duration, keywords, description, first_seen, found_by, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(v.video_id, v.channel_id, v.published_at ?? null, v.type || null, v.title || null, v.thumb || null,
+      v.duration ?? null, v.keywords ? JSON.stringify(v.keywords) : null, v.description || null, now, foundBy, now);
     return { added: true, prev: null };
   }
   store.db.prepare(`UPDATE tracked_videos SET published_at = COALESCE(?, published_at), type = COALESCE(?, type), title = COALESCE(?, title),
-    thumb = COALESCE(?, thumb), duration = COALESCE(?, duration), keywords = COALESCE(?, keywords), updated_at = ? WHERE video_id = ?`)
+    thumb = COALESCE(?, thumb), duration = COALESCE(?, duration), keywords = COALESCE(?, keywords), description = COALESCE(?, description), updated_at = ? WHERE video_id = ?`)
     .run(v.published_at ?? null, v.type === 'live' || !prev.type ? v.type || null : null, v.title || null, v.thumb || null, v.duration ?? null,
-      v.keywords ? JSON.stringify(v.keywords) : null, now, v.video_id);
+      v.keywords ? JSON.stringify(v.keywords) : null, v.description || null, now, v.video_id);
   return { added: false, prev };
 }
 
 /** Log the first known title / thumbnail, and every change after it. → 'title' | 'thumb' | null */
-function noteMeta(store, videoId, { title, thumbHash, thumbUrl, duration }, now, source) {
+function noteMeta(store, videoId, { title, thumbHash, thumbUrl, duration, snap }, now, source) {
   const last = store.db.prepare('SELECT * FROM video_meta_log WHERE video_id = ? ORDER BY ts DESC LIMIT 1').get(videoId);
   const lastHash = last ? store.db.prepare('SELECT thumb_hash FROM video_meta_log WHERE video_id = ? AND thumb_hash IS NOT NULL ORDER BY ts DESC LIMIT 1').get(videoId) : null;
   const titleChanged = last && title && last.title && title !== last.title;
   const thumbDiff = thumbHash && lastHash && thumbChanged(lastHash.thumb_hash, thumbHash);
   const firstHash = thumbHash && last && !lastHash;
   if (!last || titleChanged || thumbDiff) {
-    store.db.prepare('INSERT OR IGNORE INTO video_meta_log (video_id, ts, title, thumb_hash, duration, thumb_url, source) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(videoId, now, title || (last && last.title) || null, thumbHash || (lastHash && lastHash.thumb_hash) || null, duration ?? (last && last.duration) ?? null, thumbUrl || null, source);
+    // The thumbnail snapshot of this version (young videos only): the current image, or the one the last row had.
+    const lastSnap = last ? store.db.prepare('SELECT thumb_snap FROM video_meta_log WHERE video_id = ? AND thumb_snap IS NOT NULL ORDER BY ts DESC LIMIT 1').get(videoId) : null;
+    store.db.prepare('INSERT OR IGNORE INTO video_meta_log (video_id, ts, title, thumb_hash, duration, thumb_url, source, thumb_snap) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(videoId, now, title || (last && last.title) || null, thumbHash || (lastHash && lastHash.thumb_hash) || null, duration ?? (last && last.duration) ?? null, thumbUrl || null, source,
+        snap || (!thumbDiff && lastSnap ? lastSnap.thumb_snap : null));
     return titleChanged ? 'title' : thumbDiff ? 'thumb' : null;
   }
-  if (firstHash) store.db.prepare('UPDATE video_meta_log SET thumb_hash = ? WHERE video_id = ? AND ts = ?').run(thumbHash, videoId, last.ts);
+  if (firstHash) store.db.prepare('UPDATE video_meta_log SET thumb_hash = ?, thumb_snap = COALESCE(thumb_snap, ?) WHERE video_id = ? AND ts = ?').run(thumbHash, snap || null, videoId, last.ts);
+  else if (snap && last && !last.thumb_snap && !thumbDiff) store.db.prepare('UPDATE video_meta_log SET thumb_snap = ? WHERE video_id = ? AND ts = ?').run(snap, videoId, last.ts);
   return null;
 }
 
@@ -216,11 +220,13 @@ async function rssJob(ctx, job) {
       .slice(0, ctx.thumbsPerRun ?? 4);
     for (const { e } of due) {
       let hash = null;
-      try { hash = await hashThumb(e.thumb, { fetch: ctx.fetch, tools: ctx.thumbTools || {} }); } catch { /* try again next time */ }
+      let snap = null;
+      // Snapshots of the image for the first 30 days (when creators test thumbnails), so a change shows before and after.
+      try { const r = await thumbAndSnap(e.thumb, { fetch: ctx.fetch, tools: ctx.thumbTools || {}, keep: now - e.published_at < 30 * DAY }); if (r) { hash = r.hash; snap = r.snap; } } catch { /* try again next time */ }
       store.db.prepare('UPDATE tracked_videos SET thumb_checked_at = ?, thumb_hash = COALESCE(?, thumb_hash) WHERE video_id = ?').run(now, hash, e.video_id);
       if (!hash) continue;
       hashed++;
-      const c = noteMeta(store, e.video_id, { title: e.title, thumbHash: hash, thumbUrl: e.thumb }, now, 'rss');
+      const c = noteMeta(store, e.video_id, { title: e.title, thumbHash: hash, thumbUrl: e.thumb, snap }, now, 'rss');
       if (c) changes.push({ video_id: e.video_id, field: c });
     }
   }
@@ -247,7 +253,7 @@ async function videoBatch(ctx, jobs) {
       continue;
     }
     const r = A.videoRecord(it, { now });
-    const v = { video_id: j.video_id, channel_id: r.ownerId || j.channel_id, published_at: r.takenAt, title: r.caption, thumb: r.thumb, duration: r.duration, keywords: r.keywords, type: r.type === 'live' ? 'live' : null };
+    const v = { video_id: j.video_id, channel_id: r.ownerId || j.channel_id, published_at: r.takenAt, title: r.caption, thumb: r.thumb, duration: r.duration, keywords: r.keywords, description: r.description, type: r.type === 'live' ? 'live' : null };
     upsertVideo(store, v, now, 'api');
     if (r.views != null) stats.push({ video_id: j.video_id, ts: now, views: r.views, likes: r.likes, comments: r.comments, source: 'api' });
     noteMeta(store, j.video_id, { title: r.caption, duration: r.duration }, now, 'api');
@@ -296,7 +302,7 @@ async function backfillJob(ctx, job) {
   for (const r of res.records) {
     // The same records "All uploads via API" saves: into the library (exact beats rounded).
     store.mergePost(account, r.code, { ...r, owner: account }, { platform: 'youtube' });
-    const v = { video_id: r.code, channel_id: cid, published_at: r.takenAt, type: r.type, title: r.caption, thumb: r.thumb, duration: r.duration, keywords: r.keywords };
+    const v = { video_id: r.code, channel_id: cid, published_at: r.takenAt, type: r.type, title: r.caption, thumb: r.thumb, duration: r.duration, keywords: r.keywords, description: r.description };
     upsertVideo(store, v, now, 'backfill');
     if (r.views != null) stats.push({ video_id: r.code, ts: now, views: r.views, likes: r.likes, comments: r.comments, source: 'api' });
     noteMeta(store, r.code, { title: r.caption, duration: r.duration }, now, 'api');

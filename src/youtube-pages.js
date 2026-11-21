@@ -43,6 +43,11 @@
       rydBy: 'via Return YouTube Dislike', rydTip: 'An estimate from Return YouTube Dislike (the video id goes to returnyoutubedislike.com). Turn off in Features.', rydFail: 'unavailable',
       own: 'YouTube Analytics', ownLine: '{views} views · {hours} h watched · {pct} viewed on average · +{subs} subscribers', ownThrough: 'through {d}',
       published: 'Published', chAge: 'Channel age', avgShorts: 'Avg Shorts views', avgShortsMean: 'avg views / video', noVph: 'waiting for exact data',
+      history: 'Title & thumbnail changes', histTitle: 'Title', histThumb: 'Thumbnail', histVph: '{a} → {b} views/h', histVphPending: '{a} views/h before · after: in 24 h',
+      histTip: 'Views per hour in the 24 hours before and after the change, from OpenOutlier\'s tracker.', histNoSnap: 'new image', histMore: '+{n} earlier',
+      promotes: 'Promotes', promotesTip: 'Sponsor phrases, discount codes and affiliate / tracked links in this channel\'s video descriptions (rule-based scan, {n} descriptions).',
+      promotesNone: 'No sponsors or affiliate links in {n} descriptions', promotesUntracked: 'Track the channel to scan its descriptions for sponsors', vids: '{n} videos', vid1: '1 video', code: 'code {c}', promotesScan: 'from {n} descriptions',
+      kindSponsor: 'sponsor', kindAffiliate: 'affiliate', kindLink: 'link', kindUtm: 'tracked link', kindCode: 'code', kindDiscount: 'discount',
       title: 'OpenOutlier'
     },
     tr: {
@@ -64,6 +69,11 @@
       rydBy: 'Return YouTube Dislike\'tan', rydTip: 'Return YouTube Dislike\'ın tahmini (video ID\'si returnyoutubedislike.com\'a gider). Özellikler\'den kapatılabilir.', rydFail: 'alınamadı',
       own: 'YouTube Analytics', ownLine: '{views} izlenme · {hours} sa izlenme süresi · ort. {pct} izlendi · +{subs} abone', ownThrough: '{d} tarihine kadar',
       published: 'Yayın', chAge: 'Kanal yaşı', avgShorts: 'Ort. Shorts izlenmesi', avgShortsMean: 'video başına ort.', noVph: 'kesin veri bekleniyor',
+      history: 'Başlık ve thumbnail değişiklikleri', histTitle: 'Başlık', histThumb: 'Thumbnail', histVph: 'saatte {a} → {b} izlenme', histVphPending: 'önce saatte {a} izlenme · sonrası: 24 saatte',
+      histTip: 'Değişiklikten önceki ve sonraki 24 saatte saat başına izlenme, OpenOutlier takibinden.', histNoSnap: 'yeni görsel', histMore: '+{n} önceki',
+      promotes: 'Tanıttıkları', promotesTip: 'Bu kanalın video açıklamalarındaki sponsor ifadeleri, indirim kodları ve affiliate / takipli linkler (kurallarla tarama, {n} açıklama).',
+      promotesNone: '{n} açıklamada sponsor ya da affiliate link yok', promotesUntracked: 'Açıklamalarını sponsorlar için taramak üzere kanalı takip et', vids: '{n} video', vid1: '1 video', code: 'kod {c}', promotesScan: '{n} açıklamadan',
+      kindSponsor: 'sponsor', kindAffiliate: 'affiliate', kindLink: 'link', kindUtm: 'takipli link', kindCode: 'kod', kindDiscount: 'indirim',
       title: 'OpenOutlier'
     }
   };
@@ -119,6 +129,26 @@
     '.own b{font-weight:500}',
     '.own .sub{white-space:normal}',
     '.sk{display:inline-block;width:44px;height:12px;border-radius:3px;background:var(--line);vertical-align:middle}',
+    // Phase 4: title / thumbnail history (watch card) and what the channel promotes (channel card).
+    '.wide{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:8px 10px 0;padding:8px 8px 0;border-top:1px solid var(--line);font-size:13px;line-height:18px;min-width:0}',
+    '.wide > b{font-weight:500;white-space:nowrap}',
+    '.hist{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0;flex:1 1 100%}',
+    '.hist + .hist{margin-top:2px}',
+    '.hist .when{color:var(--muted);font-size:12px;white-space:nowrap;min-width:84px;font-variant-numeric:tabular-nums}',
+    '.hist .fld{font-size:11px;font-weight:500;padding:0 6px;border-radius:4px;background:var(--line);line-height:18px}',
+    '.hist .old{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px;overflow-wrap:anywhere}',
+    '.hist .new{overflow-wrap:anywhere}',
+    '.hist .arr{color:var(--muted)}',
+    '.hist .vph{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}',
+    '.hist .vph b{font-weight:500;color:inherit}',
+    '.hist .vph b.up{color:#0a7d3a}.hist .vph b.down{color:#c00}',
+    ':host-context(html[dark]) .hist .vph b.up{color:#5be08c}:host-context(html[dark]) .hist .vph b.down{color:#ff7c7c}',
+    '.snap{width:64px;height:36px;border-radius:4px;object-fit:cover;background:var(--line);display:block}',
+    '.snap.ph{display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}',
+    '.pr{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);font-size:12.5px;white-space:nowrap}',
+    '.pr b{font-weight:500}',
+    '.pr small{color:var(--muted);font-size:11.5px}',
+    '.wide .sub{white-space:normal}',
     '@media (max-width:640px){.cell{padding:2px 10px}.v{font-size:14px}}'
   ].join('\n');
   var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path fill="#C8FF2E" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
@@ -256,7 +286,7 @@
   }
   function channelCard() {
     var c = ctx();
-    var on = c.kind === 'channel' && (FT.isOn('channel-stats') || FT.isOn('channel-growth') || FT.isOn('channel-monetization'));
+    var on = c.kind === 'channel' && (FT.isOn('channel-stats') || FT.isOn('channel-growth') || FT.isOn('channel-monetization') || FT.isOn('channel-sponsors'));
     var acct = on ? (D.lib() && D.lib().pageAccount()) || c.id : null;
     var slot = on && acct ? channelSlot() : null;
     if (!slot) { if (chCard) { chCard.el.remove(); chCard = null; } return; }
@@ -281,7 +311,8 @@
       var smp = I.sampleVideos(posts, 5);
       monA = posts.length ? askMon('c:' + uc, { kind: 'channel', channel: uc, ids: smp.ids, shortsOnly: smp.shortsOnly }) : { state: 'checking' };
     }
-    var sig = JSON.stringify([lg, acct, st, growth && growth.series && growth.series.length, growth && growth.tracked, monA, FT.flags(), D.noKey(), document.documentElement.hasAttribute('dark')]);
+    var spons = uc && FT.isOn('channel-sponsors') ? askSponsors(uc) : null;
+    var sig = JSON.stringify([lg, acct, st, growth && growth.series && growth.series.length, growth && growth.tracked, monA, spons && [spons.scanned, spons.brands.length], FT.flags(), D.noKey(), document.documentElement.hasAttribute('dark')]);
     draw(chCard, sig, function (card) {
       card.setAttribute('aria-label', L.stats);
       var head = h('div', { class: 'cell head' }, []);
@@ -310,7 +341,70 @@
         }
       }
       if (FT.isOn('channel-stats') && !info && D.noKey()) card.appendChild(h('p', { class: 'note', text: L.needKey }));
+      // Untracked channels without saved descriptions get no row (no clutter on every channel page).
+      if (spons && (spons.brands.length || spons.tracked)) card.appendChild(sponsorRow(spons, L, lg));
     });
+  }
+
+  // ---- title-history (phase 1's video_meta_log through /youtube/video-card) ---------------------------
+  function snapEl(src, L) {
+    return src ? h('img', { class: 'snap', src: src, alt: '', loading: 'lazy' }) : h('span', { class: 'snap ph', text: L.histNoSnap });
+  }
+  function historyRow(list, L, lg) {
+    var row = h('div', { class: 'wide', title: L.histTip }, [h('b', { text: L.history })]);
+    list.slice(0, 3).forEach(function (c) {
+      var line = h('div', { class: 'hist' }, [h('span', { class: 'when', text: dateFmt(c.at, lg, { day: 'numeric', month: 'short' }) + ' · ' + ago(c.at, lg) }),
+        h('span', { class: 'fld', text: c.field === 'title' ? L.histTitle : L.histThumb })]);
+      if (c.field === 'title') {
+        line.appendChild(h('span', { class: 'old', text: c.before || '–' }));
+        line.appendChild(h('span', { class: 'arr', text: '→', 'aria-hidden': 'true' }));
+        line.appendChild(h('span', { class: 'new', text: c.after || '–' }));
+      } else {
+        line.appendChild(snapEl(c.before_snap, L));
+        line.appendChild(h('span', { class: 'arr', text: '→', 'aria-hidden': 'true' }));
+        line.appendChild(snapEl(c.after_snap, L));
+      }
+      if (c.vph_before != null) {
+        var v = h('span', { class: 'vph' });
+        if (c.vph_after != null) {
+          var cls = c.vph_after > c.vph_before * 1.1 ? 'up' : c.vph_after < c.vph_before * 0.9 ? 'down' : '';
+          var parts = fill(L.histVph, { a: '\u0000', b: '\u0001' }).split(/\u0000|\u0001/);
+          v.appendChild(document.createTextNode(parts[0]));
+          v.appendChild(h('b', { text: I.compact(c.vph_before, lg) }));
+          v.appendChild(document.createTextNode(parts[1]));
+          v.appendChild(h('b', { class: cls, text: I.compact(c.vph_after, lg) }));
+          v.appendChild(document.createTextNode(parts[2] || ''));
+        } else v.textContent = fill(L.histVphPending, { a: I.compact(c.vph_before, lg) });
+        line.appendChild(v);
+      }
+      row.appendChild(line);
+    });
+    if (list.length > 3) row.appendChild(h('span', { class: 'sub', text: fill(L.histMore, { n: list.length - 3 }) }));
+    return row;
+  }
+
+  // ---- channel-sponsors (mcp/content.mjs through the bridge) --------------------------------------------
+  var sponsors = {}; // UC → answer | { pending } | { none }
+  function askSponsors(uc) {
+    if (sponsors[uc]) return sponsors[uc].none || sponsors[uc].pending ? null : sponsors[uc];
+    sponsors[uc] = { pending: true };
+    D.send({ type: 'reelscope:yt-content', what: 'sponsors', channel: uc }).then(function (r) { sponsors[uc] = r && r.ok ? r : { none: true }; refresh(); });
+    return null;
+  }
+  function sponsorRow(sp, L, lg) {
+    var row = h('div', { class: 'wide', title: fill(L.promotesTip, { n: sp.scanned }) }, [h('b', { text: L.promotes })]);
+    if (!sp.brands.length) {
+      row.appendChild(h('span', { class: 'sub', text: sp.scanned ? fill(L.promotesNone, { n: I.full(sp.scanned, lg) }) : L.promotesUntracked }));
+      return row;
+    }
+    var KIND = { sponsor: L.kindSponsor, affiliate: L.kindAffiliate, 'brand-link': L.kindLink, utm: L.kindUtm, code: L.kindCode, discount: L.kindDiscount };
+    sp.brands.slice(0, 6).forEach(function (b) {
+      var kinds = (b.kinds || []).filter(function (k) { return KIND[k]; }).map(function (k) { return KIND[k]; });
+      var tip = [kinds.join(', '), b.codes && b.codes.length ? fill(L.code, { c: b.codes.join(', ') }) : null, b.example && b.example.text ? '“' + b.example.text + '”' : null].filter(Boolean).join('\n');
+      row.appendChild(h('span', { class: 'pr', title: tip }, [h('b', { text: b.brand }), h('small', { text: b.videos === 1 ? L.vid1 : fill(L.vids, { n: I.full(b.videos, lg) }) })]));
+    });
+    row.appendChild(h('span', { class: 'sub', text: fill(L.promotesScan, { n: I.full(sp.scanned, lg) }) }));
+    return row;
   }
 
   // ---- watch page -------------------------------------------------------------------------------------
@@ -326,22 +420,26 @@
   }
   function watchCard() {
     var c = ctx();
-    var on = c.kind === 'watch' && c.video && (FT.isOn('video-card') || FT.isOn('video-monetization') || FT.isOn('dislikes'));
+    var on = c.kind === 'watch' && c.video && (FT.isOn('video-card') || FT.isOn('video-monetization') || FT.isOn('dislikes') || FT.isOn('title-history'));
     var slot = on ? watchSlot() : null;
     if (!slot) { if (wCard) { wCard.el.remove(); wCard = null; } return; }
     if (!wCard) wCard = host('watch-card');
-    if (wCard.el.parentNode !== slot.parent || (slot.before && wCard.el.nextSibling !== slot.before)) slot.parent.insertBefore(wCard.el, slot.before);
+    // Phase 4's tool row (src/youtube-tools.js) sits right after the card: that is still "in place".
+    var nx = wCard.el.nextSibling;
+    if (nx && nx.classList && nx.classList.contains('openoutlier-tools')) nx = nx.nextSibling;
+    if (wCard.el.parentNode !== slot.parent || (slot.before && nx !== slot.before)) slot.parent.insertBefore(wCard.el, slot.before);
     wCard.el.style.margin = '12px 0 0';
     var L = T();
     var lg = lang();
     var id = c.video;
     var f = D.videoFacts(id);
     if (f.uc && FT.isOn('video-card')) D.requestChannels([f.uc]);
-    var b = FT.isOn('video-card') ? askBridge('v:' + id, { what: 'video', id: id }) : null;
+    var b = FT.isOn('video-card') || FT.isOn('title-history') ? askBridge('v:' + id, { what: 'video', id: id }) : null;
     var monA = FT.isOn('video-monetization') ? askMon('v:' + id, { kind: 'video', id: id }) : null;
     var dis = FT.isOn('dislikes') ? askRyd(id) : null;
     var eng = I.engagement(f.likes, f.comments, f.views);
-    var sig = JSON.stringify([lg, id, f.views, f.viewsExact, f.publishedAt, f.outlier, eng, b && [b.vph24, b.velocity, b.curve && b.curve.length, !!b.own], monA, dis, FT.flags(), Math.floor(Date.now() / 60000)]);
+    var hist = FT.isOn('title-history') && b && b.history && b.history.length ? b.history : null;
+    var sig = JSON.stringify([lg, id, f.views, f.viewsExact, f.publishedAt, f.outlier, eng, b && [b.vph24, b.velocity, b.curve && b.curve.length, !!b.own], hist && hist.map(function (x) { return x.at; }), monA, dis, FT.flags(), Math.floor(Date.now() / 60000)]);
     draw(wCard, sig, function (card) {
       var head = h('div', { class: 'cell head', title: L.title }, []);
       head.innerHTML = MARK;
@@ -369,6 +467,7 @@
         var link = h('a', { href: 'https://returnyoutubedislike.com/', target: '_blank', rel: 'noopener noreferrer', text: dis.failed ? L.rydFail : L.rydBy });
         card.appendChild(h('div', { class: 'cell', title: L.rydTip }, [lb, val, h('span', { class: 'sub' }, [link])]));
       }
+      if (hist) card.appendChild(historyRow(hist, L, lg));
       var own = b && b.own;
       if (FT.isOn('video-card') && own && own.days) {
         card.appendChild(h('div', { class: 'own' }, [h('b', { text: L.own }),
