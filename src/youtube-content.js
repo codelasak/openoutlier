@@ -21,6 +21,9 @@
   var O = self.ReelScopeOverlay;
   var M = self.ReelScopeMetrics;
   var FT = self.OpenOutlierFeatures; // feature on/off (src/features.js); later phases ask FT.isOn(id) before mounting
+  var TR = self.OpenOutlierTracking; // the niche tracking list in rs:org (src/tracking.js)
+  var ORG_KEY = 'rs:org';
+  var org = { folders: [], accounts: {} };
   var KEY_PREFIX = 'rs:p:';
   var MIN_POSTS = 5;
   var GRID_TABS = ['videos', 'shorts', 'streams'];
@@ -53,6 +56,7 @@
       accounts[id] = saved[k].posts;
       if (saved[k].profile) rememberProfile(id, saved[k].profile);
     });
+    if (saved[ORG_KEY] && Array.isArray(saved[ORG_KEY].folders)) org = saved[ORG_KEY];
   } catch (e) { /* storage unavailable: run in memory */ }
   // Saved counts when this page loaded, so an agent command can say how many it added.
   var initialCounts = {};
@@ -489,6 +493,7 @@
   }
   chrome.storage.onChanged.addListener(function (changes, area) {
     if (area === 'local' && (changes['rs:settings'] || changes['rs:yt-api-quota'])) loadApiStatus();
+    if (area === 'local' && changes[ORG_KEY]) { org = changes[ORG_KEY].newValue || { folders: [], accounts: {} }; scheduleRender(); }
   });
   loadApiStatus();
 
@@ -616,8 +621,70 @@
     features: !!FT,
     onFeatureToggle: function (id, on) { FT.set(id, on); },
     onFeatureReset: function () { FT.reset().then(function () { featureState.message = FT.uiLang() === 'tr' ? 'Varsayılanlar geri yüklendi.' : 'Defaults restored.'; scheduleRender(); }); },
-    onFeatureFix: fixFeature
+    onFeatureFix: fixFeature,
+    onTrackToggle: TR ? toggleTrack : null
   });
+
+  // ---- Track (niche tracking, phase 1) ----------------------------------------------
+  // The tracking list is part of rs:org, which syncs to the bridge; the bridge starts RSS and
+  // Data API measurements (and a one-time backfill of the channel's uploads).
+  function trackState() {
+    if (!TR || !FT || !FT.isOn('channel-track')) return null;
+    var id = currentAccount();
+    var c = ctx();
+    if (!id || !Y.isYouTubeId(id) || (c.kind !== 'channel' && c.kind !== 'watch' && c.kind !== 'short')) return null;
+    var st = TR.status(org, id);
+    var env = featureState.env || {};
+    return { id: id, on: st.on, via: st.via, niche: st.niche, mine: st.mine, excluded: st.excluded, ready: env.bridge === false || env.bridgeKey === false ? false : true, lang: FT.uiLang() };
+  }
+  var trackBusy = false;
+  function toggleTrack() {
+    var id = currentAccount();
+    if (!TR || !id || trackBusy) return;
+    trackBusy = true;
+    var prof = profiles[id] || {};
+    var first = accounts[id] && Object.values(accounts[id])[0];
+    chrome.storage.local.get(ORG_KEY).then(function (r) {
+      var o = r[ORG_KEY] && Array.isArray(r[ORG_KEY].folders) ? r[ORG_KEY] : { folders: [], accounts: {} };
+      TR.toggle(o, id, { channelId: prof.channelId || (first && first.ownerId), name: prof.name || (first && first.ownerName) }, Date.now());
+      org = o;
+      var patch = {};
+      patch[ORG_KEY] = o;
+      return chrome.storage.local.set(patch);
+    }).catch(function (e) { console.warn('[OpenOutlier] could not save tracking', e); }).then(function () { trackBusy = false; scheduleRender(); });
+  }
+
+  /** The inline Track button next to Subscribe in the channel header (YouTube's own layout keeps it in place). */
+  var trackHost = null;
+  function mountTrackButton() {
+    var t = ctx().kind === 'channel' ? trackState() : null;
+    var slot = t && document.querySelector('[data-openoutlier-track-slot], yt-page-header-view-model yt-flexible-actions-view-model, #page-header yt-flexible-actions-view-model, ytd-c4-tabbed-header-renderer #buttons, #channel-header #buttons');
+    if (!slot) { if (trackHost) { trackHost.remove(); } return; }
+    if (!trackHost) {
+      trackHost = document.createElement('span');
+      trackHost.className = 'openoutlier-track';
+      var sh = trackHost.attachShadow({ mode: 'open' });
+      sh.innerHTML = '<style>' +
+        ':host{display:inline-flex;align-items:center;margin:0 0 0 8px;vertical-align:middle}' +
+        'button{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 16px;border-radius:18px;border:0;cursor:pointer;font:500 14px/1 Roboto,Arial,sans-serif;background:rgba(0,0,0,.05);color:#0f0f0f}' +
+        'button:hover{background:rgba(0,0,0,.1)}' +
+        'button:focus-visible{outline:2px solid #1E3BFF;outline-offset:2px}' +
+        'i{width:8px;height:8px;border:1.5px solid currentColor;box-sizing:border-box}' +
+        'button.on{background:#1E3BFF;color:#F6F7F2}button.on:hover{background:#1530D6}button.on i{background:#C8FF2E;border-color:#C8FF2E}' +
+        ':host-context(html[dark]) button{background:rgba(255,255,255,.1);color:#f1f1f1}:host-context(html[dark]) button:hover{background:rgba(255,255,255,.2)}' +
+        ':host-context(html[dark]) button.on{background:#1E3BFF;color:#F6F7F2}' +
+        '</style><button type="button"><i></i><span></span></button>';
+      sh.querySelector('button').addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); toggleTrack(); });
+    }
+    if (trackHost.parentNode !== slot) slot.appendChild(trackHost);
+    var b = trackHost.shadowRoot.querySelector('button');
+    var tr = t.lang === 'tr';
+    b.className = t.on ? 'on' : '';
+    b.setAttribute('aria-pressed', t.on ? 'true' : 'false');
+    b.querySelector('span').textContent = t.on ? (tr ? 'Takip ediliyor' : 'Tracking') : (tr ? 'Takip et' : 'Track');
+    b.title = t.on ? (tr ? 'OpenOutlier niş takibinde' + (t.niche ? ' (' + t.niche + ')' : '') + '. Çıkarmak için tıkla.' : 'In OpenOutlier niche tracking' + (t.niche ? ' (' + t.niche + ')' : '') + '. Click to stop.')
+      : (tr ? 'OpenOutlier niş takibine ekle' : 'Add to OpenOutlier niche tracking');
+  }
 
   // ---- Features tab -----------------------------------------------------------
   // Flags and what is set up come from storage; a change anywhere (this tab, another
@@ -731,9 +798,11 @@
         exact: exact,
         api: api.configured ? api : null,
         features: featureState,
+        track: trackState(),
         auto: { running: auto.running, label: auto.label || (prof && prof.videos ? countFor(id) + ' of ~' + prof.videos + ' videos collected' : '') }
       });
       overlay.refresh();
+      mountTrackButton();
     }, 250);
   }
 

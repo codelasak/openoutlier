@@ -12,6 +12,8 @@
   var CMP = self.ReelScopeCompare;
   var KEY_PREFIX = 'rs:p:';
   var ORG_KEY = 'rs:org';
+  var TR = self.OpenOutlierTracking; // niche tracking list in rs:org (src/tracking.js)
+  var nicheAlerts = { items: [], unseen: 0 }; // rs:niche-alerts (src/agent-bridge.js)
   var SMALL = 5;
 
   var nf = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
@@ -123,6 +125,10 @@
     });
     var o = all[ORG_KEY];
     org = { folders: (o && Array.isArray(o.folders)) ? o.folders : [], accounts: (o && o.accounts) || {} };
+    // Niche tracking keeps its list in the same record (src/tracking.js).
+    if (o && o.niches) org.niches = o.niches;
+    if (o && o.tracked) org.tracked = o.tracked;
+    nicheAlerts = all['rs:niche-alerts'] || { items: [], unseen: 0 };
     await mentionsView.load();
     await studioView.load();
   }
@@ -156,6 +162,7 @@
     if (kind === 'studio') return { kind: 'studio' };
     if (kind === 'my-youtube') return { kind: 'my-youtube' };
     if (kind === 'settings') return { kind: 'settings' };
+    if (kind === 'niche') return { kind: 'niche' };
     if (kind === 'compare') return { kind: 'compare', a: parts[1] || null, b: parts[2] || null };
     if (kind === 'folder' || kind === 'tag') return { kind: kind, id: parts[1], tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
     if (kind === 'unsorted') return { kind: 'unsorted', tab: parts[1] === 'reels' ? 'reels' : 'accounts' };
@@ -352,6 +359,21 @@
   var accountPanel = P.create(Object.assign({}, common, { onApiStats: ytApiRun }));
   // Settings → Features (src/features.js + features-view.js), the API key and the bridge.
   var settingsView = self.OpenOutlierSettingsView ? self.OpenOutlierSettingsView.create({ h: h, rerender: function () { if (route().kind === 'settings') { renderSidebar(route()); settingsView.render(main); document.title = settingsView.title() + ' · OpenOutlier'; } } }) : null;
+  // Niş Takibi / Niche tracking (#/niche): the bridge's measurements (dashboard/niche-view.js).
+  var nicheView = self.OpenOutlierNicheView ? self.OpenOutlierNicheView.create({
+    h: h,
+    loadImage: function (el, url) { thumbs.load(el, url); },
+    rerender: function () { if (route().kind === 'niche') { renderSidebar(route()); nicheView.render(main); document.title = nicheView.title() + ' · OpenOutlier'; } },
+    getOrg: function () { return JSON.parse(JSON.stringify(org)); },
+    saveOrg: function (next) { org = next; return saveOrg(); },
+    youtubeAccounts: function () {
+      return Object.keys(accounts).filter(function (u) { return accounts[u].platform === 'youtube'; }).map(function (u) {
+        var a = accounts[u];
+        var prof = a.profile || {};
+        return { id: u, name: prof.name || a.name || null, handle: prof.handle || (/^yt\/UC/.test(u) ? null : u.slice(3)), count: a.count };
+      });
+    }
+  }) : null;
   var mentionsView = self.ReelScopeMentionsView.create({ h: h, ago: ago, rerender: function () { if (route().kind === 'mentions') { renderSidebar(route()); mentionsView.render(main); } } });
   var studioView = self.ReelScopeStudioView.create({ h: h, ago: ago, fmt: fmt, rerender: function () { if (route().kind === 'studio') { renderSidebar(route()); studioView.render(main); document.title = studioView.title() + ' · OpenOutlier'; } } });
   var reelsPanel = P.create(Object.assign({}, common, { preEnriched: true, showOwner: true, defaultSort: 'viralScore', listTabLabel: 'Posts' }));
@@ -366,7 +388,8 @@
     inbox: 'M1 2h14v12H1zM3 4v4h3v2h4V8h3V4z',
     compare: 'M10 2h2v2h2v2H2V4h8zM2 10h12v2h-2v2h-2v-2H2z',
     gear: 'M5 4h6v2H5zM5 10h6v2H5zM4 6h2v4H4zM10 6h2v4h-2zM7 1h2v3H7zM7 12h2v3H7zM1 7h3v2H1zM12 7h3v2h-3zM3 3h2v2H3zM11 3h2v2h-2zM3 11h2v2H3zM11 11h2v2h-2z',
-    back: 'M6 3h2v2H6zM4 5h2v2H4zM2 7h12v2H2zM4 9h2v2H4zM6 11h2v2H6z'
+    back: 'M6 3h2v2H6zM4 5h2v2H4zM2 7h12v2H2zM4 9h2v2H4zM6 11h2v2H6z',
+    trend: 'M1 12h3v3H1zM4 9h3v3H4zM7 10h3v3H7zM10 6h3v3h-3zM12 2h3v3h-3z'
   };
   function px(name, size) {
     var NS = 'http://www.w3.org/2000/svg';
@@ -416,6 +439,7 @@
     lib.appendChild(navItem('Mentions', unreadMentions ? unreadMentions + ' new' : null, '#/mentions', r.kind === 'mentions', { icon: 'bell', badge: !!unreadMentions }));
     lib.appendChild(navItem('My account', null, '#/studio', r.kind === 'studio', { icon: 'user' }));
     lib.appendChild(navItem('My YouTube channel', null, '#/my-youtube', r.kind === 'my-youtube', { icon: 'user' }));
+    if (nicheView) lib.appendChild(navItem(nicheView.navLabel(), nicheAlerts.unseen ? String(nicheAlerts.unseen) : null, '#/niche', r.kind === 'niche', { icon: 'trend', badge: !!nicheAlerts.unseen }));
     lib.appendChild(navItem('All accounts', all.length, '#/all', r.kind === 'all' && r.tab !== 'reels', { icon: 'all' }));
     lib.appendChild(navItem('Top posts', null, '#/all/reels', r.kind === 'all' && r.tab === 'reels', { icon: 'top' }));
     lib.appendChild(navItem('Unsorted', all.filter(function (u) { return !folderOf(u); }).length, '#/unsorted', r.kind === 'unsorted', { dropFolder: null, icon: 'inbox' }));
@@ -518,6 +542,7 @@
     list.forEach(function (u) { by[accounts[u].platform] += accounts[u].reels; });
     main.appendChild(h('div', { class: 'view-head' },
       h('h1', { text: scopeTitle(r) }),
+      nicheToggle(r, list),
       h('span', { class: 'sub', text: list.length + ' account' + (list.length === 1 ? '' : 's') +
         (by.instagram || (!by.reddit && !by.tiktok && !by.youtube) ? ' · ' + nfFull.format(by.instagram) + ' reels' : '') +
         (by.tiktok ? ' · ' + nfFull.format(by.tiktok) + ' TikTok videos' : '') +
@@ -553,6 +578,35 @@
       h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: 'Accounts' }), h('b', { text: nfFull.format(list.length) })),
       h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: 'Last collected' }), h('b', { text: totals.last ? ago(totals.last) : '–' }))));
     main.appendChild(h('div', { class: 'cards' }, list.map(function (u) { return accountCard(accounts[u]); })));
+  }
+
+  // ---- niche tracking: a folder or tag as a tracked niche, a channel's Track / mine ----------
+  function nicheLang() { return self.OpenOutlierFeatures && self.OpenOutlierFeatures.uiLang() === 'tr' ? 'tr' : 'en'; }
+  function nicheToggle(r, list) {
+    if (!TR || (r.kind !== 'folder' && r.kind !== 'tag')) return null;
+    var on = TR.isNiche(org, r.kind, r.id);
+    var yt = list.filter(function (u) { return accounts[u].platform === 'youtube'; }).length;
+    if (!on && !yt) return null;
+    var tr = nicheLang() === 'tr';
+    return h('button', { class: 'btn nv-niche-toggle' + (on ? ' is-on' : ''), type: 'button', 'aria-pressed': on ? 'true' : 'false',
+      title: on ? (tr ? 'Bu ' + (r.kind === 'folder' ? 'klasördeki' : 'etiketteki') + ' YouTube kanalları niş takibinde. Kapatmak için tıkla (ölçümler silinmez).' : 'The YouTube channels here are niche-tracked. Click to stop (measurements are kept).')
+        : (tr ? 'Buradaki ' + yt + ' YouTube kanalını takibe al: RSS 15 dakikada bir, yeni videolar ilk saatlerinden itibaren ölçülür.' : 'Track the ' + yt + ' YouTube channel' + (yt === 1 ? '' : 's') + ' here: RSS every 15 min, new videos measured from their first hours.'),
+      onclick: function () { TR.setNiche(org, r.kind, r.id, !on); saveOrg().then(render); } },
+      h('span', { class: 'track-dot', 'aria-hidden': 'true' }), on ? (tr ? 'Takip edilen niş' : 'Tracked niche') : (tr ? 'Niş olarak takip et' : 'Track as niche'));
+  }
+  function trackControls(u, a) {
+    if (!TR || a.platform !== 'youtube') return null;
+    var st = TR.status(org, u);
+    var tr = nicheLang() === 'tr';
+    var prof = a.profile || {};
+    var info = { channelId: prof.channelId || (a.posts[0] && a.posts[0].ownerId), name: prof.name || a.name };
+    return h('div', { class: 'nv-acct-track' },
+      h('button', { class: 'btn nv-niche-toggle' + (st.on ? ' is-on' : ''), type: 'button', 'aria-pressed': st.on ? 'true' : 'false',
+        title: st.on ? (st.niche ? (tr ? '"' + st.niche + '" nişinde' : 'In the "' + st.niche + '" niche') : (tr ? 'Takip ediliyor' : 'Tracked')) : (st.excluded ? (tr ? 'Nişte ama takipten çıkarıldı' : 'In the niche but switched off') : (tr ? 'Niş takibine ekle' : 'Add to niche tracking')),
+        onclick: function () { TR.toggle(org, u, info, Date.now()); saveOrg().then(render); } },
+        h('span', { class: 'track-dot', 'aria-hidden': 'true' }), st.on ? (tr ? 'Takip ediliyor' : 'Tracking') : (tr ? 'Takip et' : 'Track')),
+      h('label', { class: 'm-check' }, h('input', { type: 'checkbox', checked: st.mine, onchange: function (e) { TR.setMine(org, u, e.target.checked, info, Date.now()); saveOrg().then(render); } }), tr ? 'Benim kanalım' : 'My channel'),
+      st.on ? h('a', { href: '#/niche', text: tr ? 'Niş Takibi →' : 'Niche tracking →' }) : null);
   }
 
   function renderAccount(u) {
@@ -614,6 +668,7 @@
           twin ? ' · ' : null,
           twin ? h('a', { href: '#/compare/' + encodeURIComponent(u) + '/' + encodeURIComponent(twin), text: '⇄ Compare with ' + CMP_NAMES[accounts[twin].platform] }) : null)),
       h('div', { class: 'organize' },
+        trackControls(u, a),
         h('label', null, 'Folder', folderSel),
         h('div', { class: 'chips' }, o.tags.map(function (t) {
           return h('span', { class: 'chip' }, '#' + t, h('button', { type: 'button', 'aria-label': 'Remove tag ' + t, onclick: function () {
@@ -815,9 +870,10 @@
     else if (r.kind === 'studio') studioView.render(main);
     else if (r.kind === 'my-youtube') ytChannelView.render(main);
     else if (r.kind === 'settings' && settingsView) settingsView.render(main);
+    else if (r.kind === 'niche' && nicheView) nicheView.render(main);
     else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
+    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? 'Mentions' : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'niche' && nicheView ? nicheView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
   }
 
   // ---- wiring ---------------------------------------------------------------
@@ -827,7 +883,7 @@
   });
   document.getElementById('search').addEventListener('input', function (e) {
     search = e.target.value.trim();
-    if (['account', 'mentions', 'studio', 'my-youtube', 'settings', 'compare'].indexOf(route().kind) !== -1) go(lastScopeHash); else render();
+    if (['account', 'mentions', 'studio', 'my-youtube', 'settings', 'niche', 'compare'].indexOf(route().kind) !== -1) go(lastScopeHash); else render();
   });
   document.getElementById('show-small').addEventListener('change', function (e) {
     showSmall = e.target.checked;
@@ -868,6 +924,11 @@
       var inOrg = json.data[ORG_KEY];
       if (inOrg) {
         var merged = { folders: org.folders.slice(), accounts: Object.assign({}, inOrg.accounts || {}, org.accounts) };
+        // Niche tracking (src/tracking.js): ours win, the backup fills in.
+        var nIn = inOrg.niches || {};
+        var nOur = org.niches || {};
+        if (inOrg.niches || org.niches) merged.niches = { folders: (nOur.folders || []).concat((nIn.folders || []).filter(function (x) { return (nOur.folders || []).indexOf(x) === -1; })), tags: (nOur.tags || []).concat((nIn.tags || []).filter(function (x) { return (nOur.tags || []).indexOf(x) === -1; })) };
+        if (inOrg.tracked || org.tracked) merged.tracked = Object.assign({}, inOrg.tracked || {}, org.tracked || {});
         (inOrg.folders || []).forEach(function (f) { if (!merged.folders.some(function (x) { return x.id === f.id; })) merged.folders.push(f); });
         patch[ORG_KEY] = merged;
       }

@@ -152,7 +152,17 @@ One count for the day: the extension reports its units to the bridge and the bri
 <a id="youtube-features"></a>
 **YouTube features: on / off.** Every YouTube feature, built or planned (the NexLev replacement in [`docs/youtube-niche-plan.md`](docs/youtube-niche-plan.md)), has a switch in the panel's **Features** tab on youtube.com and in Library → **Settings → Features**. Changes apply at once in every open tab, no reload. Each row says what the feature needs (an API key, the bridge, the key on the bridge, My YouTube channel) and links to the fix when something is missing; features of later phases are marked *coming soon* and can already be preset. The labels follow YouTube's language on youtube.com and Chrome's in the Library (Türkçe / English; Settings → Language overrides it). The switches live in `rs:settings.features` (only the ones you changed, so new defaults reach you) and are sent to the bridge, whose background jobs check them. One of them is a data-policy switch: **Delete competitors' API data after 30 days** (off by default) makes the bridge delete other channels' Data API measurements older than 30 days once a day; RSS and page measurements and everything about your own channel stay.
 
-**Background tracker (bridge).** `mcp/tracker.mjs` runs scheduled jobs in whichever process holds the bridge (the launchd daemon, or an MCP server), only for features that are on. The schedule lives in the database (`tracker_jobs`), so it survives restarts; jobs get a random delay (jitter), never run twice at once (also across processes), back off after errors, and stop for the day before the Data API quota runs out. Right now it runs a heartbeat (and the 30-day purge when switched on); niche tracking arrives in the next phase. `bridge_status` shows the jobs, the last heartbeat and the switches you changed.
+**Background tracker (bridge).** `mcp/tracker.mjs` runs scheduled jobs in whichever process holds the bridge (the launchd daemon, or an MCP server), only for features that are on. The schedule lives in the database (`tracker_jobs`), so it survives restarts; jobs get a random delay (jitter), never run twice at once (also across processes), back off after errors, and stop for the day before the Data API quota runs out. It runs a heartbeat, the 30-day purge when switched on, and niche tracking (below). Jobs that need many `videos.list` calls are batched, 50 videos per call (1 quota unit). `bridge_status` shows the jobs, the last heartbeat, the switches you changed and the niche tracking summary.
+
+**Niche tracking (Library → Niche tracking / Niş Takibi).** Follow the YouTube channels of your niche from the first hours of every new upload, NexLev-tracker style but on your own Mac:
+
+- *What is tracked:* any Library folder or tag you mark as a **tracked niche** (the **Track as niche** button on the folder or tag), plus channels you switch on with the **Track** button (next to Subscribe on a channel page, in the panel's toolbar, or on the channel's Library page). The Track button also switches a niche member off. Tick **My channel** on your own channel's Library page: it is tracked with the niche and compared with it. The first time you open Niche tracking with nothing tracked, a helper lists your saved YouTube channels with the Excel channels and Hands on Excel preselected; one click puts them in one folder and tracks it. The list lives in the Library's folder data (`rs:org`), so it syncs to the bridge with everything else.
+- *How it measures:* every 15 minutes the bridge reads each channel's two RSS feeds (long-form `UULF…` and Shorts `UUSH…`: title, thumbnail, views, likes; no quota). New videos are then measured through the Data API on an age schedule: every 30 min for the first 6 h, hourly to 48 h, every 6 h to 7 days, daily to 30 days, weekly after. Subscribers, total views and video count are recorded daily. A newly tracked channel gets a one-time backfill of its newest 500 uploads ("All uploads via API", saved to the Library too). Exact counts the extension sees on YouTube pages of tracked channels are added as free extra measurements. Title changes are caught on every RSS read and thumbnail changes by a perceptual hash of the image (a new image behind the same URL counts; it uses ffmpeg or macOS's `sips`). Everything is kept unless *Delete competitors' API data after 30 days* is on.
+- *What you get:* this week's uploads ranked by **velocity score** (views ÷ what that channel normally has at that age, with a sparkline against its usual curve); the niche's growth curve for long videos and Shorts ("a long video gets 60 % of its 30-day views in 48 h"); what works (upload day × time, length, title words and patterns, Shorts vs long-form, upload frequency), topic gaps (fast but rare topics), competitors' title and thumbnail changes with views per hour before and after, your videos against channels of your size (views and views per subscriber at 48 h), channel growth, and a weekly digest saved every Monday.
+- *Breakouts:* a video at 3× (Settings on the page: 2× to 5×) its channel's normal at 6 h or 24 h shows up under **Fast risers** and as a Chrome notification (`breakout-alerts`).
+- *How the curves work:* checkpoints at 1, 3, 6, 12, 24, 48, 72 h and 7, 14, 30 days are interpolated between real measurements (only when measurements sit close enough on both sides). A channel's normal is the median of its tracked videos at each checkpoint, Shorts and long-form apart; until it has 5 videos at a checkpoint, the niche's curve scaled to the channel's typical views stands in.
+- *RSS vs API:* the RSS view count can trail the API. The page (Tracked channels → RSS vs Data API) and `bridge_status` → `niche_tracking.rss_lag` measure it from your own data: for each RSS reading, how many minutes earlier the API already had that count. Under 60 minutes (the verdict says `rss-ok`) RSS is fine for early curves; above it (`rss-lags`) the hourly API readings carry the first 48 hours.
+- *Needs:* the bridge (launchd) and the Data API key copied to it (Settings → **Copy key to bridge**). Without the key only RSS runs. About 130 quota units a day for 100 channels; the free quota is 10,000.
 
 **Transcripts (`get_transcript`, MCP).** An agent can ask for a video's captions as plain text with `[m:ss]` timestamps, plus `hook`: what is said in the first ~30 seconds. yt-dlp on your Mac fetches only the captions (no video): uploaded captions first, else YouTube's auto-generated ones, in the language you ask for, else the video's own language, else English. The Library only records that a transcript exists (`hasTranscript`), never the text. Errors name the cause: `no_captions`, `too_old` (`brew upgrade yt-dlp`), `missing` (install yt-dlp).
 
@@ -282,9 +292,14 @@ Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. 
 | `my_youtube_channel` | your channel's totals from YouTube Analytics: views, engaged views, watch time, average view %, subscribers |
 | `my_youtube_videos` | per video: views, engaged views, average view % and duration, thumbnail impressions and CTR, subscribers gained |
 | `my_youtube_retention` | one video's retention curve and where viewers drop off |
-| `command_status`, `bridge_status` | check a running command / the connection, backups, the Data API key and today's quota (bridge + extension), feature switches and the background tracker |
+| `niche_pulse` | a tracked YouTube niche's last N days: uploads ranked by velocity score, VPH, views per subscriber, how much of 30-day views come in 48 h, breakouts |
+| `video_velocity` | one tracked video's views at each checkpoint (1 h … 30 d) next to its channel's expected curve, its measurements and title / thumbnail log |
+| `breakouts` | tracked videos at ≥ 3× (your threshold) their channel's normal at 6 h or 24 h |
+| `channel_growth` | daily subscribers, views and video count of tracked channels, with 7- and 28-day changes |
+| `niche_report` | the weekly digest's data (stored every Monday, or the running week); Claude writes the summary |
+| `command_status`, `bridge_status` | check a running command / the connection, backups, the Data API key and today's quota (bridge + extension), feature switches, the background tracker and niche tracking (incl. the RSS lag check) |
 
-Example prompts: *"Collect yt/somechannel, then compare its Shorts and long-form outliers: what do the titles of the top 5 of each have in common?"* · *"Use compare_platforms for my account: which episodes did better on TikTok, and what do they have in common?"* · *"Compare the 10 most viral reels in my Excel folder from the last 90 days and summarize their hooks."* · *"Collect r/excel and r/spreadsheets, then use content_ideas on my Excel folder and give me 10 reel ideas my competitors haven't covered."*
+Example prompts: *"Collect yt/somechannel, then compare its Shorts and long-form outliers: what do the titles of the top 5 of each have in common?"* · *"Use compare_platforms for my account: which episodes did better on TikTok, and what do they have in common?"* · *"Compare the 10 most viral reels in my Excel folder from the last 90 days and summarize their hooks."* · *"Collect r/excel and r/spreadsheets, then use content_ideas on my Excel folder and give me 10 reel ideas my competitors haven't covered."* · *"Use niche_report for the Excel niche: what worked this week, which topics are gaps, and how did my latest video do against channels my size?"*
 </details>
 
 <details>
@@ -304,7 +319,7 @@ The extension's storage disappears if you remove the extension, so OpenOutlier c
 - **Daily backup** (`mcp/backup.mjs`): a consistent copy (`VACUUM INTO`) with an integrity check, gzipped, the last 7 kept in `~/.openoutlier/backups/`, then uploaded over SSH to `OPENOUTLIER_BACKUP_REMOTE` (`host:/path`), checksum-verified there, the last 30 kept. Runs at 03:30, or at login/wake if missed.
 - **Always on (macOS)**: `sh mcp/launchd/install.sh` installs `dev.openoutlier.bridge` (keeps the bridge running) and `dev.openoutlier.backup` (the daily backup). Logs: `~/.openoutlier/logs/`. Remove with `sh mcp/launchd/uninstall.sh`; your data stays.
 - **Status**: the popup shows the last backup (or a warning); `bridge_status` reports database counts and the schema version.
-- **Schema changes** are versioned migrations in `mcp/store.mjs` (`meta.schema_version`): they only add tables and columns, can run any number of times, and never drop data. Phase 0 of the YouTube plan added the tables for niche tracking and your own channel's history (`tracked_channels`, `video_stats`, `video_meta_log`, `channel_stats`, `tracker_jobs`, `own_daily`, `own_video_daily`, `own_breakdowns`); they fill up in later phases.
+- **Schema changes** are versioned migrations in `mcp/store.mjs` (`meta.schema_version`): they only add tables and columns, can run any number of times, and never drop data. Phase 0 of the YouTube plan added the tables for niche tracking and your own channel's history (`tracked_channels`, `video_stats`, `video_meta_log`, `channel_stats`, `tracker_jobs`, `own_daily`, `own_video_daily`, `own_breakdowns`); phase 1 added `tracked_videos`, `niche_alerts` and `niche_reports` and started filling the niche tables.
 
 <details>
 <summary><b>Restore a backup</b></summary>
@@ -363,7 +378,11 @@ youtube.com page     src/youtube.js (ytInitialData / youtubei JSON → posts) + 
 src/youtube-exact.js "Get exact stats": opens the top outliers' watch pages one by one in a background tab
 src/youtube-api*.js  optional Data API key: exact stats / all uploads (pure part + service-worker job)
 src/features*.js     YouTube feature switches: the registry (also read by the bridge) and the Features list UI
-mcp/tracker.mjs      background job scheduler in the bridge (tracker_jobs, jitter, lease, quota budget)
+mcp/tracker.mjs      background job scheduler in the bridge (tracker_jobs, jitter, lease, quota budget, batches)
+mcp/niche.mjs        niche tracking: tracking list sync, RSS / Data API / channel-stats / backfill / digest jobs, breakouts, queries
+mcp/niche-tools.mjs  the niche MCP tools; mcp/rss.mjs (channel feeds), mcp/thumbhash.mjs (thumbnail perceptual hash)
+src/velocity.js      checkpoints, curves, velocity score, VPH, age tiers, what works, topic gaps, RSS lag (pure, tested)
+src/tracking.js      the tracking list in rs:org (niches, Track button, mine, the Excel starter helper)
 mcp/youtube-dl.mjs   yt-dlp + ffmpeg downloads for YouTube, started by the bridge or download_reel
 mcp/youtube-transcript.mjs  get_transcript: captions through yt-dlp
 mcp/youtube-analytics.mjs   My YouTube channel: OAuth (PKCE, loopback to the bridge) + YouTube Analytics reports
@@ -373,7 +392,7 @@ src/compare.js       matches the same video across Instagram, TikTok and YouTube
 src/agent-bridge.js  syncs the library to the local MCP server and runs agent commands
 src/mentions*.js     Reddit keyword matching and the 15-minute checker
 mcp/                 MCP server, 127.0.0.1 bridge, SQLite store, backup, launchd install
-dashboard/           the Library page (settings-view.js: Settings → Features, API key, bridge)
+dashboard/           the Library page (settings-view.js: Settings → Features, API key, bridge; niche-view.js: Niche tracking)
 popup/               the toolbar popup
 brand/               the OpenOutlier identity (see brand/README.md)
 ```
@@ -387,7 +406,7 @@ npm test                          # unit + MCP end-to-end tests (Node 20+; run `
 python3 -m http.server 8791       # then open http://127.0.0.1:8791/dev/demo.html
 ```
 
-The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `youtube-demo.html` (channel tabs, watch page, Short, overlay; `?hl=tr` for Turkish; the Features tab takes `?bridge=off|nokey|ready` and `?ytapi`), `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare`, `#/mentions`, `#/studio`, `#/my-youtube` and `#/settings` (`?bridge=off|nokey|ready`, `?hl=tr`); add `?studio=<worker address>` to link My account, `?ytapi` for a saved YouTube Data API key, `?ytanalytics=setup|connect|connected` for My YouTube channel), `popup-demo.html` (add `?empty` for the first-run state, `?ytapi` for a saved key, `?bridge=off|nokey|ready` for the bridge's copy; `youtube-demo.html?ytapi` too) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`, `make-youtube-fixture.mjs`.
+The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `youtube-demo.html` (channel tabs, watch page, Short, overlay, the Track button next to Subscribe; `?hl=tr` for Turkish, `?dark` for YouTube's dark theme; the Features tab takes `?bridge=off|nokey|ready` and `?ytapi`), `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare`, `#/mentions`, `#/studio`, `#/my-youtube`, `#/settings` (`?bridge=off|nokey|ready`, `?hl=tr`) and `#/niche` (ten simulated weeks from `node dev/make-niche-fixture.mjs`; `?niche=empty|new|off` for the start helper, tracking just started and no bridge); add `?studio=<worker address>` to link My account, `?ytapi` for a saved YouTube Data API key, `?ytanalytics=setup|connect|connected` for My YouTube channel), `popup-demo.html` (add `?empty` for the first-run state, `?ytapi` for a saved key, `?bridge=off|nokey|ready` for the bridge's copy; `youtube-demo.html?ytapi` too) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`, `make-youtube-fixture.mjs`.
 
 **Design.** The identity ("Signal Field": Signal Blue `#1E3BFF`, Outlier Lime `#C8FF2E`, Fraunces Black + Inter Tight, the Pixel O) and its rules live in [`brand/README.md`](brand/README.md). In short: the colour logo sits only on blue or ink, and lime is reserved for outliers and never sits on light paper.
 
@@ -395,6 +414,8 @@ The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data,
 
 - [x] Instagram, TikTok, YouTube (videos + Shorts) and Reddit; Library; Instagram ↔ TikTok comparison; MCP; SQLite + backups
 - [x] YouTube: optional Data API key, transcripts (yt-dlp), Shorts ↔ Reels / TikTok comparison, your own channel through YouTube Analytics
+- [x] YouTube niche tracking: RSS + Data API measurements, velocity scores, niche curves, breakouts, weekly digest ([plan](docs/youtube-niche-plan.md), phase 1)
+- [ ] YouTube: your own channel's daily history, in-page badges, content tools, discovery (phases 2–5 of the plan)
 - [ ] TikTok comments and transcripts (subtitles TikTok already loads)
 - [ ] Reddit thread comments for deeper pain-point mining
 - [ ] Transcripts with your own API key

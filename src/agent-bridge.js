@@ -24,6 +24,11 @@
 //   Features tab and the popup. "Copy key to bridge" (reelscope:bridge-key) sends
 //   the key from rs:settings to the bridge, which stores it in
 //   ~/.openoutlier/youtube-api-key for background jobs.
+// • Niche tracking (phase 1): the tracking list rides along with the org record; the
+//   breakout threshold (rs:settings.niche) goes with the settings, and the bridge's
+//   answer carries new breakouts, which become a Chrome notification (breakout-alerts)
+//   and the "Hızlı yükselenler" list (rs:niche-alerts). The Library's Niş Takibi page
+//   asks the bridge through reelscope:niche.
 // Turn it off in the popup ("Connect to AI agents").
 'use strict';
 
@@ -35,6 +40,7 @@
   var MENTIONS_KEY = 'rs:mentions'; // { items: {id: mention}, read: {id: 1} }
   var SETTINGS_KEY = 'rs:settings';
   var STATE_KEY = 'rs:bridge'; // { port, syncId, connected, lastSyncAt, lastError }
+  var ALERTS_KEY = 'rs:niche-alerts'; // { items: [breakout], unseen: n } (newest first, at most 40)
   var ALARM = 'reelscope-bridge';
 
   var RUNNING_KEY = 'rs:running'; // command id → { port, tabId, openedTab, startedAt } (survives worker restarts)
@@ -187,11 +193,54 @@
     var F = self.OpenOutlierFeatures;
     var r = await chrome.storage.local.get([SETTINGS_KEY, QUOTA_KEY]);
     var s = r[SETTINGS_KEY] || {};
-    var body = JSON.stringify({ features: F ? F.sanitize(s.features) : {}, quota: r[QUOTA_KEY] || null });
+    var body = JSON.stringify({ features: F ? F.sanitize(s.features) : {}, quota: r[QUOTA_KEY] || null, niche: s.niche && typeof s.niche === 'object' ? s.niche : null });
     if (!force && body === lastSettings.body && Date.now() - lastSettings.at < SETTINGS_EVERY) return;
     var res = await post(found.port, '/settings', JSON.parse(body));
     lastSettings = { body: body, at: Date.now() };
     await saveSettingsAnswer(res);
+    if (res.niche && Array.isArray(res.niche.alerts) && res.niche.alerts.length) await showBreakouts(found.port, res.niche.alerts);
+  }
+
+  // ---- breakouts → Chrome notification + the Library's list ----------------------------
+  async function showBreakouts(port, alerts) {
+    var F = self.OpenOutlierFeatures;
+    var on = true;
+    try { if (F) { await F.ready; on = F.isOn('breakout-alerts'); } } catch (e) { /* default on */ }
+    var r = await chrome.storage.local.get(ALERTS_KEY);
+    var cur = r[ALERTS_KEY] || { items: [], unseen: 0 };
+    var have = {};
+    cur.items.forEach(function (a) { have[a.video_id + ':' + a.at_h] = true; });
+    var fresh = alerts.filter(function (a) { return a && /^[A-Za-z0-9_-]{11}$/.test(String(a.video_id)) && !have[a.video_id + ':' + a.at_h]; });
+    var o = {};
+    o[ALERTS_KEY] = { items: fresh.map(function (a) { return Object.assign({ seenAt: Date.now() }, a); }).reverse().concat(cur.items).slice(0, 40), unseen: (cur.unseen || 0) + fresh.length };
+    await chrome.storage.local.set(o);
+    if (on && fresh.length) notifyBreakouts(fresh);
+    // Acked either way: switched off means "don't tell me", not "tell me later".
+    await post(port, '/youtube/niche/alerts/ack', { alerts: alerts.map(function (a) { return { video_id: a.video_id, at_h: a.at_h }; }) }).catch(function () {});
+  }
+
+  function notifyBreakouts(list) {
+    var F = self.OpenOutlierFeatures;
+    var tr = F && F.uiLang && F.uiLang() === 'tr';
+    var x = function (a) { return (Math.round(a.score * 10) / 10).toLocaleString(tr ? 'tr-TR' : 'en-US') + '×'; };
+    var first = list[0];
+    var title = list.length === 1
+      ? (tr ? 'Hızlı yükselen: ' : 'Breakout: ') + (first.channel || 'YouTube')
+      : (tr ? list.length + ' hızlı yükselen video' : list.length + ' breakout videos');
+    var message = list.length === 1
+      ? (first.title || first.video_id) + '\n' + (tr ? first.at + ' içinde kanalın normalinin ' + x(first) + '\'i' : x(first) + ' the channel\'s normal at ' + first.at)
+      : list.slice(0, 4).map(function (a) { return x(a) + ' · ' + (a.channel || '') + ': ' + String(a.title || '').slice(0, 50); }).join('\n');
+    try {
+      chrome.notifications.create('openoutlier-breakout-' + Date.now(), { type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon128.png'), title: title, message: message, priority: 1 });
+    } catch (e) { /* notifications unavailable */ }
+  }
+
+  if (chrome.notifications && chrome.notifications.onClicked) {
+    chrome.notifications.onClicked.addListener(function (id) {
+      if (id.indexOf('openoutlier-breakout-') !== 0) return;
+      chrome.tabs.create({ url: chrome.runtime.getURL('dashboard/dashboard.html#/niche') });
+      chrome.notifications.clear(id);
+    });
   }
 
   function saveSettingsAnswer(res) {
@@ -244,6 +293,30 @@
     if (users.length || org || watches || mentions) syncSoon(users, org, watches, mentions);
     if (changes[SETTINGS_KEY]) tick();
   });
+
+  // ---- the Library's Niş Takibi page ------------------------------------------------
+  var NO_BRIDGE_NICHE = 'Niche tracking runs in the OpenOutlier bridge on your Mac (it keeps measuring while Chrome is closed), and the bridge isn\'t running. ' +
+    'Start it once with: sh mcp/launchd/install.sh (in the OpenOutlier folder). See the README, "Niche tracking".';
+  var OLD_BRIDGE_NICHE = 'The OpenOutlier bridge that is running is older than this extension and has no niche tracking. ' +
+    'Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge (or restart Claude if it runs the bridge).';
+  async function niche(msg) {
+    var path = msg.path === '/youtube/niche/video' ? '/youtube/niche/video' : '/youtube/niche/page';
+    var q = new URLSearchParams();
+    if (path === '/youtube/niche/page') {
+      if (typeof msg.niche === 'string') q.set('niche', msg.niche.slice(0, 80));
+      if (Number.isFinite(msg.tz)) q.set('tz', String(Math.round(msg.tz)));
+    } else {
+      if (!/^[A-Za-z0-9_-]{11}$/.test(String(msg.id || ''))) return { ok: false, error: 'Not a YouTube video id.' };
+      q.set('id', msg.id);
+    }
+    var found = await findServer(await getState());
+    if (!found) return { ok: false, noBridge: true, error: NO_BRIDGE_NICHE };
+    if ((found.health.features || []).indexOf('niche') === -1) return { ok: false, oldBridge: true, error: OLD_BRIDGE_NICHE };
+    var res = await read(found.port, path + '?' + q, 60000);
+    var j = await res.json().catch(function () { return {}; });
+    if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
+    return j;
+  }
 
   // ---- commands ---------------------------------------------------------------
   async function pollCommands(port) {
@@ -478,7 +551,7 @@
   chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (!msg || sender.id !== chrome.runtime.id) return;
     var fn = msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
-      : msg.type === 'reelscope:bridge-key' ? bridgeKey : null;
+      : msg.type === 'reelscope:bridge-key' ? bridgeKey : msg.type === 'reelscope:niche' ? niche : null;
     if (!fn) return;
     fn(msg).then(sendResponse, function (e) {
       sendResponse({ ok: false, error: /Failed to fetch|NetworkError/i.test(String(e && e.message)) ? NO_BRIDGE : String(e && e.message || e) });

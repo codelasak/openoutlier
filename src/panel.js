@@ -289,6 +289,8 @@
     var autoBtn = h('button', { class: 'btn btn-primary', type: 'button', onclick: function () { opts.onAutoScroll(); } });
     var autoStatus = h('span', { class: 'status', 'aria-live': 'polite' });
     var collectBtn = opts.onCollect ? h('button', { class: 'btn', type: 'button', onclick: function () { opts.onCollect(); } }) : null;
+    // YouTube: "Track" adds the open channel to niche tracking (src/tracking.js); state.track from the content script.
+    var trackBtn = opts.onTrackToggle ? h('button', { class: 'btn track-btn', type: 'button', hidden: true, onclick: function () { opts.onTrackToggle(); } }) : null;
     var clearBtn = h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () {
       if (state.selected && confirm('Delete the saved posts for ' + accountLabel(state.selected) + '?')) opts.onClearProfile(state.selected);
     } }, 'Clear');
@@ -321,7 +323,7 @@
           dashBtn,
           h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', 'data-tip': 'Close (Esc)', onclick: function () { toggle(false); } }, pxIcon(PX_CLOSE, 16))),
         hazePixels()),
-      embedded ? null : h('div', { class: 'toolbar' }, autoBtn, collectBtn, autoStatus, clearBtn),
+      embedded ? null : h('div', { class: 'toolbar' }, autoBtn, collectBtn, trackBtn, autoStatus, clearBtn),
       tabBar,
       h('div', { class: 'body-wrap' }, body, detailEl));
     var tooltip = h('div', { class: 'tooltip', role: 'tooltip', hidden: true });
@@ -439,6 +441,7 @@
         collectBtn.disabled = !c.running && !c.enabled;
         collectBtn.setAttribute('data-tip', c.tip || '');
       }
+      if (trackBtn) renderTrack();
       autoStatus.textContent = state.auto.label || (total ? fmtFull(total) + ' posts collected' : '');
       autoStatus.setAttribute('data-tip', state.auto.label || '');
       clearBtn.disabled = !state.selected;
@@ -581,6 +584,26 @@
           'Show ' + Math.min(PAGE, list.length - ui.shown) + ' more'));
       }
       return wrap;
+    }
+
+    /** The Track toggle: state.track = { on, via, niche, mine, excluded, ready, lang } or null (hidden). */
+    function renderTrack() {
+      var t = state.track;
+      trackBtn.hidden = !t;
+      if (!t) return;
+      var tr = t.lang === 'tr';
+      trackBtn.textContent = '';
+      trackBtn.appendChild(h('span', { class: 'track-dot', 'aria-hidden': 'true' }));
+      trackBtn.appendChild(document.createTextNode(t.on ? (tr ? 'Takip ediliyor' : 'Tracking') : (tr ? 'Takip et' : 'Track')));
+      trackBtn.classList.toggle('is-on', !!t.on);
+      trackBtn.setAttribute('aria-pressed', t.on ? 'true' : 'false');
+      var why = t.on
+        ? (t.mine ? (tr ? 'Senin kanalın; nişle karşılaştırılıyor. ' : 'Your channel, compared with the niche. ') : '') +
+          (t.via === 'niche' ? (tr ? '"' + t.niche + '" nişinin parçası. ' : 'Part of the "' + t.niche + '" niche. ') : '') +
+          (tr ? 'Bridge yeni videoları RSS ile 15 dakikada bir, Data API ile yaşına göre ölçüyor. Kapatmak için tıkla.' : 'The bridge checks RSS every 15 min and measures videos with the Data API by age. Click to stop.')
+        : (t.excluded ? (tr ? '"' + t.niche + '" nişinde ama takipten çıkarıldı. ' : 'In the "' + t.niche + '" niche but switched off. ') : '') +
+          (tr ? 'Niş takibine ekle: yeni videoların ilk saatlerden itibaren hızı ölçülür ve Library → Niş Takibi\'nde görünür.' : 'Add to niche tracking: new uploads are measured from their first hours and show up in Library → Niche tracking.');
+      trackBtn.setAttribute('data-tip', why + (t.ready === false ? (tr ? ' Bridge veya bridge\'deki API anahtarı hazır olunca başlar.' : ' Starts once the bridge (with its API key) is ready.') : ''));
     }
 
     /** The Features tab: state.features = { flags, env, message } from the content script. */

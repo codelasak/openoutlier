@@ -65,6 +65,7 @@
               return { ok: true, updated: n, units: Math.ceil(Object.keys(rec.posts).length / 50), quota: { used: window.__ytUnits, limit: 10000 } };
             }
             if (m.type === 'reelscope:yt-analytics') return demoAnalytics(m, qs.get('ytanalytics'));
+            if (m.type === 'reelscope:niche') return demoNiche(m, qs.get('niche'));
             if (m.type === 'reelscope:bridge-key') {
               await new Promise(function (r) { setTimeout(r, 300); });
               if (!store['rs:bridge'].connected) return { ok: false, error: 'The OpenOutlier bridge on your Mac isn\'t running, so there is nowhere to copy the key to.' };
@@ -76,6 +77,39 @@
         },
         permissions: { request: async function () { return true; }, contains: async function () { return true; }, remove: async function () { return true; } }
       };
+
+      // Niş Takibi (#/niche): ?niche=off (no bridge) | empty (nothing tracked: the start helper) | new (tracking just started) | default (ten simulated weeks, dev/make-niche-fixture.mjs).
+      var nichePage = null;
+      async function demoNiche(m, mode) {
+        await new Promise(function (r) { setTimeout(r, 350); });
+        if (mode === 'off') return { ok: false, noBridge: true, error: 'Niche tracking runs in the OpenOutlier bridge on your Mac (it keeps measuring while Chrome is closed), and the bridge isn\'t running.' };
+        if (!nichePage) nichePage = await (await fetch('/dev/youtube/niche/page.json')).json();
+        var p = JSON.parse(JSON.stringify(nichePage));
+        // The fixture was computed at p.now: move its times to now so "3 h ago" reads right.
+        var shift = Date.now() - p.now;
+        (function walk(o) {
+          if (Array.isArray(o)) { o.forEach(walk); return; }
+          if (!o || typeof o !== 'object') return;
+          Object.keys(o).forEach(function (k) {
+            var v = o[k];
+            if (typeof v === 'number' && v > 1.6e12 && v < 2.2e12 && /(at|^now|last_upload|first_seen)$/.test(k)) o[k] = v + shift;
+            else if (v && typeof v === 'object') walk(v);
+          });
+        })(p);
+        var tracked = store['rs:org'] && store['rs:org'].niches && store['rs:org'].niches.folders.length;
+        if (mode === 'empty' && !tracked) return { ok: true, now: Date.now(), niche: null, niches: [], channels: [], unresolved: [], week: [], curves: p.curves, what_works: {}, gaps: [], changes: [], mine: { channels: [], videos: [] }, growth: [], breakouts: [], digest: null, digest_preview: null, rss_lag: { verdict: 'collecting', samples: 0 }, settings: p.settings, status: p.status };
+        if (mode === 'new' || mode === 'empty') {
+          // Tracking started an hour ago: channels and their first RSS reads, nothing measured long enough yet.
+          p.channels.forEach(function (c) { c.backfilled_at = c.mine ? null : c.backfilled_at; c.young = 0; });
+          p.week = p.week.filter(function (v) { return v.age_h < 1.2; }).map(function (v) { v.score = null; v.spark.expected = []; return v; });
+          ['long', 'short'].forEach(function (f) { var c = p.curves[f]; c.share_48h = null; c.share_videos = 0; Object.keys(c.share).forEach(function (h) { c.share[h] = null; c.norm[h] = null; }); });
+          p.what_works = { videos: 0 }; p.gaps = []; p.changes = []; p.breakouts = []; p.digest = null;
+          p.mine.videos = []; p.growth.forEach(function (g) { g.series = g.series.slice(-1); g.delta_7d = g.delta_28d = null; });
+          p.rss_lag = { verdict: 'collecting', samples: 3, lag_min: { median: null, p90: null }, young_lag_min: { median: null, samples: 0 }, gap_pct: { median: null } };
+          p.digest_preview.top = []; p.digest_preview.totals.uploads = 0; p.digest_preview.totals.breakouts = 0; p.digest_preview.best_slot = {};
+        }
+        return p;
+      }
 
       function demoAnalytics(m, mode) {
         var connected = mode === 'connected' || window.__ytConnected;
@@ -152,7 +186,27 @@
         ytBugs[code] = q;
       });
       store['rs:p:yt/excel.bugs.demo'] = { posts: ytBugs, updatedAt: Date.now() - 600e3, platform: 'youtube', profile: { handle: 'excel.bugs.demo', name: 'Excel Bugs (demo)', subscribers: 18400 } };
+      // Saved YouTube channels with the names of the Excel niche (and two that aren't Excel), for the Niche page's start helper.
+      [['Kevin Stratvert', 'KevinStratvert', 3100000], ['Leila Gharani', 'LeilaGharani', 2900000], ['Kenji Explains', 'KenjiExplains', 1100000], ['MyOnlineTrainingHub', 'MyOnlineTrainingHub', 760000],
+        ['Excel Campus', 'ExcelCampus', 980000], ['Simon Sez IT', 'simonsezit', 690000], ['Cody Baldwin', 'CodyBaldwin', 140000], ['Marg Analytics', 'marganalytics', 33000],
+        ['Hands on Excel', 'handsonexcel', 1240], ['Starter Story', 'starterstory', 2400000], ['Jake Trinder', 'jaketrinder', 81000]].forEach(function (c, ci) {
+        var id = 'yt/' + c[1].toLowerCase();
+        var posts = {};
+        for (var i = 0; i < 6; i++) {
+          var code = ('yTch' + ci + 'v' + i + 'xxxxxxxx').slice(0, 11);
+          posts[code] = { code: code, platform: 'youtube', type: i % 3 ? 'video' : 'short', url: 'https://www.youtube.com/watch?v=' + code, owner: id, ownerName: c[0], caption: c[0] + ' video ' + (i + 1), views: Math.round(c[2] * (0.02 + i * 0.01)), viewsApprox: true, files: [] };
+        }
+        store['rs:p:' + id] = { posts: posts, updatedAt: Date.now() - (ci + 2) * 3600e3, platform: 'youtube', profile: { handle: c[1], name: c[0], subscribers: c[2] } };
+      });
+      var nicheMode = new URLSearchParams(location.search).get('niche');
+      var excelIds = ['yt/kevinstratvert', 'yt/leilagharani', 'yt/kenjiexplains', 'yt/myonlinetraininghub', 'yt/excelcampus', 'yt/simonsezit', 'yt/codybaldwin', 'yt/marganalytics', 'yt/handsonexcel'];
       store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] }, 'excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'tt/excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'yt/exceldemo': { folder: 'f2', tags: ['competitor'] } } };
+      if (nicheMode !== 'empty' && nicheMode !== 'off') {
+        excelIds.forEach(function (id) { store['rs:org'].accounts[id] = { folder: 'f2', tags: [] }; });
+        store['rs:org'].niches = { folders: ['f2'], tags: [] };
+        store['rs:org'].tracked = { 'yt/handsonexcel': { on: true, mine: true, name: 'Hands on Excel', at: Date.now() - 70 * 864e5 } };
+        store['rs:niche-alerts'] = { items: [], unseen: nicheMode === 'new' ? 0 : 2 };
+      }
 
       // Fake Reddit keyword watches and mentions.
       var now = Date.now();
@@ -189,7 +243,7 @@
       // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
       var realFetch = window.fetch;
       window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/dashboard/niche-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

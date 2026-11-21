@@ -433,6 +433,26 @@
     };
   }
 
+  /**
+   * Keep one word per topic: a word whose videos are mostly (≥ 80 %) the videos of a word
+   * already kept ("copilot" → "copilot in excel", "gantt" → "chart") says the same thing.
+   */
+  function distinct(list, idsOf) {
+    var kept = [];
+    return list.filter(function (w) {
+      var ids = idsOf(w);
+      var dup = kept.some(function (k) {
+        var shared = ids.filter(function (id) { return k[id]; }).length;
+        return shared >= 0.8 * Math.min(ids.length, Object.keys(k).length);
+      });
+      if (dup) return false;
+      var set = {};
+      ids.forEach(function (id) { set[id] = true; });
+      kept.push(set);
+      return true;
+    });
+  }
+
   /** Title words by median score ÷ overall median (words in ≥ minN videos). */
   function wordLift(list, opts) {
     opts = opts || {};
@@ -448,14 +468,7 @@
       return { word: w, n: by[w].length, median: m, lift: all ? m / all : null };
     });
     out.sort(function (a, b) { return (b.lift || 0) - (a.lift || 0) || b.n - a.n || a.word.length - b.word.length; });
-    // Words carried by exactly the same videos ("gantt", "chart", "gantt chart") say one thing: keep the first.
-    var seen = {};
-    out = out.filter(function (w) {
-      var k = by[w.word].map(function (v) { return v.id; }).sort().join(',');
-      if (seen[k]) return false;
-      seen[k] = true;
-      return true;
-    });
+    out = distinct(out, function (w) { return by[w.word].map(function (v) { return v.id; }); });
     return out.slice(0, opts.limit || 12);
   }
 
@@ -481,18 +494,11 @@
       var m = median(vs.map(function (v) { return v.score; }));
       var channels = {};
       vs.forEach(function (v) { channels[v.channel_id] = true; });
-      return { word: w, n: vs.length, channels: Object.keys(channels).length, median: m, lift: m / all,
+      return { word: w, ids: vs.map(function (v) { return v.id; }), n: vs.length, channels: Object.keys(channels).length, median: m, lift: m / all,
         examples: vs.slice().sort(function (a, b) { return b.score - a.score; }).slice(0, 3).map(function (v) { return { id: v.id, title: v.title, score: v.score }; }) };
     }).filter(function (g) { return g.lift >= minLift; });
-    // Words shared by the same videos say the same thing: keep the strongest one per example set.
-    out.sort(function (a, b) { return b.lift - a.lift || b.n - a.n; });
-    var seen = {};
-    return out.filter(function (g) {
-      var k = g.examples.map(function (e) { return e.id; }).sort().join(',');
-      if (seen[k]) return false;
-      seen[k] = true;
-      return true;
-    }).slice(0, opts.limit || 10);
+    out.sort(function (a, b) { return b.lift - a.lift || b.n - a.n || a.word.length - b.word.length; });
+    return distinct(out, function (g) { return g.ids; }).slice(0, opts.limit || 10).map(function (g) { delete g.ids; return g; });
   }
 
   // ---- RSS lag (plan 2.2, open item from phase 0) --------------------------------------

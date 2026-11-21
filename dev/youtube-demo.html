@@ -20,6 +20,16 @@
     #player { display: none; margin: 0 0 16px; }
     #player video { display: block; width: 640px; height: 360px; max-width: 100%; background: #111; border-radius: 10px; }
     #player.short video { width: 300px; height: 533px; }
+    .ch-head { display: flex; gap: 20px; align-items: center; padding: 20px 32px 8px; }
+    .ch-avatar { width: 96px; height: 96px; border-radius: 50%; background: #1f7a44; color: #fff; display: grid; place-items: center; font: 600 40px Roboto, Arial, sans-serif; }
+    .ch-name { font: 700 30px/1.2 Roboto, Arial, sans-serif; }
+    .ch-meta { color: #606060; margin: 4px 0 12px; }
+    .ch-actions { display: flex; align-items: center; }
+    .ch-sub { height: 36px; padding: 0 16px; border-radius: 18px; border: 0; background: #0f0f0f; color: #fff; font: 500 14px Roboto, Arial, sans-serif; cursor: pointer; }
+    html[dark] body { background: #0f0f0f; color: #f1f1f1; }
+    html[dark] .ch-sub { background: #f1f1f1; color: #0f0f0f; }
+    html[dark] .ch-meta, html[dark] header p { color: #aaa; }
+    html[dark] header { border-color: #333; }
   </style>
   <!-- Stand-in for the chrome.* APIs so the content scripts run on a normal page. -->
   <script>
@@ -163,6 +173,7 @@
       // ?hl=tr loads the Turkish fixtures ("63 B" = 63 thousand) and sets <html lang>.
       var hl = new URLSearchParams(location.search).get('hl') === 'tr' ? 'tr' : 'en';
       window.__demoHl = hl;
+      if (new URLSearchParams(location.search).has('dark')) document.documentElement.setAttribute('dark', '');
       document.documentElement.lang = hl === 'tr' ? 'tr-TR' : 'en';
 
       // Fake YouTube web API, installed before hook.js so the hook wraps it like youtube.com's real fetch.
@@ -193,6 +204,15 @@
   <script src="../src/hook.js"></script>
 </head>
 <body>
+  <div class="ch-head">
+    <div class="ch-avatar" aria-hidden="true">E</div>
+    <div>
+      <div class="ch-name">Excel Demo</div>
+      <div class="ch-meta">@ExcelDemo · 412K subscribers · 623 videos</div>
+      <!-- Stands in for YouTube's yt-flexible-actions-view-model (Subscribe + Join); the Track button goes here. -->
+      <div class="ch-actions" data-openoutlier-track-slot><button type="button" class="ch-sub">Subscribe</button></div>
+    </div>
+  </div>
   <header>
     <h1>OpenOutlier YouTube demo page</h1>
     <p>Stands in for youtube.com/@ExcelDemo/videos. The first page's <code>ytInitialData</code> is inlined like YouTube's own HTML; scrolling "loads" a <code>/youtubei/v1/browse</code> continuation through the same hook the extension uses. The buttons simulate in-app navigation (a Shorts tab browse, a <code>get_watch</code> video click, then <code>yt-navigate-finish</code>). Data: dev/youtube (anonymized). Add <code>?hl=tr</code> for the Turkish labels; the panel's Features tab takes <code>?bridge=off|nokey|ready</code> and <code>?ytapi</code>.</p>
@@ -213,6 +233,7 @@
   <script src="../src/youtube.js"></script>
   <script src="../src/features.js"></script>
   <script src="../src/features-view.js"></script>
+  <script src="../src/tracking.js"></script>
   <script src="../src/brand.js"></script>
   <script src="../src/panel.js"></script>
   <script src="../src/overlay.js"></script>

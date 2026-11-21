@@ -122,6 +122,12 @@ button, select, input { font: inherit; color: inherit; }
 .icon-btn:hover { background: var(--sunk); color: var(--text); }
 
 .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--line); }
+.track-btn { gap: 7px; }
+.track-btn .track-dot { width: 8px; height: 8px; flex: none; border: 1.5px solid currentColor; }
+.track-btn.is-on { border-color: var(--blue); color: var(--link); }
+.track-btn.is-on .track-dot { background: var(--blue); border-color: var(--blue); }
+:host([data-theme="dark"]) .track-btn.is-on { border-color: var(--link); }
+:host([data-theme="dark"]) .track-btn.is-on .track-dot { background: var(--link); border-color: var(--link); box-shadow: 3px -3px 0 var(--lime); }
 .status { flex: 1; min-width: 0; color: var(--text-2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .tabs { display: flex; gap: 2px; padding: 0 10px; background: var(--card); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
