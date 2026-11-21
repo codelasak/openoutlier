@@ -1337,7 +1337,14 @@ textarea.sw-in { height: auto; padding: 6px 8px; resize: vertical; line-height: 
 .dv-chip.is-sug:hover, .dv-chip.is-seed:hover { border-style: solid; color: var(--text); }
 .dv-chip small { font-size: 11px; font-weight: 600; color: var(--muted); }
 .dv-chip.is-seed.is-on { border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent); }
-.dv-x { width: 22px; height: 22px; border: 0; border-radius: var(--r-pixel); background: transparent; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; }
+.dv-x { position: relative; width: 22px; height: 22px; border: 0; border-radius: var(--r-pixel); background: transparent; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; }
+.dv-x::after { content: ""; position: absolute; inset: -9px; } /* D31: a 40 px hit area around the 22 px × */
+/* D29: views per subscriber is a ratio, not the outlier badge: outlined, the unit inside. */
+.dv-ratio { display: inline-flex; align-items: baseline; gap: 5px; padding: 1px 7px; border-radius: var(--r-pixel); box-shadow: inset 0 0 0 1.5px var(--border-2); color: var(--text); white-space: nowrap; }
+.dv-ratio b { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dv-ratio small { font-size: 11px; color: var(--muted); }
+.dv-back { display: inline-block; margin: 0 0 10px; font-weight: 600; font-size: 13px; text-decoration: none; }
+.dv-back:hover { text-decoration: underline; text-underline-offset: 2px; }
 .dv-x:hover { background: var(--border); color: var(--text); }
 .dv-x:focus-visible, .dv-chip.is-sug:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
 .dv-sug { margin-top: 14px; }

@@ -29,15 +29,15 @@
       noKey: 'The bridge has no Data API key, so the radar can\'t search.', addKey: 'Add the key in Settings',
       keywords: 'Keywords for {n}', keywordsNone: 'No keywords yet. Add a few searches people type, like "excel pivot table" or "xlookup".', add: 'Add', addPh: 'Add a keyword…', remove: 'Remove {k}',
       suggest: 'Suggestions', sugSearch: 'your search term', sugGap: 'topic gap', sugTitle: 'title word',
-      cost: 'Cost per run', costLine: '{u} units a day for {n} keywords', costDetail: '{s} for search.list (100 each) + up to {v} for videos.list and channels.list',
+      cost: 'Cost per run', costLine: { one: '{u} units a day for {n} keyword', other: '{u} units a day for {n} keywords' }, costDetail: '{s} for search.list (100 each) + up to {v} for videos.list and channels.list',
       costShare: '{p} of the daily 10,000 · all niches: {a}', costBudget: 'It stops before the day\'s budget ({b} units, tracking included) and keeps {r} for niche tracking; leftover keywords wait for the next day.',
-      thresholds: 'Thresholds', maxSubs: 'Channels up to', minRatio: 'Views per subscriber at least', minViews: 'Views at least', perKw: 'Results per keyword', market: 'Market',
-      status: 'Runs', lastRun: 'Last run {t}: {k} keywords, {u} units, {v} videos', skipped: '{n} keywords waited for the budget', nextRun: 'Next run {t}', never: 'Not run yet.', runNow: 'Run now', runQueued: 'Queued: the bridge runs it within a minute.',
+      thresholds: 'Thresholds', maxSubs: 'Channels up to', minRatio: 'Views per subscriber at least', minViews: 'Views at least', perKw: 'Results per keyword', market: 'Country / language',
+      status: 'Runs', lastRun: 'Last run {t}: {k} keywords, {u} units, {v} videos', skipped: { one: '{n} keyword waited for the budget', other: '{n} keywords waited for the budget' }, nextRun: 'Next run {t}', never: 'Not run yet.', runNow: 'Run now', runQueued: 'Queued: the bridge runs it within a minute.',
       breakouts: 'Breaking out on small channels this week', breakoutsSub: 'Uploads of the last 7 days from channels with at most {s} subscribers and at least {r} views per subscriber, best ratio first.',
       breakoutsEmpty: 'Nothing matched this week. Lower the thresholds or add keywords; results refresh with each daily run.', radarEmpty: 'No results yet: the first run fills this in.',
-      perSub: '{x} views/sub', subsN: '{n} subs', viewsN: '{n} views', vph: '{n}/h', foundBy: 'via',
+      perSub: '{x} views/sub', perSubShort: 'views / sub', subsN: '{n} subs', viewsN: '{n} views', vph: '{n}/h', foundBy: 'via',
       rising: 'Rising channels you don\'t track', risingSub: 'Channels behind those breakouts that aren\'t in your niche yet. Track adds one to {n}.', risingEmpty: 'No untracked channel stood out this week.',
-      track: 'Track', tracking: 'Tracking', videosN: '{n} videos', video1: '1 video', best: 'best {x}',
+      track: 'Track', tracking: 'Tracking', videosN: { one: '{n} video', other: '{n} videos' }, video1: '1 video', best: 'best {x}',
       // map
       mapTitle: 'Channel map', mapSub: 'Who sits next to your niche: channels YouTube recommends alongside its channels ("Up Next" lists of the videos you watch, fading over ~30 days) and channels whose titles and tags read alike.',
       outside: 'Close to the niche, not tracked', outsideSub: 'Ranked by how many of the niche\'s channels they are near, then by how near.', outsideEmpty: 'Nothing yet. Watch a few videos of the niche on YouTube: every "Up Next" list adds to this map.',
@@ -46,20 +46,20 @@
       basis: '{p} recommendation pairs · text of {t} channels', mapOff: 'Similar channels is switched off.',
       // keywords
       kwTitle: 'Keyword ideas', kwSub: 'YouTube\'s autocomplete for the niche\'s seeds, merged with its fast title words, topic gaps and the searches that already bring you viewers.',
-      seed: 'Start from', seedPh: 'a seed, e.g. excel pivot', go: 'Search', lang: 'Language', country: 'Country', expand: 'More: {s} a–z', expanding: 'Widening "{s}"…',
-      fAll: 'All', fRanks: 'You rank', fIdeas: 'New ideas', ranks: 'you rank', ranksTip: '{v} views from this search in the last 4 weeks (YouTube Analytics)',
+      seed: 'Start from', seedPh: 'a seed, e.g. excel pivot', go: 'Search', lang: 'Language', country: 'Country / language', expand: 'More: {s} a–z', expanding: 'Widening "{s}"…',
+      fAll: 'All', fRanks: 'You rank', fIdeas: 'New ideas', ranks: '{v} views from search', ranksTip: '{v} views from this search in the last 4 weeks (YouTube Analytics)',
       src: { autocomplete: 'autocomplete', title: 'title word', gap: 'topic gap', search: 'your search' }, lift: 'title words with it: {x} the niche median',
       toRadar: '+ Radar', onRadar: 'on radar', toRank: 'Track rank', ranked: 'rank #{r}', notRanked: 'not in top 40', rankTracked: 'rank tracked',
       kwEmpty: 'No ideas yet. Add a seed above, or track the niche so its title words and gaps can feed this list.', kwOff: 'Keyword ideas are off: only the Library\'s own signals are listed.',
-      kwFetched: '{f} fetched · {c} from cache (7 days) · hl={hl} gl={gl}', kwOwn: 'Your search terms: {n}', kwOwnNone: 'Connect your channel (My YouTube channel) to mark the terms you already rank for.',
+      kwFetched: '{f} fetched · {c} from cache (7 days) · {m}', kwOwn: 'Your search terms: {n}', kwOwnNone: 'Connect your channel (My YouTube channel) to mark the terms you already rank for.',
       claude: 'Ask Claude for the volume', claudeSub: 'Search volume needs the vidIQ connector in Claude: its free plan has about 30 calls a month, so this prompt asks for at most 10 keywords and tells Claude to batch them and stop at the limit.',
       copy: 'Copy prompt', copied: 'Copied', claudeNone: 'Every idea here is already a term you rank for.',
       rankNote: 'Rank tracking uses DataForSEO (optional, paid, scraping-based): {n} keywords, about ${c} a day.', rankOff: 'Turn on DataForSEO in Settings to track ranks.',
       // thumbs
-      thumbsTitle: 'Similar thumbnails', thumbsSub: 'Library videos whose thumbnails look like this one: a 64-bit perceptual hash, compared bit by bit (0 = the same image).',
-      dist: '{d} bits apart', same: 'same image', vclose: 'very close', close: 'close', sameChannel: 'same channel', thumbsEmpty: 'No thumbnail in the Library is this close yet.',
-      thumbsIdx: '{i} thumbnails indexed · {p} waiting (about 40 every 20 minutes)', thumbsNoHash: 'This thumbnail couldn\'t be hashed (it needs ffmpeg or macOS sips on the bridge\'s Mac).',
-      back: '← Niche tracking', open: 'Open on YouTube',
+      thumbsTitle: 'Similar thumbnails', thumbsSub: 'Library videos whose thumbnails look like this one, closest first.',
+      dist: '{p} alike', same: 'same image', vclose: 'very close', close: 'close', sameChannel: 'same channel', thumbsEmpty: 'No thumbnail in the Library is this close yet.',
+      thumbsIdx: '{i} thumbnails indexed · {p} waiting (about 40 every 20 minutes)', thumbsNoHash: 'This thumbnail couldn\'t be compared (it needs ffmpeg or macOS sips on the bridge\'s Mac).',
+      back: '← Tracking', open: 'Open on YouTube',
       noBridge: 'Discovery runs in the OpenOutlier bridge on your Mac, and it isn\'t running.', oldBridge: 'The bridge is older than this extension. Restart it: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge'
     },
     tr: {
@@ -72,11 +72,11 @@
       suggest: 'Öneriler', sugSearch: 'arama terimin', sugGap: 'konu boşluğu', sugTitle: 'başlık kelimesi',
       cost: 'Çalışma başına maliyet', costLine: '{n} kelime için günde {u} birim', costDetail: 'search.list için {s} (her biri 100) + videos.list ve channels.list için en çok {v}',
       costShare: 'günlük 10.000\'in {p}\'i · tüm nişler: {a}', costBudget: 'Günün bütçesine ({b} birim, takip dahil) gelmeden durur ve niş takibi için {r} bırakır; kalan kelimeler ertesi günü bekler.',
-      thresholds: 'Eşikler', maxSubs: 'En çok abone', minRatio: 'Abone başına en az izlenme', minViews: 'En az izlenme', perKw: 'Kelime başına sonuç', market: 'Pazar',
+      thresholds: 'Eşikler', maxSubs: 'En çok abone', minRatio: 'Abone başına en az izlenme', minViews: 'En az izlenme', perKw: 'Kelime başına sonuç', market: 'Ülke / dil',
       status: 'Çalışmalar', lastRun: 'Son çalışma {t}: {k} kelime, {u} birim, {v} video', skipped: '{n} kelime bütçe yüzünden bekledi', nextRun: 'Sonraki çalışma {t}', never: 'Henüz çalışmadı.', runNow: 'Şimdi çalıştır', runQueued: 'Sıraya alındı: bridge bir dakika içinde çalıştırır.',
       breakouts: 'Bu hafta küçük kanallarda patlayanlar', breakoutsSub: 'En çok {s} aboneli kanalların son 7 gündeki yüklemeleri, abone başına en az {r} izlenmeyle; en yüksek oran başta.',
       breakoutsEmpty: 'Bu hafta eşleşen yok. Eşikleri düşür ya da kelime ekle; sonuçlar her günlük çalışmada yenilenir.', radarEmpty: 'Henüz sonuç yok: ilk çalışma burayı doldurur.',
-      perSub: 'abone başına {x}', subsN: '{n} abone', viewsN: '{n} izlenme', vph: '{n}/sa', foundBy: 'kelime',
+      perSub: 'abone başına {x}', perSubShort: 'izlenme / abone', subsN: '{n} abone', viewsN: '{n} izlenme', vph: '{n}/sa', foundBy: 'kelime',
       rising: 'Takip etmediğin yükselen kanallar', risingSub: 'Bu patlamaların arkasındaki, henüz nişinde olmayan kanallar. Takip et, kanalı {n} nişine ekler.', risingEmpty: 'Bu hafta öne çıkan takip dışı kanal yok.',
       track: 'Takip et', tracking: 'Takipte', videosN: '{n} video', video1: '1 video', best: 'en iyi {x}',
       mapTitle: 'Kanal haritası', mapSub: 'Nişinin yanında kimler var: YouTube\'un nişin kanallarıyla birlikte önerdiği kanallar (izlediğin videoların "Sıradaki" listeleri, ~30 günde solar) ve başlık ve etiketleri benzeyen kanallar.',
@@ -85,19 +85,19 @@
       neighbours: 'Her kanalın en yakınları', neighboursSub: 'Takip edilen her kanala en çok benzeyen üç kanal, nişin içinden ya da dışından.', none: '–',
       basis: '{p} öneri eşleşmesi · {t} kanalın metni', mapOff: 'Benzer kanallar kapalı.',
       kwTitle: 'Anahtar kelime fikirleri', kwSub: 'Nişin tohum kelimeleri için YouTube\'un otomatik tamamlaması; nişin hızlı başlık kelimeleri, konu boşlukları ve sana zaten izleyici getiren aramalarla birleşik.',
-      seed: 'Başlangıç', seedPh: 'bir tohum, örn. excel pivot', go: 'Ara', lang: 'Dil', country: 'Ülke', expand: 'Daha fazla: {s} a–z', expanding: '"{s}" genişletiliyor…',
-      fAll: 'Hepsi', fRanks: 'Sıralandıkların', fIdeas: 'Yeni fikirler', ranks: 'sıralanıyorsun', ranksTip: 'Son 4 haftada bu aramadan {v} izlenme (YouTube Analytics)',
+      seed: 'Başlangıç', seedPh: 'bir tohum, örn. excel pivot', go: 'Ara', lang: 'Dil', country: 'Ülke / dil', expand: 'Daha fazla: {s} a–z', expanding: '"{s}" genişletiliyor…',
+      fAll: 'Hepsi', fRanks: 'Sıralandıkların', fIdeas: 'Yeni fikirler', ranks: 'aramadan {v} izlenme', ranksTip: 'Son 4 haftada bu aramadan {v} izlenme (YouTube Analytics)',
       src: { autocomplete: 'otomatik tamamlama', title: 'başlık kelimesi', gap: 'konu boşluğu', search: 'arama terimin' }, lift: 'bu kelimeli başlıklar: nişin medyanının {x}',
       toRadar: '+ Radar', onRadar: 'radarda', toRank: 'Sırayı takip et', ranked: '#{r}. sıra', notRanked: 'ilk 40\'ta yok', rankTracked: 'sıra takipte',
       kwEmpty: 'Henüz fikir yok. Yukarıya bir tohum ekle ya da nişi takip et ki başlık kelimeleri ve boşluklar bu listeyi beslesin.', kwOff: 'Anahtar kelime fikirleri kapalı: sadece Library\'nin kendi sinyalleri listeleniyor.',
-      kwFetched: '{f} yeni · {c} önbellekten (7 gün) · hl={hl} gl={gl}', kwOwn: 'Arama terimlerin: {n}', kwOwnNone: 'Zaten sıralandığın terimleri işaretlemek için kanalını bağla (Kanalım).',
+      kwFetched: '{f} yeni · {c} önbellekten (7 gün) · {m}', kwOwn: 'Arama terimlerin: {n}', kwOwnNone: 'Zaten sıralandığın terimleri işaretlemek için kanalını bağla (Kanalım).',
       claude: 'Claude ile hacim sor', claudeSub: 'Arama hacmi için Claude\'daki vidIQ bağlayıcısı gerekiyor: ücretsiz planı ayda ~30 çağrı veriyor; bu istem en çok 10 kelime sorar, Claude\'a kelimeleri tek çağrıda toplamasını ve limitte durmasını söyler.',
       copy: 'İstemi kopyala', copied: 'Kopyalandı', claudeNone: 'Buradaki her fikir zaten sıralandığın bir terim.',
       rankNote: 'Sıra takibi DataForSEO kullanır (isteğe bağlı, ücretli, scraping tabanlı): {n} kelime, günde yaklaşık ${c}.', rankOff: 'Sıra takibi için Ayarlar\'dan DataForSEO\'yu aç.',
-      thumbsTitle: 'Benzer thumbnail\'ler', thumbsSub: 'Thumbnail\'i buna benzeyen Library videoları: 64 bitlik perceptual hash, bit bit karşılaştırılır (0 = aynı görsel).',
-      dist: '{d} bit fark', same: 'aynı görsel', vclose: 'çok yakın', close: 'yakın', sameChannel: 'aynı kanal', thumbsEmpty: 'Library\'de henüz bu kadar yakın bir thumbnail yok.',
-      thumbsIdx: '{i} thumbnail dizinde · {p} bekliyor (20 dakikada ~40)', thumbsNoHash: 'Bu thumbnail\'in hash\'i alınamadı (bridge\'in Mac\'inde ffmpeg ya da macOS sips gerekir).',
-      back: '← Niş Takibi', open: 'YouTube\'da aç',
+      thumbsTitle: 'Benzer thumbnail\'ler', thumbsSub: 'Thumbnail\'i buna benzeyen Library videoları, en yakını başta.',
+      dist: '{p} benzer', same: 'aynı görsel', vclose: 'çok yakın', close: 'yakın', sameChannel: 'aynı kanal', thumbsEmpty: 'Library\'de henüz bu kadar yakın bir thumbnail yok.',
+      thumbsIdx: '{i} thumbnail dizinde · {p} bekliyor (20 dakikada ~40)', thumbsNoHash: 'Bu thumbnail karşılaştırılamadı (bridge\'in Mac\'inde ffmpeg ya da macOS sips gerekir).',
+      back: '← Takip', open: 'YouTube\'da aç',
       noBridge: 'Keşif araçları Mac\'teki OpenOutlier bridge\'inde çalışır ve bridge çalışmıyor.', oldBridge: 'Bridge bu eklentiden eski. Yeniden başlat: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge'
     }
   };
@@ -109,7 +109,16 @@
 
     function lang() { return F && F.uiLang ? F.uiLang() : 'en'; }
     function L() { return S[lang()] || S.en; }
-    function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
+    // s: a string or plural forms ({ one, other }) chosen by `count` or o.n (B5).
+    function fill(s, o, count) {
+      if (s && typeof s === 'object') {
+        var c = count != null ? count : typeof o.n === 'number' ? o.n : Number(String(o.n).replace(/[^\d]/g, ''));
+        var rule = 'other';
+        try { rule = new Intl.PluralRules(lang() === 'tr' ? 'tr-TR' : 'en-US').select(c); } catch (e) { /* other */ }
+        s = s[rule] != null ? s[rule] : s.other;
+      }
+      return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; });
+    }
     function loc() { return lang() === 'tr' ? 'tr-TR' : 'en-US'; }
     function num(n) { return n == null ? '–' : new Intl.NumberFormat(loc(), { notation: 'compact', maximumFractionDigits: n < 1000 ? 0 : 1 }).format(n); }
     function full(n) { return n == null ? '–' : new Intl.NumberFormat(loc()).format(Math.round(n)); }
@@ -123,6 +132,8 @@
       for (var i = 0; i < units.length; i++) if (Math.abs(s) >= units[i][1]) return rtf.format(Math.round(s / units[i][1]), units[i][0]);
       return rtf.format(0, 'minute');
     }
+    /** "US · English" instead of hl=en gl=US (C21). */
+    function marketName(gl, hl) { var m = MARKETS.filter(function (x) { return x[0] === gl && x[1] === hl; })[0] || MARKETS.filter(function (x) { return x[0] === gl; })[0]; return m ? m[2] : [gl, hl].filter(Boolean).join(' · '); }
     function nicheLabel(n) { return n || (lang() === 'tr' ? 'Adsız niş' : 'Untitled niche'); }
 
     function call(what, extra) {
@@ -293,7 +304,8 @@
                 v.tracked ? h('span', { class: 'nv-tag is-soft', text: T.tracking }) : null),
               h('div', { class: 'dv-kws' }, h('small', { class: 'muted', text: T.foundBy }), (v.keywords || []).slice(0, 3).map(function (k) { return h('span', { class: 'dv-kw', text: k }); }))),
             h('div', { class: 'nv-nums' },
-              h('span', { class: 'nv-score' + (v.views_per_sub >= 2 ? ' is-out' : '') + (v.views_per_sub >= 10 ? ' is-hot' : '') }, h('b', { text: times(v.views_per_sub) }), h('small', { text: lang() === 'tr' ? 'abone b.' : 'per sub' })),
+              // D29: a ratio badge with its unit inside, outlined: not the outlier "×median" badge.
+              h('span', { class: 'dv-ratio', title: fill(T.perSub, { x: times(v.views_per_sub) }) }, h('b', { text: times(v.views_per_sub) }), h('small', { text: T.perSubShort })),
               h('span', { class: 'nv-views', text: fill(T.viewsN, { n: num(v.views) }) }),
               v.vph != null ? h('span', { class: 'nv-vph', text: fill(T.vph, { n: num(v.vph) }) }) : null));
         })) : empty(d.results ? T.breakoutsEmpty : T.radarEmpty)));
@@ -407,12 +419,12 @@
             h('div', { class: 'dv-srcs' }, i.sources.map(function (x) { return h('span', { class: 'dv-src is-' + x, text: T.src[x] || x }); }),
               i.lift != null && i.lift >= 1.2 ? h('span', { class: 'dv-lift', title: fill(T.lift, { x: times(i.lift) }), text: '↑ ' + times(i.lift) }) : null)),
           h('div', { class: 'dv-idea-side' },
-            i.ranks ? h('span', { class: 'dv-ranks', title: fill(T.ranksTip, { v: full(i.ranks.views) }) }, h('i', { 'aria-hidden': 'true' }), T.ranks + ' · ' + num(i.ranks.views)) : null,
+            i.ranks ? h('span', { class: 'dv-ranks', title: fill(T.ranksTip, { v: full(i.ranks.views) }) }, h('i', { 'aria-hidden': 'true' }), fill(T.ranks, { v: num(i.ranks.views) })) : null,
             i.serp ? h('span', { class: 'dv-serp', text: i.serp.rank ? fill(T.ranked, { r: i.serp.rank }) : T.notRanked }) : null,
             onRadar ? h('span', { class: 'dv-onradar', text: T.onRadar }) : h('button', { class: 'btn btn-ghost dv-small', type: 'button', onclick: function () { setKeywords(radar.concat(i.keyword)); } }, T.toRadar),
             dfsOn ? (ranked ? h('span', { class: 'dv-onradar', text: T.rankTracked }) : h('button', { class: 'btn btn-ghost dv-small', type: 'button', onclick: function () { saveRadar(function (rd) { rd.rankKeywords = rd.rankKeywords.concat(i.keyword); }); } }, T.toRank)) : null));
       })) : empty(d.feature ? T.kwEmpty : T.kwOff);
-      var meta = h('p', { class: 'nv-sub' }, [fill(T.kwFetched, { f: d.fetched, c: d.cached, hl: d.hl, gl: d.gl }), ' · ', d.own_connected ? fill(T.kwOwn, { n: d.own_terms }) : T.kwOwnNone].join(''));
+      var meta = h('p', { class: 'nv-sub' }, [fill(T.kwFetched, { f: d.fetched, c: d.cached, m: marketName(d.gl, d.hl) }), ' · ', d.own_connected ? fill(T.kwOwn, { n: d.own_terms }) : T.kwOwnNone].join(''));
       var prompt = d.prompt_keywords && d.prompt_keywords.length ? d.prompt : null;
       var copyBtn = h('button', { class: 'btn btn-primary', type: 'button', disabled: !prompt, onclick: function () {
         navigator.clipboard.writeText(prompt).then(function () { st.copied = true; env.rerender(); setTimeout(function () { st.copied = false; env.rerender(); }, 1800); });
@@ -451,21 +463,21 @@
             h('a', { class: 'nv-title', href: x.url, target: '_blank', rel: 'noopener noreferrer', text: x.title || x.id }),
             h('div', { class: 'nv-meta' }, x.channel ? h('span', { class: 'nv-chan', text: x.channel }) : null, x.views != null ? h('span', { text: fill(T.viewsN, { n: num(x.views) }) }) : null),
             h('div', { class: 'dv-dist' }, h('span', { class: 'dv-dbar', 'aria-hidden': 'true' }, h('i', { style: 'width:' + Math.max(4, 100 - x.distance / 12 * 100) + '%' })),
-              h('small', { text: label + ' · ' + fill(T.dist, { d: x.distance }) }), x.same_channel ? h('span', { class: 'nv-tag is-soft', text: T.sameChannel }) : null)));
+              h('small', { text: x.distance === 0 ? label : label + ' · ' + fill(T.dist, { p: pct(Math.max(0, 1 - x.distance / 64)) }) }), x.same_channel ? h('span', { class: 'nv-tag is-soft', text: T.sameChannel }) : null)));
       })) : empty(T.thumbsEmpty);
-      return [head, h('section', { class: 'm-card nv-card' }, grid)];
+      return [h('a', { class: 'dv-back', href: '#/niche' }, T.back), head, h('section', { class: 'm-card nv-card' }, grid)];
     }
 
     // ---- entry -------------------------------------------------------------------------------------------
     /** Draw tab ('radar' | 'map' | 'keywords' | 'thumbs') into main (after niche-view's head and tabs). */
-    function render(main, tab, arg) {
+    function render(main, tab, arg, skeleton) {
       if (st.tab !== tab || st.arg !== arg) { st.msg = ''; st.filter = st.tab === tab ? st.filter : 'all'; }
       st.tab = tab;
       st.arg = arg;
       want(tab, arg);
       if (st.error) { main.appendChild(errorBox()); return; }
       var d = st.data;
-      if (!d) { main.appendChild(h('p', { class: 'muted dv-loading', role: 'status', text: L().loading })); return; }
+      if (!d) { main.appendChild(skeleton ? skeleton() : h('p', { class: 'muted dv-loading', role: 'status', text: L().loading })); return; }
       var parts = tab === 'radar' ? radarTab(d) : tab === 'map' ? mapTab(d) : tab === 'keywords' ? keywordsTab(d) : thumbsTab(d);
       main.appendChild(h('div', { class: 'dv dv-' + tab }, parts));
     }

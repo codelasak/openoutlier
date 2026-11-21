@@ -10,7 +10,7 @@
 
   var S = {
     en: {
-      nav: 'Swipe file', title: 'Swipe file', sub: '{n} saved · {c} clips', subOne: '1 saved',
+      nav: 'Swipe file', title: 'Swipe file', sub: '{n} saved · {c}', subOne: '1 saved', clipsN: { one: '{n} clip', other: '{n} clips' },
       search: 'Search titles, notes, tags', allFolders: 'All folders', noFolder: 'Swipe file (no folder)', all: 'All', videos: 'Videos', shorts: 'Shorts', clips: 'Clips only',
       sortNew: 'Newest', sortViews: 'Most viewed', sortTitle: 'Title', export: 'Export', tags: 'Tags',
       emptyTitle: 'Nothing saved yet', empty: 'On a YouTube video, press "Save" under the OpenOutlier card (on Shorts: the bookmark in the OpenOutlier toolbar). Add a note, tags and a clip from the playhead; it lands here.',
@@ -19,7 +19,7 @@
       saved: 'saved {d}', views: '{n} views', short: 'Short', removed: 'Removed.', undo: 'Undo', badClip: 'The clip end must be after its start.', open: 'Open at {t}'
     },
     tr: {
-      nav: 'Swipe file', title: 'Swipe file', sub: '{n} kayıt · {c} klip', subOne: '1 kayıt',
+      nav: 'Swipe file', title: 'Swipe file', sub: '{n} kayıt · {c}', subOne: '1 kayıt', clipsN: '{n} klip',
       search: 'Başlık, not ve etiketlerde ara', allFolders: 'Bütün klasörler', noFolder: 'Swipe file (klasörsüz)', all: 'Hepsi', videos: 'Videolar', shorts: 'Shorts', clips: 'Sadece klipler',
       sortNew: 'En yeni', sortViews: 'En çok izlenen', sortTitle: 'Başlık', export: 'Dışa aktar', tags: 'Etiketler',
       emptyTitle: 'Henüz kayıt yok', empty: 'Bir YouTube videosunda OpenOutlier kartının altındaki "Kaydet"e bas (Shorts\'ta: OpenOutlier araç çubuğundaki yer imi). Not, etiket ve oynatma anından bir klip ekle; buraya gelir.',
@@ -139,7 +139,7 @@
       var on = !F || F.isOn('swipe-save');
       main.appendChild(h('div', { class: 'view-head sw-head' },
         h('h1', { text: L().title }),
-        h('span', { class: 'sub', text: items.length === 1 ? L().subOne : fill(L().sub, { n: items.length, c: clips }) }),
+        h('span', { class: 'sub', text: items.length === 1 ? L().subOne : fill(L().sub, { n: items.length, c: F.plural(clips, L().clipsN, lang()) }) }),
         items.length ? h('div', { class: 'sw-export', role: 'group', 'aria-label': L().export },
           h('span', { class: 'muted', text: L().export }),
           h('button', { class: 'btn', type: 'button', onclick: function () { download('swipe-file.csv', SW.toCsv(filtered(), org()), 'text/csv'); } }, 'CSV'),

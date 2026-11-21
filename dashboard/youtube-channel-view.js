@@ -81,7 +81,7 @@
     tr: {
       nav: 'Kanalım', title: 'Kanalım', loading: 'Yükleniyor…', refresh: 'Yenile', collect: 'Şimdi topla', combined: 'Birleşik', addChannel: 'Kanal ekle',
       subsN: '{n} abone', subs1: '1 abone', through: 'Analytics {d} tarihine kadar', since: '{d} tarihinden beri', channelsN: '{n} kanal',
-      kSubs: 'Abone', kViews: 'İzlenme · {n} g', kHours: 'İzlenme süresi (sa) · {n} g', kCtr: 'Gösterim tıklama oranı · {n} g', kPct: 'Ort. izlenme % · {n} g',
+      kSubs: 'Abone', kViews: 'İzlenme · {n} g', kHours: 'İzlenme süresi (sa) · {n} g', kCtr: 'Tıklama oranı · {n} g', kPct: 'Ort. izlenme % · {n} g',
       vsPrev: 'önceki {n} güne göre', newCh: 'karşılaştırmak için yeni', noCtr: 'günlük olarak verilmiyor',
       progress: 'İlerleme', progressSub: 'YouTube Analytics\'ten günlük sayılar; kanalın ilk gününden beri bu Mac\'te saklanıyor.',
       mSubs: 'Abone', mViews: 'İzlenme', mHours: 'İzlenme süresi', mCtr: 'Tıklama oranı', mPct: 'Ort. izlenme %',

@@ -14,6 +14,7 @@
       nav: 'Thumbnail tester', title: 'Thumbnail tester', sub: 'Your thumbnail and title among the niche\'s real videos, the way viewers meet them.',
       drop: 'Drop your thumbnail here', dropOr: 'or', pick: 'Choose an image', dropHint: 'JPG, PNG or WebP, 16:9 (1280×720). It stays in this tab.', replace: 'Replace', clearImg: 'Remove',
       titleL: 'Title', titlePh: 'Your video title', channelL: 'Channel', viewsL: 'Views', ageL: 'Hours ago', durL: 'Length',
+      chips: ['All', 'Excel', 'Tutorials', 'Data', 'Office', 'Recently uploaded'],
       views: '{n} views', from: 'Competitors', fromNiche: 'Tracked niche ({n})', fromAll: 'All saved YouTube channels ({n})', fromFolder: '{f} ({n})',
       shuffle: 'Shuffle', position: 'Your video', posFirst: 'First', posRandom: 'Random', highlight: 'Outline mine',
       home: 'Home', search: 'Search', desktop: 'Desktop', mobile: 'Phone', light: 'Light', dark: 'Dark',
@@ -25,6 +26,7 @@
       nav: 'Thumbnail testi', title: 'Thumbnail testi', sub: 'Thumbnail\'in ve başlığın, nişin gerçek videolarının arasında, izleyicinin gördüğü gibi.',
       drop: 'Thumbnail\'ini buraya bırak', dropOr: 'ya da', pick: 'Görsel seç', dropHint: 'JPG, PNG ya da WebP, 16:9 (1280×720). Bu sekmede kalır.', replace: 'Değiştir', clearImg: 'Kaldır',
       titleL: 'Başlık', titlePh: 'Videonun başlığı', channelL: 'Kanal', viewsL: 'İzlenme', ageL: 'Saat önce', durL: 'Süre',
+      chips: ['Tümü', 'Excel', 'Eğitimler', 'Veri', 'Office', 'Son yüklenenler'],
       views: '{n} görüntüleme', from: 'Rakipler', fromNiche: 'Takip edilen niş ({n})', fromAll: 'Bütün kayıtlı YouTube kanalları ({n})', fromFolder: '{f} ({n})',
       shuffle: 'Karıştır', position: 'Senin videon', posFirst: 'İlk sırada', posRandom: 'Rastgele', highlight: 'Benimkini çerçevele',
       home: 'Ana sayfa', search: 'Arama', desktop: 'Masaüstü', mobile: 'Telefon', light: 'Açık', dark: 'Koyu',
@@ -36,7 +38,7 @@
 
   function create(env) {
     var h = env.h;
-    var st = { img: null, title: '', channel: '', views: '1.2K', age: 2, dur: '12:34', src: 'niche', pos: 'random', seed: 1, hl: false, surface: 'home', device: 'desktop', theme: 'light', err: '' };
+    var st = { img: null, title: '', channel: '', views: null, age: 2, dur: '12:34', src: 'niche', pos: 'random', seed: 1, hl: false, surface: 'home', device: 'desktop', theme: 'light', err: '' };
     try { var saved = JSON.parse(sessionStorage.getItem(STORE) || '{}'); Object.keys(saved).forEach(function (k) { if (k in st) st[k] = saved[k]; }); } catch (e) { /* none */ }
     if (!st.theme || (st.theme !== 'light' && st.theme !== 'dark')) st.theme = root.matchMedia && root.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     function keep() { try { sessionStorage.setItem(STORE, JSON.stringify(st)); } catch (e) { try { var x = Object.assign({}, st, { img: null }); sessionStorage.setItem(STORE, JSON.stringify(x)); } catch (e2) { /* full */ } } }
@@ -87,7 +89,8 @@
       return pick.map(function (v, i) { return { v: v, r: rand(st.seed * 97 + i) }; }).sort(function (a, b) { return a.r - b.r; }).map(function (x) { return x.v; });
     }
     function mine() {
-      return { mine: true, title: st.title || L().titlePh, channel: st.channel || (myChannel() || 'Hands on Excel'), viewsText: st.views, ageText: st.age, dur: st.dur, thumb: st.img };
+      // C11: the default count is written the way YouTube writes it in this language (1,2 B / 1.2K).
+      return { mine: true, title: st.title || L().titlePh, channel: st.channel || (myChannel() || 'Hands on Excel'), viewsText: st.views || num(1200), ageText: st.age, dur: st.dur, thumb: st.img };
     }
     function myChannel() {
       var org = env.getOrg();
@@ -151,7 +154,7 @@
       frame.appendChild(h('div', { class: 'yt-top' }, h('span', { class: 'yt-logo' }, h('i'), 'YouTube'),
         h('span', { class: 'yt-q', text: st.surface === 'search' ? (st.title.split(/\s+/).slice(0, 3).join(' ') || L().searchQ) : L().searchQ }), h('span', { class: 'yt-me' })));
       if (st.surface === 'home') {
-        frame.appendChild(h('div', { class: 'yt-chips' }, ['All', 'Excel', 'Tutorials', 'Data', 'Office', 'Recently uploaded'].map(function (c, i) { return h('span', { class: i ? '' : 'on', text: c }); })));
+        frame.appendChild(h('div', { class: 'yt-chips' }, L().chips.map(function (c, i) { return h('span', { class: i ? '' : 'on', text: c }); })));
         frame.appendChild(h('div', { class: 'yt-grid' }, withMine(list, mob ? 6 : 12).map(homeCard)));
       } else {
         frame.appendChild(h('div', { class: mob ? 'yt-grid' : 'yt-slist' }, withMine(list, mob ? 6 : 8).map(mob ? homeCard : searchRow)));
@@ -193,7 +196,7 @@
       var mockHost = h('div', { class: 'tt-stage' });
       title.addEventListener('input', function () { st.title = title.value; lenNote(); keep(); paintMock(); });
       function field(label, el) { return h('label', { class: 'sw-lbl' }, label, el); }
-      function small(key, label, w) { var i = h('input', { class: 'sw-in', type: 'text', value: String(st[key]), style: 'width:' + w, 'aria-label': label }); i.addEventListener('input', function () { st[key] = i.value; keep(); paintMock(); }); return field(label, i); }
+      function small(key, label, w) { var i = h('input', { class: 'sw-in', type: 'text', value: st[key] == null ? '' : String(st[key]), placeholder: key === 'views' ? num(1200) : null, style: 'width:' + w, 'aria-label': label }); i.addEventListener('input', function () { st[key] = i.value; keep(); paintMock(); }); return field(label, i); }
       var srcs = sources();
       if (!srcs.some(function (s) { return s.id === st.src; })) st.src = srcs[0] ? srcs[0].id : 'all';
       var srcSel = h('select', { class: 'sw-in', 'aria-label': L().from }, srcs.map(function (s) { return h('option', { value: s.id, text: s.label, selected: s.id === st.src }); }));

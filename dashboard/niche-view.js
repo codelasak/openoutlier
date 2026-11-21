@@ -671,24 +671,45 @@
     function tabStrip(cur) {
       if (!dv) return null;
       var names = dv.tabs();
+      // C19: the similar-thumbnails view belongs to Tracking (it opens from a video there).
+      var on = cur === 'thumbs' ? 'tracking' : cur;
       return h('nav', { class: 'dv-tabs', 'aria-label': L().title }, TABS.map(function (t) {
-        return h('a', { class: 'dv-tab', href: t === 'tracking' ? '#/niche' : '#/niche/' + t, 'aria-current': cur === t ? 'page' : null }, names[t]);
+        return h('a', { class: 'dv-tab', href: t === 'tracking' ? '#/niche' : '#/niche/' + t, 'aria-current': on === t ? 'page' : null }, names[t]);
       }));
+    }
+    /** C19: one header for every tab: niche · channels · updated, the niche picker, Channels and Refresh. */
+    function headEl(tab) {
+      var d = ui.data;
+      var cur = d ? d.niche : dv ? dv.currentNiche() : undefined;
+      var names = d && d.niches && d.niches.length ? d.niches : dv ? dv.niches() : null;
+      var bits = d ? [(d.niche || (d.channels.length ? L().allNiches : null)), d.channels.length ? fill(L().channelsN, { n: d.channels.length }) : null, ui.at ? fill(L().updated, { t: ago(ui.at) }) : null]
+        : [cur !== undefined ? cur || L().allNiches : null];
+      var again = function () { if (tab !== 'tracking' && dv) { dv.invalidate(); env.rerender(); } refresh(); };
+      return h('div', { class: 'view-head' },
+        h('h1', { text: L().title }),
+        h('span', { class: 'sub', text: bits.filter(Boolean).join(' · ') }),
+        h('span', { class: 's-head-actions' }, nicheSelect(names, cur),
+          TR && d && d.channels.length ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () { if (tab !== 'tracking') location.hash = '#/niche'; openStart(); } }, L().channelsBtn) : null,
+          h('button', { class: 'btn', type: 'button', disabled: ui.loading, onclick: again }, L().refresh)));
+    }
+    /** D33: the page's shape while it loads (one skeleton, no "Loading…" twice). */
+    function skeleton() {
+      return h('div', { class: 'kc-skel nv-skel', 'aria-busy': 'true', 'aria-label': L().loading },
+        h('div', { class: 'kc-skel-kpis' }, [0, 1, 2, 3].map(function () { return h('i'); })),
+        h('div', { class: 'nv-grid' }, h('div', { class: 'nv-col' }, h('i', { class: 'kc-skel-card is-tall' }), h('i', { class: 'kc-skel-card' })), h('div', { class: 'nv-col' }, h('i', { class: 'kc-skel-card' }))));
     }
     function nicheSelect(names, current) {
       if (!names || names.length < 2) return null;
-      var sel = h('select', { 'aria-label': L().niche, onchange: function () { ui.niche = sel.value; ui.data = null; if (dv) dv.invalidate(); env.rerender(); } },
+      var sel = h('select', { 'aria-label': L().niche, onchange: function () { ui.niche = sel.value; ui.data = null; if (dv) dv.invalidate(); refresh(); } },
         names.map(function (n) { return h('option', { value: n.name || '', selected: (n.name || null) === (current || null), text: (n.name || L().allNiches) + ' (' + n.channels + ')' }); }));
       return sel;
     }
     function renderDiscovery(main, t) {
-      var cur = dv.currentNiche();
-      main.appendChild(h('div', { class: 'view-head' },
-        h('h1', { text: L().title }),
-        h('span', { class: 'sub', text: cur !== undefined ? (cur || L().allNiches) : '' }),
-        h('span', { class: 's-head-actions' }, nicheSelect(dv.niches(), cur))));
+      // The shared header needs the tracking summary too (channels, last update).
+      if (!ui.data && !ui.loading && !ui.error) setTimeout(refresh, 0);
+      main.appendChild(headEl(t.tab));
       main.appendChild(tabStrip(t.tab));
-      dv.render(main, t.tab, t.arg);
+      dv.render(main, t.tab, t.arg, skeleton);
     }
 
     // ---- render -------------------------------------------------------------------------------
@@ -698,17 +719,9 @@
       var t = tabOf();
       if (dv && t.tab !== 'tracking') { renderDiscovery(main, t); return; }
       var d = ui.data;
-      var names = d && d.niches || [];
-      var sel = names.length > 1 ? h('select', { 'aria-label': L().niche, onchange: function () { ui.niche = sel.value; if (dv) dv.invalidate(); refresh(); } },
-        names.map(function (n) { return h('option', { value: n.name || '', selected: (n.name || null) === (d.niche || null), text: (n.name || L().allNiches) + ' (' + n.channels + ')' }); })) : null;
-      main.appendChild(h('div', { class: 'view-head' },
-        h('h1', { text: L().title }),
-        h('span', { class: 'sub', text: !d ? (ui.loading ? L().loading : '') : [(d.niche || (d.channels.length ? L().allNiches : null)), d.channels.length ? fill(L().channelsN, { n: d.channels.length }) : null, ui.at ? fill(L().updated, { t: ago(ui.at) }) : null].filter(Boolean).join(' · ') }),
-        h('span', { class: 's-head-actions' }, sel,
-          TR && d && d.channels.length ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: openStart }, L().channelsBtn) : null,
-          h('button', { class: 'btn', type: 'button', disabled: ui.loading, onclick: refresh }, ui.loading ? L().loading : L().refresh))));
+      main.appendChild(headEl('tracking'));
       if (!ui.error && dv) main.appendChild(tabStrip('tracking'));
-      if (!d && !ui.error) { if (!ui.loading) setTimeout(refresh, 0); return; }
+      if (!d && !ui.error) { main.appendChild(skeleton()); if (!ui.loading) setTimeout(refresh, 0); return; }
       if (ui.error) {
         main.appendChild(ui.noBridge
           ? h('section', { class: 'm-card s-narrow' }, h('h2', { text: L().title }), h('p', { class: 'muted', text: L().noBridge }), h('p', { class: 'muted small', text: L().install }), h('pre', { class: 'set-code', text: 'sh mcp/launchd/install.sh' }))
