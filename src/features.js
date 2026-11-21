@@ -288,8 +288,13 @@
     subs.push(cb);
     return function () { subs = subs.filter(function (x) { return x !== cb; }); };
   }
+  // Writes go one at a time: two quick switches must not read the same old settings and lose one.
+  var writes = Promise.resolve();
+  function serial(fn) { var p = writes.then(fn); writes = p.catch(function () {}); return p; }
+
   /** Turn a feature on or off (stored in rs:settings.features). */
-  async function set(id, on) {
+  function set(id, on) { return serial(function () { return setNow(id, on); }); }
+  async function setNow(id, on) {
     if (!BY_ID[id] || !hasChrome) return false;
     var r = await root.chrome.storage.local.get(SETTINGS_KEY);
     var s = Object.assign({}, r[SETTINGS_KEY]);
@@ -305,7 +310,8 @@
   /** A choice setting's current value (CHOICES), e.g. choice('outlierFormula') → 'median'. */
   function choice(name) { return cache.choices[name] != null ? cache.choices[name] : choiceOf(name); }
   /** Store a choice setting (rs:settings.<name>). */
-  async function setChoice(name, value) {
+  function setChoice(name, value) { return serial(function () { return setChoiceNow(name, value); }); }
+  async function setChoiceNow(name, value) {
     if (!CHOICES[name] || CHOICES[name].values.indexOf(value) === -1 || !hasChrome) return false;
     var r = await root.chrome.storage.local.get(SETTINGS_KEY);
     var s = Object.assign({}, r[SETTINGS_KEY]);
@@ -318,7 +324,8 @@
   }
 
   /** Back to the defaults (forgets every choice). */
-  async function reset() {
+  function reset() { return serial(resetNow); }
+  async function resetNow() {
     if (!hasChrome) return;
     var r = await root.chrome.storage.local.get(SETTINGS_KEY);
     var s = Object.assign({}, r[SETTINGS_KEY]);

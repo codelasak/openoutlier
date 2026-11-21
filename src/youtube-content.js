@@ -7,7 +7,8 @@
 //     first page's data) after in-app navigation.
 //  2. YouTube's own /youtubei/v1/* responses (browse, get_watch, player, next,
 //     reel/*), forwarded by hook.js as the page loads them.
-// OpenOutlier makes no YouTube requests of its own. Auto-scroll makes YouTube
+// This script makes no YouTube requests of its own (the one exception, the Monetized badge's
+// watch-page check, lives in src/youtube-insights-bg.js). Auto-scroll makes YouTube
 // load the next page of a channel's grid by itself.
 //
 // Storage: rs:p:yt/<handle> = { posts: {id: post}, updatedAt, platform: 'youtube', profile }.

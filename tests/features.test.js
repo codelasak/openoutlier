@@ -202,6 +202,14 @@ test('browser: the outlier formula is stored in rs:settings, reaches other pages
   assert.equal(local['rs:settings'].outlierFormula, undefined);
 });
 
+test('browser: two quick switches are both kept (writes go one at a time)', async () => {
+  const { F: B, local } = browser({ 'rs:settings': {} });
+  await B.ready;
+  await Promise.all([B.set('card-vph', false), B.set('dislikes', false), B.setChoice('outlierFormula', 'mean'), B.set('hide-shorts', true)]);
+  assert.deepEqual({ ...local['rs:settings'].features }, { 'card-vph': false, dislikes: false, 'hide-shorts': true });
+  assert.equal(local['rs:settings'].outlierFormula, 'mean');
+});
+
 test('browser: env() says what is set up, from the popup key and the bridge state', async () => {
   const key = 'AIza' + 'x'.repeat(35);
   const none = browser({});

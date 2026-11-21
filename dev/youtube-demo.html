@@ -41,6 +41,13 @@
       var demoBridge = new URLSearchParams(location.search).get('bridge') || 'nokey';
       data['rs:bridge'] = demoBridge === 'off' ? { connected: false } : { connected: true, port: 47811, bridgeApiKey: demoBridge === 'ready', bridgeApiKeySource: demoBridge === 'ready' ? 'file' : null, oauthConnected: demoBridge === 'ready', settingsAt: Date.now() };
       if (/[?&]ytapi\b/.test(location.search)) data['rs:settings'] = { youtubeApiKey: 'AIza' + 'D'.repeat(31) + 'demo' };
+      // Phase 3: ?off=card-vph,dislikes / ?on=hide-shorts start with those switched off / on; ?formula=mean is NexLev's outlier.
+      (function (q) {
+        var feats = {};
+        if (q.get('off')) q.get('off').split(',').forEach(function (f) { feats[f] = false; });
+        if (q.get('on')) q.get('on').split(',').forEach(function (f) { feats[f] = true; });
+        if (Object.keys(feats).length || q.get('formula')) data['rs:settings'] = Object.assign({}, data['rs:settings'], { features: feats }, q.get('formula') ? { outlierFormula: q.get('formula') } : {});
+      })(new URLSearchParams(location.search));
       window.chrome = {
         storage: {
           local: {
@@ -321,9 +328,8 @@
       var surface = window.__demoSurface;
       var hl = window.__demoHl;
       var q = new URLSearchParams(location.search);
-      var keep = ['hl', 'dark', 'ytapi', 'bridge', 'mon', 'ryd', 'own', 'slowmon', 'off', 'surface'].filter(function (k) { return q.has(k); }).map(function (k) { return k + (q.get(k) ? '=' + q.get(k) : ''); }).join('&');
-      // ?off=card-vph,dislikes: start with those switched off (the Features tab can turn them back on).
-      if (q.get('off')) { var feats = {}; q.get('off').split(',').forEach(function (f) { feats[f] = false; }); window.__demoStore['rs:settings'] = Object.assign({}, window.__demoStore['rs:settings'], { features: feats }); }
+      var keep = ['hl', 'dark', 'ytapi', 'bridge', 'mon', 'ryd', 'own', 'slowmon', 'off', 'on', 'formula', 'surface'].filter(function (k) { return q.has(k); }).map(function (k) { return k + (q.get(k) ? '=' + q.get(k) : ''); }).join('&');
+      // ?off= / ?on= / ?formula= are applied in the head script, before src/features.js reads storage.
       function loadScripts(list, done) {
         if (!list.length) { if (done) done(); return; }
         var sc = document.createElement('script');

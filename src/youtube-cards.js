@@ -98,11 +98,11 @@
     }
     return document.querySelector('[data-oo-page]') || document.body;
   }
-  /** YouTube's label language: <html lang>, or Turkish words in the data. */
+  /** YouTube's label language: the words in the data when they tell ("views" / "görüntüleme"), else <html lang>. */
   function dataLang(raw) {
     var n = Y.normLang(String(document.documentElement.getAttribute('lang') || ''));
     var d = raw ? Y.detectLang(raw) : null;
-    return d === 'tr' ? 'tr' : n || d || 'en';
+    return d || n || 'en';
   }
 
   // ---- data -----------------------------------------------------------------------------------
@@ -474,7 +474,7 @@
     }
     if (FT.isOn('card-velocity') && f.velocity && f.velocity.score != null) {
       var at = I.cpLabel(f.velocity.hours, lg);
-      out.push({ k: 'vel', t: at + ' ' + I.times(f.velocity.score, lg), s: '', tip: fill(L.tipVel, { views: I.full(f.velocity.views, lg), at: at, x: I.times(f.velocity.score, lg) }) });
+      out.push({ k: 'vel', t: at + ': ' + I.times(f.velocity.score, lg), s: '', tip: fill(L.tipVel, { views: I.full(f.velocity.views, lg), at: at, x: I.times(f.velocity.score, lg) }) });
     }
     if (FT.isOn('card-vph') && f.vph) out.push({ k: 'vph', t: I.vphLabel(f.vph, lg), s: '', tip: f.vph.approx ? L.tipVphApprox : L.tipVph });
     if (FT.isOn('card-subs') && f.subs != null) out.push({ k: 'subs', t: I.compact(f.subs, lg), s: L.subs, tip: L.tipSubs + ' ' + I.full(f.subs, lg) });

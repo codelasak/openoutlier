@@ -41,7 +41,7 @@
       outTipMedian: 'Views ÷ the median of this channel\'s {n} saved {fmt} videos.', outTipMean: 'Views ÷ the channel\'s average views per video (total views ÷ video count).', outTipMeanLib: 'Views ÷ the average of {n} saved {fmt} videos.',
       outNone: 'Save the channel (OpenOutlier panel) or add an API key', avg: 'avg', fmtLong: 'long-form', fmtShort: 'Shorts',
       rydBy: 'via Return YouTube Dislike', rydTip: 'An estimate from Return YouTube Dislike (the video id goes to returnyoutubedislike.com). Turn off in Features.', rydFail: 'unavailable',
-      own: 'YouTube Analytics', ownLine: '{views} views · {hours} h watched · {pct} average viewed · +{subs} subscribers', ownThrough: 'through {d}',
+      own: 'YouTube Analytics', ownLine: '{views} views · {hours} h watched · {pct} viewed on average · +{subs} subscribers', ownThrough: 'through {d}',
       published: 'Published', chAge: 'Channel age', avgShorts: 'Avg Shorts views', avgShortsMean: 'avg views / video', noVph: 'waiting for exact data',
       title: 'OpenOutlier'
     },
@@ -62,7 +62,7 @@
       outTipMedian: 'İzlenme ÷ bu kanalın {n} kayıtlı {fmt} videosunun medyanı.', outTipMean: 'İzlenme ÷ kanalın video başına ortalama izlenmesi (toplam izlenme ÷ video sayısı).', outTipMeanLib: 'İzlenme ÷ {n} kayıtlı {fmt} videonun ortalaması.',
       outNone: 'Kanalı kaydet (OpenOutlier paneli) ya da API anahtarı ekle', avg: 'ort.', fmtLong: 'uzun', fmtShort: 'Shorts',
       rydBy: 'Return YouTube Dislike\'tan', rydTip: 'Return YouTube Dislike\'ın tahmini (video ID\'si returnyoutubedislike.com\'a gider). Özellikler\'den kapatılabilir.', rydFail: 'alınamadı',
-      own: 'YouTube Analytics', ownLine: '{views} izlenme · {hours} sa izlenme süresi · ort. %{pct} izlendi · +{subs} abone', ownThrough: '{d} tarihine kadar',
+      own: 'YouTube Analytics', ownLine: '{views} izlenme · {hours} sa izlenme süresi · ort. {pct} izlendi · +{subs} abone', ownThrough: '{d} tarihine kadar',
       published: 'Yayın', chAge: 'Kanal yaşı', avgShorts: 'Ort. Shorts izlenmesi', avgShortsMean: 'video başına ort.', noVph: 'kesin veri bekleniyor',
       title: 'OpenOutlier'
     }
@@ -88,9 +88,11 @@
   var CSS = [
     ':host{display:block;font:400 14px/20px Roboto,Arial,sans-serif;color:#0f0f0f;--surf:rgba(0,0,0,.05);--line:rgba(0,0,0,.1);--muted:#606060;--ink:#0B0E1A;--blue:#1E3BFF;--lime:#C8FF2E;--paper:#F6F7F2;--link:#1E3BFF;--hot-bg:#0B0E1A;--hot-fg:#C8FF2E}',
     ':host-context(html[dark]){color:#f1f1f1;--surf:rgba(255,255,255,.1);--line:rgba(255,255,255,.16);--muted:#aaa;--link:#8FA0FF;--hot-bg:#C8FF2E;--hot-fg:#0B0E1A}',
-    '.card{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;border-radius:12px;background:var(--surf);padding:10px 4px;box-sizing:border-box;min-height:64px}',
-    '.cell{display:flex;flex-direction:column;justify-content:center;gap:1px;padding:2px 14px;min-width:0;border-left:1px solid var(--line)}',
-    '.cell:first-child{border-left:0}',
+    // Cells wrap on narrow pages; each has a divider on its left, pulled 1px out so the one that starts a
+    // row is clipped by the card's edge (no stray line at the start of a wrapped row).
+    '.card{display:flex;flex-wrap:wrap;align-items:stretch;row-gap:10px;border-radius:12px;background:var(--surf);padding:10px 4px 10px 0;box-sizing:border-box;min-height:64px;overflow:hidden}',
+    '.cell{display:flex;flex-direction:column;justify-content:center;gap:1px;padding:2px 14px;min-width:0;border-left:1px solid var(--line);margin-left:-1px}',
+    '.cell:first-child{border-left:0;margin-left:0}',
     '.lb{display:flex;align-items:center;gap:5px;font-size:12px;line-height:16px;color:var(--muted);white-space:nowrap}',
     '.v{font-size:15px;line-height:22px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}',
     '.v small{font-size:11.5px;font-weight:400;color:var(--muted);margin-left:4px}',
@@ -112,7 +114,7 @@
     '.spark .e{fill:none;stroke:var(--muted);stroke-width:1.25;stroke-dasharray:3 3;vector-effect:non-scaling-stroke}',
     '.spark .d{fill:var(--link)}',
     '.note{flex-basis:100%;margin:6px 14px 0;font-size:12px;line-height:16px;color:var(--muted)}',
-    '.note a,.lb a{color:var(--link);text-decoration:none}.note a:hover,.lb a:hover{text-decoration:underline}',
+    '.note a,.lb a,.sub a{color:var(--link);text-decoration:none}.note a:hover,.lb a:hover,.sub a:hover{text-decoration:underline}',
     '.own{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;margin:8px 10px 0;padding:6px 8px 0;border-top:1px solid var(--line);font-size:13px}',
     '.own b{font-weight:500}',
     '.own .sub{white-space:normal}',
@@ -370,7 +372,7 @@
       var own = b && b.own;
       if (FT.isOn('video-card') && own && own.days) {
         card.appendChild(h('div', { class: 'own' }, [h('b', { text: L.own }),
-          h('span', { text: fill(L.ownLine, { views: I.full(own.views, lg), hours: I.compact(own.watch_hours, lg), pct: own.avg_pct != null ? I.compact(own.avg_pct, lg) : '–', subs: I.full(own.subs_gained, lg) }) }),
+          h('span', { text: fill(L.ownLine, { views: I.full(own.views, lg), hours: I.compact(own.watch_hours, lg), pct: own.avg_pct != null ? I.pct(own.avg_pct, lg) : '–', subs: I.full(own.subs_gained, lg) }) }),
           own.through ? h('span', { class: 'sub', text: fill(L.ownThrough, { d: dateFmt(Date.parse(own.through + 'T12:00:00Z'), lg) }) }) : null]));
       }
     });
@@ -393,12 +395,12 @@
     ':host{position:fixed;z-index:2000;width:196px;pointer-events:auto}',
     '.card{flex-direction:column;flex-wrap:nowrap;padding:8px 0;border-radius:12px;background:rgba(255,255,255,.92);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.06)}',
     ':host-context(html[dark]) .card{background:rgba(33,33,33,.92);box-shadow:0 0 0 1px rgba(255,255,255,.08)}',
-    '.cell{border-left:0;border-top:1px solid var(--line);padding:6px 12px}',
+    '.cell{border-left:0;margin-left:0;border-top:1px solid var(--line);padding:6px 12px}',
     '.cell:first-child{border-top:0}',
     '.head{padding:2px 12px 6px}',
     ':host(.compact){width:auto;max-width:calc(100vw - 24px)}',
-    ':host(.compact) .card{flex-direction:row;flex-wrap:wrap;padding:4px 0;min-height:0;background:rgba(11,14,26,.78);color:#F6F7F2;box-shadow:none;--muted:#C3C9E0;--line:rgba(246,247,242,.18)}',
-    ':host(.compact) .cell{border-top:0;border-left:1px solid var(--line);padding:0 8px}',
+    ':host(.compact) .card{flex-direction:row;flex-wrap:wrap;row-gap:4px;padding:4px 0;min-height:0;background:rgba(11,14,26,.78);color:#F6F7F2;box-shadow:none;--muted:#C3C9E0;--line:rgba(246,247,242,.18)}',
+    ':host(.compact) .cell{border-top:0;border-left:1px solid var(--line);margin-left:-1px;padding:0 8px}',
     ':host(.compact) .cell:first-child{border-left:0}',
     ':host(.compact) .v{font-size:13px;line-height:18px}',
     ':host(.compact) .lb{font-size:10.5px;line-height:13px}',
@@ -425,9 +427,11 @@
       sCard.el.style.left = Math.max(8, r.left + 12) + 'px';
       sCard.el.style.top = Math.max(8, r.top + 56) + 'px';
       sCard.el.style.right = 'auto';
+      sCard.el.style.maxWidth = Math.max(160, r.width - 24) + 'px';
     } else {
       sCard.el.style.left = Math.max(8, r.left - 196 - 16) + 'px';
       sCard.el.style.top = Math.max(64, r.top) + 'px';
+      sCard.el.style.maxWidth = '';
     }
     var L = T();
     var lg = lang();
@@ -456,12 +460,13 @@
   function refresh() {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(function () {
+    // A timeout, not requestAnimationFrame: a tab opened in the background gets its cards too.
+    setTimeout(function () {
       queued = false;
       try { channelCard(); } catch (e) { console.warn('[OpenOutlier] channel card failed', e); }
       try { watchCard(); } catch (e) { console.warn('[OpenOutlier] watch card failed', e); }
       try { shortsCard(); } catch (e) { console.warn('[OpenOutlier] Shorts card failed', e); }
-    });
+    }, 40);
   }
   var lastUrl = location.href;
   function onNav() {
