@@ -618,3 +618,43 @@ Karar (bölüm 10): NexLev hesabı ücretsiz MCP için tutulur, vidIQ'nun ücret
 - Öneri grafiği ancak kullanıcı izledikçe dolar; yeni kurulumda harita ve benzer kanallar önce metin benzerliğine dayanır.
 - Simülasyondaki başlıklar aynı kalıplardan üretildiği için metin benzerliği demo'da yüksek çıkıyor; gerçek nişte daha ayırt edici olmalı.
 - `thumb-index` ffmpeg ya da `sips` yoksa SHA-1'e düşer; SHA-1 hash'leri benzerlikte kullanılmaz (sadece "d:" hash'leri).
+
+## Review düzeltmeleri
+
+*2026-11-21, dal `claude/review-fixes-7adadf` (`youtube-niche` üstüne). Bulgular ve madde madde notlar: [`docs/youtube-niche-review.md`](youtube-niche-review.md) — 43 maddenin hepsi işaretli.*
+
+### Kod (A1–A7)
+
+- **RSS satırları (A1).** Değişmeyen RSS okuması artık satır eklemiyor: yeni okuma videonun son üç satırına eşitse ortadaki silinir. Düz bir koşu ilk satırını, son ikisini ve en az 2 saatte (30 günden eski videolarda günde) bir satırı tutar. Doğrusal ara değer her anda aynı, her kontrol noktası "bilinir" kalıyor; son iki satırın tutulması, aynı saniyedeki bir API okumasının `velocity.series`'te birleşmesine karşı. **Migration 6** (`collapseRssRuns`) mevcut satırlara aynı kuralı uygular ve `meta.stats_rev`'i başlatır. Testte satırlar üçte bire iniyor; eğri ve kontrol noktaları birebir aynı.
+- **Hızlı yükselen kontrolü (A2)** tick başına niş başına bir kez: işler adayları `ctx.after('breakouts')` ile bırakır, tracker tick sonunda `NICHE_AFTER_TICK` çalıştırır (`out.after`).
+- **Model önbelleği (A3).** İmza `store.statsRev()` (yeni `video_stats` satırı ve modelin okuduğu `tracked_videos` değişikliğinde artar; COUNT(*) yok). Okuma yolları `maxAge` verir; `/youtube/cards` 5 dakikalık modeli kabul eder (son sayılar yine doğrudan `video_stats`'tan).
+- **Ayar yazımı (A4).** Tek yazıcı `OpenOutlierFeatures.updateSettings(patch | fn)`: taze okumaya yalnız verilen anahtarları yazar; bağlam içinde sıralı, eklenti sayfaları ve servis worker arasında Web Lock ile (`openoutlier:rs-settings`); içerik betikleri yazımı servis worker'a yollar (`reelscope:settings-update`). `radar`, `niche`, `ownProfit` kendi anahtarlarında: `rs:radar`, `rs:niche-settings`, `rs:own-profit` (`migrateSplit` servis worker açılışında; `readSetting` eski yere düşer). `agent-bridge.js` bridge'e bunları yeni anahtarlardan yollar.
+- **Monetization kuyruğu (A5, A6).** İş başına try/finally; çerezli tekrar denemede reklam ayarı yoksa `unknown` (Premium); `unknown` 6 saat yaşar (girdiler budama için 7 günlük TTL ile yazılır: eskiden kısa TTL'li bir yazım diğer bütün sonuçları siliyordu).
+- **OAuth (A7).** Kanal sorgusu düşen giriş `youtube-token-pending-<hex>.json`'a; `listTokens` listeler, `adoptLegacyToken` hepsini kanal dosyasına taşır.
+
+### Arayüz
+
+- **Ortak temeller.** `features.js`: `plural`, `signedPct` (TR'de "−%13"), `pct`, `signedPts` ("+0,8 puan"), `locale`, `applyLang`. Library her çizimde `<html lang>`'ı, YouTube'daki her shadow host kendi `lang`'ını `uiLang()`'den alır (TR büyük harf: "BU HAFTAKİ"). `dashboard.css`: kontrol kenarı `--border-2` = #6E7590 / #6A7190, `--r-pixel` / `--r-md`, kırılma noktaları 760 / 1100 / 1500, tek segment stili (`.seg` + `aria-pressed`; `.ft-seg` aynı görünüm).
+- **Library.** Kenar çubuğu, üst çubuk ve popup TR/EN; telefonda geçerli çip ortalanır, kenarlar solar. Kanalım: yüzde sırası, oranlarda puan, tek YPP tarihi, "toplam" kilometre taşları, ilk N izlenmeli video bütün bilinen videolardan (eksikse "henüz bilinmiyor"), %100'e tamamlanan paylar, eşik notu, ilk karede iskelet. Niş Takibi: akışkan eğri, dar ekranda hızlı yükselenler ve benim videolarım KPI'ların hemen altında, 2–3× mürekkep rozet / 3×'ten itibaren lime + piksel gölge, bütün sekmelerde tek başlık ve iskelet. Ayarlar: grup başına tek uyarı bandı, "Servis anahtarları". Kırmızı/yeşil farklar mürekkep + ok.
+- **YouTube (alt oturum).** Araç çubuğu artık YouTube'un beğen/paylaş satırının içinde değil, `#top-row`'dan sonra kendi satırında (`.openoutlier-watch-row`); 600 px altında OO + "…"; sabit kartlar maskenin altında. İzleme sayfasında tek araç çubuğu (Transcript / Yorumlar / Kaydet aynı satırda), OO düğmesi satır içi karta kaydırır. Kartlarda en çok 2 rozet, abone meta satırında, hız rozeti koyu. Kanal kartı katlanır, 3 benzer kanal + "+N". Shorts'ta yüzen düğme yok, boş hücreler gizli. Açık YouTube'da tek renk mavi işaret, para kazanma hapı nötr. Panel listesi ve araç çubuğu etiketleri TR/EN.
+
+### Plandan sapmalar
+
+- B1'de araç çubuğu `#actions` içine değil, `#top-row`'un ardına kendi satırına kondu (yanında dursa da YouTube satırının genişliğini yiyordu).
+- B2'de çekmece / select yapılmadı; ortalanan çip ve kenar solması 390 px'te yeterli.
+- A1'de "son okumaya eşitse atla" yerine koşunun ilk ve son iki satırı (ve 2 saatte bir satır) tutuldu: eğriler ve "bilinir" kuralı birebir aynı kalsın diye.
+- A4'te bütün alt anahtarlar değil, ayrı sayfaların düzenlediği büyük olanlar (`radar`, `niche`, `ownProfit`) ayrıldı; geri kalanı (özellikler, seçimler, dil, API anahtarı) kilitli tek yazıcıdan geçiyor.
+- İngilizce kalanlar: Library'nin Instagram/TikTok/Reddit sayfaları (hesap, Mentions, Instagram hesabım, karşılaştırma), panelin Analytics ve Export sekmelerinin gövdesi ve YouTube dışı paneller.
+
+### Testler ve doğrulama
+
+- `npm test`: **351/351** (önce 338). Yeni: `tests/review-fixes.test.mjs` (A1 yazıcı ve migration 6, A2, A3), `insights-bg.test.js` (A5, A6), `own-history.test.mjs` (A7), `features.test.js` (ayar yardımcısı: üç bağlam, ayrık anahtarlar, içerik betiği yolu; plural / yüzde / puan), `own-metrics.test.js` (eksik videolarda kilometre taşı), `syntax.test.js` (her tarayıcı betiği ayrıştırılır; `panel.js`'teki bir sözdizimi hatası önceden testlerden geçiyordu).
+- Başsız Chromium (playwright-core) ile: Library'nin bütün rotaları ve popup TR/EN, açık/koyu, 390/768/1280 (130 çalışma) ve YouTube demo yüzeyleri + Studio (76 çalışma): hiçbir yerde yatay kaydırma yok, sayfa hatası yok (thumbnail testindeki iki dış avatar 400'ü temel sürümde de var), kaydırınca maske yerinde, her shadow host'ta `lang` var.
+- Önce/sonra görüntüleri `docs/screenshots/review-*.png`: b1, b2, b3, b4, b6, b7, b10, c12 (Kanalım, anahtar kelimeler), c16, c17, c18.
+
+### Canlı Chrome denemesinde önce bakılacaklar
+
+- İzleme sayfasında `ytd-watch-metadata #top-row` var mı, `.openoutlier-watch-row` onun ardına ve kartın üstüne düşüyor mu; araç çipleri `display: contents` ile YouTube'un flex düzeninde düzgün mü; `#masthead-container` / `ytd-masthead` bulunuyor mu.
+- Kart abone sayısı yalnız kartta `/@…` ya da `/channel/UC…` metin linki olunca çıkıyor; gerçek lockup'larda kanal adı başka yerde olabilir.
+- Shorts dar kartının 64 px ofseti gerçek üst kontrollere göre.
+- Kurulum: eklentiyi yeniden yükle (popup artık `features.js` yüklüyor, servis worker açılışta `migrateSplit` yapar) ve bridge'i yeniden başlat (`launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge`): migration 6 ilk açılışta mevcut RSS koşularını sıkıştırır (gerçek veritabanında birkaç saniye sürebilir).

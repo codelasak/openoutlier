@@ -1,5 +1,7 @@
 # youtube-niche: final review findings (2026-11-21)
 
+**Status (2026-11-21, branch `claude/review-fixes-7adadf`): all 43 items fixed; see the notes under each and "Review düzeltmeleri" in the plan.**
+
 These findings come from two reviews of the merged phases 0–5 on `youtube-niche`, measured against `main`. Every item is to be fixed. When a fix is done, mark its checkbox and add a one-line note. If you deliberately don't fix one, say why.
 
 Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-eshagh-web-code-openoutlier/63c5f623-dd40-40ca-bcea-6c715447a635/scratchpad/ui-review/`. They may be gone after a reboot; the descriptions below stand on their own.
@@ -30,30 +32,34 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
 
 ## B. UI review: must fix
 
-- [ ] **B1 · Watch page at 390 px scrolls sideways, so the toolbar rides over the masthead.** The OO toolbar is inserted inside YouTube's like/share row (`#top-level-buttons-computed`). The row grows to 477 px on a 390 px viewport: Like wraps, and "İndir" and "…" are clipped. With the page wider than the viewport, the visual viewport scrolls and the sticky masthead slides away. Files: `src/overlay.js:317-321` (`pl.inline.insertBefore(host, pl.inline.firstChild)`) and `src/youtube-content.js:764` (`overlayPlacement`). Fix:
+- [x] **B1 · Watch page at 390 px scrolls sideways, so the toolbar rides over the masthead.** The OO toolbar is inserted inside YouTube's like/share row (`#top-level-buttons-computed`). The row grows to 477 px on a 390 px viewport: Like wraps, and "İndir" and "…" are clipped. With the page wider than the viewport, the visual viewport scrolls and the sticky masthead slides away. Files: `src/overlay.js:317-321` (`pl.inline.insertBefore(host, pl.inline.firstChild)`) and `src/youtube-content.js:764` (`overlayPlacement`). Fix:
+  - **Done:** root cause fixed: the toolbar is no longer inside YouTube's like/share row. It lives in our own row (.openoutlier-watch-row) right after ytd-watch-metadata #top-row, so it takes no width from YouTube's buttons; below 600 px it shrinks to the OO button plus '…', and a fixed card's top is clamped below #masthead-container / ytd-masthead. At 390 px scrollWidth = innerWidth on every surface; after scrolling 600 px the masthead is at top 0 with nothing of ours over it. (Placed after #top-row rather than inside #actions: next to the row it would still have taken its width.) Screenshots review-b1-*.
   - insert the toolbar as a sibling *before* the row, inside `#actions`, not inside it;
   - below ~600 px, collapse it to one "OO" button or the rail;
   - clamp the fixed stats card's `top` to the masthead's bottom.
 - [x] **B2 · The Library top nav strip at 390 px** scrolls sideways with no hint, and the current chip is off-screen (#/niche, #/swipe). File: `dashboard/dashboard.css:553-571`. Fix: `scrollIntoView({inline:'center', block:'nearest'})` on the `aria-current` chip after render, plus an edge fade (`mask-image`) and scroll-snap. Better: below 760 px, use a "Menü" drawer or a select.
   - **Done:** the current chip is centred after every render (side.scrollTo, no page scroll), the strip has edge fades (mask-image) and scroll-snap. Screenshots review-b2-*. A drawer was not added: the centred chip plus fades was enough at 390 px.
 - [x] **B3 · Turkish uppercase is wrong because `<html lang>` stays "en".** CSS uppercase produces "BU HAFTAKI", "UZUN VIDEO", "SAATTEKI", "BAŞLIK KELIMELERI", "SPONSOR LINKI", "INDIRIM", "BENIM", "YENI", "NIŞ MEDYANI", "ÜCRETLI". Only the features list sets its own lang, which gives "SCRAPİNG" there. Files: `dashboard/dashboard.html:2`, `dev/dashboard-demo.html:2`, `dashboard/dashboard.js`. Fix:
-  - **Done:** renderSidebar sets <html lang> from uiLang() on every render (Library and popup); 'scraping' is wrapped in lang="en" in the Features list and the provider tags. Shadow hosts: see the YouTube in-page note below. Screenshot review-b3-* ('BU HAFTAKİ').
+  - **Done:** renderSidebar sets <html lang> from uiLang() on every render (Library and popup); 'scraping' is wrapped in lang="en" in the Features list and the provider tags. Every in-page shadow host (panel, toolbar, Track button, cards, tool chips, popover, feed bar, Studio dialog) gets lang via F.applyLang. Screenshot review-b3-* ('BU HAFTAKİ').
   - on every render, set `document.documentElement.lang = OpenOutlierFeatures.uiLang()`;
   - set the same `lang` on the shadow hosts of the in-page cards;
   - make technical English terms immune: don't uppercase "SCRAPING" in TR, or keep the brand words in `lang="en"` spans.
 - [x] **B4 · Percent deltas on Kanalım use English order in TR.** Values read "%3,2" but deltas read "−13%", "+21%", "+0,8%". This shows on the KPI tiles, the chart headline ("önceki 28 güne göre −13%") and the change pills. A CTR delta is percentage points. File: `dashboard/youtube-channel-view.js:166` (`signedPct`). Fix: `Intl.NumberFormat(loc,{style:'percent',signDisplay:'exceptZero'})`, which gives "−%13" in TR. Rate deltas become "+0,8 puan" / "+0.8 pts".
   - **Done:** F.signedPct (Intl percent, signDisplay exceptZero, real minus) gives '−%13' / '−13%'; CTR and average-view-% changes are points ('+0,8 puan' / '+0.8 pts') on KPI tiles, chips and the headline. Tests in features.test.js. Screenshot review-b4-*.
 - [x] **B5 · No plurals in English counts.**
-  - **Done:** F.plural(n, { one, other }) (Intl.PluralRules); every count string in Kanalım, Niş Takibi, discovery, swipe, Settings providers, the Library sidebar and the popup has one/other forms. YouTube pages: see the in-page note.
+  - **Done:** F.plural(n, { one, other }) (Intl.PluralRules); every count string in Kanalım, Niş Takibi, discovery, swipe, Settings providers, the Library sidebar and the popup has one/other forms. YouTube page cards: day(s), saved video(s), video(s) too.
   - Seen: "last 1 weeks", "Last 1 weeks · 9 views" and "1 videos · 1 Shorts" (Kanalım, tiny channel).
   - The same pattern exists in `'{n} videos'`, `'{n} channels'`, `'{n} clips'`, `'{n} keywords'` and `'{n} days'`.
   - Files: `dashboard/youtube-channel-view.js:40,43,57`, `dashboard/niche-view.js:26-74`, `dashboard/discovery-view.js:32-61`, `dashboard/swipe-view.js:13`, `src/youtube-pages.js:29,50`.
   - Fix: one shared `plural(n, {one, other})` helper (`Intl.PluralRules`), with `_one` / `_other` strings for every count.
 - [x] **B6 · The Settings → "Outlier formülü" segmented control has no border or background.** `.ft-seg` / `.ft-seg-btn` use `--line-2`, `--card` and `--sunk`, which exist only in `panel.css` and `popup.css`, not in `dashboard.css`, so the unselected option reads as plain text. File: `dashboard/dashboard.css:542-547`. Fix: use dashboard tokens and the shared segmented style (see B15).
   - **Done:** the Features list choice (.ft-seg) now uses dashboard tokens and the .seg look (surface track, ink-outlined active button). Screenshot review-b6-*.
-- [ ] **B7 · Shorts at 390 px: the floating OO panel button covers YouTube's Share and "…" buttons, and the stats card touches the player's top controls.** Files: `src/panel.js` (launcher position) and `src/youtube-content.js:768-772` (rail placement). Fix: on Shorts and at narrow widths, hide the floating button (the rail already opens the panel) or move it above the action column, and add an 8 px offset below the top controls.
-- [ ] **B8 · On Shorts at desktop width (TR, 1280 px), the side-card hint is clipped mid-word:** "Yaş, toplam izlenme ve ülke için bir Y". `.sub{white-space:nowrap}` also hits the multi-line hint. File: `src/youtube-pages.js:124`. Fix: a `.hint{white-space:normal}` class.
-- [ ] **B9 · The watch-page stats popover (the OO toolbar button) is all English in TR, and its open state persists.**
+- [x] **B7 · Shorts at 390 px: the floating OO panel button covers YouTube's Share and "…" buttons, and the stats card touches the player's top controls.** Files: `src/panel.js` (launcher position) and `src/youtube-content.js:768-772` (rail placement). Fix: on Shorts and at narrow widths, hide the floating button (the rail already opens the panel) or move it above the action column, and add an 8 px offset below the top controls.
+  - **Done:** no floating panel button on Shorts (the rail opens the panel); the narrow Shorts card sits 8 px below the player's top controls and never above the masthead; toolbar buttons 40 px below 600 px. Screenshots review-b7-*.
+- [x] **B8 · On Shorts at desktop width (TR, 1280 px), the side-card hint is clipped mid-word:** "Yaş, toplam izlenme ve ülke için bir Y". `.sub{white-space:nowrap}` also hits the multi-line hint. File: `src/youtube-pages.js:124`. Fix: a `.hint{white-space:normal}` class.
+  - **Done:** .sub.hint { white-space: normal }; the clipped hint itself was replaced by C25's single line.
+- [x] **B9 · The watch-page stats popover (the OO toolbar button) is all English in TR, and its open state persists.**
+  - **Done:** the stats card is TR/EN (numbers and dates too) and its open state is no longer saved on YouTube; on watch pages the OO button scrolls to the inline watch card and flashes it (the card opens only when the inline card is switched off).
   - Strings: "Views", "Likes", "Collect this channel's Videos tab…", "Most replayed at", "Open the OpenOutlier panel", and the date "May 8, 2025".
   - Because `openKey` saves the open state, the popover reopens on every video and covers the inline watch card, which shows the same numbers.
   - Files: `src/overlay.js:280-290` and `src/youtube-content.js:776-787`.
@@ -64,7 +70,7 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
 ## C. UI review: should fix
 
 - [x] **C11 · Mixed TR/EN on TR screens.**
-  - **Done:** Library sidebar, top bar, folder prompts and scope titles; thumbnail tester chips and its default view count; the whole popup (features.js now loaded there). Panel tabs and toolbar labels: see the in-page note. Instagram/TikTok/Reddit-only views inside the Library (account pages, Mentions, My Instagram account, Compare) stay English: large, and not YouTube.
+  - **Done:** Library sidebar, top bar, folder prompts and scope titles; thumbnail tester chips and its default view count; the whole popup (features.js now loaded there). YouTube panel: tabs, Auto-scroll/Stop, Clear, Close, sort labels, summary, units and toolbar aria-labels follow uiLang. Still English: the panel's Analytics and Export tab bodies and the Instagram/TikTok/Reddit panels (large, not YouTube). Instagram/TikTok/Reddit-only views inside the Library (account pages, Mentions, My Instagram account, Compare) stay English: large, and not YouTube.
   - Library sidebar and top bar: "Mentions", "3 new", "My account", "All accounts", "Top posts", "Unsorted", "Compare platforms", "Folders", "Tags", "Back up", "Restore", "Search accounts" (`dashboard/dashboard.js:460-478`, `dashboard/dashboard.html:19`).
   - Panel tabs "Videos / Analytics / Export", plus "Auto-scroll" and "Clear" (`src/panel.js`).
   - Toolbar aria-labels: "Download video", "Show OpenOutlier stats", "Download cover image".
@@ -72,7 +78,8 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
   - Thumbnail tester mock grid: "All", "Tutorials", "Recently uploaded"; the views default is "1.2K".
 
   Route all of these through `uiLang()`, since the Settings "Dil" card promises the language. At minimum, cover the Library chrome, the YouTube panel, the toolbar and the popup. Instagram/TikTok/Reddit-only panel text may stay English if it's large, but note it.
-- [ ] **C12 · Lime is used outside its outlier role.** The brand reserves lime for outliers and the one key number. Fix each of these:
+- [x] **C12 · Lime is used outside its outlier role.** The brand reserves lime for outliers and the one key number. Fix each of these:
+  - **Done:** Library: the last Kanalım bar is --s5 in both themes, YENİ search-term tags and the 'aramadan … izlenme' rank badges use --accent-soft, keyword lifts are ink. YouTube: the mark is one-colour blue on light YouTube (ring + lime trail only on dark/ink), the monetized pill is a neutral outline with ✓, the filter count bubble is paper/ink, the pinned tag and ok dot aren't lime. The EN YAKIN YPP tag was already blue (accent on dark), left as is. Screenshots review-c12-*.
 
   | Where | File | Fix |
   |---|---|---|
@@ -84,7 +91,8 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
   | Count bubble `.n` on light YouTube | `src/youtube-cards.js:622` | non-lime |
 - [x] **C13 · Control borders fail contrast.** `--border-2 #BFC3B4` on white is 1.8:1; the brand's `line-strong #6E7590` (4.2:1) is meant for control borders. In dark mode, the off-switch track `#3A4570` on `#121729` is 1.9:1. Files: `dashboard/dashboard.css:9,47` and `.ft-switch span`. Fix: map control borders to `#6E7590` / `#6A7190`, and give the off switch an outline or a lighter track.
   - **Done:** --border-2 is the brand's line-strong (#6E7590 light, #6A7190 dark) for control borders; the off switch is an outlined track with a grey knob.
-- [ ] **C14 · Two "Filtreler" buttons sit stacked on YouTube search** (YouTube's and ours). File: `src/youtube-cards.js` (feed bar). Rename ours "Outlier filtreleri" / "Outlier filters", or show only the OO mark plus a count of active filters.
+- [x] **C14 · Two "Filtreler" buttons sit stacked on YouTube search** (YouTube's and ours). File: `src/youtube-cards.js` (feed bar). Rename ours "Outlier filtreleri" / "Outlier filters", or show only the OO mark plus a count of active filters.
+  - **Done:** ours reads 'Outlier filtreleri' / 'Outlier filters'.
 - [x] **C15 · Three segmented-control styles.**
   - **Done:** .seg with aria-pressed is the one style; .ft-seg and the swipe tag chips use the same pressed look; .set-pill became outlined status tags (they aren't controls).
   - `.seg`: outlined white active state (Niş Takibi Hepsi/Videolar/Shorts, Dil, Thumbnail tester, Swipe).
@@ -92,14 +100,17 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
   - `.set-pill.is-on` and `.chip.sw-tag.is-on`: filled ink or blue.
 
   Pick one (`.seg` with `aria-pressed`) and remove the rest.
-- [ ] **C16 · Badge clutter on video cards.**
+- [x] **C16 · Badge clutter on video cards.**
+  - **Done:** subscribers moved to the meta row after the channel name and hidden on the channel's own page; at most 2 thumbnail badges (outlier first); the velocity badge uses the same dark style. Screenshots review-c16-*.
   - Up to three badges ("72 sa: 3,4×", "654/sa", "3,4 B abone") cover ~80% of a 4-column home thumbnail and sit over the thumbnail text.
   - On a channel page every card repeats the channel's own subscriber count.
   - The blue velocity badge looks foreign on YouTube.
 
   File: `src/youtube-cards.js:323-334`. Fix: hide `oo-subs` on the channel's own page and move subs to the meta row instead of the thumbnail; at most 2 badges by default; velocity in the same dark style as the others.
-- [ ] **C17 · The channel card is too heavy.** Stats, a no-key notice, sponsors and six "Benzer kanallar" rows push the Videos tabs below the fold at 390 px and to mid-screen at 1280 px, and the floating OO button covers "Kanal haritası →". Files: `src/youtube-pages.js` and `src/youtube-similar.js`. Fix: make the card collapsible (remember the state), show three similar channels plus "+3", and drop "(popup)" from the hint.
-- [ ] **C18 · Two OO toolbars on the watch page, plus a tall card above the description.**
+- [x] **C17 · The channel card is too heavy.** Stats, a no-key notice, sponsors and six "Benzer kanallar" rows push the Videos tabs below the fold at 390 px and to mid-screen at 1280 px, and the floating OO button covers "Kanal haritası →". Files: `src/youtube-pages.js` and `src/youtube-similar.js`. Fix: make the card collapsible (remember the state), show three similar channels plus "+3", and drop "(popup)" from the hint.
+  - **Done:** the channel card folds (localStorage openoutlier:channel-card-folded), shows 3 similar channels plus '+N', no '(popup)', 'Anahtar ekle' links to Settings; nothing floats over 'Kanal haritası →'. Screenshots review-c17-*.
+- [x] **C18 · Two OO toolbars on the watch page, plus a tall card above the description.**
+  - **Done:** one toolbar: Transcript / Yorumlar / Kaydet chips sit in the OO toolbar's row (an open panel takes its own line); an empty outlier cell shows only 'Anahtar ekle', the explanation moved to its tooltip. The card stays above the description (it holds the numbers people look for first). Screenshots review-c18-*.
   - The icon toolbar sits in the like row, and a second row (Transcript / Yorumlar / Kaydet) sits under the card.
   - The "Outlier –" cell shows a long hint instead of a value.
 
@@ -118,7 +129,7 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
   - `settings-view.js:65`: "anahtar" is used for both the switch and the key → "özelliği açılıp … API anahtarı eklenmeden".
   - Kanalım: "günde 9" is missing its unit (izlenme); "Bu hızla olmuyor" → "Bu hızla 90 günde yetişmiyor".
 - [x] **C21 · Unclear labels.**
-  - **Done:** 'Tıklama oranı' instead of TO, 'Ülke / dil' in radar and keywords, the ratio badge reads 'izlenme / abone', 'aramadan 77 izlenme' (the number is views from that search, per ranksTip), market names instead of hl/gl, similarity % instead of hash bits, length buckets '< 5 dk', 'Para kazanma rozeti', 'Transkript araçları', '24 sa'. In-page hour labels: see below.
+  - **Done:** 'Tıklama oranı' instead of TO, 'Ülke / dil' in radar and keywords, the ratio badge reads 'izlenme / abone', 'aramadan 77 izlenme' (the number is views from that search, per ranksTip), market names instead of hl/gl, similarity % instead of hash bits, length buckets '< 5 dk', 'Para kazanma rozeti', 'Transkript araçları', '24 sa'. In-page labels already said '24 sa'; the '24 s:' was in the Features list description.
   - "TO" for CTR → "Tıklama oranı" / "Gösterim TO".
   - Radar "Pazar" vs Keywords "Ülke" for the same field → "Ülke / dil" in both.
   - "abone b." → "abone başına".
@@ -142,7 +153,8 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
   Files: `dashboard/niche-view.js` and `dashboard/dashboard.css:596-600`.
 - [x] **C24 · Settings → Features repeats the same warning about 7 times** ("Bridge'de API anahtarı yok · Anahtar ekle"), and "İsteğe bağlı servisler" appears twice. Fix: one banner per group ("5 özellik bridge'de API anahtarı bekliyor → Ekle") and provider keys inline under each switch. File: `src/features-view.js`.
   - **Done:** one banner per group when two or more switches wait for the same thing ('5 özellik bridge'de API anahtarı bekliyor · Anahtar ekle →'), rows show a small 'bekliyor' tag; provider keys stay on their row. The Settings card is now 'Servis anahtarları' so 'İsteğe bağlı servisler' appears once.
-- [ ] **C25 · The Shorts stats card shows empty dashes** ("Kanal yaşı –", "Ort. Shorts izlenmesi –"). Hide cells that have no data and add one "API anahtarıyla daha fazlası" line. File: `src/youtube-pages.js`.
+- [x] **C25 · The Shorts stats card shows empty dashes** ("Kanal yaşı –", "Ort. Shorts izlenmesi –"). Hide cells that have no data and add one "API anahtarıyla daha fazlası" line. File: `src/youtube-pages.js`.
+  - **Done:** cells without data are hidden, with one 'API anahtarıyla daha fazlası · Anahtar ekle' line.
 
 ## D. UI review: nice to have (fix these too)
 
@@ -157,13 +169,14 @@ Evidence screenshots for the UI items are in `/private/tmp/claude-501/-Users-esh
 - [x] **D30 · Red/green deltas** (Kanalım ▲▼, Keywords "↑ 2,6×", title history "1 B") vs the brand's single-hue charts. Use ink text with the arrow.
   - **Done:** Kanalım deltas, search-term week changes, report-card multiples, keyword lifts and title-history slopes are ink text with the arrow.
 - [x] **D31 · Tap targets at 390 px:** feature switches are 36×21, the radar chip "×" is 22×22, toolbar buttons are 34×30. Give them a ≥32–44 px hit area.
-  - **Done:** feature switches have an invisible input reaching ~48×41 px; the radar chip × has a 40 px hit area. Toolbar: see below.
+  - **Done:** feature switches have an invisible input reaching ~48×41 px; the radar chip × has a 40 px hit area. Toolbar buttons are 36×32 in the watch row and 40×40 below 600 px; the panel's switches have a 44 px hit area.
 - [x] **D32 · Neighbouring cards show different totals** (traffic 770 vs geography 639 vs devices 753). Add a "(YouTube rapor eşiği)" note. Subscribed/not subscribed sums to 101%: round so it sums to 100.
   - **Done:** a note under the audience cards when their totals differ ('YouTube rapor eşiğinin altındaki satırları vermiyor'); shares are rounded by largest remainder so they add up to 100.
 - [x] **D33 · Blank first render (~1 s) on Kanalım and Radar.** Use the `kc-skel` skeleton everywhere.
   - **Done:** Kanalım shows its skeleton from the first frame; Niş Takibi and every discovery tab show one skeleton while loading.
 - [x] **D34 · The popup demo uses port 47321** while the bridge scans 47811–47820 (`dev/popup-demo.html:39`).
   - **Done:** the popup demo's bridge uses port 47811.
-- [ ] **D35 · The monetized "checking" pill truncates** ("Reklam kontrol ediliyo…"). Shorten it to "Kontrol ediliyor…".
+- [x] **D35 · The monetized "checking" pill truncates** ("Reklam kontrol ediliyo…"). Shorten it to "Kontrol ediliyor…".
+  - **Done:** 'Kontrol ediliyor…' / 'Checking…'.
 - [x] **D36 · Lime crowds the Niş Takibi list:** seven lime badges with pixel shadows in "Bu hafta", five more in Hızlı yükselenler. Use the pixel shadow only for ≥3×, and a plain ink badge for 2–3×.
   - **Done:** 2–3× is a plain ink badge; lime with the pixel shadow (and the stair) only from 3×, also in Hızlı yükselenler.
