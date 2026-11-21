@@ -36,8 +36,13 @@
         'rs:p:yt/exceldemo': { posts: ytPosts(30), updatedAt: Date.now() - 5 * 36e5, platform: 'youtube' },
         'rs:mentions': { items: { a: {}, b: {}, c: {}, d: {} }, read: { d: true } },
         'rs:watches': [{}],
-        'rs:bridge': { connected: true, port: 47321, lastSyncAt: Date.now() - 6e4, lastBackupAt: Date.now() - 36e5, lastBackupOk: true }
+        'rs:bridge': { connected: true, port: 47321, lastSyncAt: Date.now() - 6e4, lastBackupAt: Date.now() - 36e5, lastBackupOk: true, settingsAt: Date.now() }
       };
+      // ?bridge=off|nokey|ready: the bridge's copy of the key (default nokey).
+      var demoBridge = new URLSearchParams(location.search).get('bridge') || 'nokey';
+      if (!empty && demoBridge === 'off') store['rs:bridge'] = { connected: false };
+      if (!empty && demoBridge === 'ready') Object.assign(store['rs:bridge'], { bridgeApiKey: true, bridgeApiKeySource: 'file', bridgeQuota: { day: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()), units: 12 } });
+      var storageListeners = [];
       // ?ytapi: a saved YouTube Data API key with some quota used today.
       if (/[?&]ytapi\b/.test(location.search)) {
         store['rs:settings'] = { youtubeApiKey: 'AIza' + 'D'.repeat(31) + 'demo' };
@@ -53,15 +58,27 @@
               [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; });
               return o;
             },
-            set: async function (o) { Object.assign(store, o); },
+            set: async function (o) {
+              var c = {};
+              Object.keys(o).forEach(function (k) { c[k] = { oldValue: store[k], newValue: o[k] }; store[k] = o[k]; });
+              setTimeout(function () { storageListeners.forEach(function (fn) { fn(c, 'local'); }); }, 0);
+            },
             remove: async function (k) { [].concat(k).forEach(function (x) { delete store[x]; }); }
           },
-          onChanged: { addListener: function () {} }
+          onChanged: { addListener: function (fn) { storageListeners.push(fn); } }
         },
         runtime: {
           getURL: function (p) { return '/' + p; },
           getManifest: function () { return { version: '0.2.0' }; },
-          sendMessage: async function () { return null; }
+          sendMessage: async function (m) {
+            if (m && m.type === 'reelscope:bridge-key') {
+              await new Promise(function (r) { setTimeout(r, 300); });
+              if (!(store['rs:bridge'] || {}).connected) return { ok: false, error: 'The bridge isn\'t running.' };
+              await chrome.storage.local.set({ 'rs:bridge': Object.assign({}, store['rs:bridge'], { bridgeApiKey: m.action !== 'remove', bridgeApiKeySource: m.action !== 'remove' ? 'file' : null }) });
+              return { ok: true };
+            }
+            return null;
+          }
         },
         tabs: { query: async function () { return [{ id: 1 }]; }, create: function () {}, sendMessage: async function () { throw new Error('demo'); } },
         permissions: { request: async function () { return true; }, remove: async function () { return true; } }

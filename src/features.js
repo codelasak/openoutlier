@@ -293,9 +293,10 @@
     return {
       apiKey: typeof key === 'string' && /^[A-Za-z0-9_-]{30,60}$/.test(key.trim()),
       bridge: connected,
-      // Only known while connected to a bridge that reports it (older bridges don't).
-      bridgeKey: connected && b.bridgeApiKey != null ? !!b.bridgeApiKey : connected ? undefined : false,
-      oauth: connected && b.oauthConnected != null ? !!b.oauthConnected : connected ? undefined : false,
+      // Only known while connected to a bridge that reports them (older bridges don't). Without a
+      // bridge they are unknown, not missing: the bridge itself is what to fix first.
+      bridgeKey: connected && b.bridgeApiKey != null ? !!b.bridgeApiKey : undefined,
+      oauth: connected && b.oauthConnected != null ? !!b.oauthConnected : undefined,
       bridgeSettings: connected && !!b.settingsAt
     };
   }

@@ -26,6 +26,11 @@
     (function () {
       var data = {};
       var listeners = [];
+      var storageListeners = [];
+      // Features tab stand-ins: ?bridge=off|nokey|ready (default nokey: connected, no key on the bridge yet), ?ytapi (a key in the browser).
+      var demoBridge = new URLSearchParams(location.search).get('bridge') || 'nokey';
+      data['rs:bridge'] = demoBridge === 'off' ? { connected: false } : { connected: true, port: 47811, bridgeApiKey: demoBridge === 'ready', bridgeApiKeySource: demoBridge === 'ready' ? 'file' : null, oauthConnected: demoBridge === 'ready', settingsAt: Date.now() };
+      if (/[?&]ytapi\b/.test(location.search)) data['rs:settings'] = { youtubeApiKey: 'AIza' + 'D'.repeat(31) + 'demo' };
       window.chrome = {
         storage: {
           local: {
@@ -36,10 +41,14 @@
               [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; });
               return o;
             },
-            set: async function (o) { Object.assign(data, JSON.parse(JSON.stringify(o))); },
+            set: async function (o) {
+              var c = {};
+              Object.keys(o).forEach(function (k) { c[k] = { oldValue: data[k], newValue: JSON.parse(JSON.stringify(o[k])) }; data[k] = JSON.parse(JSON.stringify(o[k])); });
+              setTimeout(function () { storageListeners.forEach(function (fn) { fn(c, 'local'); }); }, 0);
+            },
             remove: async function (k) { [].concat(k).forEach(function (x) { delete data[x]; }); }
           },
-          onChanged: { addListener: function () {} }
+          onChanged: { addListener: function (fn) { storageListeners.push(fn); } }
         },
         runtime: {
           getURL: function (p) { return '/' + p; },
@@ -48,6 +57,12 @@
             if (/^reelscope:yt-exact/.test(m.type)) return demoExact(m);
             if (/^reelscope:yt-video/.test(m.type)) return demoVideo(m);
             // ?ytapi: a saved YouTube Data API key (src/youtube-api-bg.js stand-in).
+            if (m.type === 'reelscope:bridge-key') {
+              if (demoBridge === 'off') return { ok: false, error: 'The OpenOutlier bridge on your Mac isn\'t running, so there is nowhere to copy the key to.' };
+              await chrome.storage.local.set({ 'rs:bridge': Object.assign({}, data['rs:bridge'], { bridgeApiKey: m.action !== 'remove', bridgeApiKeySource: m.action !== 'remove' ? 'file' : null }) });
+              return { ok: true, configured: m.action !== 'remove', source: 'file' };
+            }
+            if (m.type === 'reelscope:open-dashboard') { console.log('[demo] would open the Library at', m.hash); window.__demoOpened = m.hash; return; }
             if (m.type === 'reelscope:yt-api-status') return { configured: demoQ.has('ytapi'), quota: { used: 37, limit: 10000 } };
             if (m.type === 'reelscope:yt-api') { await new Promise(function (r) { setTimeout(r, 500); }); return { ok: true, updated: 12, added: m.action === 'uploads' ? 30 : 0, units: m.action === 'uploads' ? 31 : 1, quota: { used: m.action === 'uploads' ? 68 : 38, limit: 10000 } }; }
             if (m.type === 'reelscope:download' && m.what !== 'cover') return { ok: false, queued: 0, errors: ['YouTube video files are downloaded with yt-dlp through the OpenOutlier bridge, not by the extension.'] };
@@ -180,7 +195,7 @@
 <body>
   <header>
     <h1>OpenOutlier YouTube demo page</h1>
-    <p>Stands in for youtube.com/@ExcelDemo/videos. The first page's <code>ytInitialData</code> is inlined like YouTube's own HTML; scrolling "loads" a <code>/youtubei/v1/browse</code> continuation through the same hook the extension uses. The buttons simulate in-app navigation (a Shorts tab browse, a <code>get_watch</code> video click, then <code>yt-navigate-finish</code>). Data: dev/youtube (anonymized). Add <code>?hl=tr</code> for the Turkish labels.</p>
+    <p>Stands in for youtube.com/@ExcelDemo/videos. The first page's <code>ytInitialData</code> is inlined like YouTube's own HTML; scrolling "loads" a <code>/youtubei/v1/browse</code> continuation through the same hook the extension uses. The buttons simulate in-app navigation (a Shorts tab browse, a <code>get_watch</code> video click, then <code>yt-navigate-finish</code>). Data: dev/youtube (anonymized). Add <code>?hl=tr</code> for the Turkish labels; the panel's Features tab takes <code>?bridge=off|nokey|ready</code> and <code>?ytapi</code>.</p>
   </header>
   <nav>
     <button type="button" id="go-videos">Videos tab</button>
@@ -196,6 +211,8 @@
   </main>
   <script src="../src/metrics.js"></script>
   <script src="../src/youtube.js"></script>
+  <script src="../src/features.js"></script>
+  <script src="../src/features-view.js"></script>
   <script src="../src/brand.js"></script>
   <script src="../src/panel.js"></script>
   <script src="../src/overlay.js"></script>

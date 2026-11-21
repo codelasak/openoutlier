@@ -18,7 +18,7 @@
       lang: 'Language', langHint: 'For the Features list and this page. Auto follows YouTube\'s language on YouTube and Chrome\'s here.',
       langAuto: 'Auto', apiTitle: 'YouTube Data API key',
       apiText: 'Your own key from Google Cloud (YouTube Data API v3). Free quota: 10,000 units a day. Without a key OpenOutlier never calls the API.',
-      apiSaved: 'Saved (…{k}).', apiNone: 'No key in this browser.', save: 'Save', removeKey: 'Remove the key',
+      apiSaved: 'Saved (…{k}).', apiNone: 'No key in this browser.', apiReplace: 'Paste a new key to replace it', save: 'Save', removeKey: 'Remove the key',
       apiBad: 'That doesn\'t look like an API key (letters, digits, - and _, usually 39 characters starting with AIza).',
       apiPerm: 'Chrome needs permission to reach www.googleapis.com for the key to work. Nothing was saved.',
       apiSavedMsg: 'Saved. The key stays in this browser until you copy it to the bridge.', apiRemovedMsg: 'Removed from this browser.',
@@ -38,7 +38,7 @@
       lang: 'Dil', langHint: 'Özellikler listesi ve bu sayfa için. Otomatik: YouTube\'da YouTube\'un dili, burada Chrome\'un dili.',
       langAuto: 'Otomatik', apiTitle: 'YouTube Data API anahtarı',
       apiText: 'Google Cloud\'dan kendi anahtarın (YouTube Data API v3). Bedava kota günde 10.000 birim. Anahtar yoksa OpenOutlier API\'yi hiç çağırmaz.',
-      apiSaved: 'Kayıtlı (…{k}).', apiNone: 'Bu tarayıcıda anahtar yok.', save: 'Kaydet', removeKey: 'Anahtarı sil',
+      apiSaved: 'Kayıtlı (…{k}).', apiNone: 'Bu tarayıcıda anahtar yok.', apiReplace: 'Değiştirmek için yeni anahtarı yapıştır', save: 'Kaydet', removeKey: 'Anahtarı sil',
       apiBad: 'Bu bir API anahtarına benzemiyor (harf, rakam, - ve _; genelde AIza ile başlayan 39 karakter).',
       apiPerm: 'Anahtarın çalışması için Chrome\'un www.googleapis.com\'a erişim izni gerekiyor. Hiçbir şey kaydedilmedi.',
       apiSavedMsg: 'Kaydedildi. Bridge\'e kopyalayana kadar anahtar bu tarayıcıda kalır.', apiRemovedMsg: 'Bu tarayıcıdan silindi.',
@@ -56,7 +56,7 @@
 
   function create(env) {
     var h = env.h;
-    var nf = new Intl.NumberFormat();
+    function nf() { return new Intl.NumberFormat(F.uiLang() === 'tr' ? 'tr-TR' : 'en-US'); }
     var st = { flags: F.flags(), env: {}, settings: {}, bridge: {}, quota: null, msg: '', apiMsg: '', bridgeMsg: '', busy: false };
 
     async function load() {
@@ -124,7 +124,7 @@
       var mine = A ? A.usedToday(st.quota) : 0;
       var onBridge = A ? A.usedToday(st.bridge.bridgeQuota) : 0;
       // The page re-renders on storage changes (the bridge state every ~30 s): keep what was typed.
-      var input = h('input', { type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: on ? fill(T.apiSaved, { k: key.slice(-4) }) : 'AIza…', 'aria-label': T.apiTitle,
+      var input = h('input', { type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: on ? T.apiReplace : 'AIza…', 'aria-label': T.apiTitle,
         oninput: function (e) { st.draft = e.target.value; } });
       input.value = st.draft || '';
       var connected = st.env.bridge;
@@ -143,7 +143,7 @@
           await setSetting('youtubeApiKey', k);
           st.apiMsg = T.apiSavedMsg;
         } }, input, h('button', { class: 'btn', type: 'submit' }, T.save)),
-        on ? h('p', { class: 'muted small', text: fill(T.quota, { u: nf.format(mine + onBridge), l: nf.format(10000), e: nf.format(mine), b: nf.format(onBridge) }) }) : null,
+        on ? h('p', { class: 'muted small', text: fill(T.quota, { u: nf().format(mine + onBridge), l: nf().format(10000), e: nf().format(mine), b: nf().format(onBridge) }) }) : null,
         st.apiMsg ? h('p', { class: 'm-msg', role: 'status', text: st.apiMsg }) : null,
         h('div', { class: 'm-actions set-actions' },
           on && connected ? h('button', { class: 'btn btn-primary', type: 'button', disabled: st.busy, onclick: function () { bridgeKey('copy'); } }, st.env.bridgeKey ? T.copyAgain : T.copy) : null,

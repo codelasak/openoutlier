@@ -160,7 +160,9 @@ test('browser: isOn reads rs:settings.features, set() stores only the choice, on
 test('browser: env() says what is set up, from the popup key and the bridge state', async () => {
   const key = 'AIza' + 'x'.repeat(35);
   const none = browser({});
-  assert.deepEqual({ ...(await none.F.env()) }, { apiKey: false, bridge: false, bridgeKey: false, oauth: false, bridgeSettings: false });
+  assert.deepEqual({ ...(await none.F.env()) }, { apiKey: false, bridge: false, bridgeKey: undefined, oauth: undefined, bridgeSettings: false });
+  // No bridge: only "bridge" is reported missing, not its key as well.
+  assert.deepEqual([...none.F.missing('tracker', await none.F.env(), none.F.defaults())], ['bridge']);
   const older = browser({ 'rs:settings': { youtubeApiKey: key }, 'rs:bridge': { connected: true } });
   const e1 = await older.F.env();
   assert.equal(e1.apiKey, true);

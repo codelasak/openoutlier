@@ -144,7 +144,15 @@ Instagram has renamed its view counter several times. `src/extract.js` checks `p
 **YouTube Data API key (optional, off by default).** With your own key the panel (and a YouTube account page in the Library) gets **Exact stats via API** (exact views, likes, comments, publish time, length, tags and category for every saved video, 50 videos per quota unit, no pages opened) and **All uploads via API** (the channel's newest 500 uploads, including ones the tabs never loaded; Shorts are told apart by the channel's Shorts playlist). It uses `videos.list`, `channels.list` and `playlistItems.list` only, never `search.list` (100 units a call). The free quota is 10,000 units a day; the popup and the panel show how many units were used today (Google resets them at midnight Pacific time). Without a key nothing changes and no request is made.
 1. Google Cloud console → create a project → *APIs & Services → Library* → enable **YouTube Data API v3**.
 2. *Credentials → Create credentials → API key*. Restrict it to *YouTube Data API v3* (website restrictions don't fit an extension).
-3. Extension: popup → **YouTube Data API key** → paste → Save (Chrome asks for access to `www.googleapis.com`). The key stays in this browser and is left out of backup files. MCP: set `OPENOUTLIER_YOUTUBE_API_KEY` for the MCP server and use `youtube_api_stats`; it counts its own quota (`bridge_status` shows it).
+3. Extension: popup → **YouTube Data API key** → paste → Save (Chrome asks for access to `www.googleapis.com`), or the same in Library → **Settings**. The key stays in this browser and is left out of backup files.
+4. Bridge (background jobs and `youtube_api_stats`): press **Copy key to bridge** (popup or Library → Settings). It goes only to the paired bridge on `127.0.0.1`, which saves it as `~/.openoutlier/youtube-api-key` (mode 600, readable only by you); **Remove from bridge** deletes the file. `OPENOUTLIER_YOUTUBE_API_KEY` for the bridge / MCP server still works and wins over the file.
+
+One count for the day: the extension reports its units to the bridge and the bridge answers with its own, so the popup, the panel, Library → Settings and `bridge_status` all show the same total (this browser + the bridge), since one key spends one Google Cloud project's quota.
+
+<a id="youtube-features"></a>
+**YouTube features: on / off.** Every YouTube feature, built or planned (the NexLev replacement in [`docs/youtube-niche-plan.md`](docs/youtube-niche-plan.md)), has a switch in the panel's **Features** tab on youtube.com and in Library → **Settings → Features**. Changes apply at once in every open tab, no reload. Each row says what the feature needs (an API key, the bridge, the key on the bridge, My YouTube channel) and links to the fix when something is missing; features of later phases are marked *coming soon* and can already be preset. The labels follow YouTube's language on youtube.com and Chrome's in the Library (Türkçe / English; Settings → Language overrides it). The switches live in `rs:settings.features` (only the ones you changed, so new defaults reach you) and are sent to the bridge, whose background jobs check them. One of them is a data-policy switch: **Delete competitors' API data after 30 days** (off by default) makes the bridge delete other channels' Data API measurements older than 30 days once a day; RSS and page measurements and everything about your own channel stay.
+
+**Background tracker (bridge).** `mcp/tracker.mjs` runs scheduled jobs in whichever process holds the bridge (the launchd daemon, or an MCP server), only for features that are on. The schedule lives in the database (`tracker_jobs`), so it survives restarts; jobs get a random delay (jitter), never run twice at once (also across processes), back off after errors, and stop for the day before the Data API quota runs out. Right now it runs a heartbeat (and the 30-day purge when switched on); niche tracking arrives in the next phase. `bridge_status` shows the jobs, the last heartbeat and the switches you changed.
 
 **Transcripts (`get_transcript`, MCP).** An agent can ask for a video's captions as plain text with `[m:ss]` timestamps, plus `hook`: what is said in the first ~30 seconds. yt-dlp on your Mac fetches only the captions (no video): uploaded captions first, else YouTube's auto-generated ones, in the language you ask for, else the video's own language, else English. The Library only records that a transcript exists (`hasTranscript`), never the text. Errors name the cause: `no_captions`, `too_old` (`brew upgrade yt-dlp`), `missing` (install yt-dlp).
 
@@ -253,7 +261,7 @@ Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. 
 | `get_reel` | everything about one post, incl. the mp4 `video_url`, `cover_url` and link expiry; YouTube: format, exact or rounded views, exact or approximate date, chapters, heatmap peaks, category, tags, captions |
 | `download_reel` | save the mp4 and/or cover to `~/Downloads/OpenOutlier/<account>/` and return the path (YouTube: yt-dlp, with exact stats written back) |
 | `refresh_reel` | fresh stats and links for one post (YouTube: opens the watch page for exact numbers) |
-| `youtube_api_stats` | exact YouTube stats for a channel's videos, given videos, or the channel's full upload list through your own Data API key (optional; no request without `OPENOUTLIER_YOUTUBE_API_KEY`) |
+| `youtube_api_stats` | exact YouTube stats for a channel's videos, given videos, or the channel's full upload list through your own Data API key (optional; no request without a key: **Copy key to bridge** or `OPENOUTLIER_YOUTUBE_API_KEY`) |
 | `get_transcript` | a YouTube video's captions as text with timestamps, plus its first ~30 s as `hook` (yt-dlp on your Mac) |
 | `reel_history` | how a post's views, likes, comments, shares and saves changed over time |
 | `collect_profile` | the extension collects an Instagram or TikTok profile, a YouTube channel (`yt/name`: Videos, then Shorts) or a subreddit in your browser |
@@ -274,7 +282,7 @@ Claude Desktop (*Settings → Developer → Edit Config*), then restart Claude. 
 | `my_youtube_channel` | your channel's totals from YouTube Analytics: views, engaged views, watch time, average view %, subscribers |
 | `my_youtube_videos` | per video: views, engaged views, average view % and duration, thumbnail impressions and CTR, subscribers gained |
 | `my_youtube_retention` | one video's retention curve and where viewers drop off |
-| `command_status`, `bridge_status` | check a running command / the connection and backups |
+| `command_status`, `bridge_status` | check a running command / the connection, backups, the Data API key and today's quota (bridge + extension), feature switches and the background tracker |
 
 Example prompts: *"Collect yt/somechannel, then compare its Shorts and long-form outliers: what do the titles of the top 5 of each have in common?"* · *"Use compare_platforms for my account: which episodes did better on TikTok, and what do they have in common?"* · *"Compare the 10 most viral reels in my Excel folder from the last 90 days and summarize their hooks."* · *"Collect r/excel and r/spreadsheets, then use content_ideas on my Excel folder and give me 10 reel ideas my competitors haven't covered."*
 </details>
@@ -295,7 +303,8 @@ The extension's storage disappears if you remove the extension, so OpenOutlier c
 - **Safe by design.** A full sync only adds and updates, so a reinstalled extension with empty storage can't wipe the database. An account is removed only when you delete it in the extension.
 - **Daily backup** (`mcp/backup.mjs`): a consistent copy (`VACUUM INTO`) with an integrity check, gzipped, the last 7 kept in `~/.openoutlier/backups/`, then uploaded over SSH to `OPENOUTLIER_BACKUP_REMOTE` (`host:/path`), checksum-verified there, the last 30 kept. Runs at 03:30, or at login/wake if missed.
 - **Always on (macOS)**: `sh mcp/launchd/install.sh` installs `dev.openoutlier.bridge` (keeps the bridge running) and `dev.openoutlier.backup` (the daily backup). Logs: `~/.openoutlier/logs/`. Remove with `sh mcp/launchd/uninstall.sh`; your data stays.
-- **Status**: the popup shows the last backup (or a warning); `bridge_status` reports database counts.
+- **Status**: the popup shows the last backup (or a warning); `bridge_status` reports database counts and the schema version.
+- **Schema changes** are versioned migrations in `mcp/store.mjs` (`meta.schema_version`): they only add tables and columns, can run any number of times, and never drop data. Phase 0 of the YouTube plan added the tables for niche tracking and your own channel's history (`tracked_channels`, `video_stats`, `video_meta_log`, `channel_stats`, `tracker_jobs`, `own_daily`, `own_video_daily`, `own_breakdowns`); they fill up in later phases.
 
 <details>
 <summary><b>Restore a backup</b></summary>
@@ -332,7 +341,7 @@ Then start a new agent session so it picks up the `openoutlier` tools.
 
 ## Privacy
 
-- No analytics, no tracking, no remote servers. The only requests OpenOutlier makes are to instagram.com and reddit.com themselves (post details, listing pages), to TikTok's, Instagram's and YouTube's (`i.ytimg.com`) file hosts when you download, all from your own session, and, if you use agents, to the MCP server on `127.0.0.1`. YouTube video downloads and transcripts are made by yt-dlp on your Mac, only when you ask for one. Only if you set them up: your own YouTube Data API key sends requests to `www.googleapis.com`, and My YouTube channel to Google's sign-in and YouTube Analytics API (from the bridge on your Mac).
+- No analytics, no tracking, no remote servers. The only requests OpenOutlier makes are to instagram.com and reddit.com themselves (post details, listing pages), to TikTok's, Instagram's and YouTube's (`i.ytimg.com`) file hosts when you download, all from your own session, and, if you use agents, to the MCP server on `127.0.0.1`. YouTube video downloads and transcripts are made by yt-dlp on your Mac, only when you ask for one. Only if you set them up: your own YouTube Data API key sends requests to `www.googleapis.com` (from the extension, and from the bridge once you press **Copy key to bridge**: the key then goes to `127.0.0.1` only), and My YouTube channel to Google's sign-in and YouTube Analytics API (from the bridge on your Mac). Feature switches and the day's quota count go only to the bridge on `127.0.0.1`.
 - Fonts (Fraunces, Inter Tight; SIL OFL) are bundled in `fonts/`; nothing is loaded from Google or any CDN.
 - Permissions: `storage` + `unlimitedStorage` (collected posts), `downloads` (media files), `alarms` (MCP connection check, Mentions), `notifications` (new Mentions), `scripting` (the read-only Mentions request inside your reddit.com tab), host access to instagram.com, tiktok.com, youtube.com, reddit.com and their file hosts, and optional access to your reddit-watch server and chatmany worker (asked only when you connect one) and to `www.googleapis.com` (asked only when you save a YouTube Data API key).
 - The Library caches cover images in the extension's own IndexedDB, so covers keep showing after the platforms' links expire.
@@ -353,6 +362,8 @@ tiktok.com page      src/tiktok.js (JSON → posts) + src/tiktok-content.js (sto
 youtube.com page     src/youtube.js (ytInitialData / youtubei JSON → posts) + src/youtube-content.js (storage, auto-scroll, overlay, agent commands)
 src/youtube-exact.js "Get exact stats": opens the top outliers' watch pages one by one in a background tab
 src/youtube-api*.js  optional Data API key: exact stats / all uploads (pure part + service-worker job)
+src/features*.js     YouTube feature switches: the registry (also read by the bridge) and the Features list UI
+mcp/tracker.mjs      background job scheduler in the bridge (tracker_jobs, jitter, lease, quota budget)
 mcp/youtube-dl.mjs   yt-dlp + ffmpeg downloads for YouTube, started by the bridge or download_reel
 mcp/youtube-transcript.mjs  get_transcript: captions through yt-dlp
 mcp/youtube-analytics.mjs   My YouTube channel: OAuth (PKCE, loopback to the bridge) + YouTube Analytics reports
@@ -362,7 +373,7 @@ src/compare.js       matches the same video across Instagram, TikTok and YouTube
 src/agent-bridge.js  syncs the library to the local MCP server and runs agent commands
 src/mentions*.js     Reddit keyword matching and the 15-minute checker
 mcp/                 MCP server, 127.0.0.1 bridge, SQLite store, backup, launchd install
-dashboard/           the Library page
+dashboard/           the Library page (settings-view.js: Settings → Features, API key, bridge)
 popup/               the toolbar popup
 brand/               the OpenOutlier identity (see brand/README.md)
 ```
@@ -376,7 +387,7 @@ npm test                          # unit + MCP end-to-end tests (Node 20+; run `
 python3 -m http.server 8791       # then open http://127.0.0.1:8791/dev/demo.html
 ```
 
-The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `youtube-demo.html` (channel tabs, watch page, Short, overlay; `?hl=tr` for Turkish), `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare`, `#/mentions`, `#/studio` and `#/my-youtube`; add `?studio=<worker address>` to link My account, `?ytapi` for a saved YouTube Data API key, `?ytanalytics=setup|connect|connected` for My YouTube channel), `popup-demo.html` (add `?empty` for the first-run state, `?ytapi` for a saved key; `youtube-demo.html?ytapi` too) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`, `make-youtube-fixture.mjs`.
+The `dev/` pages run the real scripts with a stubbed `chrome` API and fake data, so you can work on the UI without opening the real sites: `demo.html` (Instagram profile + reel overlay), `tiktok-demo.html`, `youtube-demo.html` (channel tabs, watch page, Short, overlay; `?hl=tr` for Turkish; the Features tab takes `?bridge=off|nokey|ready` and `?ytapi`), `reddit-demo.html`, `dashboard-demo.html` (Library, incl. `#/compare`, `#/mentions`, `#/studio`, `#/my-youtube` and `#/settings` (`?bridge=off|nokey|ready`, `?hl=tr`); add `?studio=<worker address>` to link My account, `?ytapi` for a saved YouTube Data API key, `?ytanalytics=setup|connect|connected` for My YouTube channel), `popup-demo.html` (add `?empty` for the first-run state, `?ytapi` for a saved key, `?bridge=off|nokey|ready` for the bridge's copy; `youtube-demo.html?ytapi` too) and `design-mock.html` (the clickable design reference). Fixtures: `node dev/make-fixture.mjs`, `make-reddit-fixture.mjs`, `make-tiktok-fixture.mjs`, `make-youtube-fixture.mjs`.
 
 **Design.** The identity ("Signal Field": Signal Blue `#1E3BFF`, Outlier Lime `#C8FF2E`, Fraunces Black + Inter Tight, the Pixel O) and its rules live in [`brand/README.md`](brand/README.md). In short: the colour logo sits only on blue or ink, and lime is reserved for outliers and never sits on light paper.
 

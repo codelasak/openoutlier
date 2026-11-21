@@ -65,10 +65,16 @@
               return { ok: true, updated: n, units: Math.ceil(Object.keys(rec.posts).length / 50), quota: { used: window.__ytUnits, limit: 10000 } };
             }
             if (m.type === 'reelscope:yt-analytics') return demoAnalytics(m, qs.get('ytanalytics'));
+            if (m.type === 'reelscope:bridge-key') {
+              await new Promise(function (r) { setTimeout(r, 300); });
+              if (!store['rs:bridge'].connected) return { ok: false, error: 'The OpenOutlier bridge on your Mac isn\'t running, so there is nowhere to copy the key to.' };
+              await chrome.storage.local.set({ 'rs:bridge': Object.assign({}, store['rs:bridge'], { bridgeApiKey: m.action !== 'remove', bridgeApiKeySource: m.action !== 'remove' ? 'file' : null }) });
+              return { ok: true, configured: m.action !== 'remove', source: 'file' };
+            }
             return { ok: true, queued: (m.posts || []).length, skipped: 0, failed: 0 };
           }
         },
-        permissions: { request: async function () { return true; }, contains: async function () { return true; } }
+        permissions: { request: async function () { return true; }, contains: async function () { return true; }, remove: async function () { return true; } }
       };
 
       function demoAnalytics(m, mode) {
@@ -164,6 +170,14 @@
       store['rs:mentions'] = { items: ReelScopeMentions.mergeMentions({}, demoM).items, read: { t3_m4: 1 } };
       store['rs:mentions-state'] = { lastRunAt: now - 6 * 60e3, lastNew: 1, via: 'tab', warnings: ['"handsonexcel": comments need a subreddit list (Reddit has no comment search), so only posts are checked.'] };
 
+      // Settings → Features: ?bridge=off|nokey|ready (default nokey: connected, no key on the bridge yet); ?ytapi adds a key in the browser.
+      var demoBridge = new URLSearchParams(location.search).get('bridge') || 'nokey';
+      store['rs:bridge'] = demoBridge === 'off' ? { connected: false } : { connected: true, port: 47811, lastSyncAt: Date.now() - 6e4, bridgeApiKey: demoBridge === 'ready', bridgeApiKeySource: demoBridge === 'ready' ? 'file' : null, oauthConnected: demoBridge === 'ready', settingsAt: Date.now(), bridgeQuota: demoBridge === 'ready' ? { day: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()), units: 12 } : null };
+      if (/[?&]ytapi\b/.test(location.search)) {
+        store['rs:settings'] = { youtubeApiKey: 'AIza' + 'D'.repeat(31) + 'demo' };
+        store['rs:yt-api-quota'] = { day: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date()), units: 37 };
+      }
+
       // "My account": open with ?studio=<address of a chatmany worker or a local stand-in> to link it.
       var studio = new URLSearchParams(location.search).get('studio');
       if (studio) store['rs:studio'] = { baseUrl: studio, token: 'demo' };
@@ -175,7 +189,7 @@
       // dashboard.js fetches '../src/panel.css' relative to /dashboard/.
       var realFetch = window.fetch;
       window.fetch = function (u) { if (u === '../src/panel.css') return realFetch('/src/panel.css'); return realFetch.apply(this, arguments); };
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/youtube-channel-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

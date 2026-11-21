@@ -644,7 +644,9 @@
   }
   if (FT) {
     FT.ready.then(loadFeatureState);
-    FT.onChange(function () { featureState.message = ''; loadFeatureState(); });
+    // A switch changed: drop the last status line. Only the bridge state changed (e.g. right after
+    // "Copy key to bridge"): keep it, so the confirmation stays readable.
+    FT.onChange(function (changed) { if (changed.length) featureState.message = ''; loadFeatureState(); });
   }
 
   /** The page's main player: the watch page's, or the Short that is on screen. */
