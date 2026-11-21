@@ -201,7 +201,7 @@
     ]);
   }
   function mast(lang, q) {
-    return h('div', { class: 'mast' }, [h('div', { class: 'logo' }, [h('i'), 'YouTube']), h('div', { class: 'sb', text: q || (lang === 'tr' ? 'Ara' : 'Search') }), h('div', { class: 'me' })]);
+    return h('div', { class: 'mast', id: 'masthead-container' }, [h('div', { class: 'logo' }, [h('i'), 'YouTube']), h('div', { class: 'sb', text: q || (lang === 'tr' ? 'Ara' : 'Search') }), h('div', { class: 'me' })]);
   }
   function chips(list) { return h('div', { class: 'chips', id: 'header' }, list.map(function (c, i) { return h('span', { class: 'chip' + (i ? '' : ' on'), text: c }); })); }
 

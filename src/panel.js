@@ -155,6 +155,20 @@
     ['comments', 'Comments'],
     ['engagement', 'Engagement rate']
   ];
+  var YOUTUBE_SORT_TR = { views: 'İzlenme', viralScore: 'Viral Skor', duration: 'En uzun', date: 'En yeni', likes: 'Beğeni', comments: 'Yorum', engagement: 'Etkileşim oranı' };
+
+  // The panel's chrome in Turkish when the page asks for it (opts.lang; the YouTube panel). Instagram, TikTok and
+  // Reddit panels, and the analytics / export bodies, stay English.
+  var CHROME_TR = {
+    open: 'OpenOutlier\'ı aç', close: 'Kapat', closeTip: 'Kapat (Esc)', library: 'Library\'yi aç', libraryTip: 'Library\'yi aç: bütün kayıtlı hesaplar, klasörler ve etiketler',
+    profile: 'Profil', noProfiles: 'Henüz profil yok', clear: 'Temizle', clearConfirm: '{a} için kayıtlı gönderiler silinsin mi?', auto: 'Otomatik kaydır', stop: 'Durdur', stopTip: 'Kaydırmayı durdur',
+    videos: 'Videolar', analytics: 'Analiz', export: 'Dışa aktar', details: 'Gönderi ayrıntıları', collected: '{n} gönderi toplandı',
+    sort: 'Sırala', sortBy: 'Sıralama', outliers: 'Sadece outlier\'lar', search: 'Başlıklarda veya #etiketlerde ara', format: 'Biçim', fmtVideos: 'Videolar',
+    fmtVideosTip: 'Uzun videolar ve geçmiş canlı yayınlar, kendi medyanlarına göre', fmtShortsTip: 'Shorts, Shorts medyanına göre',
+    ytEmpty: 'Henüz YouTube videosu toplanmadı', ytE1: 'Bir kanalın Videolar ya da Shorts sekmesini aç, örn. ', ytE2: 'Aşağı kaydır ya da Otomatik kaydır\'a bas. Videolar YouTube yükledikçe toplanır.',
+    ytE3: 'Kesin izlenme, beğeni ve tarih için bir videoyu aç. Sıralamak, analiz etmek ve dışa aktarmak için buraya dön.',
+    ytEnote: 'Her şey bu tarayıcıda kalır. OpenOutlier sadece YouTube\'un zaten yüklediğini okur; beğenmez, abone olmaz, yorum yapmaz, paylaşmaz.'
+  };
   var MIXED_SORT_OPTIONS = [
     ['viralScore', 'Viral Score'],
     ['views', 'Views / score'],
@@ -233,6 +247,11 @@
    */
   function create(opts) {
     var embedded = !!opts.embedded;
+    /** A chrome string: Turkish when opts.lang() says so, else the English given. */
+    function tx(key, en, vars) {
+      var t = opts.lang && opts.lang() === 'tr' && CHROME_TR[key] != null ? CHROME_TR[key] : en;
+      return vars ? String(t).replace(/\{(\w+)\}/g, function (m, k) { return vars[k] != null ? vars[k] : m; }) : t;
+    }
     var host = document.createElement('div');
     host.id = embedded ? 'reelscope-embedded' : 'reelscope-root';
     if (!embedded) host.style.setProperty('all', 'initial');
@@ -262,14 +281,15 @@
     var hasTT = false;      // the list has TikTok videos (adds the Saves sort)
     var multiPlat = false;  // the list mixes platforms (rows get a platform badge)
     function sortOptions() {
-      var all = plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : plat === 'youtube' ? YOUTUBE_SORT_OPTIONS : hasTT ? VIDEO_SORT_OPTIONS : SORT_OPTIONS;
+      var yt = opts.lang && opts.lang() === 'tr' ? YOUTUBE_SORT_OPTIONS.map(function (o) { return [o[0], YOUTUBE_SORT_TR[o[0]] || o[1]]; }) : YOUTUBE_SORT_OPTIONS;
+      var all = plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : plat === 'youtube' ? yt : hasTT ? VIDEO_SORT_OPTIONS : SORT_OPTIONS;
       // Carousels and photos have no views, length or view-based engagement to sort by.
       return basis === 'likes' ? all.filter(function (o) { return LIKES_ONLY_HIDDEN.indexOf(o[0]) === -1; }) : all;
     }
     var LIKES_ONLY_HIDDEN = ['views', 'duration', 'engagement'];
     /** The sort in effect: "Views" (the default) means likes while the list is carousels and photos. */
     function sortKey() { return basis === 'likes' && LIKES_ONLY_HIDDEN.indexOf(ui.sort) !== -1 ? 'likes' : ui.sort; }
-    function listTab() { return opts.listTabLabel || (plat === 'instagram' ? 'Reels' : plat === 'tiktok' || plat === 'youtube' ? 'Videos' : 'Posts'); }
+    function listTab() { return plat === 'youtube' || opts.listTabLabel === 'Videos' ? tx('videos', opts.listTabLabel || 'Videos') : opts.listTabLabel || (plat === 'instagram' ? 'Reels' : plat === 'tiktok' ? 'Videos' : 'Posts'); }
     function ytFormatOf(p) { return p.type === 'short' ? 'short' : 'long'; }
     // What the open list is ranked by: 'views', 'likes' (Instagram carousels and photos) or 'mixed' (both in one list).
     var basis = 'views';
@@ -282,22 +302,22 @@
 
     // ---- skeleton -----------------------------------------------------------
     var launcherCount = h('span', { class: 'launcher-count', text: '0' });
-    var launcher = h('button', { class: 'launcher', type: 'button', 'aria-label': 'Open OpenOutlier', 'data-tip': 'OpenOutlier', onclick: function () { toggle(true); } },
+    var launcher = h('button', { class: 'launcher', type: 'button', 'aria-label': tx('open', 'Open OpenOutlier'), 'data-tip': 'OpenOutlier', onclick: function () { toggle(true); } },
       logo('mark', 'mark'), h('span', { class: 'launcher-sep', 'aria-hidden': 'true' }), launcherCount);
 
-    var profileSelect = h('select', { class: 'profile-select', 'aria-label': 'Profile', onchange: function () { opts.onSelectProfile(profileSelect.value); } });
+    var profileSelect = h('select', { class: 'profile-select', 'aria-label': tx('profile', 'Profile'), onchange: function () { opts.onSelectProfile(profileSelect.value); } });
     var autoBtn = h('button', { class: 'btn btn-primary', type: 'button', onclick: function () { opts.onAutoScroll(); } });
     var autoStatus = h('span', { class: 'status', 'aria-live': 'polite' });
     var collectBtn = opts.onCollect ? h('button', { class: 'btn', type: 'button', onclick: function () { opts.onCollect(); } }) : null;
     // YouTube: "Track" adds the open channel to niche tracking (src/tracking.js); state.track from the content script.
     var trackBtn = opts.onTrackToggle ? h('button', { class: 'btn track-btn', type: 'button', hidden: true, onclick: function () { opts.onTrackToggle(); } }) : null;
     var clearBtn = h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () {
-      if (state.selected && confirm('Delete the saved posts for ' + accountLabel(state.selected) + '?')) opts.onClearProfile(state.selected);
-    } }, 'Clear');
+      if (state.selected && confirm(tx('clearConfirm', 'Delete the saved posts for {a}?', { a: accountLabel(state.selected) }))) opts.onClearProfile(state.selected);
+    } }, tx('clear', 'Clear'));
 
     var tabs = {};
     var tabBar = h('div', { class: 'tabs', role: 'tablist' });
-    var tabList = [['reels', opts.listTabLabel || 'Reels'], ['analytics', 'Analytics'], ['export', 'Export']];
+    var tabList = [['reels', opts.listTabLabel || 'Reels'], ['analytics', tx('analytics', 'Analytics')], ['export', tx('export', 'Export')]];
     // YouTube: every switchable feature (src/features.js), in the page's language.
     if (opts.features && root.OpenOutlierFeaturesView) tabList.push(['features', root.OpenOutlierFeatures.uiLang() === 'tr' ? 'Özellikler' : 'Features']);
     tabList.forEach(function (t) {
@@ -311,9 +331,9 @@
     });
 
     var body = h('div', { class: 'body' });
-    var detailEl = h('div', { class: 'detail', role: 'dialog', 'aria-label': 'Post details', hidden: true });
+    var detailEl = h('div', { class: 'detail', role: 'dialog', 'aria-label': tx('details', 'Post details'), hidden: true });
     var dashBtn = opts.onOpenDashboard
-      ? h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Open the Library', 'data-tip': 'Open the Library: all saved accounts, folders and tags', onclick: function () { opts.onOpenDashboard(); } }, pxIcon(PX_GRID, 16))
+      ? h('button', { class: 'icon-btn', type: 'button', 'aria-label': tx('library', 'Open the Library'), 'data-tip': tx('libraryTip', 'Open the Library: all saved accounts, folders and tags'), onclick: function () { opts.onOpenDashboard(); } }, pxIcon(PX_GRID, 16))
       : null;
     var drawer = h('aside', { class: 'drawer' + (embedded ? ' embedded' : ''), 'aria-label': 'OpenOutlier', hidden: !embedded },
       embedded ? null : h('header', { class: 'head' },
@@ -321,7 +341,7 @@
           logo('wordmark', 'wordmark', 'OpenOutlier'),
           profileSelect,
           dashBtn,
-          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Close', 'data-tip': 'Close (Esc)', onclick: function () { toggle(false); } }, pxIcon(PX_CLOSE, 16))),
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': tx('close', 'Close'), 'data-tip': tx('closeTip', 'Close (Esc)'), onclick: function () { toggle(false); } }, pxIcon(PX_CLOSE, 16))),
         hazePixels()),
       embedded ? null : h('div', { class: 'toolbar' }, autoBtn, collectBtn, trackBtn, autoStatus, clearBtn),
       tabBar,
@@ -427,14 +447,17 @@
 
       // profile select
       profileSelect.textContent = '';
-      if (!state.profiles.length) profileSelect.appendChild(h('option', { value: '', text: 'No profiles yet' }));
+      if (!state.profiles.length) profileSelect.appendChild(h('option', { value: '', text: tx('noProfiles', 'No profiles yet') }));
       state.profiles.forEach(function (p) {
         profileSelect.appendChild(h('option', { value: p.username, selected: p.username === state.selected, text: accountLabel(p.username) + ' (' + p.count + ')' }));
       });
       profileSelect.disabled = !state.profiles.length;
 
-      autoBtn.textContent = state.auto.running ? 'Stop' : 'Auto-scroll';
-      autoBtn.setAttribute('data-tip', state.auto.running ? 'Stop scrolling' : (opts.autoTip || 'Scroll this page automatically until every reel has loaded'));
+      autoBtn.textContent = state.auto.running ? tx('stop', 'Stop') : tx('auto', 'Auto-scroll');
+      autoBtn.setAttribute('data-tip', state.auto.running ? tx('stopTip', 'Stop scrolling') : (opts.autoTip ? (typeof opts.autoTip === 'function' ? opts.autoTip() : opts.autoTip) : 'Scroll this page automatically until every reel has loaded'));
+      tabs.analytics.textContent = tx('analytics', 'Analytics');
+      tabs.export.textContent = tx('export', 'Export');
+      if (tabs.features && root.OpenOutlierFeatures) tabs.features.textContent = root.OpenOutlierFeatures.uiLang() === 'tr' ? 'Özellikler' : 'Features';
       if (collectBtn) {
         var c = state.collect || {};
         collectBtn.textContent = c.running ? 'Stop collecting' : (c.label || 'Collect top posts');
@@ -442,7 +465,7 @@
         collectBtn.setAttribute('data-tip', c.tip || '');
       }
       if (trackBtn) renderTrack();
-      autoStatus.textContent = state.auto.label || (total ? fmtFull(total) + ' posts collected' : '');
+      autoStatus.textContent = state.auto.label || (total ? tx('collected', '{n} posts collected', { n: fmtFull(total) }) : '');
       autoStatus.setAttribute('data-tip', state.auto.label || '');
       clearBtn.disabled = !state.selected;
 
@@ -496,12 +519,12 @@
       }
       if (opts.platform === 'youtube') {
         return h('div', { class: 'empty' },
-          h('p', { class: 'empty-title', text: 'No YouTube videos collected yet' }),
+          h('p', { class: 'empty-title', text: tx('ytEmpty', 'No YouTube videos collected yet') }),
           h('ol', null,
-            h('li', null, 'Open a channel\'s Videos or Shorts tab, e.g. ', h('code', { text: 'youtube.com/@name/videos' })),
-            h('li', { text: 'Scroll down, or press Auto-scroll. Videos are collected as YouTube loads them.' }),
-            h('li', { text: 'Open a video to get its exact views, likes and date. Come back here to sort, analyze and export.' })),
-          h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier only reads what YouTube already loaded; it never likes, subscribes, comments or posts.' }));
+            h('li', null, tx('ytE1', 'Open a channel\'s Videos or Shorts tab, e.g. '), h('code', { text: 'youtube.com/@name/videos' })),
+            h('li', { text: tx('ytE2', 'Scroll down, or press Auto-scroll. Videos are collected as YouTube loads them.') }),
+            h('li', { text: tx('ytE3', 'Open a video to get its exact views, likes and date. Come back here to sort, analyze and export.') })),
+          h('p', { class: 'muted', text: tx('ytEnote', 'Everything stays in this browser. OpenOutlier only reads what YouTube already loaded; it never likes, subscribes, comments or posts.') }));
       }
       if (opts.platform === 'reddit') {
         return h('div', { class: 'empty' },
@@ -531,7 +554,7 @@
           : [h('option', { value: 'reels', selected: ui.typeFilter === 'reels', text: plat === 'mixed' ? 'Reels, videos & Reddit posts' : plat === 'tiktok' ? 'Videos' : 'Reels & videos' }),
             igPosts() ? h('option', { value: 'posts', selected: ui.typeFilter === 'posts', text: 'Carousels & photos (' + fmtFull(igPosts()) + ')' }) : null,
             h('option', { value: 'all', selected: ui.typeFilter === 'all', text: plat === 'tiktok' ? 'Videos & photo posts' : 'All posts' })]);
-      var search = h('input', { type: 'search', placeholder: plat === 'reddit' || plat === 'youtube' ? (plat === 'reddit' ? 'Search titles or flair' : 'Search titles or #tags') : 'Search captions or #tags', value: ui.query, 'aria-label': 'Search captions' });
+      var search = h('input', { type: 'search', placeholder: plat === 'reddit' || plat === 'youtube' ? (plat === 'reddit' ? 'Search titles or flair' : tx('search', 'Search titles or #tags')) : 'Search captions or #tags', value: ui.query, 'aria-label': 'Search captions' });
       search.addEventListener('input', function () {
         ui.query = search.value; ui.shown = PAGE;
         render();
@@ -540,8 +563,8 @@
       if (plat === 'youtube') {
         var nS = state.posts.filter(function (p) { return p.type === 'short'; }).length;
         var nL = state.posts.length - nS;
-        ytSwitch = h('div', { class: 'seg', role: 'group', 'aria-label': 'Format' },
-          [['long', 'Videos', nL, 'Long-form videos and past live streams, scored against their own median'], ['short', 'Shorts', nS, 'Shorts, scored against the Shorts median']].map(function (f) {
+        ytSwitch = h('div', { class: 'seg', role: 'group', 'aria-label': tx('format', 'Format') },
+          [['long', tx('fmtVideos', 'Videos'), nL, tx('fmtVideosTip', 'Long-form videos and past live streams, scored against their own median')], ['short', 'Shorts', nS, tx('fmtShortsTip', 'Shorts, scored against the Shorts median')]].map(function (f) {
             return h('button', { type: 'button', class: 'seg-btn', 'aria-pressed': ui.ytFormat === f[0] ? 'true' : 'false', 'data-tip': f[3], onclick: function () {
               ui.ytFormat = f[0]; ui.shown = PAGE; ui.detail = null; render();
             } }, f[1], h('span', { class: 'seg-count', text: ' ' + fmtFull(f[2]) }));
@@ -549,8 +572,8 @@
       }
       var outl = h('label', { class: 'check' },
         h('input', { type: 'checkbox', checked: ui.outliersOnly, onchange: function (e) { ui.outliersOnly = e.target.checked; ui.shown = PAGE; render(); } }),
-        'Outliers only');
-      wrap.appendChild(h('div', { class: 'controls' }, ytSwitch, h('label', { class: 'field' }, 'Sort', sortSel), plat === 'youtube' ? null : typeSel, outl, search));
+        tx('outliers', 'Outliers only'));
+      wrap.appendChild(h('div', { class: 'controls' }, ytSwitch, h('label', { class: 'field' }, tx('sort', 'Sort'), sortSel), plat === 'youtube' ? null : typeSel, outl, search));
 
       var list = data.list;
       wrap.appendChild(h('p', { class: 'summary' },

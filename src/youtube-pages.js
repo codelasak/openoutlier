@@ -26,12 +26,13 @@
 
   var S = {
     en: {
-      stats: 'Channel stats', age: 'Age', days: '{n} days', since: 'since {d}', total: 'Total views', mean: 'Avg / video', median: 'Median / video', perMonth: 'Uploads / month',
+      stats: 'Channel stats', age: 'Age', days: { one: '{n} day', other: '{n} days' }, since: 'since {d}', total: 'Total views', mean: 'Avg / video', median: 'Median / video', perMonth: 'Uploads / month',
       avgLen: 'Avg length', shorts: 'Shorts', yes: 'Yes', no: 'No', country: 'Country', growth: 'Subscribers', growthTip: 'Daily subscribers since OpenOutlier started tracking this channel.',
       growthNone: 'Tracking started; the chart fills in daily.', growthOff: 'Track the channel for a growth chart.',
-      fromSaved: 'from {n} saved videos', fromChannel: 'total views ÷ video count', recent: 'last 90 days', lifetime: 'lifetime',
-      needKey: 'Add a YouTube Data API key (popup) for age, total views and country.',
-      monYes: 'Monetized', monNo: 'Not monetized', monChecking: 'Checking ads…', monUnknown: 'Can\'t check ads', monShorts: 'Can\'t check: Shorts only', monMusic: 'Music video',
+      fromSaved: { one: 'from {n} saved video', other: 'from {n} saved videos' }, fromChannel: 'total views ÷ video count', recent: 'last 90 days', lifetime: 'lifetime',
+      needKey: 'Add a YouTube Data API key for age, total views and country.', addKey: 'Add key', moreWithKey: 'More with an API key',
+      collapse: 'Hide the OpenOutlier card', expand: 'Show the OpenOutlier card', moreSim: '+{n}',
+      monYes: 'Monetized', monNo: 'Not monetized', monChecking: 'Checking…', monUnknown: 'Can\'t check ads', monShorts: 'Can\'t check: Shorts only', monMusic: 'Music video',
       monTipCh: 'Watch pages of {n} sampled videos checked for YouTube\'s ad key (yt_ad), {when}. OpenOutlier asks YouTube itself: at most 10 pages a minute, cached for 7 days. Turn off in Features.',
       monTipV: 'This video\'s watch page has YouTube\'s ad key (yt_ad) or not, checked {when}. Cached for 7 days. Turn off in Features.',
       monTipMusic: 'A music video: labels monetize these, so it says nothing about the channel.',
@@ -47,7 +48,7 @@
       history: 'Title & thumbnail changes', histTitle: 'Title', histThumb: 'Thumbnail', histVph: '{a} → {b} views/h', histVphPending: '{a} views/h before · after: in 24 h',
       histTip: 'Views per hour in the 24 hours before and after the change, from OpenOutlier\'s tracker.', histNoSnap: 'new image', histMore: '+{n} earlier',
       promotes: 'Promotes', promotesTip: 'Sponsor phrases, discount codes and affiliate / tracked links in this channel\'s video descriptions (rule-based scan, {n} descriptions).',
-      promotesNone: 'No sponsors or affiliate links in {n} descriptions', promotesUntracked: 'Track the channel to scan its descriptions for sponsors', vids: '{n} videos', vid1: '1 video', code: 'code {c}', promotesScan: 'from {n} descriptions',
+      promotesNone: 'No sponsors or affiliate links in {n} descriptions', promotesUntracked: 'Track the channel to scan its descriptions for sponsors', vids: { one: '{n} video', other: '{n} videos' }, vid1: '1 video', code: 'code {c}', promotesScan: 'from {n} descriptions',
       kindSponsor: 'sponsor', kindAffiliate: 'affiliate', kindLink: 'link', kindUtm: 'tracked link', kindCode: 'code', kindDiscount: 'discount',
       similar: 'Similar channels', similarTip: 'Recommended next to this channel in the "Up Next" lists of videos you watched (counts kept on this Mac, fading over ~30 days) and channels whose titles and tags read alike.',
       simCo: 'Up Next ×{n}', simText: 'similar titles', simBoth: 'Up Next ×{n} · titles', simNone: 'Nothing yet: it learns from the "Up Next" lists of the videos you watch.', simMap: 'Channel map', simTracked: 'tracked',
@@ -58,12 +59,13 @@
       title: 'OpenOutlier'
     },
     tr: {
-      stats: 'Kanal istatistikleri', age: 'Yaş', days: '{n} gün', since: '{d} tarihinden beri', total: 'Toplam izlenme', mean: 'Video başına ort.', median: 'Video başına medyan', perMonth: 'Aylık yükleme',
+      stats: 'Kanal istatistikleri', age: 'Yaş', days: { other: '{n} gün' }, since: '{d} tarihinden beri', total: 'Toplam izlenme', mean: 'Video başına ort.', median: 'Video başına medyan', perMonth: 'Aylık yükleme',
       avgLen: 'Ort. süre', shorts: 'Shorts', yes: 'Var', no: 'Yok', country: 'Ülke', growth: 'Abone', growthTip: 'OpenOutlier bu kanalı takip etmeye başladığından beri günlük abone sayısı.',
       growthNone: 'Takip başladı; grafik her gün dolacak.', growthOff: 'Büyüme grafiği için kanalı takip et.',
-      fromSaved: '{n} kayıtlı videodan', fromChannel: 'toplam izlenme ÷ video sayısı', recent: 'son 90 gün', lifetime: 'kanal ömrü',
-      needKey: 'Yaş, toplam izlenme ve ülke için bir YouTube Data API anahtarı ekle (popup).',
-      monYes: 'Para kazanıyor', monNo: 'Para kazanmıyor', monChecking: 'Reklam kontrol ediliyor…', monUnknown: 'Reklam kontrol edilemedi', monShorts: 'Kontrol edilemiyor: sadece Shorts', monMusic: 'Müzik videosu',
+      fromSaved: { other: '{n} kayıtlı videodan' }, fromChannel: 'toplam izlenme ÷ video sayısı', recent: 'son 90 gün', lifetime: 'kanal ömrü',
+      needKey: 'Yaş, toplam izlenme ve ülke için bir YouTube Data API anahtarı ekle.', addKey: 'Anahtar ekle', moreWithKey: 'API anahtarıyla daha fazlası',
+      collapse: 'OpenOutlier kartını gizle', expand: 'OpenOutlier kartını göster', moreSim: '+{n}',
+      monYes: 'Para kazanıyor', monNo: 'Para kazanmıyor', monChecking: 'Kontrol ediliyor…', monUnknown: 'Reklam kontrol edilemedi', monShorts: 'Kontrol edilemiyor: sadece Shorts', monMusic: 'Müzik videosu',
       monTipCh: '{n} örnek videonun izleme sayfasında YouTube\'un reklam anahtarı (yt_ad) arandı, {when}. OpenOutlier YouTube\'a kendisi sorar: dakikada en fazla 10 sayfa, 7 gün önbellek. Özellikler\'den kapatılabilir.',
       monTipV: 'Bu videonun izleme sayfasında YouTube\'un reklam anahtarı (yt_ad) var mı, {when} kontrol edildi. 7 gün önbellekte. Özellikler\'den kapatılabilir.',
       monTipMusic: 'Bir müzik videosu: bunları plak şirketleri para kazandırır, kanal hakkında bir şey söylemez.',
@@ -79,7 +81,7 @@
       history: 'Başlık ve thumbnail değişiklikleri', histTitle: 'Başlık', histThumb: 'Thumbnail', histVph: 'saatte {a} → {b} izlenme', histVphPending: 'önce saatte {a} izlenme · sonrası: 24 saatte',
       histTip: 'Değişiklikten önceki ve sonraki 24 saatte saat başına izlenme, OpenOutlier takibinden.', histNoSnap: 'yeni görsel', histMore: '+{n} önceki',
       promotes: 'Tanıttıkları', promotesTip: 'Bu kanalın video açıklamalarındaki sponsor ifadeleri, indirim kodları ve affiliate / takipli linkler (kurallarla tarama, {n} açıklama).',
-      promotesNone: '{n} açıklamada sponsor ya da affiliate link yok', promotesUntracked: 'Açıklamalarını sponsorlar için taramak üzere kanalı takip et', vids: '{n} video', vid1: '1 video', code: 'kod {c}', promotesScan: '{n} açıklamadan',
+      promotesNone: '{n} açıklamada sponsor ya da affiliate link yok', promotesUntracked: 'Açıklamalarını sponsorlar için taramak üzere kanalı takip et', vids: { other: '{n} video' }, vid1: '1 video', code: 'kod {c}', promotesScan: '{n} açıklamadan',
       kindSponsor: 'sponsor', kindAffiliate: 'affiliate', kindLink: 'link', kindUtm: 'takipli link', kindCode: 'kod', kindDiscount: 'indirim',
       similar: 'Benzer kanallar', similarTip: 'İzlediğin videoların "Sıradaki" listelerinde bu kanalın yanında önerilenler (sayılar bu Mac\'te, ~30 günde solar) ve başlık ve etiketleri benzeyen kanallar.',
       simCo: 'Sıradaki ×{n}', simText: 'benzer başlıklar', simBoth: 'Sıradaki ×{n} · başlıklar', simNone: 'Henüz yok: izlediğin videoların "Sıradaki" listelerinden öğrenir.', simMap: 'Kanal haritası', simTracked: 'takipte',
@@ -92,7 +94,16 @@
   };
   function lang() { return D.lang(); }
   function T() { return S[lang()]; }
-  function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); }
+  /** {n} text, or a { one, other } count string (src/features.js plural: "1 day", "3 days"). */
+  function fill(s, o) {
+    if (s && typeof s === 'object') {
+      var n = Number(String(o.n).replace(/[^0-9.-]/g, ''));
+      var rule = 'other';
+      try { rule = new Intl.PluralRules(lang() === 'tr' ? 'tr-TR' : 'en-US').select(isFinite(n) ? n : 2); } catch (e) { /* other */ }
+      s = s[rule] != null ? s[rule] : s.other;
+    }
+    return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; });
+  }
   function ctx() { return Y.pageContext(location.pathname, location.search); }
   function dateFmt(t, lg, opts) { try { return new Intl.DateTimeFormat(lg === 'tr' ? 'tr-TR' : 'en-US', opts || { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(t)); } catch (e) { return ''; } }
   function ago(t, lg) {
@@ -122,12 +133,25 @@
     '.v.hot{display:inline-flex;align-self:flex-start;padding:0 6px;border-radius:4px;background:var(--hot-bg);color:var(--hot-fg);font-weight:700}',
     '.v.hot small{color:inherit;opacity:.75}',
     '.sub{font-size:11.5px;line-height:15px;color:var(--muted);white-space:nowrap}',
+    '.sub.hint{white-space:normal}',
+    '.cell a.key{color:var(--link);text-decoration:none;font-size:13px;font-weight:500;line-height:22px;white-space:nowrap}.cell a.key:hover{text-decoration:underline}',
+    // C17: the channel card folds to its title row (remembered in this browser).
+    '.fold{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:16px;background:transparent;color:var(--muted);cursor:pointer;font:inherit;font-size:16px;line-height:1}',
+    '.fold:hover{background:var(--line)}.fold:focus-visible{outline:2px solid var(--link);outline-offset:1px}',
+    '.card.folded > :not(.head){display:none}',
+    '.card.folded{min-height:0}',
+    '.head.grow{flex:1 1 100%}',
     '.head{flex-direction:row;align-items:center;justify-content:flex-start;gap:8px;padding:0 14px 0 10px;border-left:0}',
     '.mk{width:16px;height:16px;flex:none}',
+    // The brand mark: one colour (Signal Blue) on YouTube's light page; ring + lime trail on dark (never lime on light).
+    '.mk .mk-o,.mk .mk-t{fill:var(--blue)}',
+    ':host-context(html[dark]) .mk .mk-o{fill:currentColor}:host-context(html[dark]) .mk .mk-t{fill:var(--lime)}',
     '.ttl{font-weight:500;font-size:14px;white-space:nowrap}',
     '.mon{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:12px;font-size:12.5px;font-weight:500;white-space:nowrap;background:transparent;box-shadow:inset 0 0 0 1px var(--line)}',
     '.mon i{width:6px;height:6px;flex:none;background:currentColor}',
-    '.mon.yes{background:var(--hot-bg);color:var(--hot-fg);box-shadow:none}',
+    // Monetized: a neutral outline pill with a check (lime is for outliers only).
+    '.mon.yes{color:inherit}',
+    '.mon .ck{font-size:12px;line-height:1}',
     '.mon.no,.mon.unknown,.mon.music,.mon.shorts{color:var(--muted)}',
     '.mon.checking i{animation:oo-blink 1s steps(2,end) infinite}',
     '@keyframes oo-blink{50%{opacity:.2}}',
@@ -174,7 +198,7 @@
     '.est{display:inline-block;margin-left:6px;padding:0 5px;border-radius:4px;font-size:10.5px;font-weight:500;line-height:16px;vertical-align:2px;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}',
     '@media (max-width:640px){.cell{padding:2px 10px}.v{font-size:14px}}'
   ].join('\n');
-  var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path fill="#C8FF2E" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
+  var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path class="mk-o" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path class="mk-t" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
 
   function h(tag, attrs, kids) {
     var e = document.createElement(tag);
@@ -202,11 +226,13 @@
     el.setAttribute('data-openoutlier', name);
     var root = el.attachShadow({ mode: 'open' });
     root.innerHTML = '<style>' + CSS + '</style><div class="card"></div>';
+    if (FT.applyLang) FT.applyLang(el, lang()); else el.setAttribute('lang', lang());
     return { el: el, root: root, card: root.querySelector('.card'), sig: '' };
   }
   function draw(hc, sig, build) {
     if (hc.sig === sig) return;
     hc.sig = sig;
+    hc.el.setAttribute('lang', lang());
     hc.card.textContent = '';
     build(hc.card);
   }
@@ -248,6 +274,17 @@
     return svg;
   }
 
+  /** A link that opens Library → Settings (the API key card). */
+  function keyLink(L) {
+    var a = h('a', { class: 'key', href: '#', text: L.addKey });
+    a.addEventListener('click', function (e) { e.preventDefault(); try { chrome.runtime.sendMessage({ type: 'reelscope:open-dashboard', hash: '#/settings' }); } catch (err) { /* reloaded */ } });
+    return a;
+  }
+  // C17: the channel card can fold to its title row; remembered in this browser (not in the synced settings).
+  var FOLD_KEY = 'openoutlier:channel-card-folded';
+  function folded() { try { return localStorage.getItem(FOLD_KEY) === '1'; } catch (e) { return false; } }
+  function setFolded(v) { try { localStorage.setItem(FOLD_KEY, v ? '1' : '0'); } catch (e) { /* ignore */ } }
+
   // ---- monetization + RYD answers, shared by the cards -----------------------------------------
   var mon = {};    // 'c:UC' / 'v:id' → answer
   var monAt = {};
@@ -274,7 +311,7 @@
     var cls = st === 'shorts-only' ? 'shorts' : st;
     var when = a && a.at ? ago(a.at, lg) : '';
     var tip = st === 'checking' ? L.monTipChecking : st === 'music' ? L.monTipMusic : kind === 'channel' ? fill(L.monTipCh, { n: a && a.sampled || a && a.checked || 5, when: when }) : fill(L.monTipV, { when: when });
-    return h('span', { class: 'mon ' + cls, title: tip, role: 'status' }, [h('i', {}), text]);
+    return h('span', { class: 'mon ' + cls, title: tip, role: 'status' }, [st === 'yes' ? h('span', { class: 'ck', 'aria-hidden': 'true', text: '✓' }) : h('i', {}), text]);
   }
 
   var ryd = {};
@@ -338,13 +375,18 @@
       monA = posts.length ? askMon('c:' + uc, { kind: 'channel', channel: uc, ids: smp.ids, shortsOnly: smp.shortsOnly }) : { state: 'checking' };
     }
     var spons = uc && FT.isOn('channel-sponsors') ? askSponsors(uc) : null;
-    var sig = JSON.stringify([lg, acct, st, growth && growth.series && growth.series.length, growth && growth.tracked, monA, spons && [spons.scanned, spons.brands.length], sim && sim.similar && sim.similar.map(function (x) { return x.id; }), rpm, FT.flags(), D.noKey(), document.documentElement.hasAttribute('dark')]);
+    var isFolded = folded();
+    var sig = JSON.stringify([lg, acct, st, growth && growth.series && growth.series.length, growth && growth.tracked, monA, spons && [spons.scanned, spons.brands.length], sim && sim.similar && sim.similar.map(function (x) { return x.id; }), rpm, FT.flags(), D.noKey(), document.documentElement.hasAttribute('dark'), isFolded]);
     draw(chCard, sig, function (card) {
       card.setAttribute('aria-label', L.stats);
-      var head = h('div', { class: 'cell head' }, []);
+      card.classList.toggle('folded', isFolded);
+      var head = h('div', { class: 'cell head' + (isFolded ? ' grow' : '') }, []);
       head.innerHTML = MARK;
       head.appendChild(h('span', { class: 'ttl', text: L.stats }));
       if (monA) head.appendChild(monPill(monA, L, lg, 'channel'));
+      var fold = h('button', { class: 'fold', type: 'button', 'aria-expanded': isFolded ? 'false' : 'true', title: isFolded ? L.expand : L.collapse, 'aria-label': isFolded ? L.expand : L.collapse, text: isFolded ? '▾' : '▴' });
+      fold.addEventListener('click', function () { setFolded(!folded()); chCard.sig = ''; refresh(); });
+      if (isFolded) { head.appendChild(fold); card.appendChild(head); return; }
       card.appendChild(head);
       if (FT.isOn('channel-stats')) {
         if (st.ageDays != null) card.appendChild(cell(L.age, fill(L.days, { n: I.full(st.ageDays, lg) }), { sub: info && info.publishedAt ? fill(L.since, { d: dateFmt(info.publishedAt, lg, { month: 'short', year: 'numeric' }) }) : null }));
@@ -367,11 +409,18 @@
         }
       }
       if (rpm) card.appendChild(rpmCell(rpm, L, lg));
-      if (FT.isOn('channel-stats') && !info && D.noKey()) card.appendChild(h('p', { class: 'note', text: L.needKey }));
+      if (FT.isOn('channel-stats') && !info && D.noKey()) card.appendChild(h('p', { class: 'note' }, [L.needKey + ' ', keyLink(L)]));
       // Untracked channels without saved descriptions get no row (no clutter on every channel page).
       if (spons && (spons.brands.length || spons.tracked)) card.appendChild(sponsorRow(spons, L, lg));
       // Similar channels: shown when there is something to show, or (as a hint) on channels the tracker or the Library knows.
       if (sim && (sim.similar.length || sim.channel && (sim.channel.tracked || sim.channel.saved))) card.appendChild(similarRow(sim, L, lg));
+      // The fold button last, top right of the card (out of the floating OpenOutlier button's corner).
+      fold.style.position = 'absolute';
+      fold.style.top = '6px';
+      fold.style.right = '6px';
+      card.style.position = 'relative';
+      card.style.paddingRight = '40px';
+      card.appendChild(fold);
     });
   }
 
@@ -386,12 +435,14 @@
   function similarRow(sim, L, lg) {
     var row = h('div', { class: 'wide', title: L.similarTip }, [h('b', { text: L.similar })]);
     if (!sim.similar.length) { row.appendChild(h('span', { class: 'sub', text: L.simNone })); return row; }
-    sim.similar.slice(0, 6).forEach(function (x) {
+    // Three, then "+N" (the rest are on the channel map).
+    sim.similar.slice(0, 3).forEach(function (x) {
       var why = x.why === 'both' ? fill(L.simBoth, { n: I.full(x.seen || 0, lg) }) : x.why === 'corec' ? fill(L.simCo, { n: I.full(x.seen || 0, lg) }) : L.simText;
       var tip = [x.name, x.subs != null ? I.compact(x.subs, lg) : null, x.tracked ? L.simTracked : null, x.terms && x.terms.length ? x.terms.join(', ') : null].filter(Boolean).join(' · ');
       var av = x.thumb ? h('img', { src: x.thumb, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }) : h('span', { class: 'av' });
       row.appendChild(h('a', { class: 'sim', href: x.url, title: tip }, [av, h('b', { text: x.name }), h('small', { text: why })]));
     });
+    if (sim.similar.length > 3) row.appendChild(h('span', { class: 'sub', title: sim.similar.slice(3).map(function (x) { return x.name; }).join(', '), text: fill(L.moreSim, { n: sim.similar.length - 3 }) }));
     var more = h('a', { class: 'more', href: '#', text: L.simMap + ' →' });
     more.addEventListener('click', function (e) { e.preventDefault(); try { chrome.runtime.sendMessage({ type: 'reelscope:open-dashboard', hash: '#/niche/map' }); } catch (err) { /* reloaded */ } });
     row.appendChild(more);
@@ -525,7 +576,7 @@
         var fmt = f.type === 'short' ? L.fmtShort : L.fmtLong;
         card.appendChild(o ? cell(L.outlier, I.times(o.value, lg), { hot: o.value >= I.OUTLIER, small: o.basis === 'mean' ? L.avg : null,
           tip: o.basis === 'median' ? fill(L.outTipMedian, { n: o.n, fmt: fmt }) : o.source === 'channel' ? L.outTipMean : fill(L.outTipMeanLib, { n: o.n, fmt: fmt }) })
-          : cell(L.outlier, '–', { sub: L.outNone }));
+          : cell(L.outlier, D.noKey() ? keyLink(L) : '–', { tip: L.outNone }));
         card.appendChild(cell(L.vph, f.vph ? I.vphLabel(f.vph, lg) : '–', { tip: L.vphTip, sub: f.vph ? null : L.noVph }));
         card.appendChild(cell(L.vph24, b && b.vph24 ? I.compact(b.vph24.vph, lg) + (lg === 'tr' ? '/sa' : '/h') : '–', { tip: L.vph24Tip, sub: b && b.vph24 ? null : L.vph24None }));
         card.appendChild(cell(L.eng, eng != null ? I.pct(eng, lg) : '–', { tip: L.engTip }));
@@ -583,8 +634,13 @@
     ':host(.compact) .cell:first-child{border-left:0}',
     ':host(.compact) .v{font-size:13px;line-height:18px}',
     ':host(.compact) .lb{font-size:10.5px;line-height:13px}',
-    ':host(.compact) .sub,:host(.compact) .head{display:none}'
+    ':host(.compact) .sub,:host(.compact) .head,:host(.compact) .more{display:none}'
   ].join('\n');
+  function mastBottom() {
+    var m = document.querySelector('ytd-masthead, #masthead-container');
+    var r = m && m.getBoundingClientRect();
+    return r && r.height > 0 && r.top <= 1 ? Math.max(0, Math.round(r.bottom)) : 0;
+  }
   function shortsCard() {
     var c = ctx();
     var on = c.kind === 'short' && c.video && FT.isOn('shorts-overlay');
@@ -602,9 +658,9 @@
     var compact = room < 212;
     sCard.el.classList.toggle('compact', compact);
     if (compact) {
-      // Narrow window: one line over the top of the video, under YouTube's play / volume row.
+      // Narrow window: one line over the top of the video, 8 px under YouTube's play / volume row (and under the masthead).
       sCard.el.style.left = Math.max(8, r.left + 12) + 'px';
-      sCard.el.style.top = Math.max(8, r.top + 56) + 'px';
+      sCard.el.style.top = Math.max(mastBottom() + 8, r.top + 64) + 'px';
       sCard.el.style.right = 'auto';
       sCard.el.style.maxWidth = Math.max(160, r.width - 24) + 'px';
     } else {
@@ -626,11 +682,16 @@
       head.innerHTML = MARK;
       head.appendChild(h('span', { class: 'ttl', text: L.title }));
       card.appendChild(head);
+      // Only cells with a value (C25); what an API key would add is one line at the end.
       card.appendChild(cell(L.vph, f.vph ? I.vphLabel(f.vph, lg) : '–', { tip: L.vphTip, sub: f.vph ? null : L.noVph }));
-      card.appendChild(cell(L.published, f.publishedAt ? (f.dateExact ? '' : '≈') + ago(f.publishedAt, lg) : '–', { sub: f.publishedAt && f.dateExact ? dateFmt(f.publishedAt, lg, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null }));
+      if (f.publishedAt) card.appendChild(cell(L.published, (f.dateExact ? '' : '≈') + ago(f.publishedAt, lg), { sub: f.dateExact ? dateFmt(f.publishedAt, lg, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null }));
       var age = info && info.publishedAt ? Math.floor((Date.now() - info.publishedAt) / I.DAY) : null;
-      card.appendChild(cell(L.chAge, age != null ? fill(L.days, { n: I.full(age, lg) }) : '–', { sub: age == null && D.noKey() ? L.needKey.split(' (')[0] : null }));
-      card.appendChild(cell(L.avgShorts, avgShorts && avgShorts.v != null ? I.compact(avgShorts.v, lg) : '–', { sub: avgShorts ? avgShorts.sub : null }));
+      if (age != null) card.appendChild(cell(L.chAge, fill(L.days, { n: I.full(age, lg) })));
+      if (avgShorts && avgShorts.v != null) card.appendChild(cell(L.avgShorts, I.compact(avgShorts.v, lg), { sub: avgShorts.sub }));
+      if ((age == null || !avgShorts) && D.noKey()) {
+        var more = h('div', { class: 'cell more' }, [h('span', { class: 'sub hint' }, [L.moreWithKey + ' · ', keyLink(L)])]);
+        card.appendChild(more);
+      }
     });
   }
 

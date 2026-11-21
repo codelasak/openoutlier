@@ -615,7 +615,8 @@
     platform: 'youtube',
     velocityOf: velocityOf,
     listTabLabel: 'Videos',
-    autoTip: 'Scroll this channel tab automatically until every video has loaded',
+    lang: function () { return FT ? FT.uiLang() : 'en'; },
+    autoTip: function () { return FT && FT.uiLang() === 'tr' ? 'Her video yüklenene kadar bu kanal sekmesini kendiliğinden kaydırır' : 'Scroll this channel tab automatically until every video has loaded'; },
     onAutoScroll: toggleAuto,
     onSelectProfile: function (id) { selected = id || null; scheduleRender(); },
     onClearProfile: function (id) {
@@ -756,14 +757,40 @@
     return bestArea > 20000 ? best : null;
   }
 
+  /**
+   * The watch page's OpenOutlier row: a flex row of our own right under YouTube's title / owner / like
+   * row (ytd-watch-metadata #top-row). The toolbar (overlay.js) is its first item and phase 4's tool
+   * chips (youtube-tools.js) follow, so the page has one OpenOutlier toolbar, it wraps on narrow
+   * windows, and YouTube's own like / share row is never widened (that made 390 px pages scroll sideways).
+   */
+  var watchRowEl = null;
+  function watchRow() {
+    var tops = document.querySelectorAll('ytd-watch-metadata #top-row');
+    var top = null;
+    for (var i = 0; i < tops.length; i++) if (tops[i].getBoundingClientRect().width > 0) { top = tops[i]; break; }
+    if (!top || !top.parentNode) return null;
+    if (!watchRowEl) {
+      watchRowEl = document.createElement('div');
+      watchRowEl.className = 'openoutlier-watch-row';
+      watchRowEl.setAttribute('data-openoutlier', 'watch-row');
+      watchRowEl.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;min-width:0;max-width:100%';
+    }
+    if (watchRowEl.previousElementSibling !== top || watchRowEl.parentNode !== top.parentNode) top.parentNode.insertBefore(watchRowEl, top.nextSibling);
+    return watchRowEl;
+  }
+  /** The bottom of YouTube's sticky masthead (fixed cards stay below it). */
+  function mastheadBottom() {
+    var m = document.querySelector('ytd-masthead, #masthead-container, [data-oo-masthead]');
+    var r = m && m.getBoundingClientRect();
+    return r && r.height > 0 && r.top <= 0 + 1 ? Math.max(0, Math.round(r.bottom)) : 0;
+  }
+
   /** Where the toolbar goes: never on top of YouTube's player (it has its own controls there). */
   function overlayPlacement() {
     var c = ctx();
     if (c.kind === 'watch') {
-      // The like / share row under the video; YouTube lays it out, so nothing is covered.
-      var rows = document.querySelectorAll('ytd-watch-metadata #top-level-buttons-computed');
-      for (var i = 0; i < rows.length; i++) if (rows[i].getBoundingClientRect().width > 0) return { inline: rows[i] };
-      return null;
+      var row = watchRow();
+      return row ? { inline: row } : null;
     }
     if (c.kind === 'short') {
       var v = mainVideo();
@@ -774,11 +801,29 @@
     return null;
   }
 
+  /** The stats button on a watch page: scroll to the inline watch card (youtube-pages.js) and flash it, instead of a second card. */
+  function showWatchCard() {
+    if (ctx().kind !== 'watch') return false;
+    var cards = document.querySelectorAll('.openoutlier-watch-card');
+    var card = null;
+    for (var i = 0; i < cards.length; i++) if (cards[i].getBoundingClientRect().height > 0) { card = cards[i]; break; }
+    if (!card) return false;
+    try { card.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { card.scrollIntoView(); }
+    card.animate && card.animate([{ boxShadow: '0 0 0 3px #1E3BFF' }, { boxShadow: '0 0 0 3px rgba(30,59,255,0)' }], { duration: 1400, easing: 'ease-out' });
+    card.style.borderRadius = '12px';
+    return true;
+  }
+
   var overlay = O.create({
     cssText: cssText,
     placement: overlayPlacement,
-    openKey: 'reelscope:yt-card-open',
+    // Not remembered on YouTube: a card left open would reopen on every video over the inline card.
+    persistOpen: false,
     defaultOpen: false,
+    lang: function () { return FT ? FT.uiLang() : 'en'; },
+    collapseBelow: 600,
+    topInset: mastheadBottom,
+    onStats: showWatchCard,
     getPost: function (id) { return findPost(id); },
     getProfilePosts: function (owner) { return owner && accounts[owner] ? Object.values(accounts[owner]) : []; },
     isLoading: function () { return false; },
@@ -820,6 +865,9 @@
       });
       overlay.refresh();
       mountTrackButton();
+      // Shadow hosts carry the UI language, so CSS uppercase gives "İ" / "I" right (review B3).
+      var ul = FT ? FT.uiLang() : 'en';
+      [panel.host, overlay.host, trackHost].forEach(function (el) { if (el && el.getAttribute('lang') !== ul) el.setAttribute('lang', ul); });
       libSubs.slice().forEach(function (fn) { try { fn(); } catch (e) { console.warn('[OpenOutlier] library listener failed', e); } });
     }, 250);
   }
@@ -834,6 +882,8 @@
     findPost: findPost,
     overlay: overlay,
     mainVideo: mainVideo,
+    /** The watch page's one OpenOutlier row (toolbar + tool chips), or null off watch pages. */
+    watchRow: function () { return ctx().kind === 'watch' ? watchRow() : null; },
     pageAccount: function () { return pageAccount(); },
     /** cb() after the saved videos changed (throttled with the panel's render). */
     onChange: function (cb) { libSubs.push(cb); return function () { libSubs = libSubs.filter(function (x) { return x !== cb; }); }; }
@@ -854,7 +904,8 @@
     if (code !== overlayCode) { overlayCode = code; overlay.setCode(code); }
     // On a watch page the floating button would cover the player's fullscreen / settings
     // controls; the toolbar under the video opens the panel there instead.
-    panel.setLauncherHidden(c.kind === 'watch');
+    // Shorts: the action column is there (Share, …) and the toolbar beside the Short opens the card and the panel.
+    panel.setLauncherHidden(c.kind === 'watch' || c.kind === 'short');
   }
 
   mount();

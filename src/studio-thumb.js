@@ -120,6 +120,7 @@
     var host = document.createElement('div');
     host.setAttribute('data-openoutlier', 'thumb-compress');
     var root = host.attachShadow({ mode: 'open' });
+    host.setAttribute('lang', lg);
     root.innerHTML = '<style>' + CSS + '</style>';
     var origUrl = URL.createObjectURL(file);
     var made = null;
@@ -250,6 +251,7 @@
       link = document.createElement('div');
       link.setAttribute('data-openoutlier', 'thumb-tester-link');
       var r = link.attachShadow({ mode: 'open' });
+      link.setAttribute('lang', lang());
       r.innerHTML = '<style>:host{display:block;margin:8px 0 0}a{display:inline-flex;align-items:center;gap:6px;font:500 13px/20px Roboto,Arial,sans-serif;color:#065fd4;text-decoration:none;cursor:pointer}' +
         ':host-context(html[dark]) a{color:#3ea6ff}a:hover{text-decoration:underline}.mk{width:14px;height:14px;color:currentColor}</style><a role="link" tabindex="0"></a>';
       var a = r.querySelector('a');

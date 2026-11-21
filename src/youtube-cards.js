@@ -39,7 +39,7 @@
       tipVphApprox: 'Views per hour, approximate: YouTube shows rounded views and a relative date here. Open the video for the exact number.',
       tipSubs: 'Channel subscribers.',
       tipVel: 'Velocity: {views} views at {at}, {x} what this channel\'s videos usually have by then (OpenOutlier niche tracking).',
-      filters: 'Filters', reset: 'Reset', close: 'Close',
+      filters: 'Outlier filters', reset: 'Reset', close: 'Close',
       showing: 'Showing {a} of {b} loaded videos', showingAll: '{b} videos loaded',
       loadedNote: 'Filters only what YouTube has loaded so far. Scroll down to load more.',
       noData: '{n} hidden for lack of data',
@@ -60,7 +60,7 @@
       tipVphApprox: 'Saat başına izlenme, yaklaşık: YouTube burada yuvarlanmış izlenme ve göreli tarih gösteriyor. Kesin sayı için videoyu aç.',
       tipSubs: 'Kanalın abone sayısı.',
       tipVel: 'Hız: {at} noktasında {views} izlenme, bu kanalın videolarının o saatte normalde aldığının {x} katı (OpenOutlier niş takibi).',
-      filters: 'Filtreler', reset: 'Sıfırla', close: 'Kapat',
+      filters: 'Outlier filtreleri', reset: 'Sıfırla', close: 'Kapat',
       showing: 'Yüklenen {b} videodan {a} tanesi gösteriliyor', showingAll: '{b} video yüklendi',
       loadedNote: 'Filtreler sadece YouTube\'un şu ana kadar yüklediği videolara uygulanır. Daha fazlası için aşağı kaydır.',
       noData: '{n} video verisi olmadığı için gizlendi',
@@ -326,7 +326,11 @@
     'oo-b{display:inline-flex;align-items:center;flex:none;height:18px;padding:0 5px;border-radius:4px;background:rgba(11,14,26,.8);color:#F6F7F2;white-space:nowrap;font-variant-numeric:tabular-nums;cursor:default}',
     'oo-b.oo-out{background:rgba(11,14,26,.8);color:#F6F7F2}',
     'oo-b.oo-hot{background:#C8FF2E;color:#0B0E1A;font-weight:700}',
-    'oo-b.oo-vel{background:#1E3BFF;color:#F6F7F2}',
+    // Velocity in the same dark style as the others (blue looked foreign on YouTube).
+    'oo-b.oo-vel{background:rgba(11,14,26,.8);color:#F6F7F2}',
+    // Subscribers sit in the card's meta row, after the channel name, not over the thumbnail.
+    'oo-m{color:inherit;font:inherit;white-space:nowrap}',
+    'oo-m::before{content:" · "}',
     'oo-b i{font-style:normal;opacity:.78;font-size:10px;margin-left:3px;font-weight:500}',
     'oo-b.oo-hot i{opacity:.7}',
     '@container oo (max-width: 230px){oo-b.oo-subs{display:none}}',
@@ -451,7 +455,7 @@
       st.facts = f;
       list.push(c);
       want(f);
-      if (!showBadges) { if (st.host) { st.host.remove(); st.host = null; st.sig = ''; } return; }
+      if (!showBadges) { if (st.host) { st.host.remove(); st.host = null; st.sig = ''; } if (st.meta) { st.meta.remove(); st.meta = null; } return; }
       var chips = chipsFor(f, L, lg);
       var sig = JSON.stringify(chips);
       if (sig === st.sig && st.host && st.host.isConnected) return;
@@ -477,8 +481,11 @@
       out.push({ k: 'vel', t: at + ': ' + I.times(f.velocity.score, lg), s: '', tip: fill(L.tipVel, { views: I.full(f.velocity.views, lg), at: at, x: I.times(f.velocity.score, lg) }) });
     }
     if (FT.isOn('card-vph') && f.vph) out.push({ k: 'vph', t: I.vphLabel(f.vph, lg), s: '', tip: f.vph.approx ? L.tipVphApprox : L.tipVph });
-    if (FT.isOn('card-subs') && f.subs != null) out.push({ k: 'subs', t: I.compact(f.subs, lg), s: L.subs, tip: L.tipSubs + ' ' + I.full(f.subs, lg) });
-    return out;
+    // Not on a channel's own page: every card there would repeat the same channel's count.
+    if (FT.isOn('card-subs') && f.subs != null && pageKind() !== 'channel') out.push({ k: 'subs', t: I.compact(f.subs, lg), s: L.subs, tip: L.tipSubs + ' ' + I.full(f.subs, lg) });
+    // At most two badges on the thumbnail (outlier first, then velocity or VPH); subscribers go to the meta row.
+    var thumbs = out.filter(function (c) { return c.k !== 'subs'; }).slice(0, 2);
+    return thumbs.concat(out.filter(function (c) { return c.k === 'subs'; }));
   }
 
   function thumbOf(card) {
@@ -487,9 +494,33 @@
     return t;
   }
 
+  /** The channel name link in the card's text (not the avatar or thumbnail): subscribers go right after it. */
+  function channelLinkOf(card, thumb) {
+    var links = card.querySelectorAll('a[href^="/@"], a[href^="/channel/UC"]');
+    for (var i = 0; i < links.length; i++) {
+      var a = links[i];
+      if (thumb && thumb.contains(a)) continue;
+      if (!String(a.textContent || '').trim()) continue; // the avatar link
+      return a;
+    }
+    return null;
+  }
+  function paintMeta(card, st, sub, thumb) {
+    if (!sub) { if (st.meta) { st.meta.remove(); st.meta = null; } return; }
+    var link = channelLinkOf(card, thumb);
+    if (!link) { if (st.meta) { st.meta.remove(); st.meta = null; } return; }
+    if (!st.meta) st.meta = document.createElement('oo-m');
+    if (st.meta.previousSibling !== link) link.after(st.meta);
+    var txt = sub.t + ' ' + sub.s;
+    if (st.meta.textContent !== txt) st.meta.textContent = txt;
+    if (st.meta.title !== sub.tip) st.meta.title = sub.tip;
+  }
   function paint(card, st, chips) {
+    var thumb0 = thumbOf(card);
+    paintMeta(card, st, chips.filter(function (c) { return c.k === 'subs'; })[0], thumb0);
+    chips = chips.filter(function (c) { return c.k !== 'subs'; });
     if (!chips.length) { if (st.host) { st.host.remove(); st.host = null; } return; }
-    var thumb = thumbOf(card);
+    var thumb = thumb0;
     if (!thumb) return;
     if (!st.host || st.host.parentNode !== thumb) {
       if (st.host) st.host.remove();
@@ -512,6 +543,7 @@
   function unmount(card) {
     var st = state.get(card);
     if (st && st.host) st.host.remove();
+    if (st && st.meta) st.meta.remove();
     card.removeAttribute('data-oo-hidden');
     card.style.removeProperty('order');
     cards.delete(card);
@@ -619,7 +651,14 @@
     '.btn[aria-pressed="true"],.btn.has{background:var(--ink);color:var(--paper)}',
     ':host-context(html[dark]) .btn[aria-pressed="true"],:host-context(html[dark]) .btn.has{background:var(--paper);color:var(--ink)}',
     '.mk{width:14px;height:14px;flex:none;display:block}',
-    '.n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:4px;background:var(--lime);color:var(--ink);font-size:11.5px;font-weight:700;box-sizing:border-box}',
+    // The mark: one colour blue on the light page; ring + lime trail on ink (a pressed / active button) and on dark YouTube.
+    '.mk .mk-o,.mk .mk-t{fill:var(--blue)}',
+    '.btn[aria-pressed="true"] .mk .mk-o,.btn.has .mk .mk-o{fill:currentColor}.btn[aria-pressed="true"] .mk .mk-t,.btn.has .mk .mk-t{fill:var(--lime)}',
+    ':host-context(html[dark]) .mk .mk-o{fill:currentColor}:host-context(html[dark]) .mk .mk-t{fill:var(--lime)}',
+    ':host-context(html[dark]) .btn[aria-pressed="true"] .mk .mk-t,:host-context(html[dark]) .btn.has .mk .mk-t{fill:var(--blue)}',
+    // Active-filter count: paper on the ink button (light), ink on the paper button (dark); never lime.
+    '.n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:4px;background:var(--paper);color:var(--ink);font-size:11.5px;font-weight:700;box-sizing:border-box}',
+    ':host-context(html[dark]) .n{background:var(--ink);color:var(--paper)}',
     '.st{color:var(--muted);font-size:13px;min-width:0}',
     '.st b{color:inherit;font-weight:500}',
     '.lnk{border:0;background:none;padding:0;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}',
@@ -645,7 +684,7 @@
     '@media (max-width:520px){.st{flex-basis:100%}}'
   ].join('\n');
 
-  var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path fill="#C8FF2E" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
+  var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path class="mk-o" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path class="mk-t" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
 
   function buildBar(mode) {
     var host = document.createElement('div');
@@ -680,6 +719,7 @@
     var sig = JSON.stringify([bar.mode, bar.open, lg, filters, filterStats, sortOn, sortLayoutOk, document.documentElement.hasAttribute('dark')]);
     if (sig === barSig && bar.row.childNodes.length) return;
     barSig = sig;
+    bar.host.setAttribute('lang', lg);
     var keepFocus = bar.root.activeElement && bar.root.activeElement.getAttribute('data-k');
     bar.row.textContent = '';
     if (bar.mode === 'sort') {

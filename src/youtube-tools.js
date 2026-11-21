@@ -82,6 +82,11 @@
 
   // ---- look: YouTube's surfaces and chips, the brand's blue for the one primary action ------------
   var CSS = [
+    // In the watch page's OpenOutlier row: the chips and the open panel become items of that row (the panel on a line of its own).
+    ':host(.in-row){display:contents}',
+    ':host(.in-row) .box{flex:1 1 100%;min-width:0}',
+    ':host(.in-row) .box:empty{display:none}',
+    ':host(.in-row) .panel{margin-top:0}',
     ':host{display:block;font:400 14px/20px Roboto,Arial,sans-serif;color:#0f0f0f;--surf:rgba(0,0,0,.05);--surf2:rgba(0,0,0,.1);--line:rgba(0,0,0,.1);--muted:#606060;--chip:rgba(0,0,0,.05);--chip-h:rgba(0,0,0,.1);',
     '--on-bg:#0f0f0f;--on-fg:#fff;--link:#065fd4;--blue:#1E3BFF;--ink:#0B0E1A;--lime:#C8FF2E;--field:#fff;--hl:rgba(30,59,255,.12)}',
     ':host-context(html[dark]){color:#f1f1f1;--surf:rgba(255,255,255,.1);--surf2:rgba(255,255,255,.16);--line:rgba(255,255,255,.16);--muted:#aaa;--chip:rgba(255,255,255,.1);--chip-h:rgba(255,255,255,.2);--on-bg:#f1f1f1;--on-fg:#0f0f0f;--link:#3ea6ff;--field:#121212;--hl:rgba(62,166,255,.18)}',
@@ -96,6 +101,10 @@
     '.chip:focus-visible,.btn:focus-visible,.seg button:focus-visible,.ts:focus-visible{outline:2px solid var(--link);outline-offset:2px}',
     '.brand{display:inline-flex;align-items:center;margin-left:auto;color:var(--muted);font-size:12px;gap:6px}',
     '.mk{width:14px;height:14px}',
+    '.mk .mk-o,.mk .mk-t{fill:var(--blue)}',
+    ':host-context(html[dark]) .mk .mk-o{fill:currentColor}:host-context(html[dark]) .mk .mk-t{fill:var(--lime)}',
+    // In the watch page's OpenOutlier row the chips match YouTube's 36 px pills.
+    ':host(.in-row) .chip{height:36px}',
     '.panel{margin-top:8px;border-radius:12px;background:var(--surf);padding:12px 14px}',
     '.ph{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:10px}',
     '.ph h3{margin:0;font-size:16px;line-height:22px;font-weight:500}',
@@ -125,7 +134,7 @@
     '.note{color:var(--muted);font-size:12px;line-height:16px;margin:8px 0 0}',
     '.msg{font-size:13px;margin:8px 0 0;color:var(--muted)}',
     '.msg.ok{color:inherit}',
-    '.msg.ok::before{content:"";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;background:var(--lime);box-shadow:0 0 0 1px var(--ink)}',
+    '.msg.ok::before{content:"";display:inline-block;width:6px;height:6px;margin:0 8px 2px 0;background:var(--blue)}',
     '.empty{color:var(--muted);padding:16px 2px;font-size:13px}',
     '.sk{display:block;height:12px;border-radius:3px;background:var(--surf2);margin:8px 0}',
     '.filters{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px}',
@@ -140,8 +149,8 @@
     '.cm.reply{padding-left:26px}',
     '.tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:4px;font-size:11px;font-weight:500;background:var(--surf2);color:inherit}',
     '.tag.q{background:var(--blue);color:#fff}',
-    '.tag.pin{background:var(--ink);color:var(--lime)}',
-    ':host-context(html[dark]) .tag.pin{background:var(--lime);color:var(--ink)}',
+    '.tag.pin{background:var(--ink);color:#F6F7F2}',
+    ':host-context(html[dark]) .tag.pin{background:#F6F7F2;color:var(--ink)}',
     '.form{display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:start}',
     '.form label.l{font-size:13px;color:var(--muted);padding-top:6px}',
     '.form .chk{min-height:32px}',
@@ -173,7 +182,7 @@
     '.x{position:absolute;top:8px;right:8px;width:28px;height:28px;border:0;border-radius:14px;background:transparent;cursor:pointer;color:var(--muted);font-size:18px;line-height:1}',
     '.x:hover{background:var(--chip)}'
   ].join('\n');
-  var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path fill="#C8FF2E" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
+  var MARK = '<svg class="mk" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path class="mk-o" d="M4 2h6v2H4zM2 4h2v8H2zM10 4h2v8h-2zM4 12h6v2H4z"/><path class="mk-t" d="M12 2h2v2h-2zM14 0h2v2h-2z"/></svg>';
   var ICON = {
     transcript: 'M4 6h16M4 11h16M4 16h10',
     comments: 'M4 5h16v11H9l-5 4z',
@@ -453,6 +462,10 @@
   var bar = null; // { el, root, chips, panelBox }
   function anyWatchTool() { return FT.isOn('transcript-tools') || FT.isOn('comment-tools') || FT.isOn('swipe-save'); }
   function barSlot() {
+    // The watch page's OpenOutlier row (youtube-content.js): the chips sit right after the toolbar, one toolbar.
+    var lib = Lib();
+    var row = lib && lib.watchRow ? lib.watchRow() : null;
+    if (row) return { parent: row, before: null, row: true };
     var page = D.activePage();
     var card = page.querySelector('.openoutlier-watch-card');
     if (card && card.parentNode) return { parent: card.parentNode, before: card.nextSibling };
@@ -469,7 +482,7 @@
     var root = el.attachShadow({ mode: 'open' });
     root.innerHTML = '<style>' + CSS + '</style>';
     var row = h('div', { class: 'row', role: 'toolbar' });
-    var box = h('div', {});
+    var box = h('div', { class: 'box' });
     root.appendChild(row);
     root.appendChild(box);
     return { el: el, root: root, row: row, box: box, sig: '' };
@@ -495,13 +508,18 @@
     var sig = JSON.stringify([lang(), state.open, FT.flags(), c ? c.items.length : 0, !!saved]);
     if (bar.sig === sig) return;
     bar.sig = sig;
+    bar.el.setAttribute('lang', lang());
+    if (pop.el) pop.el.setAttribute('lang', lang());
     bar.row.textContent = '';
     if (FT.isOn('transcript-tools')) bar.row.appendChild(chip('transcript', L.transcript, ICON.transcript));
     if (FT.isOn('comment-tools')) bar.row.appendChild(chip('comments', L.comments, ICON.comments, c && c.items.length ? I.compact(c.items.length, lang()) : null));
     if (FT.isOn('swipe-save')) bar.row.appendChild(chip('save', saved ? L.saved : L.save, saved ? ICON.saved : ICON.save));
-    var br = h('span', { class: 'brand', title: L.tools });
-    br.innerHTML = MARK;
-    bar.row.appendChild(br);
+    // In the shared row the toolbar already carries the OpenOutlier mark.
+    if (!bar.el.classList.contains('in-row')) {
+      var br = h('span', { class: 'brand', title: L.tools });
+      br.innerHTML = MARK;
+      bar.row.appendChild(br);
+    }
   }
   function watchBar() {
     var c = ctx();
@@ -510,7 +528,9 @@
     if (!slot) { if (bar) { bar.el.remove(); bar = null; } return; }
     if (state.video !== c.video) { state.video = c.video; state.open = null; state.form = null; setMsg(''); restore(c.video); }
     if (state.open && !FT.isOn(state.open === 'transcript' ? 'transcript-tools' : state.open === 'comments' ? 'comment-tools' : 'swipe-save')) state.open = null;
-    if (!bar) { bar = makeBar(); bar.el.style.margin = '12px 0 0'; }
+    if (!bar) bar = makeBar();
+    bar.el.classList.toggle('in-row', !!slot.row);
+    bar.el.style.margin = slot.row ? '' : '12px 0 0';
     if (bar.el.parentNode !== slot.parent || (slot.before && bar.el.nextSibling !== slot.before && bar.el !== slot.before)) slot.parent.insertBefore(bar.el, slot.before);
     paintChips();
     paintPanel();
@@ -825,6 +845,7 @@
     pop.el.setAttribute('data-openoutlier', 'tools-popover');
     pop.el.style.cssText = 'all:initial;position:fixed;z-index:2147483000;left:0;top:0;width:0;height:0';
     pop.root = pop.el.attachShadow({ mode: 'open' });
+    pop.el.setAttribute('lang', lang());
     pop.root.innerHTML = '<style>' + CSS + '</style>';
     pop.box = h('div', { class: 'pop', role: 'dialog' });
     pop.root.appendChild(pop.box);
