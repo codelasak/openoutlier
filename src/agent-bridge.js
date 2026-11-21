@@ -138,7 +138,8 @@
       } else {
         await setState({ port: found.port, connected: true, lastError: null, lastBackupAt: found.health.lastBackupAt || null, lastBackupOk: found.health.lastBackupOk });
       }
-      await pushSettings(found);
+      // A refused settings call must not make the bridge look disconnected (sync and commands still work).
+      await pushSettings(found).catch(function (e) { console.warn('[OpenOutlier] the bridge refused the feature settings:', e && e.message); });
       await pollCommands(found.port);
       await expireStale();
     } catch (e) {
