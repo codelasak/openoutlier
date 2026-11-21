@@ -861,7 +861,7 @@
         api: api.configured ? api : null,
         features: featureState,
         track: trackState(),
-        auto: { running: auto.running, label: auto.label || (prof && prof.videos ? countFor(id) + ' of ~' + prof.videos + ' videos collected' : '') }
+        auto: { running: auto.running, label: auto.label || (prof && prof.videos ? (FT && FT.uiLang() === 'tr' ? '~' + prof.videos + ' videonun ' + countFor(id) + ' tanesi toplandı' : countFor(id) + ' of ~' + prof.videos + ' videos collected') : '') }
       });
       overlay.refresh();
       mountTrackButton();

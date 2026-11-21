@@ -178,8 +178,8 @@
     '.hist .arr{color:var(--muted)}',
     '.hist .vph{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}',
     '.hist .vph b{font-weight:500;color:inherit}',
-    '.hist .vph b.up{color:#0a7d3a}.hist .vph b.down{color:#c00}',
-    ':host-context(html[dark]) .hist .vph b.up{color:#5be08c}:host-context(html[dark]) .hist .vph b.down{color:#ff7c7c}',
+    // Ink text with an arrow, not red / green (the brand's single-hue rule, review D30).
+    '.hist .vph b.up::before{content:"▲ ";font-size:9px;vertical-align:1px}.hist .vph b.down::before{content:"▼ ";font-size:9px;vertical-align:1px}',
     '.snap{width:64px;height:36px;border-radius:4px;object-fit:cover;background:var(--line);display:block}',
     '.snap.ph{display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted)}',
     '.pr{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line);font-size:12.5px;white-space:nowrap}',

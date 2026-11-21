@@ -167,6 +167,8 @@
     fmtVideosTip: 'Uzun videolar ve geçmiş canlı yayınlar, kendi medyanlarına göre', fmtShortsTip: 'Shorts, Shorts medyanına göre',
     ytEmpty: 'Henüz YouTube videosu toplanmadı', ytE1: 'Bir kanalın Videolar ya da Shorts sekmesini aç, örn. ', ytE2: 'Aşağı kaydır ya da Otomatik kaydır\'a bas. Videolar YouTube yükledikçe toplanır.',
     ytE3: 'Kesin izlenme, beğeni ve tarih için bir videoyu aç. Sıralamak, analiz etmek ve dışa aktarmak için buraya dön.',
+    viewsUnit: 'izlenme', allRounded: 'İzlenmeler YouTube\'un yuvarladığı sayılar (63 B, 1,2 Mn); medyanla karşılaştırmaya yeter. Kesin sayılar için videoyu aç.',
+    someRounded: '{b} izlenmenin {a} tanesi YouTube\'un yuvarladığı sayı; gerisi kesin (açılan videolar).', exact: 'Kesin istatistikleri al', exactTop: 'Viral Skor\'a göre ilk {n} için', exactDone: 'İlk {n} kesin',
     ytEnote: 'Her şey bu tarayıcıda kalır. OpenOutlier sadece YouTube\'un zaten yüklediğini okur; beğenmez, abone olmaz, yorum yapmaz, paylaşmaz.'
   };
   var MIXED_SORT_OPTIONS = [
@@ -577,7 +579,9 @@
 
       var list = data.list;
       wrap.appendChild(h('p', { class: 'summary' },
-        fmtFull(list.length) + ' shown · ' + (plat === 'mixed' ? 'scored against each account\'s own median' : basis === 'mixed' ? 'reels scored on views, carousels and photos on likes, each against its own median' : 'median ' + fmt(M.baselineOf(data.all) !== null ? M.baselineOf(data.all) : M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' ' + unit() + (plat === 'youtube' ? (ui.ytFormat === 'short' ? ' (Shorts)' : ' (long-form)') : '')) + ' · outlier = ' + M.OUTLIER_RATIO + '× median or more'));
+        plat === 'youtube' && opts.lang && opts.lang() === 'tr'
+          ? fmtFull(list.length) + ' gösteriliyor · medyan ' + fmt(M.baselineOf(data.all) !== null ? M.baselineOf(data.all) : M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' izlenme (' + (ui.ytFormat === 'short' ? 'Shorts' : 'uzun') + ') · outlier = medyanın ' + M.OUTLIER_RATIO + ' katı ya da fazlası'
+          : fmtFull(list.length) + ' shown · ' + (plat === 'mixed' ? 'scored against each account\'s own median' : basis === 'mixed' ? 'reels scored on views, carousels and photos on likes, each against its own median' : 'median ' + fmt(M.baselineOf(data.all) !== null ? M.baselineOf(data.all) : M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' ' + unit() + (plat === 'youtube' ? (ui.ytFormat === 'short' ? ' (Shorts)' : ' (long-form)') : '')) + ' · outlier = ' + M.OUTLIER_RATIO + '× median or more'));
       if (plat === 'instagram' && basis !== 'views') {
         var scored = data.all.filter(M.isLikesScored);
         wrap.appendChild(h('p', { class: 'muted small', text: scored.length < M.MIN_BASELINE
@@ -591,8 +595,8 @@
       if (plat === 'youtube') {
         var nApprox = data.all.filter(function (p) { return p.viewsApprox; }).length;
         if (nApprox) wrap.appendChild(h('p', { class: 'muted small', text: nApprox === data.all.length
-          ? 'View counts are YouTube\'s rounded ones (63K, 1.2M), close enough to compare with the median. Open a video for its exact numbers.'
-          : nApprox + ' of ' + data.all.length + ' view counts are rounded by YouTube; the rest are exact (opened videos).' }));
+          ? tx('allRounded', 'View counts are YouTube\'s rounded ones (63K, 1.2M), close enough to compare with the median. Open a video for its exact numbers.')
+          : tx('someRounded', '{a} of {b} view counts are rounded by YouTube; the rest are exact (opened videos).', { a: nApprox, b: data.all.length }) }));
         if (opts.onExactStats) wrap.appendChild(exactBar(data.all));
       }
       if (plat === 'youtube' && opts.onApiStats && state.api) wrap.appendChild(apiBar());
@@ -651,8 +655,8 @@
           ? 'Opens the ' + todo + ' of the top ' + top.length + ' videos that still have rounded views or dates, one at a time in a background tab, so their views, likes and dates become exact. Takes about ' + Math.max(1, Math.round(todo * 10 / 60)) + ' min.'
           : 'The top ' + top.length + ' videos already have exact stats',
         onclick: function () { if (ex.running) opts.onExactCancel(); else opts.onExactStats(all); } },
-        ex.running ? 'Stop' : 'Get exact stats' + (todo ? ' (' + todo + ')' : ''));
-      return h('div', { class: 'exact-bar' }, btn, h('span', { class: 'muted small', 'aria-live': 'polite', text: ex.label || (todo ? 'for the top ' + top.length + ' by Viral Score' : 'Top ' + top.length + ' are exact') }));
+        ex.running ? tx('stop', 'Stop') : tx('exact', 'Get exact stats') + (todo ? ' (' + todo + ')' : ''));
+      return h('div', { class: 'exact-bar' }, btn, h('span', { class: 'muted small', 'aria-live': 'polite', text: ex.label || (todo ? tx('exactTop', 'for the top {n} by Viral Score', { n: top.length }) : tx('exactDone', 'Top {n} are exact', { n: top.length })) }));
     }
 
     /** YouTube with the user's own Data API key: exact stats for every saved video, or the full upload list. */
@@ -1078,7 +1082,7 @@
             h('span', { class: 'row-top' },
               byLikes
                 ? h('span', { class: 'views', 'data-tip': p.likes != null ? fmtFull(p.likes) + ' likes. Instagram shows no views on carousels and photos.' : p.likesHidden ? 'The creator hid the like count' : 'Likes not loaded yet' }, p.likes != null ? fmt(p.likes) : '–', h('span', { class: 'unit', text: ' likes' }))
-                : h('span', { class: 'views', 'data-tip': viewsTip(p) }, p.views != null ? (isYT(p) && p.viewsApprox ? '≈' : '') + fmt(p.views) : '–', h('span', { class: 'unit', text: ' views' })),
+                : h('span', { class: 'views', 'data-tip': viewsTip(p) }, p.views != null ? (isYT(p) && p.viewsApprox ? '≈' : '') + fmt(p.views) : '–', h('span', { class: 'unit', text: ' ' + (isYT(p) ? tx('viewsUnit', 'views') : 'views') })),
               badges),
             h('span', { class: 'meta', text: meta.join(' · ') }),
             p.caption ? h('span', { class: 'caption', text: p.caption.replace(/\s+/g, ' ') }) : null)),

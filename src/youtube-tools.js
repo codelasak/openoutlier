@@ -84,6 +84,7 @@
   var CSS = [
     // In the watch page's OpenOutlier row: the chips and the open panel become items of that row (the panel on a line of its own).
     ':host(.in-row){display:contents}',
+    ':host(.in-row) .row{display:contents}',
     ':host(.in-row) .box{flex:1 1 100%;min-width:0}',
     ':host(.in-row) .box:empty{display:none}',
     ':host(.in-row) .panel{margin-top:0}',
