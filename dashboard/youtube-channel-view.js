@@ -21,40 +21,41 @@
   var S = {
     en: {
       nav: 'My YouTube channel', title: 'My YouTube channel', loading: 'Loading…', refresh: 'Refresh', collect: 'Collect now', combined: 'Combined', addChannel: 'Add channel',
-      subsN: '{n} subscribers', subs1: '1 subscriber', through: 'Analytics through {d}', since: 'since {d}', channelsN: '{n} channels',
-      kSubs: 'Subscribers', kViews: 'Views · {n} d', kHours: 'Watch hours · {n} d', kCtr: 'Thumbnail CTR · {n} d', kPct: 'Avg. view % · {n} d',
+      subsN: { one: '{n} subscriber', other: '{n} subscribers' }, subs1: '1 subscriber', through: 'Analytics through {d}', since: 'since {d}', channelsN: { one: '{n} channel', other: '{n} channels' },
+      kSubs: 'Subscribers', kViews: 'Views · {n} d', kHours: 'Watch hours · {n} d', kCtr: 'Impressions CTR · {n} d', kPct: 'Avg. view % · {n} d',
       vsPrev: 'vs previous {n} d', newCh: 'too new to compare', noCtr: 'not reported by day',
       progress: 'Progress', progressSub: 'Daily numbers from YouTube Analytics, kept on this Mac since the channel\'s first day.',
       mSubs: 'Subscribers', mViews: 'Views', mHours: 'Watch hours', mCtr: 'CTR', mPct: 'Avg. view %',
       gDay: 'Day', gWeek: 'Week', gMonth: 'Month', r7: '7 days', r28: '28 days', r90: '90 days', r365: '365 days', rAll: 'All time',
       ledeViews: '{v} views in the last {n} days', ledeHours: '{v} watch hours in the last {n} days', ledeSubs: '{v} subscribers in the last {n} days', ledeCtr: '{v} thumbnail click-through rate in the last {n} days', ledePct: 'People watched {v} of a video on average in the last {n} days',
-      ledeFirst: '{v} {unit} in the channel\'s first {d} days of Analytics.', unitSubs: 'subscribers', unitViews: 'views', unitHours: 'watch hours', ledeChange: ', {p} vs the previous {n} days.', ledeNew: '. Too new to compare with the {n} days before.', ledeFlat: ', the same as the previous {n} days.',
+      ledeFirst: { one: '{v} {unit} in the channel\'s first day of Analytics.', other: '{v} {unit} in the channel\'s first {d} days of Analytics.' }, unitSubs: 'subscribers', unitViews: 'views', unitHours: 'watch hours', ledeChange: ', {p} vs the previous {n} days.', ledeNew: '. Too new to compare with the {n} days before.', ledeFlat: ', the same as the previous {n} days.',
       prevPeriod: 'previous period', chartEmpty: 'No Analytics days yet for this range. YouTube Analytics is 2–3 days behind; the first days show up soon after connecting.',
       noReach: 'YouTube didn\'t report thumbnail impressions by day for this channel, so CTR stays empty.',
       cmpRow: 'Change vs the period before',
       report: 'Video report card', reportSub: 'Each upload\'s first 48 hours, 7 days and 30 days, next to your channel\'s median (same format) and the niche\'s.',
-      chMedian: 'Your median', nicheMedian: 'Niche median', nicheScopeSimilar: '{niche}, channels your size ({n})', nicheScopeAll: '{niche}, whole niche ({n} channels)',
+      chMedian: 'Your median', nicheMedian: 'Niche median', nicheScopeSimilar: '{niche}, channels your size ({n})', nicheScopeAll: { one: '{niche}, whole niche ({n} channel)', other: '{niche}, whole niche ({n} channels)' },
       noNiche: 'Track your channel in Niche tracking to compare with the niche.', h48: '48 h', d7: '7 d', d30: '30 d', total: 'Total', due: 'on {d}', long: 'Video', short: 'Short', live: 'Live',
-      reportEmpty: 'No uploads in the last 90 days. Your next upload shows up here from its first days.', medianNote: 'Median from {n} videos', tooFew: 'too few videos for a median yet',
+      reportEmpty: 'No uploads in the last 90 days. Your next upload shows up here from its first days.', medianNote: { one: 'Median from {n} video', other: 'Median from {n} videos' }, tooFew: 'too few videos for a median yet',
       vsChannel: '{x} your median', vsNiche: '{x} the niche', watchedPct: '{p} watched',
       search: 'Search terms that found you', searchSub: 'YouTube searches that led to your videos, last {w} weeks. Good words for your next titles and descriptions.',
       searchEmpty: 'No search views yet. YouTube lists a term once a few people find you through it (it hides rare ones), so small channels see few.',
       lastWeek: 'last week', newTerm: 'new', showAll: 'Show all {n}', showFewer: 'Show fewer', terms4w: '{w} wk',
-      traffic: 'Traffic sources', geo: 'Geography', demo: 'Audience', devices: 'Devices', subscribed: 'Subscribed', playback: 'Where they watch', last4: 'Last {w} weeks · {n} views', lastW: 'Last {w} weeks, share of views', audEmpty: 'Fills in after the first complete week of views.',
+      traffic: 'Traffic sources', geo: 'Geography', demo: 'Audience', devices: 'Devices', subscribed: 'Subscribed', playback: 'Where they watch', last4: { one: 'Last {w} week', other: 'Last {w} weeks' }, viewsN: { one: '{n} view', other: '{n} views' }, lastW: { one: 'Last {w} week, share of views', other: 'Last {w} weeks, share of views' }, audEmpty: 'Fills in after the first complete week of views.',
+      thresholdNote: 'Totals differ between cards: YouTube leaves out rows below its reporting threshold.',
       ageGender: 'Age and gender', male: 'Male', female: 'Female', other: 'Other', unavailable: 'YouTube doesn\'t report this for a channel this size (it needs more views).',
       ypp: 'Partner Program', yppSub: '1,000 subscribers, plus 4,000 watch hours on long videos in 365 days or 10M Shorts views in 90 days.',
       yppIn: 'In the Partner Program', yppInText: 'Revenue arrives below; YouTube Studio decides the rest.', yppReached: 'Eligible: you can apply in YouTube Studio → Earn.',
       pathWatch: 'Watch hours · 365 d', pathShorts: 'Shorts views · 90 d', or: 'or', best: 'closest',
-      eta: 'At this pace: {t} ({d})', etaSubs: 'Subscribers at this pace: {t}', etaNever: 'Not at this pace ({p}/day). The oldest days leave the window as fast as new ones come.', etaEarly: 'Too early for an estimate: it needs 14 days of history.',
-      etaStill: 'Not at this pace: {p} a day in the last {n} days.', paceH: '{v} h', approx: 'Includes Shorts\' watch time (Analytics didn\'t split it for this channel); YouTube Studio\'s count is the official one.',
+      eta: 'At this pace: {t} ({d})', etaEarly: 'Too early for an estimate: it needs 14 days of history.',
+      etaStill: 'Doesn\'t get there within {w} days at this pace: {p} a day over the last {n} days.', paceH: '{v} h', paceViews: { one: '{v} view', other: '{v} views' }, approx: 'Includes Shorts\' watch time (Analytics didn\'t split it for this channel); YouTube Studio\'s count is the official one.',
       realtime: 'Last 48 hours', realtimeSub: 'From niche tracking\'s hourly measurements: YouTube Analytics is 2–3 days behind.', gained: 'views in 48 h', perHour: '{n}/h', isNew: 'new',
       realtimeOff: 'Hourly numbers come from niche tracking. Add this channel to a tracked niche (or press Track on its channel page) to see its last 48 hours here.', openNiche: 'Open Niche tracking', measured: 'measured {t}',
-      milestones: 'Milestones', next: 'Next', reached: 'Reached', notify: 'Notify me (Chrome notification)', msSubs: '{n} subscribers', msViews: '{n} total views', msHours: '{n} watch hours', msVideo: 'First video with {n} views', msNone: 'Your first milestone, 10 subscribers, is next.',
+      milestones: 'Milestones', next: 'Next', reached: 'Reached', notify: 'Notify me (Chrome notification)', msSubs: '{n} subscribers', msViews: '{n} total views', msHours: '{n} total watch hours', msVideo: 'First video with {n} views', msPartial: 'not known yet: older videos aren\'t collected', msNone: 'Your first milestone, 10 subscribers, is next.',
       revenue: 'Revenue', revenueSub: 'Estimated, in USD, from YouTube Analytics.', revNot: 'Revenue shows up here once the channel is in the Partner Program. Nothing to set up: the permission is already granted.',
       revScope: 'Revenue needs one more read-only permission. Reconnect once to add it.', revNone: 'In the Partner Program, but no revenue reported yet.', revOff: 'Revenue is switched off in Features.',
       rev28: 'last 28 days', rpm: 'RPM', cpm: 'CPM', rpmHint: 'revenue per 1,000 views', cpmHint: 'what advertisers pay per 1,000 ad impressions',
       profit: 'Profit calculator', profitSub: 'What a video costs you (voice, thumbnail, your time) against what the channel earns.', costVideo: 'Per video', costShort: 'Per Short', currency: 'Currency', period: 'Period',
-      uploadsN: '{v} videos · {s} Shorts', costTotal: 'Cost', revenueTotal: 'Revenue', net: 'Net', breakEven: 'Break-even RPM', breakEvenText: 'You\'d need an RPM of {v} to cover these costs with this period\'s views ({n}).',
+      videosN: { one: '{n} video', other: '{n} videos' }, shortsN: { one: '{n} Short', other: '{n} Shorts' }, costTotal: 'Cost', revenueTotal: 'Revenue', net: 'Net', breakEven: 'Break-even RPM', breakEvenText: 'You\'d need an RPM of {v} to cover these costs with this period\'s views ({n}).',
       usdOnly: 'Revenue is reported in USD: pick USD to see the net.', enterCost: 'Enter what a video costs to see the result.',
       channels: 'Connected channels', primary: 'default', historyDone: 'history since {d}', historyLoading: 'loading history · {p}%', historyPending: 'starting…', lastDaily: 'updated {t}',
       reconnect: 'Reconnect', disconnect: 'Disconnect', addHint: 'A family member\'s channel: they sign in with their own Google account on this Mac; only read access is granted.',
@@ -80,15 +81,15 @@
     tr: {
       nav: 'Kanalım', title: 'Kanalım', loading: 'Yükleniyor…', refresh: 'Yenile', collect: 'Şimdi topla', combined: 'Birleşik', addChannel: 'Kanal ekle',
       subsN: '{n} abone', subs1: '1 abone', through: 'Analytics {d} tarihine kadar', since: '{d} tarihinden beri', channelsN: '{n} kanal',
-      kSubs: 'Abone', kViews: 'İzlenme · {n} g', kHours: 'İzlenme süresi (sa) · {n} g', kCtr: 'Thumbnail TO · {n} g', kPct: 'Ort. izlenme % · {n} g',
+      kSubs: 'Abone', kViews: 'İzlenme · {n} g', kHours: 'İzlenme süresi (sa) · {n} g', kCtr: 'Gösterim tıklama oranı · {n} g', kPct: 'Ort. izlenme % · {n} g',
       vsPrev: 'önceki {n} güne göre', newCh: 'karşılaştırmak için yeni', noCtr: 'günlük olarak verilmiyor',
       progress: 'İlerleme', progressSub: 'YouTube Analytics\'ten günlük sayılar; kanalın ilk gününden beri bu Mac\'te saklanıyor.',
-      mSubs: 'Abone', mViews: 'İzlenme', mHours: 'İzlenme süresi', mCtr: 'TO', mPct: 'Ort. izlenme %',
+      mSubs: 'Abone', mViews: 'İzlenme', mHours: 'İzlenme süresi', mCtr: 'Tıklama oranı', mPct: 'Ort. izlenme %',
       gDay: 'Gün', gWeek: 'Hafta', gMonth: 'Ay', r7: '7 gün', r28: '28 gün', r90: '90 gün', r365: '365 gün', rAll: 'Tüm zamanlar',
       ledeViews: 'Son {n} günde {v} izlenme', ledeHours: 'Son {n} günde {v} saat izlenme', ledeSubs: 'Son {n} günde {v} abone', ledeCtr: 'Son {n} günde thumbnail tıklama oranı {v}', ledePct: 'Son {n} günde izleyiciler bir videonun ortalama {v} kadarını izledi',
       ledeFirst: 'Kanalın Analytics\'teki ilk {d} gününde {v} {unit}.', unitSubs: 'abone', unitViews: 'izlenme', unitHours: 'saat izlenme', ledeChange: '; önceki {n} güne göre {p}.', ledeNew: '. Önceki {n} günle karşılaştırmak için çok yeni.', ledeFlat: '; önceki {n} günle aynı.',
       prevPeriod: 'önceki dönem', chartEmpty: 'Bu aralık için henüz Analytics günü yok. YouTube Analytics 2–3 gün geriden gelir; ilk günler bağlandıktan kısa süre sonra görünür.',
-      noReach: 'YouTube bu kanal için günlük thumbnail gösterimini vermedi; TO boş kalıyor.',
+      noReach: 'YouTube bu kanal için günlük thumbnail gösterimini vermedi; tıklama oranı boş kalıyor.',
       cmpRow: 'Önceki döneme göre değişim',
       report: 'Video karnesi', reportSub: 'Her yüklemenin ilk 48 saati, 7 günü ve 30 günü; kanalının medyanıyla (aynı format) ve nişin medyanıyla yan yana.',
       chMedian: 'Senin medyanın', nicheMedian: 'Niş medyanı', nicheScopeSimilar: '{niche}, senin büyüklüğündeki kanallar ({n})', nicheScopeAll: '{niche}, bütün niş ({n} kanal)',
@@ -98,21 +99,22 @@
       search: 'Seni bulan arama terimleri', searchSub: 'Videolarına getiren YouTube aramaları, son {w} hafta. Bir sonraki başlık ve açıklama için iyi kelimeler.',
       searchEmpty: 'Henüz aramadan izlenme yok. YouTube bir terimi ancak birkaç kişi seni onunla bulunca listeler (nadir olanları gizler); küçük kanallar az görür.',
       lastWeek: 'geçen hafta', newTerm: 'yeni', showAll: '{n} terimin hepsini göster', showFewer: 'Daha az göster', terms4w: '{w} hf',
-      traffic: 'Trafik kaynakları', geo: 'Coğrafya', demo: 'Kitle', devices: 'Cihazlar', subscribed: 'Abonelik', playback: 'Nerede izliyorlar', last4: 'Son {w} hafta · {n} izlenme', lastW: 'Son {w} hafta, izlenme payı', audEmpty: 'İlk tam haftanın izlenmesinden sonra dolar.',
+      traffic: 'Trafik kaynakları', geo: 'Coğrafya', demo: 'Kitle', devices: 'Cihazlar', subscribed: 'Abonelik', playback: 'Nerede izliyorlar', last4: 'Son {w} hafta', viewsN: '{n} izlenme', lastW: 'Son {w} hafta, izlenme payı',
+      thresholdNote: 'Kartlardaki toplamlar farklı: YouTube rapor eşiğinin altındaki satırları vermiyor.', audEmpty: 'İlk tam haftanın izlenmesinden sonra dolar.',
       ageGender: 'Yaş ve cinsiyet', male: 'Erkek', female: 'Kadın', other: 'Diğer', unavailable: 'YouTube bu büyüklükteki bir kanal için bunu vermiyor (daha çok izlenme gerekiyor).',
       ypp: 'Partner Programı', yppSub: '1.000 abone; ayrıca 365 günde uzun videolarda 4.000 saat izlenme ya da 90 günde 10 milyon Shorts izlenmesi.',
       yppIn: 'Partner Programı\'nda', yppInText: 'Gelir aşağıda; gerisine YouTube Studio karar verir.', yppReached: 'Şartlar tamam: YouTube Studio → Para kazan\'dan başvurabilirsin.',
       pathWatch: 'İzlenme süresi · 365 g', pathShorts: 'Shorts izlenmesi · 90 g', or: 'ya da', best: 'en yakın',
-      eta: 'Bu hızla: {t} ({d})', etaSubs: 'Bu hızla abone: {t}', etaNever: 'Bu hızla olmuyor (günde {p}). En eski günler, yenileri geldiği hızla pencereden çıkıyor.', etaEarly: 'Tahmin için erken: 14 günlük geçmiş gerekiyor.',
-      etaStill: 'Bu hızla olmuyor: son {n} günün ortalaması günde {p}.', paceH: '{v} sa', approx: 'Shorts\'un izlenme süresi de dahil (Analytics bu kanal için ayırmadı); resmi sayı YouTube Studio\'daki.',
+      eta: 'Bu hızla: {t} ({d})', etaEarly: 'Tahmin için erken: 14 günlük geçmiş gerekiyor.',
+      etaStill: 'Bu hızla {w} günde yetişmiyor: son {n} günün ortalaması günde {p}.', paceH: '{v} sa', paceViews: '{v} izlenme', approx: 'Shorts\'un izlenme süresi de dahil (Analytics bu kanal için ayırmadı); resmi sayı YouTube Studio\'daki.',
       realtime: 'Son 48 saat', realtimeSub: 'Niş takibinin saatlik ölçümlerinden: YouTube Analytics 2–3 gün geriden gelir.', gained: '48 saatte izlenme', perHour: '{n}/sa', isNew: 'yeni',
       realtimeOff: 'Saatlik sayılar niş takibinden gelir. Bu kanalı takip edilen bir nişe ekle (ya da kanal sayfasında Takip et\'e bas); son 48 saati burada görünür.', openNiche: 'Niş Takibi\'ni aç', measured: '{t} ölçüldü',
-      milestones: 'Kilometre taşları', next: 'Sıradaki', reached: 'Ulaşılan', notify: 'Bana haber ver (Chrome bildirimi)', msSubs: '{n} abone', msViews: 'toplam {n} izlenme', msHours: '{n} saat izlenme', msVideo: '{n} izlenmeli ilk video', msNone: 'İlk kilometre taşın, 10 abone, sırada.',
+      milestones: 'Kilometre taşları', next: 'Sıradaki', reached: 'Ulaşılan', notify: 'Bana haber ver (Chrome bildirimi)', msSubs: '{n} abone', msViews: 'toplam {n} izlenme', msHours: 'toplam {n} saat izlenme', msVideo: '{n} izlenmeli ilk video', msPartial: 'henüz bilinmiyor: eski videolar toplanmadı', msNone: 'İlk kilometre taşın, 10 abone, sırada.',
       revenue: 'Gelir', revenueSub: 'YouTube Analytics\'ten tahmini, USD.', revNot: 'Kanal Partner Programı\'na girince gelir burada görünür. Kurulacak bir şey yok: izin zaten verildi.',
       revScope: 'Gelir için bir okuma izni daha gerekiyor. Eklemek için bir kez yeniden bağlan.', revNone: 'Partner Programı\'nda, ama henüz gelir görünmüyor.', revOff: 'Gelir, Özellikler\'de kapalı.',
       rev28: 'son 28 gün', rpm: 'RPM', cpm: 'CPM', rpmHint: '1.000 izlenme başına gelir', cpmHint: 'reklamverenin 1.000 reklam gösterimine ödediği',
       profit: 'Kâr hesaplayıcı', profitSub: 'Bir videonun sana maliyeti (ses, thumbnail, zamanın) ve kanalın kazancı.', costVideo: 'Video başına', costShort: 'Short başına', currency: 'Para birimi', period: 'Dönem',
-      uploadsN: '{v} video · {s} Shorts', costTotal: 'Maliyet', revenueTotal: 'Gelir', net: 'Net', breakEven: 'Başa baş RPM', breakEvenText: 'Bu maliyeti bu dönemin izlenmesiyle ({n}) karşılamak için {v} RPM gerekir.',
+      videosN: '{n} video', shortsN: '{n} Shorts', costTotal: 'Maliyet', revenueTotal: 'Gelir', net: 'Net', breakEven: 'Başa baş RPM', breakEvenText: 'Bu maliyeti bu dönemin izlenmesiyle ({n}) karşılamak için {v} RPM gerekir.',
       usdOnly: 'Gelir USD olarak geliyor: neti görmek için USD seç.', enterCost: 'Sonucu görmek için bir videonun maliyetini gir.',
       channels: 'Bağlı kanallar', primary: 'varsayılan', historyDone: '{d} tarihinden beri geçmiş', historyLoading: 'geçmiş yükleniyor · %{p}', historyPending: 'başlıyor…', lastDaily: '{t} güncellendi',
       reconnect: 'Yeniden bağlan', disconnect: 'Bağlantıyı kes', addHint: 'Bir aile üyesinin kanalı: bu Mac\'te kendi Google hesabıyla giriş yapar; yalnız okuma izni verilir.',
@@ -120,8 +122,8 @@
       bannerOff: 'Kanal geçmişi kapalı; yeni veri toplanmıyor.', turnOn: 'Aç', oldBridge: 'Çalışan bridge bu sayfadan eski ve henüz kanal geçmişi tutmuyor. Yeniden başlat: launchctl kickstart -k gui/$(id -u)/dev.openoutlier.bridge',
       collecting: '{c} kanalının geçmişi toplanıyor', collectingText: '{d} tarihinden bugüne, en yeniden başlayarak. Grafikler doldukça güncellenir; sayfa kendiliğinden yenilenir.', collectingSoon: 'Bağlandıktan sonra bir dakika içinde başlar.',
       perChannel: 'Kanallar yan yana', perChannelSub: 'Her kanalın son 28 günü.', ch: 'Kanal', views28: 'İzlenme', hours28: 'İzl. sa', subs28: 'Abone', yppCol: 'Partner Programı',
-      liveVideos: 'Video ayrıntıları', show: 'Göster', hide: 'Gizle', liveSub: 'Seçtiğin dönem için YouTube Analytics\'ten canlı: video başına izleyici tutma, gösterim ve TO.', retention: 'İzleyici tutma', period7: 'Son 7 gün', period28: 'Son 28 gün', period90: 'Son 90 gün', period365: 'Son 365 gün',
-      cols: ['Video', 'İzlenme', 'Etkileşimli', 'Ort. izl. %', 'Ort. süre', 'Gösterim', 'TO', 'Beğeni', 'Yorum', 'Abone', ''], noViews: 'Bu dönemde izlenme yok.', reachErr: 'Thumbnail gösterimi ve TO alınamadı: {e}',
+      liveVideos: 'Video ayrıntıları', show: 'Göster', hide: 'Gizle', liveSub: 'Seçtiğin dönem için YouTube Analytics\'ten canlı: video başına izleyici tutma, gösterim ve tıklama oranı.', retention: 'İzleyici tutma', period7: 'Son 7 gün', period28: 'Son 28 gün', period90: 'Son 90 gün', period365: 'Son 365 gün',
+      cols: ['Video', 'İzlenme', 'Etkileşimli', 'Ort. izl. %', 'Ort. süre', 'Gösterim', 'Tıklama oranı', 'Beğeni', 'Yorum', 'Abone', ''], noViews: 'Bu dönemde izlenme yok.', reachErr: 'Thumbnail gösterimi ve tıklama oranı alınamadı: {e}',
       setupTitle: 'Kurulum (isteğe bağlı)', setupText: 'Kendi kanalının analitiği YouTube Analytics API\'den gelir ve senin oluşturacağın bir Google OAuth istemcisi gerekir. OpenOutlier oturumu bu Mac\'te, yalnız okuma izniyle tutar.',
       setupSteps: ['Google Cloud konsolu: bir proje aç, "YouTube Analytics API" ve "YouTube Data API v3"ü etkinleştir.', 'OAuth izin ekranı: External, yayın durumu Testing; Google hesabını (ve kanalı için bir aile üyesininkini) test kullanıcısı olarak ekle.', 'Credentials → Create credentials → OAuth client ID → Desktop app. JSON\'u indir.', '~/.openoutlier/youtube-oauth.json olarak kaydet (ya da bridge için OPENOUTLIER_YOUTUBE_CLIENT_ID ve OPENOUTLIER_YOUTUBE_CLIENT_SECRET ayarla), sonra buraya dönüp Bağla\'ya bas.'],
       setupMore: 'Ayrıntılar: README → "My YouTube channel".', connectTitle: 'Kanalını bağla', connectText: 'Google\'ın giriş sayfasını açar. Yalnız okuma iznini onayla (YouTube Analytics, Partner Programı\'na girince gelir ve kanalının video listesi); Google seni bu Mac\'teki OpenOutlier bridge\'ine geri gönderir, oturumu o tutar. Başka hiçbir yere bir şey gitmez.',
@@ -155,7 +157,16 @@
 
     function lang() { return F && F.uiLang ? F.uiLang() : 'en'; }
     function L() { return S[lang()] || S.en; }
-    function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
+    // s: a string or plural forms ({ one, other }) chosen by `count` (default o.n when it is a number) (B5).
+    function fill(s, o, count) {
+      if (s && typeof s === 'object') {
+        var c = count != null ? count : typeof o.n === 'number' ? o.n : NaN;
+        var rule = 'other';
+        try { rule = new Intl.PluralRules(loc()).select(c); } catch (e) { /* other */ }
+        s = s[rule] != null ? s[rule] : s.other;
+      }
+      return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; });
+    }
     function loc() { return lang() === 'tr' ? 'tr-TR' : 'en-US'; }
     function num(n) { return n == null ? '–' : new Intl.NumberFormat(loc(), { notation: 'compact', maximumFractionDigits: Math.abs(n) < 1000 ? 0 : 1 }).format(n); }
     function full(n) { return n == null ? '–' : new Intl.NumberFormat(loc()).format(Math.round(n)); }
@@ -163,7 +174,9 @@
     function pctv(v, d) { return v == null ? '–' : new Intl.NumberFormat(loc(), { style: 'percent', maximumFractionDigits: d == null ? 1 : d }).format(v / 100); }
     function money(v, cur) { return v == null ? '–' : new Intl.NumberFormat(loc(), { style: 'currency', currency: cur || 'USD', maximumFractionDigits: Math.abs(v) < 100 ? 2 : 0 }).format(v); }
     function times(x) { return x == null ? '–' : new Intl.NumberFormat(loc(), { maximumFractionDigits: x < 10 ? 1 : 0, minimumFractionDigits: x < 10 ? 1 : 0 }).format(x) + '×'; }
-    function signedPct(p) { return p == null ? '–' : (p > 0 ? '+' : p < 0 ? '−' : '±') + new Intl.NumberFormat(loc(), { maximumFractionDigits: Math.abs(p) < 10 ? 1 : 0 }).format(Math.abs(p)) + '%'; }
+    // B4: percent changes in the language's order ("−%13" in TR), rates (CTR, view %) in points.
+    function signedPct(p) { return p == null ? '–' : F.signedPct(p / 100, lang(), Math.abs(p) < 10 ? 1 : 0); }
+    function signedPts(d) { return d == null ? '–' : F.signedPts(d, lang(), 1); }
     function signed(n) { return n == null ? '–' : (n > 0 ? '+' : n < 0 ? '−' : '±') + num(Math.abs(n)); }
     function dayLabel(d, opts) { return d ? new Date(d + 'T12:00:00Z').toLocaleDateString(loc(), Object.assign({ day: 'numeric', month: 'short', timeZone: 'UTC' }, opts || {})) : '–'; }
     function dateOf(t) { return t ? new Date(t).toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) : '–'; }
@@ -455,10 +468,13 @@
         return h('button', { type: 'button', 'aria-pressed': String(cur === o[0]), onclick: function () { on(o[0]); } }, o[1]);
       }));
     }
-    function delta(c, invert) {
+    /** A change chip: ink text with an arrow (D30, single-hue). rate: CTR / view % change in points (B4). */
+    function delta(c, rate) {
       if (!c || c.pct == null) return null;
-      var up = invert ? c.pct < 0 : c.pct > 0;
-      return h('span', { class: 'kc-delta' + (Math.abs(c.pct) < 0.5 ? '' : up ? ' is-up' : ' is-down') }, h('span', { 'aria-hidden': 'true', text: Math.abs(c.pct) < 0.5 ? '' : c.pct > 0 ? '▲ ' : '▼ ' }), signedPct(c.pct));
+      var pts = rate && c.cur != null && c.prev != null ? c.cur - c.prev : null;
+      var flat = pts != null ? Math.abs(pts) < 0.05 : Math.abs(c.pct) < 0.5;
+      var dir = pts != null ? pts : c.pct;
+      return h('span', { class: 'kc-delta' + (flat ? '' : dir > 0 ? ' is-up' : ' is-down') }, h('span', { 'aria-hidden': 'true', text: flat ? '' : dir > 0 ? '▲ ' : '▼ ' }), pts != null ? signedPts(pts) : signedPct(c.pct));
     }
     function bar(v, max, cls) { return h('span', { class: 'kc-track' }, h('span', { class: 'kc-fill ' + (cls || ''), style: 'width:' + Math.max(v > 0 ? 1.5 : 0, Math.min(100, (v || 0) / (max || 1) * 100)).toFixed(1) + '%' })); }
     function thumb(v) {
@@ -495,8 +511,8 @@
         k(L().kSubs, full(p.totals && p.totals.subs), subsNet && subsNet.cur != null ? signed(subsNet.cur) + ' · 28 ' + L().days : null),
         k(fill(L().kViews, { n: 28 }), c ? full(c.views.cur) : '–', cmpSub, c ? delta(c.views) : null),
         k(fill(L().kHours, { n: 28 }), c ? fmtMetric('watch_hours', c.watch_hours.cur) : '–', cmpSub, c ? delta(c.watch_hours) : null),
-        k(fill(L().kCtr, { n: 28 }), c && c.ctr.cur != null ? pctv(c.ctr.cur) : '–', c && c.ctr.cur == null ? L().noCtr : cmpSub, c ? delta(c.ctr) : null),
-        k(fill(L().kPct, { n: 28 }), c && c.avg_pct.cur != null ? pctv(c.avg_pct.cur) : '–', cmpSub, c ? delta(c.avg_pct) : null));
+        k(fill(L().kCtr, { n: 28 }), c && c.ctr.cur != null ? pctv(c.ctr.cur) : '–', c && c.ctr.cur == null ? L().noCtr : cmpSub, c ? delta(c.ctr, true) : null),
+        k(fill(L().kPct, { n: 28 }), c && c.avg_pct.cur != null ? pctv(c.avg_pct.cur) : '–', cmpSub, c ? delta(c.avg_pct, true) : null));
     }
 
     function progressCard(p) {
@@ -513,9 +529,13 @@
         // A channel younger than the window: say "in its first N days" instead of comparing with days it didn't exist.
         if (p.history_days && p.history_days < n) {
           lede = m === 'ctr' || m === 'avg_pct' ? fill(tpl, { v: v, n: p.history_days }) + '.'
-            : fill(L().ledeFirst, { v: v, unit: { subs: L().unitSubs, views: L().unitViews, watch_hours: L().unitHours }[m], d: p.history_days });
+            : fill(L().ledeFirst, { v: v, unit: { subs: L().unitSubs, views: L().unitViews, watch_hours: L().unitHours }[m], d: p.history_days }, p.history_days);
         }
-        else lede = fill(tpl, { v: v, n: n }) + (pc == null ? fill(L().ledeNew, { n: n }) : Math.abs(pc) < 0.5 ? fill(L().ledeFlat, { n: n }) : fill(L().ledeChange, { n: n, p: signedPct(pc) }));
+        else {
+          var isRate = m === 'ctr' || m === 'avg_pct';
+          var dp = isRate && w[cm].prev != null ? w[cm].cur - w[cm].prev : null;
+          lede = fill(tpl, { v: v, n: n }) + (pc == null ? fill(L().ledeNew, { n: n }) : (dp != null ? Math.abs(dp) < 0.05 : Math.abs(pc) < 0.5) ? fill(L().ledeFlat, { n: n }) : fill(L().ledeChange, { n: n, p: dp != null ? signedPts(dp) : signedPct(pc) }));
+        }
       }
       var metricSeg = seg(L().progress, METRICS.map(function (x) { return [x[0], L()[x[1]]]; }), m, function (v) { ui.metric = v; env.rerender(); });
       var rangeSel = h('select', { 'aria-label': L().period, class: 'kc-select', onchange: function (e) { ui.range = e.target.value === 'all' ? 'all' : Number(e.target.value); env.rerender(); } },
@@ -523,7 +543,7 @@
       var granSeg = ui.range === 'all' ? null : seg(L().period, [['day', L().gDay], ['week', L().gWeek], ['month', L().gMonth]].filter(function (o) { return o[0] !== 'month' || ui.range >= 90; }).filter(function (o) { return o[0] !== 'week' || ui.range >= 14; }), ui.gran === 'month' && ui.range < 90 ? 'week' : ui.gran === 'week' && ui.range < 14 ? 'day' : ui.gran, function (v) { ui.gran = v; env.rerender(); });
       var chips = [7, 28, 90, 365].filter(function (d) { return c[d]; }).map(function (d) {
         var x = c[d][cm];
-        return h('span', { class: 'kc-chip' + (ui.range === d ? ' is-on' : '') }, h('small', { text: d + ' ' + L().days }), x && x.pct != null ? delta(x) : h('span', { class: 'kc-delta', text: '–' }));
+        return h('span', { class: 'kc-chip' + (ui.range === d ? ' is-on' : '') }, h('small', { text: d + ' ' + L().days }), x && x.pct != null ? delta(x, cm === 'ctr' || cm === 'avg_pct') : h('span', { class: 'kc-delta', text: '–' }));
       });
       return card('kc-progress', L().progress, null, h('div', null,
         h('div', { class: 'kc-controls' }, metricSeg, h('span', { class: 'kc-controls-r' }, granSeg, rangeSel)),
@@ -595,9 +615,20 @@
     function barsList(rows, labelOf, opts) {
       opts = opts || {};
       var max = Math.max.apply(null, rows.map(function (r) { return r.share || 0; }).concat([0.01]));
-      return h('ul', { class: 'kc-bars' }, rows.slice(0, opts.limit || 8).map(function (r) {
-        return h('li', null, h('span', { class: 'kc-bar-label', text: labelOf(r.key) }), bar(r.share, max, opts.cls), h('span', { class: 'kc-num', text: pctv((r.share || 0) * 100, 0) }));
+      var whole = roundedShares(rows);
+      return h('ul', { class: 'kc-bars' }, rows.slice(0, opts.limit || 8).map(function (r, i) {
+        return h('li', null, h('span', { class: 'kc-bar-label', text: labelOf(r.key) }), bar(r.share, max, opts.cls), h('span', { class: 'kc-num', text: pctv(whole[i], 0) }));
       }));
+    }
+    /** D32: whole percents that add up to 100 when the shares cover everything (largest remainder). */
+    function roundedShares(rows) {
+      var raw = rows.map(function (r) { return (r.share || 0) * 100; });
+      var sum = raw.reduce(function (a, b) { return a + b; }, 0);
+      var out = raw.map(Math.floor);
+      if (Math.abs(sum - 100) > 0.6) return raw.map(Math.round);
+      var left = 100 - out.reduce(function (a, b) { return a + b; }, 0);
+      raw.map(function (v, i) { return [v - Math.floor(v), i]; }).sort(function (a, b) { return b[0] - a[0]; }).slice(0, Math.max(0, left)).forEach(function (x) { out[x[1]]++; });
+      return out;
     }
     function audienceCards(p) {
       var a = p.audience || {};
@@ -605,7 +636,7 @@
       var none = function (kind) { return !a[kind] || !a[kind].rows || !a[kind].rows.length; };
       var regions = null;
       try { regions = new Intl.DisplayNames([loc()], { type: 'region' }); } catch (e) { /* old engine */ }
-      var sub = function (kind) { return a[kind] && a[kind].total ? fill(L().last4, { w: w, n: full(a[kind].total) }) : null; };
+      var sub = function (kind) { return a[kind] && a[kind].total ? fill(L().last4, { w: w }, w) + ' · ' + fill(L().viewsN, { n: full(a[kind].total) }, a[kind].total) : null; };
       var traffic = card('kc-aud', L().traffic, sub('traffic'), none('traffic') ? empty(a.traffic && a.traffic.unavailable ? L().unavailable : L().audEmpty) : barsList(a.traffic.rows, function (k) { return L().traffics[k] || k; }));
       var geo = card('kc-aud', L().geo, sub('countries'), none('countries') ? empty(a.countries && a.countries.unavailable ? L().unavailable : L().audEmpty) : barsList(a.countries.rows, function (k) { try { return regions ? regions.of(k) : k; } catch (e) { return k; } }, { cls: 'is-geo' }));
       var ag = a.age_gender || {};
@@ -627,12 +658,15 @@
               h('span', { class: 'kc-num', text: pctv(ag.by_age[k], 0) }));
           })));
       }
-      var demoCard = card('kc-aud', L().ageGender, ages.length ? fill(L().lastW, { w: w }) : null, demo);
+      var demoCard = card('kc-aud', L().ageGender, ages.length ? fill(L().lastW, { w: w }, w) : null, demo);
       var small = card('kc-aud', L().devices, sub('devices'), h('div', { class: 'kc-aud-small' },
         none('devices') ? empty(L().audEmpty) : barsList(a.devices.rows, function (k) { return L().devicesL[k] || k; }, { limit: 4 }),
         none('subscribed') ? null : h('div', null, h('h3', { text: L().subscribed }), barsList(a.subscribed.rows, function (k) { return L().subsL[k] || k; }, { limit: 2, cls: 'is-alt' })),
         none('playback') ? null : h('div', null, h('h3', { text: L().playback }), barsList(a.playback.rows, function (k) { return L().placesL[k] || k; }, { limit: 4, cls: 'is-alt' }))));
-      return h('div', { class: 'kc-aud-grid' }, traffic, geo, demoCard, small);
+      // D32: the cards' totals differ (YouTube drops rows under its reporting threshold): say so once.
+      var totals = ['traffic', 'countries', 'devices'].map(function (k) { return a[k] && a[k].total; }).filter(function (x) { return x != null; });
+      var differ = totals.length > 1 && Math.max.apply(null, totals) !== Math.min.apply(null, totals);
+      return h('div', null, h('div', { class: 'kc-aud-grid' }, traffic, geo, demoCard, small), differ ? h('p', { class: 'kc-note kc-aud-note', text: L().thresholdNote }) : null);
     }
 
     function yppCard(p) {
@@ -646,18 +680,22 @@
             h('span', { style: 'width:' + Math.max(cur > 0 ? 1.2 : 0, Math.min(100, (cur || 0) / target * 100)).toFixed(1) + '%' })),
           extra || null);
       }
-      function etaText(days, pace, paceFmt) {
-        if (!y.enough_history) return L().etaEarly;
+      // C22: one ETA line, in one format. With an overall date (the later of subscribers and the
+      // closest path) only that line shows; per-meter lines appear only to say a goal isn't reachable.
+      var overall = y.eta_days != null && !y.reached;
+      function etaLine(days) { return fill(L().eta, { t: span(days), d: monthYear(OM ? OM.addDays(y.end || p.data_through, days) : '') }); }
+      function etaText(days, pace, paceFmt, windowDays) {
+        if (!y.enough_history) return overall ? null : L().etaEarly;
         if (days === 0) return null;
-        if (days == null) return fill(L().etaStill, { p: paceFmt(pace), n: y.pace_days || 28 });
-        return fill(L().eta, { t: span(days), d: monthYear(OM ? OM.addDays(y.end || p.data_through, days) : '') });
+        if (days == null) return fill(L().etaStill, { p: paceFmt(pace), n: y.pace_days || 28, w: windowDays });
+        return overall ? null : etaLine(days);
       }
-      var subsEta = s.reached ? null : y.enough_history && s.days != null ? fill(L().etaSubs, { t: span(s.days) }) : null;
+      var subsEta = s.reached || overall ? null : y.enough_history && s.days != null ? etaLine(s.days) : null;
       var paths = (y.paths || []).map(function (q, i) {
         var mm = q.metric;
         var isW = q.id === 'watch';
         var fmtV = isW ? function (v) { return full(v); } : function (v) { return num(v); };
-        var e = mm.reached ? null : etaText(mm.days, mm.pace_per_day, isW ? function (v) { return fill(L().paceH, { v: dec(v, 1) }); } : function (v) { return num(v); });
+        var e = mm.reached ? null : etaText(mm.days, mm.pace_per_day, isW ? function (v) { return fill(L().paceH, { v: dec(v, 1) }); } : function (v) { return fill(L().paceViews, { v: num(v) }, Math.round(v || 0)); }, isW ? 365 : 90);
         return h('div', { class: 'kc-path' + (y.best === q.id && (y.paths || []).length > 1 ? ' is-best' : '') },
           i ? h('span', { class: 'kc-or', text: L().or }) : null,
           meter(isW ? L().pathWatch : L().pathShorts, mm.current, mm.target, fmtV, mm.reached, e ? h('p', { class: 'kc-eta', text: e }) : null),
@@ -667,7 +705,7 @@
         y.reached ? h('p', { class: 'kc-ypp-badge is-ready' }, h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), L().yppReached) : null,
         meter(L().kSubs, s.current, s.target || 1000, full, s.reached, subsEta ? h('p', { class: 'kc-eta', text: subsEta }) : null),
         h('div', { class: 'kc-paths' }, paths),
-        y.eta_days != null && !y.reached ? h('p', { class: 'kc-ypp-eta' }, h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), fill(L().eta, { t: span(y.eta_days), d: monthYear(OM.addDays(y.end || p.data_through, y.eta_days)) })) : null,
+        overall ? h('p', { class: 'kc-ypp-eta' }, h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), etaLine(y.eta_days)) : (y.reached ? null : !y.enough_history ? h('p', { class: 'kc-eta', text: L().etaEarly }) : null),
         y.approx_hours ? h('p', { class: 'kc-note', text: L().approx }) : null));
     }
 
@@ -698,7 +736,7 @@
       var notify = F ? h('label', { class: 'm-check kc-notify' }, h('input', { type: 'checkbox', checked: !!(F.flags ? F.flags()['own-milestones'] : flags['own-milestones']), onchange: function (e) { F.set('own-milestones', e.target.checked); } }), L().notify) : null;
       return card('kc-ms', L().milestones, null, h('div', null,
         next.length ? h('div', null, h('h3', { text: L().next }), h('ul', { class: 'kc-ms-next' }, next.map(function (x) {
-          return h('li', null, h('div', { class: 'kc-meter-head' }, h('span', { text: label(x) }), h('small', { text: (x.kind === 'hours' ? dec(x.current, 1) : full(x.current)) + ' ' + L().of + ' ' + full(x.value) })), h('span', { class: 'kc-meter-track is-thin' }, h('span', { style: 'width:' + Math.max(x.pct > 0 ? 1.5 : 0, x.pct || 0) + '%' })),
+          return h('li', null, h('div', { class: 'kc-meter-head' }, h('span', { text: label(x) }), h('small', { text: x.partial ? L().msPartial : (x.kind === 'hours' ? dec(x.current, 1) : full(x.current)) + ' ' + L().of + ' ' + full(x.value) })), x.partial ? null : h('span', { class: 'kc-meter-track is-thin' }, h('span', { style: 'width:' + Math.max(x.pct > 0 ? 1.5 : 0, x.pct || 0) + '%' })),
             x.video && x.video.title ? h('small', { class: 'kc-ms-video', text: x.video.title }) : null);
         }))) : null,
         reached.length ? h('div', null, h('h3', { text: L().reached }), h('ul', { class: 'kc-ms-done' }, reached.slice(0, 8).map(function (x) {
@@ -747,7 +785,7 @@
         out.textContent = '';
         var c2 = Object.assign({ video: '', short: '', currency: 'USD' }, profit[key]);
         var cst = (Number(c2.video) || 0) * nv + (Number(c2.short) || 0) * ns;
-        out.appendChild(h('div', { class: 'kc-profit-row' }, h('span', { text: L().period }), h('b', { text: fill(L().uploadsN, { v: nv, s: ns }) })));
+        out.appendChild(h('div', { class: 'kc-profit-row' }, h('span', { text: L().period }), h('b', { text: fill(L().videosN, { n: nv }, nv) + ' · ' + fill(L().shortsN, { n: ns }, ns) })));
         if (!(cst > 0)) { out.appendChild(h('p', { class: 'kc-note', text: L().enterCost })); return; }
         out.appendChild(h('div', { class: 'kc-profit-row' }, h('span', { text: L().costTotal }), h('b', { text: money(cst, c2.currency) })));
         if (rev != null) {
@@ -779,7 +817,7 @@
             avatar(c),
             h('div', { class: 'kc-chan-main' },
               h('div', { class: 'kc-chan-name' }, h('b', { text: c.title || c.channel_id }), c.primary ? h('span', { class: 'kc-tag is-soft', text: L().primary }) : null),
-              h('small', { class: 'muted', text: [c.subs != null ? (c.subs === 1 ? L().subs1 : fill(L().subsN, { n: full(c.subs) })) : null, stateText, col.last_daily_at ? fill(L().lastDaily, { t: ago(col.last_daily_at) }) : null].filter(Boolean).join(' · ') }),
+              h('small', { class: 'muted', text: [c.subs != null ? (c.subs === 1 ? L().subs1 : fill(L().subsN, { n: full(c.subs) }, c.subs)) : null, stateText, col.last_daily_at ? fill(L().lastDaily, { t: ago(col.last_daily_at) }) : null].filter(Boolean).join(' · ') }),
               col.error && !c.reconnect ? h('small', { class: 'kc-err', text: col.error }) : null,
               !col.backfill_done && !c.pending && col.pct != null ? h('span', { class: 'kc-meter-track is-thin' }, h('span', { style: 'width:' + (col.pct || 0) + '%' })) : null),
             h('span', { class: 'kc-chan-actions' },
@@ -921,7 +959,7 @@
       if (!st) subBits.push(L().loading);
       else if (p) {
         var subs = p.totals && p.totals.subs;
-        if (subs != null) subBits.push(subs === 1 ? L().subs1 : fill(L().subsN, { n: full(subs) }));
+        if (subs != null) subBits.push(subs === 1 ? L().subs1 : fill(L().subsN, { n: full(subs) }, subs));
         if (p.combined) subBits.push(fill(L().channelsN, { n: chans.length }));
         if (p.data_through) subBits.push(fill(L().through, { d: dayLabel(p.data_through) }));
       } else if (ui.loading) subBits.push(L().loading);
@@ -944,7 +982,8 @@
           own && own.ok && own.page ? h('button', { class: 'btn btn-ghost', type: 'button', title: L().collect, onclick: collectNow }, L().collect) : null,
           h('button', { class: 'btn', type: 'button', disabled: ui.loading, onclick: refreshAll }, ui.loading ? L().loading : L().refresh)) : null));
       if (switcher) main.appendChild(h('div', { class: 'kc-switch-row' }, switcher));
-      if (!st) { load().then(env.rerender); return; }
+      // D33: the skeleton from the first frame, not a blank page while the status loads.
+      if (!st) { main.appendChild(skeleton()); load().then(env.rerender); return; }
       if (!st.ok) {
         main.appendChild(st.noBridge
           ? h('section', { class: 'm-card s-narrow' }, h('h2', { text: L().title }), h('p', { class: 'muted', text: L().noBridge }), h('p', { class: 'muted small', text: L().install }), h('pre', { class: 'set-code', text: 'sh mcp/launchd/install.sh' }))

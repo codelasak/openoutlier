@@ -684,12 +684,33 @@ export function realtime(store, ids, now = Date.now()) {
 
 /** Milestones of a channel (and the stored ones: when they were first seen). */
 function milestonesOf(store, ch, rows) {
-  const vids = store.db.prepare('SELECT video_id, title, published_at FROM own_videos WHERE channel_id = ?').all(ch.channel_id).map((v) => {
-    const views = store.db.prepare('SELECT metric FROM own_video_daily WHERE video_id = ?').all(v.video_id).reduce((s, r) => s + (parse(r.metric, {}).views || 0), 0);
-    return { id: v.video_id, title: v.title, published_at: v.published_at, views };
-  });
+  // "First video with N views" needs every video, not only the last 90 days' uploads that own_videos
+  // holds: each video's best known count from the Analytics day rows, the tracker's latest reading
+  // and the Library's saved posts of this channel.
+  const best = new Map();
+  const put = (id, title, published, views) => {
+    if (!id || views == null) return;
+    const b = best.get(id);
+    if (!b || views > b.views) best.set(id, { id, title: title || (b && b.title) || null, published_at: published ?? (b && b.published_at) ?? null, views });
+  };
+  for (const v of store.db.prepare('SELECT video_id, title, published_at FROM own_videos WHERE channel_id = ?').all(ch.channel_id)) {
+    put(v.video_id, v.title, v.published_at, store.db.prepare('SELECT metric FROM own_video_daily WHERE video_id = ?').all(v.video_id).reduce((s, r) => s + (parse(r.metric, {}).views || 0), 0));
+  }
+  for (const v of store.db.prepare(`SELECT t.video_id, t.title, t.published_at, s.views FROM tracked_videos t
+    JOIN (SELECT video_id, MAX(views) AS views FROM video_stats WHERE views IS NOT NULL GROUP BY video_id) s ON s.video_id = t.video_id WHERE t.channel_id = ?`).all(ch.channel_id)) put(v.video_id, v.title, v.published_at, v.views);
+  const accounts = new Set(store.db.prepare('SELECT account_id FROM tracked_channels WHERE channel_id = ? AND account_id IS NOT NULL').all(ch.channel_id).map((r) => r.account_id));
+  if (ch.handle) accounts.add('yt/' + String(ch.handle).replace(/^@/, '').toLowerCase());
+  accounts.add('yt/' + ch.channel_id);
+  for (const a of accounts) {
+    for (const p of store.db.prepare('SELECT code, views, taken_at, data FROM posts WHERE account_id = ? AND views IS NOT NULL').all(a)) put(p.code, parse(p.data, {}).caption || null, p.taken_at, p.views);
+  }
+  const vids = [...best.values()];
+  const known = vids.reduce((s, v) => s + v.views, 0);
   const last = rows[rows.length - 1];
-  const m = OM.milestones({ rows, subs: ch.subs, views: last ? last.views_cum : ch.views_total, videos: vids });
+  const total = last ? last.views_cum : ch.views_total;
+  // When the known videos add up to much less than the channel's total, an unknown older video may
+  // already be past the next step: say "not known" instead of a misleading 0.
+  const m = OM.milestones({ rows, subs: ch.subs, views: total, videos: vids, videosComplete: !(total > 0) || known >= total * 0.9 });
   const stored = Object.fromEntries(store.db.prepare('SELECT key, reached_day, created_at FROM own_milestones WHERE channel_id = ?').all(ch.channel_id).map((r) => [r.key, r]));
   for (const x of m.reached) if (!x.day && stored[x.key]) x.day = stored[x.key].reached_day || OM.dayOf(stored[x.key].created_at);
   return m;

@@ -23,8 +23,8 @@
   var S = {
     en: {
       nav: 'Niche tracking', title: 'Niche tracking', loading: 'Loading…', refresh: 'Refresh', channelsBtn: 'Channels',
-      updated: 'updated {t}', channelsN: '{n} channels', niche: 'Niche', allNiches: 'Untitled niche',
-      kUploads: 'Uploads this week', kShorts: '{n} Shorts', kBreakouts: 'Breakouts (14 days)', kLong48: 'Long videos: 30-day views in 48 h', kShort48: 'Shorts: 30-day views in 48 h',
+      updated: 'updated {t}', channelsN: { one: '{n} channel', other: '{n} channels' }, niche: 'Niche', allNiches: 'Untitled niche',
+      kUploads: 'Uploads this week', kShorts: { one: '{n} Short', other: '{n} Shorts' }, kBreakouts: 'Breakouts (14 days)', kLong48: 'Long videos: 30-day views in 48 h', kShort48: 'Shorts: 30-day views in 48 h',
       kNoData: 'not enough data yet',
       week: 'This week', weekSub: 'Uploads of the last 7 days, fastest first. Score = views ÷ what the channel normally has at that age.',
       fAll: 'All', fLong: 'Videos', fShort: 'Shorts', showAll: 'Show all {n}', showFewer: 'Show the top 12', weekEmpty: 'No uploads in the last 7 days yet. New videos appear here within 15 minutes of going live.',
@@ -35,43 +35,44 @@
       curvesSentenceL: 'In this niche a long video gets {l} of its 30-day views in the first 48 hours.',
       curvesNorm: 'Not enough videos have reached 30 days yet, so this shows views as a multiple of each channel\'s typical video.',
       curvesEmpty: 'Curves appear after the first new uploads are tracked from their first hours: the 48-hour points within about 2 days, the full 30-day shape within a month.',
-      long: 'Long-form', short: 'Shorts', videosN: '{n} videos',
+      long: 'Long-form', short: 'Shorts', videosN: { one: '{n} video', other: '{n} videos' },
       works: 'What works', worksSub: 'By 48-hour velocity, from videos the tracker saw young (exact upload times, your time zone).',
       worksEmpty: 'Patterns need scored videos: they fill in as new uploads pass their first checkpoints (from 1 hour) and get stronger with every week.',
       bestSlot: 'Best slot: {d}, {b}', heat: 'Upload day × time', lengths: 'Length', words: 'Title words', patterns: 'Title patterns', formats: 'Shorts vs long-form', perWeek: 'Uploads per week (8 weeks)',
-      withP: 'with', withoutP: 'without', nVideos: '{n} videos', medianScore: 'median {x}',
+      withP: 'with', withoutP: 'without', nVideos: { one: '{n} video', other: '{n} videos' }, medianScore: 'median {x}',
       gaps: 'Topic gaps', gapsSub: 'Fast but rare: words whose few videos beat the niche\'s median by 1.5× or more.', gapsEmpty: 'No gaps yet. They show up once there are enough scored videos to compare topics.',
-      gapLine: '{n} videos · {c} channels', example: 'e.g.',
+      gapLine: { one: '{n} video · {c} channels', other: '{n} videos · {c} channels' }, example: 'e.g.',
       changes: 'Title & thumbnail changes', changesSub: 'Competitors\' retitles and new thumbnails, with views per hour in the 24 h before and after.',
-      changesEmpty: 'No changes seen yet. Titles are compared on every RSS read; thumbnails by a perceptual hash, so a new image behind the same URL counts too.',
+      changesEmpty: 'No changes seen yet. Titles are compared on every RSS read; thumbnails by how the image looks, so a new image behind the same URL counts too.',
       chTitle: 'Title', chThumb: 'Thumbnail', before: 'before', after: 'after', slope: '{a}/h → {b}/h',
       mine: 'My videos vs the niche', mineSub: 'Views at 48 h and per subscriber, against channels of your size (⅓× to 3× subscribers) or the whole niche.',
       mineNone: 'Mark your own channel to compare it: on its page in the Library, or with "Start tracking" below (Hands on Excel is preselected).',
       mineEmpty: 'Your next upload shows up here from its first hours.', peersSimilar: 'channels your size', peersNiche: 'the niche',
       at48: 'at 48 h', perSub: 'per subscriber', vsPeers: 'vs {n} for {p}', pending48: 'The 48-hour comparison comes on {d}.', nowAge: 'now, at {h}',
-      breakouts: 'Fast risers', breakoutsSub: 'At {x}× or more of the channel\'s normal at 6 h or 24 h.', breakoutsEmpty: 'Nothing has broken out in the last 14 days. A Chrome notification comes when one does.',
+      breakouts: 'Fast risers', breakoutsSub: 'At {x}× or more of the channel\'s normal at 6 h or 24 h.', alertLine: 'alert {t} · {x} at {at}', breakoutsEmpty: 'Nothing has broken out in the last 14 days. A Chrome notification comes when one does.',
       growth: 'Channel growth', growthSub: 'Daily subscribers since tracking started.', growthEmpty: 'Daily channel stats start the day a channel is tracked.',
       subs: 'subs', d7: '7 d', d28: '28 d',
       digest: 'Weekly digest', digestSub: 'Saved every Monday morning; this week so far until then.', digestWeek: 'Week of {d}', digestRunning: 'This week so far',
-      digestTop: 'Top uploads', uploadsN: '{n} uploads', breakoutsN: '{n} breakouts', digestNone: 'No uploads yet this week.', digestAsk: 'Ask Claude for the write-up: "niche_report" (OpenOutlier MCP).',
+      digestTop: 'Top uploads', uploadsN: { one: '{n} upload', other: '{n} uploads' }, breakoutsN: { one: '{n} breakout', other: '{n} breakouts' }, digestNone: 'No uploads yet this week.', digestAsk: 'Ask Claude for the write-up: "niche_report" (OpenOutlier MCP).',
       tracked: 'Tracked channels', backfilled: 'history loaded', backfillPending: 'loading history…', rssAt: 'RSS {t}', rssNever: 'waiting for the first RSS read',
-      unresolved: 'Looking up {n} channel(s) by handle.', remove: 'Stop tracking',
+      unresolved: { one: 'Looking up {n} channel by handle.', other: 'Looking up {n} channels by handle.' }, remove: 'Stop tracking',
       lag: 'RSS vs Data API', lagHow: 'How to read this', lagCollecting: 'Measuring: {n} of 12 samples so far.', lagOk: 'RSS view counts trail the API by ~{m} min (median, videos under 48 h). RSS is good enough for early curves.',
       lagBad: 'RSS trails the API by ~{m} min: the hourly API readings carry the first 48 hours.',
       lagExplain: 'For each RSS reading: how many minutes earlier the Data API already had that view count (two API readings of the same video, interpolated). Under 60 minutes is fine.',
       startTitle: 'Start tracking a niche', startText: 'Pick the YouTube channels to follow. They go into one folder that becomes the tracked niche; the bridge then checks their RSS feeds every 15 minutes and measures new videos with your Data API key, also while Chrome is closed.',
       startFolder: 'Folder', startPick: 'Channels in your library', startMine: 'Your channel', startMineMissing: 'Hands on Excel isn\'t saved yet; it will be tracked by its handle.',
-      startGo: 'Track {n} channels', startOther: 'Any folder or tag can be a tracked niche: open it and press "Track as niche".', startNone: 'No YouTube channels saved yet. Open a channel on YouTube (Videos tab) and they are saved here.',
+      startGo: { one: 'Track {n} channel', other: 'Track {n} channels' }, startOther: 'Any folder or tag can be a tracked niche: open it and press "Track as niche".', startNone: 'No YouTube channels saved yet. Open a channel on YouTube (Videos tab) and they are saved here.',
       missingNames: 'Not in your library yet: {list}.', cancel: 'Cancel', mineTag: 'mine', excelTag: 'Excel list',
       noBridge: 'Niche tracking runs in the OpenOutlier bridge on your Mac, and it isn\'t running.', install: 'Install it once (it stays on through launchd):',
       trackerOff: 'Niche tracking is switched off.', turnOn: 'Turn on', noKey: 'The bridge has no Data API key yet: only RSS runs (no exact counts, comments or lengths).', addKey: 'Copy the key in Settings',
       settings: 'Alert threshold', settingsHint: 'Breakout when a video reaches this multiple of its channel\'s normal at 6 h or 24 h.', fastStart: 'Measure every 30 min in the first 6 hours',
+      lenL: { '<5m': '< 5 min', '5–10m': '5–10 min', '10–20m': '10–20 min', '20–40m': '20–40 min', '40m+': '40+ min' },
       days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], blocks: ['0–3', '3–6', '6–9', '9–12', '12–15', '15–18', '18–21', '21–24'],
       evergreen: 'evergreen', spike: 'spike', steady: 'steady', justNow: 'just now', sourceNiche: 'niche curve',
       sponsors: 'Who promotes what', sponsorsSub: 'Sponsors, discount codes and affiliate links in the tracked channels\' descriptions (last 365 days), most widespread first.',
       sponsorsEmpty: 'No sponsors or affiliate links found yet. Descriptions come in with each new upload\'s Data API reading and from the channels\' history; short links (bit.ly …) are counted, not followed.',
-      spScanned: '{n} descriptions from {c} channels', spChannels: '{n} channels', spChannel1: '1 channel', spVideos: '{n} videos', spVideo1: '1 video', spLast: 'last {d}', spCodes: 'Codes',
-      spShort: '{n} short links (target not visible)', spDisclose: '{n} disclose affiliate links', spAsk: 'Ask Claude: "sponsor_mentions" (OpenOutlier MCP).',
+      spScanned: { one: '{n} description from {c} channels', other: '{n} descriptions from {c} channels' }, spChannels: '{n} channels', spChannel1: '1 channel', spVideos: '{n} videos', spVideo1: '1 video', spLast: 'last {d}', spCodes: 'Codes',
+      spShort: { one: '{n} short link (target not visible)', other: '{n} short links (target not visible)' }, spDisclose: { one: '{n} discloses affiliate links', other: '{n} disclose affiliate links' }, spAsk: 'Ask Claude: "sponsor_mentions" (OpenOutlier MCP).',
       kSponsor: 'sponsor', kAffiliate: 'affiliate', kLink: 'sponsor link', kUtm: 'tracked link', kCode: 'code', kDiscount: 'discount'
     },
     tr: {
@@ -84,25 +85,25 @@
       score: '{at}: {x}', noScore: 'çok yeni', expected: 'beklenen {n}', vph: '{n}/sa', views: '{n} izlenme', ago: '{t}',
       curveFromNiche: 'niş eğrisiyle karşılaştırıldı (kanalın 5\'ten az takip edilen videosu var)',
       curves: 'Nişin eğrisi', curvesSub: 'Bir videonun ilk 30 gününün ne kadarını hangi yaşta aldığı (takip edilen videoların medyanı).',
-      curvesSentence: 'Bu nişte bir uzun video 30 günlük izlenmesinin {l}\'ini ilk 48 saatte alıyor; bir Short {s}\'ini.',
-      curvesSentenceL: 'Bu nişte bir uzun video 30 günlük izlenmesinin {l}\'ini ilk 48 saatte alıyor.',
+      curvesSentence: 'Bu nişte bir uzun videonun 30 günlük izlenmesinin {l} kadarı ilk 48 saatte gelir; bir Short\'unki {s} kadarı.',
+      curvesSentenceL: 'Bu nişte bir uzun videonun 30 günlük izlenmesinin {l} kadarı ilk 48 saatte gelir.',
       curvesNorm: 'Henüz yeterince video 30 güne ulaşmadı; grafik izlenmeyi her kanalın tipik videosunun katı olarak gösteriyor.',
-      curvesEmpty: 'Eğriler, ilk yeni yüklemeler ilk saatlerinden itibaren takip edilince oluşur: 48 saatlik noktalar yaklaşık 2 günde, 30 günlük şekil bir ayda.',
+      curvesEmpty: 'Eğriler, yeni yüklenen videolar ilk saatlerinden itibaren takip edildikçe oluşur: 48 saatlik noktalar yaklaşık 2 günde, 30 günlük şekil bir ayda gelir.',
       long: 'Uzun video', short: 'Shorts', videosN: '{n} video',
-      works: 'Ne işe yarıyor', worksSub: '48 saatlik hıza göre; takipçinin genç yakaladığı videolardan (kesin yükleme zamanı, senin saat dilimin).',
+      works: 'Ne işe yarıyor', worksSub: '48 saatlik hıza göre; takibin ilk saatlerinde yakaladığı videolardan (kesin yükleme zamanı, senin saat dilimin).',
       worksEmpty: 'Kalıplar skorlu video ister: yeni yüklemeler ilk kontrol noktalarını (1. saatten itibaren) geçtikçe dolar, her hafta güçlenir.',
       bestSlot: 'En iyi zaman: {d}, {b}', heat: 'Yükleme günü × saat', lengths: 'Süre', words: 'Başlık kelimeleri', patterns: 'Başlık kalıpları', formats: 'Shorts ve uzun video', perWeek: 'Haftalık yükleme (8 hafta)',
       withP: 'olan', withoutP: 'olmayan', nVideos: '{n} video', medianScore: 'medyan {x}',
       gaps: 'Konu boşlukları', gapsSub: 'Hızlı ama az: birkaç videosu nişin medyanını 1,5 kat ya da daha fazla geçen kelimeler.', gapsEmpty: 'Henüz boşluk yok. Konuları karşılaştıracak kadar skorlu video olunca görünür.',
       gapLine: '{n} video · {c} kanal', example: 'örn.',
       changes: 'Başlık ve thumbnail değişiklikleri', changesSub: 'Rakiplerin başlık ve thumbnail değişiklikleri; öncesi ve sonrasındaki 24 saatte saat başına izlenme.',
-      changesEmpty: 'Henüz değişiklik yok. Başlıklar her RSS okumasında karşılaştırılır; thumbnail\'ler perceptual hash ile, yani aynı adresteki yeni görsel de sayılır.',
+      changesEmpty: 'Henüz değişiklik yok. Başlıklar her RSS okumasında karşılaştırılır; thumbnail\'ler görselin kendisine bakılarak, yani aynı adresteki yeni görsel de sayılır.',
       chTitle: 'Başlık', chThumb: 'Thumbnail', before: 'önce', after: 'sonra', slope: '{a}/sa → {b}/sa',
       mine: 'Benim videolarım ve niş', mineSub: '48. saatteki izlenme ve abone başına izlenme; senin büyüklüğündeki kanallarla (⅓× ile 3× abone) ya da bütün nişle.',
       mineNone: 'Karşılaştırmak için kendi kanalını işaretle: Library\'deki sayfasından ya da aşağıdaki "Takibi başlat" ile (Hands on Excel seçili gelir).',
       mineEmpty: 'Bir sonraki yüklemen ilk saatlerinden itibaren burada görünür.', peersSimilar: 'senin büyüklüğündeki kanallar', peersNiche: 'niş',
       at48: '48. saatte', perSub: 'abone başına', vsPeers: '{p}: {n}', pending48: '48 saatlik karşılaştırma {d} gelir.', nowAge: 'şu an, {h}',
-      breakouts: 'Hızlı yükselenler', breakoutsSub: '6. veya 24. saatte kanalın normalinin {x} katı ya da fazlası.', breakoutsEmpty: 'Son 14 günde hızlı yükselen yok. Olunca Chrome bildirimi gelir.',
+      breakouts: 'Hızlı yükselenler', breakoutsSub: '6. veya 24. saatte kanalın normalinin {x} katı ya da fazlası.', alertLine: 'uyarı {t} · {at}: {x}', breakoutsEmpty: 'Son 14 günde hızlı yükselen yok. Olunca Chrome bildirimi gelir.',
       growth: 'Kanal büyümesi', growthSub: 'Takip başladığından beri günlük abone.', growthEmpty: 'Günlük kanal istatistikleri, kanal takibe girdiği gün başlar.',
       subs: 'abone', d7: '7 g', d28: '28 g',
       digest: 'Haftalık özet', digestSub: 'Her pazartesi sabahı kaydedilir; o zamana kadar bu haftanın gidişatı.', digestWeek: '{d} haftası', digestRunning: 'Bu hafta şimdiye kadar',
@@ -119,6 +120,7 @@
       noBridge: 'Niş takibi Mac\'teki OpenOutlier bridge\'inde çalışır ve bridge çalışmıyor.', install: 'Bir kez kur (launchd sayesinde açık kalır):',
       trackerOff: 'Niş takibi kapalı.', turnOn: 'Aç', noKey: 'Bridge\'de henüz Data API anahtarı yok: sadece RSS çalışıyor (kesin sayı, yorum ve süre yok).', addKey: 'Anahtarı Ayarlar\'dan kopyala',
       settings: 'Uyarı eşiği', settingsHint: 'Bir video 6. veya 24. saatte kanalının normalinin bu katına ulaşınca hızlı yükselen sayılır.', fastStart: 'İlk 6 saatte 30 dakikada bir ölç',
+      lenL: { '<5m': '< 5 dk', '5–10m': '5–10 dk', '10–20m': '10–20 dk', '20–40m': '20–40 dk', '40m+': '40+ dk' },
       days: ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'], blocks: ['0–3', '3–6', '6–9', '9–12', '12–15', '15–18', '18–21', '21–24'],
       evergreen: 'evergreen', spike: 'patlama', steady: 'dengeli', justNow: 'az önce', sourceNiche: 'niş eğrisi',
       sponsors: 'Kim neyi tanıtıyor', sponsorsSub: 'Takip edilen kanalların açıklamalarındaki sponsorlar, indirim kodları ve affiliate linkler (son 365 gün), en yaygını başta.',
@@ -135,7 +137,16 @@
 
     function lang() { return F && F.uiLang ? F.uiLang() : 'en'; }
     function L() { return S[lang()] || S.en; }
-    function fill(s, o) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; }); }
+    // s: a string or plural forms ({ one, other }) chosen by o.n (B5); o.n may be a formatted string, `count` the number.
+    function fill(s, o, count) {
+      if (s && typeof s === 'object') {
+        var c = count != null ? count : typeof o.n === 'number' ? o.n : Number(String(o.n).replace(/[^\d]/g, ''));
+        var rule = 'other';
+        try { rule = new Intl.PluralRules(lang() === 'tr' ? 'tr-TR' : 'en-US').select(c); } catch (e) { /* other */ }
+        s = s[rule] != null ? s[rule] : s.other;
+      }
+      return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; });
+    }
     function loc() { return lang() === 'tr' ? 'tr-TR' : 'en-US'; }
     function num(n) { return n == null ? '–' : new Intl.NumberFormat(loc(), { notation: 'compact', maximumFractionDigits: n < 1000 ? 0 : 1 }).format(n); }
     function full(n) { return n == null ? '–' : new Intl.NumberFormat(loc()).format(Math.round(n)); }
@@ -212,10 +223,13 @@
 
     /** The niche curve chart: checkpoints evenly spaced; long-form and Shorts. */
     function curveChart(c, mode) {
-      var W = 640;
-      var Hh = 220;
-      var padL = 40;
-      var padR = 72;
+      // B10: drawn for the space it gets: a narrower viewBox (and every other age label) on phones,
+      // so the chart scales to 100% of its card instead of scrolling inside it.
+      var narrow = (root.innerWidth || 1280) < 600;
+      var W = narrow ? 360 : 640;
+      var Hh = narrow ? 200 : 220;
+      var padL = narrow ? 34 : 40;
+      var padR = narrow ? 58 : 72;
       var padT = 12;
       var padB = 28;
       var key = mode === 'share' ? 'share' : 'norm';
@@ -229,7 +243,7 @@
         g.push(svg('line', { x1: padL, x2: W - padR, y1: Yv(t), y2: Yv(t), class: 'nv-grid' }));
         g.push(txt(padL - 6, Yv(t) + 4, mode === 'share' ? pct(t) : times(t), 'nv-axis', 'end'));
       });
-      CPS.forEach(function (hr, i) { g.push(txt(X(i), Hh - 8, cp(hr), 'nv-axis', 'middle')); });
+      CPS.forEach(function (hr, i) { if (!narrow || i % 2 === 0 || i === CPS.length - 1) g.push(txt(X(i), Hh - 8, cp(hr), 'nv-axis', 'middle')); });
       g.push(svg('line', { x1: X(5), x2: X(5), y1: padT, y2: Hh - padB, class: 'nv-mark' }));
       var labels = [];
       series.forEach(function (s) {
@@ -264,11 +278,13 @@
       if (v.type === 'short') wrap.appendChild(h('span', { class: 'nv-dur', text: 'Shorts' }));
       return wrap;
     }
+    // D36: lime and the pixel shadow from 3× (a real breakout); 2–3× is a plain ink badge, so the list isn't a wall of lime.
+    function scoreClass(x) { return x >= BREAKOUT ? 'is-hot' : x >= 2 ? 'is-out' : x < 0.7 ? 'is-low' : ''; }
     function scoreBadge(v, big) {
       if (v.score == null) return h('span', { class: 'nv-score is-none', text: L().noScore });
-      var cls = v.score >= BREAKOUT ? ' is-hot' : v.score >= 2 ? ' is-out' : v.score < 0.7 ? ' is-low' : '';
+      var cls = ' ' + scoreClass(v.score);
       return h('span', { class: 'nv-score' + cls + (big ? ' big' : ''), title: fill(L().expected, { n: full(v.expected) }) + (v.curve_from === 'niche' ? ' · ' + L().curveFromNiche : '') },
-        v.score >= 2 ? h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')) : null,
+        v.score >= BREAKOUT ? h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')) : null,
         h('b', { text: times(v.score) }), h('small', { text: cpLabel(v.score_at) }));
     }
 
@@ -367,7 +383,7 @@
       var ww = d.what_works || {};
       if (!ww.videos) return card('nv-workscard', L().works, L().worksSub, empty(L().worksEmpty));
       var lenOrder = (ww.length_order || []).filter(function (k) { return ww.lengths[k]; });
-      var lenRows = lenOrder.map(function (k) { return { label: k === 'short' ? L().short : k, v: ww.lengths[k].median, n: ww.lengths[k].n }; });
+      var lenRows = lenOrder.map(function (k) { return { label: k === 'short' ? L().short : L().lenL[k] || k, v: ww.lengths[k].median, n: ww.lengths[k].n }; });
       var fmtRows = ['long', 'short'].filter(function (k) { return ww.formats[k]; }).map(function (k) { return { label: k === 'short' ? L().short : L().long, v: ww.formats[k].median, n: ww.formats[k].n }; });
       var maxBar = Math.max.apply(null, lenRows.concat(fmtRows).map(function (r) { return r.v || 0; }).concat([1.5]));
       var best = ww.best_day && ww.best_block ? fill(L().bestSlot, { d: L().days[ww.best_day.key], b: L().blocks[ww.best_block.key] }) : null;
@@ -485,8 +501,9 @@
         return h('li', null, thumb(v, 'small'),
           h('div', { class: 'nv-main' },
             h('a', { class: 'nv-title', href: v.url, target: '_blank', rel: 'noopener noreferrer', text: v.title }),
-            h('div', { class: 'nv-meta' }, h('span', { class: 'nv-chan', text: v.channel }), h('span', { text: ago(v.alert.created_at) }))),
-          h('span', { class: 'nv-score is-hot' }, h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')), h('b', { text: times(v.alert.score) }), h('small', { text: cpLabel(v.alert.at) })));
+            // C23: the alert's own moment and score, so it doesn't read like the "This week" row's current score.
+            h('div', { class: 'nv-meta' }, h('span', { class: 'nv-chan', text: v.channel }), h('span', { text: fill(L().alertLine, { t: ago(v.alert.created_at), x: times(v.alert.score), at: cpLabel(v.alert.at) }) }))),
+          h('span', { class: 'nv-score ' + scoreClass(v.alert.score) }, v.alert.score >= 3 ? h('span', { class: 'stair', 'aria-hidden': 'true' }, h('i'), h('i'), h('i')) : null, h('b', { text: times(v.alert.score) })));
       })) : empty(L().breakoutsEmpty));
     }
 

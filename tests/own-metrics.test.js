@@ -158,3 +158,18 @@ test('milestones: reached with the day they happened, and the next one with prog
   assert.equal(next.video.value, 100000);
   assert.equal(next.hours.value, 1000);
 });
+
+test('milestones (review C22): with older videos missing, the next "first video with N views" is not known, not 0', () => {
+  const OM = require('../src/own-metrics.js');
+  const vids = [{ id: 'a', title: 'A', views: 120, published_at: 1 }];
+  const full = OM.milestones({ rows: [], subs: 50, views: 420000, videos: vids });
+  assert.equal(full.next.find((x) => x.kind === 'video').current, 120);
+  const part = OM.milestones({ rows: [], subs: 50, views: 420000, videos: vids, videosComplete: false });
+  const nx = part.next.find((x) => x.kind === 'video');
+  assert.equal(nx.current, null);
+  assert.equal(nx.pct, null);
+  assert.equal(nx.partial, true);
+  // A video past the step still counts as reached.
+  const r = OM.milestones({ rows: [], subs: 50, views: 420000, videos: [{ id: 'b', views: 5000 }], videosComplete: false });
+  assert.ok(r.reached.some((x) => x.key === 'video:1000'));
+});

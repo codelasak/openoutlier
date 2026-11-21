@@ -281,7 +281,9 @@
       if (first) reached.push({ key: 'video:' + v, kind: 'video', value: v, day: null, video: { id: first.id, title: first.title, views: first.views } });
     });
     var vNext = MILESTONES.video.filter(function (v) { return !top || top.views < v; })[0];
-    if (vNext) next.push({ key: 'video:' + vNext, kind: 'video', value: vNext, current: top ? top.views : 0, pct: round(Math.min(1, (top ? top.views : 0) / vNext) * 100, 1), video: top ? { id: top.id, title: top.title } : null });
+    // opts.videosComplete === false: the list misses videos (older uploads), so the best known count isn't the channel's best.
+    var partial = opts.videosComplete === false;
+    if (vNext) next.push({ key: 'video:' + vNext, kind: 'video', value: vNext, current: partial ? null : top ? top.views : 0, pct: partial ? null : round(Math.min(1, (top ? top.views : 0) / vNext) * 100, 1), video: top && !partial ? { id: top.id, title: top.title } : null, partial: partial || undefined });
     rows.forEach(function (r) { delete r.hours_cum; });
     return { reached: reached, next: next };
   }
