@@ -1,0 +1,682 @@
+{
+ "contents": {
+  "twoColumnWatchNextResults": {
+   "secondaryResults": {
+    "secondaryResults": {
+     "results": [
+      {
+       "lockupViewModel": {
+        "contentImage": {
+         "thumbnailViewModel": {
+          "image": {
+           "sources": [
+            {
+             "url": "https://i.ytimg.com/vi/sidexxxxx36/hq720.jpg",
+             "width": 720,
+             "height": 404
+            }
+           ]
+          },
+          "overlays": [
+           {
+            "thumbnailBottomOverlayViewModel": {
+             "badges": [
+              {
+               "thumbnailBadgeViewModel": {
+                "text": "8:15",
+                "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+               }
+              }
+             ]
+            }
+           }
+          ]
+         }
+        },
+        "metadata": {
+         "lockupMetadataViewModel": {
+          "title": {
+           "content": "XLOOKUP with multiple criteria"
+          },
+          "metadata": {
+           "contentMetadataViewModel": {
+            "metadataRows": [
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "Excel Demo",
+                 "commandRuns": [
+                  {
+                   "startIndex": 0,
+                   "length": 10,
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCdemoExcelChannel000000",
+                      "canonicalBaseUrl": "/@ExcelDemo"
+                     }
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             },
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "35K views"
+                },
+                "accessibilityLabel": "35,902 views"
+               },
+               {
+                "text": {
+                 "content": "3 weeks ago"
+                },
+                "accessibilityLabel": "3 weeks ago"
+               }
+              ]
+             }
+            ],
+            "delimiter": " • "
+           }
+          }
+         }
+        },
+        "contentId": "sidexxxxx36",
+        "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+        "rendererContext": {
+         "commandContext": {
+          "onTap": {
+           "innertubeCommand": {
+            "watchEndpoint": {
+             "videoId": "sidexxxxx36"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "lockupViewModel": {
+        "contentImage": {
+         "thumbnailViewModel": {
+          "image": {
+           "sources": [
+            {
+             "url": "https://i.ytimg.com/vi/sidexxxxx37/hq720.jpg",
+             "width": 720,
+             "height": 404
+            }
+           ]
+          },
+          "overlays": [
+           {
+            "thumbnailBottomOverlayViewModel": {
+             "badges": [
+              {
+               "thumbnailBadgeViewModel": {
+                "text": "9:44",
+                "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+               }
+              }
+             ]
+            }
+           }
+          ]
+         }
+        },
+        "metadata": {
+         "lockupMetadataViewModel": {
+          "title": {
+           "content": "Excel tables: the feature you skip"
+          },
+          "metadata": {
+           "contentMetadataViewModel": {
+            "metadataRows": [
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "Sheet Academy",
+                 "commandRuns": [
+                  {
+                   "startIndex": 0,
+                   "length": 13,
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCsheetAcademy0000000000",
+                      "canonicalBaseUrl": "/@SheetAcademy"
+                     }
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             },
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "640K views"
+                },
+                "accessibilityLabel": "640,118 views"
+               },
+               {
+                "text": {
+                 "content": "1 year ago"
+                },
+                "accessibilityLabel": "1 year ago"
+               }
+              ]
+             }
+            ],
+            "delimiter": " • "
+           }
+          }
+         }
+        },
+        "contentId": "sidexxxxx37",
+        "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+        "rendererContext": {
+         "commandContext": {
+          "onTap": {
+           "innertubeCommand": {
+            "watchEndpoint": {
+             "videoId": "sidexxxxx37"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "lockupViewModel": {
+        "contentImage": {
+         "thumbnailViewModel": {
+          "image": {
+           "sources": [
+            {
+             "url": "https://i.ytimg.com/vi/sidexxxxx38/hq720.jpg",
+             "width": 720,
+             "height": 404
+            }
+           ]
+          },
+          "overlays": [
+           {
+            "thumbnailBottomOverlayViewModel": {
+             "badges": [
+              {
+               "thumbnailBadgeViewModel": {
+                "text": "12:31",
+                "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+               }
+              }
+             ]
+            }
+           }
+          ]
+         }
+        },
+        "metadata": {
+         "lockupMetadataViewModel": {
+          "title": {
+           "content": "My Excel setup (2026)"
+          },
+          "metadata": {
+           "contentMetadataViewModel": {
+            "metadataRows": [
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "Pivot Point",
+                 "commandRuns": [
+                  {
+                   "startIndex": 0,
+                   "length": 11,
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCpivotPointTV0000000000",
+                      "canonicalBaseUrl": "/@PivotPointTV"
+                     }
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             },
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "5.5K views"
+                },
+                "accessibilityLabel": "5,540 views"
+               },
+               {
+                "text": {
+                 "content": "4 days ago"
+                },
+                "accessibilityLabel": "4 days ago"
+               }
+              ]
+             }
+            ],
+            "delimiter": " • "
+           }
+          }
+         }
+        },
+        "contentId": "sidexxxxx38",
+        "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+        "rendererContext": {
+         "commandContext": {
+          "onTap": {
+           "innertubeCommand": {
+            "watchEndpoint": {
+             "videoId": "sidexxxxx38"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "lockupViewModel": {
+        "contentImage": {
+         "thumbnailViewModel": {
+          "image": {
+           "sources": [
+            {
+             "url": "https://i.ytimg.com/vi/sidexxxxx39/hq720.jpg",
+             "width": 720,
+             "height": 404
+            }
+           ]
+          },
+          "overlays": [
+           {
+            "thumbnailBottomOverlayViewModel": {
+             "badges": [
+              {
+               "thumbnailBadgeViewModel": {
+                "text": "17:02",
+                "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+               }
+              }
+             ]
+            }
+           }
+          ]
+         }
+        },
+        "metadata": {
+         "lockupMetadataViewModel": {
+          "title": {
+           "content": "SUMPRODUCT finally explained"
+          },
+          "metadata": {
+           "contentMetadataViewModel": {
+            "metadataRows": [
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "Cell Craft",
+                 "commandRuns": [
+                  {
+                   "startIndex": 0,
+                   "length": 10,
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCcellCraft0000000000000",
+                      "canonicalBaseUrl": "/@CellCraft"
+                     }
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             },
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "1.2M views"
+                },
+                "accessibilityLabel": "1,203,770 views"
+               },
+               {
+                "text": {
+                 "content": "4 years ago"
+                },
+                "accessibilityLabel": "4 years ago"
+               }
+              ]
+             }
+            ],
+            "delimiter": " • "
+           }
+          }
+         }
+        },
+        "contentId": "sidexxxxx39",
+        "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+        "rendererContext": {
+         "commandContext": {
+          "onTap": {
+           "innertubeCommand": {
+            "watchEndpoint": {
+             "videoId": "sidexxxxx39"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "lockupViewModel": {
+        "contentImage": {
+         "thumbnailViewModel": {
+          "image": {
+           "sources": [
+            {
+             "url": "https://i.ytimg.com/vi/sidexxxxx40/hq720.jpg",
+             "width": 720,
+             "height": 404
+            }
+           ]
+          },
+          "overlays": [
+           {
+            "thumbnailBottomOverlayViewModel": {
+             "badges": [
+              {
+               "thumbnailBadgeViewModel": {
+                "text": "6:06",
+                "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+               }
+              }
+             ]
+            }
+           }
+          ]
+         }
+        },
+        "metadata": {
+         "lockupMetadataViewModel": {
+          "title": {
+           "content": "Spill errors and how to fix them"
+          },
+          "metadata": {
+           "contentMetadataViewModel": {
+            "metadataRows": [
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "Formula Friday",
+                 "commandRuns": [
+                  {
+                   "startIndex": 0,
+                   "length": 14,
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCformulaFriday000000000",
+                      "canonicalBaseUrl": "/@FormulaFriday"
+                     }
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             },
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "3.9K views"
+                },
+                "accessibilityLabel": "3,911 views"
+               },
+               {
+                "text": {
+                 "content": "1 week ago"
+                },
+                "accessibilityLabel": "1 week ago"
+               }
+              ]
+             }
+            ],
+            "delimiter": " • "
+           }
+          }
+         }
+        },
+        "contentId": "sidexxxxx40",
+        "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+        "rendererContext": {
+         "commandContext": {
+          "onTap": {
+           "innertubeCommand": {
+            "watchEndpoint": {
+             "videoId": "sidexxxxx40"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "lockupViewModel": {
+        "contentImage": {
+         "thumbnailViewModel": {
+          "image": {
+           "sources": [
+            {
+             "url": "https://i.ytimg.com/vi/sidexxxxx41/hq720.jpg",
+             "width": 720,
+             "height": 404
+            }
+           ]
+          },
+          "overlays": [
+           {
+            "thumbnailBottomOverlayViewModel": {
+             "badges": [
+              {
+               "thumbnailBadgeViewModel": {
+                "text": "1:40",
+                "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+               }
+              }
+             ]
+            }
+           }
+          ]
+         }
+        },
+        "metadata": {
+         "lockupMetadataViewModel": {
+          "title": {
+           "content": "Excel in 100 seconds"
+          },
+          "metadata": {
+           "contentMetadataViewModel": {
+            "metadataRows": [
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "Excel Demo",
+                 "commandRuns": [
+                  {
+                   "startIndex": 0,
+                   "length": 10,
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCdemoExcelChannel000000",
+                      "canonicalBaseUrl": "/@ExcelDemo"
+                     }
+                    }
+                   }
+                  }
+                 ]
+                }
+               }
+              ]
+             },
+             {
+              "metadataParts": [
+               {
+                "text": {
+                 "content": "220K views"
+                },
+                "accessibilityLabel": "220,045 views"
+               },
+               {
+                "text": {
+                 "content": "6 months ago"
+                },
+                "accessibilityLabel": "6 months ago"
+               }
+              ]
+             }
+            ],
+            "delimiter": " • "
+           }
+          }
+         }
+        },
+        "contentId": "sidexxxxx41",
+        "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+        "rendererContext": {
+         "commandContext": {
+          "onTap": {
+           "innertubeCommand": {
+            "watchEndpoint": {
+             "videoId": "sidexxxxx41"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "compactVideoRenderer": {
+        "videoId": "sidexxxxx42",
+        "title": {
+         "runs": [
+          {
+           "text": "Pivot table formatting pro tips"
+          }
+         ]
+        },
+        "lengthText": {
+         "simpleText": "10:10"
+        },
+        "viewCountText": {
+         "simpleText": "98,331 views"
+        },
+        "shortViewCountText": {
+         "simpleText": "98K views"
+        },
+        "publishedTimeText": {
+         "simpleText": "2 months ago"
+        },
+        "navigationEndpoint": {
+         "commandMetadata": {
+          "webCommandMetadata": {
+           "url": "/watch?v=sidexxxxx42"
+          }
+         }
+        },
+        "longBylineText": {
+         "runs": [
+          {
+           "text": "Sheet Academy",
+           "navigationEndpoint": {
+            "browseEndpoint": {
+             "browseId": "UCsheetAcademy0000000000",
+             "canonicalBaseUrl": "/@SheetAcademy"
+            }
+           }
+          }
+         ]
+        }
+       }
+      },
+      {
+       "compactVideoRenderer": {
+        "videoId": "sidexxxxx43",
+        "title": {
+         "runs": [
+          {
+           "text": "What-if analysis made simple"
+          }
+         ]
+        },
+        "lengthText": {
+         "simpleText": "7:58"
+        },
+        "viewCountText": {
+         "simpleText": "1,104 views"
+        },
+        "shortViewCountText": {
+         "simpleText": "1.1K views"
+        },
+        "publishedTimeText": {
+         "simpleText": "11 hours ago"
+        },
+        "navigationEndpoint": {
+         "commandMetadata": {
+          "webCommandMetadata": {
+           "url": "/watch?v=sidexxxxx43"
+          }
+         }
+        },
+        "longBylineText": {
+         "runs": [
+          {
+           "text": "Pivot Point",
+           "navigationEndpoint": {
+            "browseEndpoint": {
+             "browseId": "UCpivotPointTV0000000000",
+             "canonicalBaseUrl": "/@PivotPointTV"
+            }
+           }
+          }
+         ]
+        }
+       }
+      }
+     ]
+    }
+   }
+  }
+ }
+}

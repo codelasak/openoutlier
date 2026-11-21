@@ -27,6 +27,7 @@
     "https://i.ytimg.com/*",
     "https://www.reddit.com/*",
     "https://*.redd.it/*",
+    "https://returnyoutubedislikeapi.com/*",
     "http://127.0.0.1/*"
   ],
   "background": {
@@ -98,10 +99,13 @@
         "src/features.js",
         "src/features-view.js",
         "src/tracking.js",
+        "src/yt-insights.js",
         "src/brand.js",
         "src/panel.js",
         "src/overlay.js",
-        "src/youtube-content.js"
+        "src/youtube-content.js",
+        "src/youtube-cards.js",
+        "src/youtube-pages.js"
       ],
       "run_at": "document_idle"
     },

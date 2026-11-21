@@ -25,6 +25,7 @@ import { apiKeyInfo, saveApiKey, removeApiKey, setExtensionQuota, quota as apiQu
 import { store } from './library.mjs';
 import * as NICHE from './niche.mjs';
 import * as OWN from './own-history.mjs';
+import * as CARDS from './cards.mjs';
 import { createRequire } from 'node:module';
 
 const Features = createRequire(import.meta.url)('../src/features.js');
@@ -39,7 +40,8 @@ const VERSION = '0.1.0';
 // 'settings': POST /settings (feature flags + quota) and /settings/youtube-api-key; 'tracker': mcp/tracker.mjs;
 // 'niche': niche tracking (the org's tracking list, /youtube/niche/*, breakout alerts in the settings answer).
 // 'own-history': own-channel history (phase 2: several channels, /youtube/own/*, milestones in the settings answer).
-const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history'];
+// 'cards': phase 3's in-page badges and cards (/youtube/cards, /youtube/channel-card, /youtube/video-card).
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 
@@ -201,6 +203,19 @@ async function handle(req, res, port) {
   if (req.method === 'POST' && url.pathname === '/youtube/niche/alerts/ack') {
     const body = await readBody(req);
     return send(res, 200, { ok: true, acked: NICHE.ackAlerts(store(), Array.isArray(body.alerts) ? body.alerts.slice(0, 200) : []) }, origin);
+  }
+  // In-page badges and cards (mcp/cards.mjs): read only, from the tracker's and Analytics' rows.
+  if (req.method === 'POST' && url.pathname === '/youtube/cards') {
+    const body = await readBody(req);
+    return send(res, 200, { ok: true, ...CARDS.cardsLookup(store(), { videos: Array.isArray(body.videos) ? body.videos : [], channels: Array.isArray(body.channels) ? body.channels : [] }) }, origin);
+  }
+  if (method === 'GET' && url.pathname === '/youtube/channel-card') {
+    const r = CARDS.channelCard(store(), { channel: url.searchParams.get('channel') || '' });
+    return send(res, r.error ? 400 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r }, origin);
+  }
+  if (method === 'GET' && url.pathname === '/youtube/video-card') {
+    const r = CARDS.videoCard(store(), { video: url.searchParams.get('id') || '' });
+    return send(res, r.error ? 400 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r }, origin);
   }
   // Kanalım (mcp/own-history.mjs): the stored daily history of the connected channels.
   if (method === 'GET' && url.pathname === '/youtube/own/page') {

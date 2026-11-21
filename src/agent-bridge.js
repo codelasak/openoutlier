@@ -586,9 +586,35 @@
     return j;
   }
 
+  /**
+   * Phase 3's badges and cards (mcp/cards.mjs): msg.what = 'cards' ({ videos, channels }),
+   * 'channel' ({ channel: UC… }) or 'video' ({ id }). Quietly empty without a (new enough) bridge.
+   */
+  async function cards(msg) {
+    var st = await getState();
+    if (!st.connected) return { ok: false, noBridge: true };
+    var found = await findServer(st);
+    if (!found) return { ok: false, noBridge: true };
+    if ((found.health.features || []).indexOf('cards') === -1) return { ok: false, oldBridge: true };
+    if (msg.what === 'cards') {
+      var body = {
+        videos: (Array.isArray(msg.videos) ? msg.videos : []).filter(function (x) { return /^[A-Za-z0-9_-]{11}$/.test(String(x)); }).slice(0, 300),
+        channels: (Array.isArray(msg.channels) ? msg.channels : []).filter(function (x) { return /^UC[A-Za-z0-9_-]{22}$/.test(String(x)); }).slice(0, 100)
+      };
+      return post(found.port, '/youtube/cards', body);
+    }
+    var path = msg.what === 'channel' && /^UC[A-Za-z0-9_-]{22}$/.test(String(msg.channel || '')) ? '/youtube/channel-card?channel=' + msg.channel
+      : msg.what === 'video' && /^[A-Za-z0-9_-]{11}$/.test(String(msg.id || '')) ? '/youtube/video-card?id=' + msg.id : null;
+    if (!path) return { ok: false, error: 'bad request' };
+    var res = await read(found.port, path, 20000);
+    var j = await res.json().catch(function () { return {}; });
+    if (!res.ok) return { ok: false, error: j.error || 'HTTP ' + res.status };
+    return j;
+  }
+
   chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     if (!msg || sender.id !== chrome.runtime.id) return;
-    var fn = msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
+    var fn = msg.type === 'reelscope:yt-cards' ? cards : msg.type === 'reelscope:yt-video' ? ytVideoStart : msg.type === 'reelscope:yt-video-status' ? ytVideoStatus : msg.type === 'reelscope:yt-analytics' ? ytAnalytics
       : msg.type === 'reelscope:bridge-key' ? bridgeKey : msg.type === 'reelscope:niche' ? niche : msg.type === 'reelscope:own' ? own : null;
     if (!fn) return;
     fn(msg).then(sendResponse, function (e) {

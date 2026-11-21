@@ -51,30 +51,30 @@
   var FEATURES = [
     F('card-vph', 'cards', 3, true, 'VPH rozeti', 'VPH badge',
       'Saat başına izlenme (izlenme ÷ yayından beri geçen saat).', 'Views per hour (views ÷ hours since it was published).',
-      { surface: ['youtube:cards'] }),
+      { available: true, surface: ['youtube:cards'] }),
     F('card-outlier', 'cards', 3, true, 'Outlier rozeti', 'Outlier badge',
       'Videonun kanalın medyanına (ya da ortalamasına) göre kaç kat olduğu.', 'How many times the channel\'s median (or average) a video got.',
-      { optional: ['apiKey'], surface: ['youtube:cards'] }),
+      { available: true, optional: ['apiKey'], surface: ['youtube:cards'] }),
     F('card-subs', 'cards', 3, true, 'Abone sayısı', 'Subscriber count',
-      'Kartta kanalın abone sayısı.', 'The channel\'s subscribers on each card.',
-      { requires: ['apiKey'], surface: ['youtube:cards'] }),
-    F('card-velocity', 'cards', 1, true, 'Hız skoru', 'Velocity score',
+      'Kartta kanalın abone sayısı (sayfadan, kayıtlı kanaldan ya da önbellekteki channels.list\'ten).', 'The channel\'s subscribers on each card (from the page, a saved channel or the cached channels.list).',
+      { available: true, optional: ['apiKey'], surface: ['youtube:cards'] }),
+    F('card-velocity', 'cards', 3, true, 'Hız skoru', 'Velocity score',
       'Takip edilen videolarda "24 s: 3,4×" gibi erken hız.', 'Early speed on tracked videos, like "24 h: 3.4×".',
-      { requires: ['tracker'], surface: ['youtube:cards'] }),
+      { available: true, requires: ['tracker'], surface: ['youtube:cards'] }),
 
     F('feed-filters', 'feeds', 3, true, 'Gelişmiş filtreler', 'Advanced filters',
       'Outlier, VPH, süre, izlenme, tarih ve abone/izlenme oranına göre süz.', 'Filter by outlier, VPH, length, views, date and views per subscriber.',
-      { surface: ['youtube:search', 'youtube:home', 'youtube:subscriptions'] }),
+      { available: true, surface: ['youtube:search', 'youtube:home', 'youtube:subscriptions'] }),
     F('hide-shorts', 'feeds', 3, false, 'Aramada Shorts\'u gizle', 'Hide Shorts in search',
       'Arama sonuçlarından Shorts\'u kaldırır.', 'Removes Shorts from search results.',
-      { surface: ['youtube:search'] }),
+      { available: true, surface: ['youtube:search'] }),
     F('channel-sort', 'feeds', 3, true, 'Outlier\'a göre sırala', 'Sort by outlier',
       'Kanal videolarını outlier skoruna göre sıralar.', 'Sorts a channel\'s videos by outlier score.',
-      { surface: ['youtube:channel'] }),
+      { available: true, surface: ['youtube:channel'] }),
 
     F('channel-stats', 'channel', 3, true, 'Kanal istatistikleri', 'Channel stats',
       'Yaş, toplam izlenme, video başına ortalama ve medyan, aylık yükleme, ortalama süre, ülke.', 'Age, total views, average and median per video, uploads per month, average length, country.',
-      { optional: ['apiKey'], surface: ['youtube:channel'] }),
+      { available: true, optional: ['apiKey'], surface: ['youtube:channel'] }),
     F('channel-growth', 'channel', 1, true, 'Büyüme grafiği', 'Growth chart',
       'Takip başladıktan sonra günlük abone ve izlenme.', 'Daily subscribers and views since tracking started.',
       { available: true, requires: ['tracker'], surface: ['youtube:channel', 'library'] }),
@@ -83,7 +83,7 @@
       { available: true, requires: ['bridge', 'bridgeKey'], surface: ['youtube:channel'] }),
     F('channel-monetization', 'channel', 3, true, 'Monetized rozeti', 'Monetized badge',
       'Kanalın reklam gösterip göstermediği (5 örnek video).', 'Whether the channel shows ads (5 sample videos).',
-      { notes: ['ytRequest'], surface: ['youtube:channel'] }),
+      { available: true, notes: ['ytRequest'], surface: ['youtube:channel'] }),
     F('channel-similar', 'channel', 5, true, 'Benzer kanallar', 'Similar channels',
       'Birlikte önerilen ve benzer başlıklı kanallar.', 'Channels recommended together and with similar titles.',
       { surface: ['youtube:channel', 'library'] }),
@@ -96,10 +96,10 @@
 
     F('video-card', 'video', 3, true, 'Video kartı', 'Video card',
       'Outlier, VPH (ömür boyu ve son 24 saat), etkileşim ve hız eğrisi.', 'Outlier, VPH (lifetime and last 24 h), engagement and the velocity curve.',
-      { optional: ['tracker'], surface: ['youtube:watch'] }),
+      { available: true, optional: ['tracker'], surface: ['youtube:watch'] }),
     F('video-monetization', 'video', 3, true, 'Monetized rozeti', 'Monetized badge',
       'Videoda reklam olup olmadığı.', 'Whether the video shows ads.',
-      { notes: ['ytRequest'], surface: ['youtube:watch'] }),
+      { available: true, notes: ['ytRequest'], surface: ['youtube:watch'] }),
     F('transcript-tools', 'video', 4, true, 'Transcript araçları', 'Transcript tools',
       'Kopyala, txt/srt/md olarak dışa aktar, Claude\'a gönder.', 'Copy, export as txt/srt/md, send to Claude.',
       { notes: ['mcp'], surface: ['youtube:watch'] }),
@@ -117,11 +117,11 @@
       { surface: ['youtube:watch', 'library'] }),
     F('dislikes', 'video', 3, true, 'Dislike sayısı', 'Dislike count',
       'Return YouTube Dislike\'tan tahmini dislike sayısı.', 'Estimated dislikes from Return YouTube Dislike.',
-      { notes: ['thirdParty'], link: 'https://returnyoutubedislike.com/', surface: ['youtube:watch'] }),
+      { available: true, notes: ['thirdParty'], link: 'https://returnyoutubedislike.com/', surface: ['youtube:watch'] }),
 
     F('shorts-overlay', 'shorts', 3, true, 'Shorts kartı', 'Shorts card',
       'VPH, yayın tarihi, kanal yaşı ve kanalın ortalama Shorts izlenmesi.', 'VPH, publish date, channel age and the channel\'s average Shorts views.',
-      { optional: ['apiKey'], surface: ['youtube:shorts'] }),
+      { available: true, optional: ['apiKey'], surface: ['youtube:shorts'] }),
 
     F('thumb-compress', 'studio', 4, true, 'Thumbnail sıkıştırıcı', 'Thumbnail compressor',
       '2 MB\'tan büyük thumbnail\'i yüklemeden önce küçültür.', 'Shrinks thumbnails over 2 MB before upload.',
@@ -159,6 +159,29 @@
 
   var BY_ID = {};
   FEATURES.forEach(function (f) { BY_ID[f.id] = f; });
+
+  // Settings that are a choice rather than an on/off switch (rs:settings.<name>), shown under the
+  // feature they belong to. outlierFormula: 'median' (ours: views ÷ the channel's median, saved
+  // channels only) or 'mean' (NexLev's: views ÷ total views ÷ video count).
+  var CHOICES = {
+    outlierFormula: {
+      feature: 'card-outlier', default: 'median', values: ['median', 'mean'],
+      label: { tr: 'Outlier formülü', en: 'Outlier formula' },
+      options: {
+        median: { tr: 'Medyan', en: 'Median' },
+        mean: { tr: 'Ortalama (NexLev)', en: 'Average (NexLev)' }
+      },
+      hint: {
+        tr: 'Medyan yalnız kayıtlı kanallarda var; olmayanlarda rozet ortalamayı "ort." etiketiyle gösterir (API anahtarıyla, 50 kanal = 1 birim, 7 gün önbellek).',
+        en: 'The median exists for saved channels only; elsewhere the badge shows the average, labelled "avg" (with an API key: 50 channels = 1 unit, cached 7 days).'
+      }
+    }
+  };
+  function choiceOf(name, stored) {
+    var c = CHOICES[name];
+    if (!c) return null;
+    return c.values.indexOf(stored) !== -1 ? stored : c.default;
+  }
 
   function get(id) { return BY_ID[id] || null; }
   function defaults() {
@@ -226,7 +249,8 @@
 
   // ---- chrome.storage (extension pages, content scripts, service worker) ----------
   var hasChrome = !!(root.chrome && root.chrome.storage && root.chrome.storage.local);
-  var cache = { stored: {}, flags: defaults(), uiLang: null, loaded: false };
+  var cache = { stored: {}, flags: defaults(), uiLang: null, loaded: false, choices: {} };
+  Object.keys(CHOICES).forEach(function (k) { cache.choices[k] = CHOICES[k].default; });
   var subs = [];
 
   function take(settings) {
@@ -235,7 +259,12 @@
     cache.flags = resolve(cache.stored);
     cache.uiLang = settings && settings.uiLang || null;
     cache.loaded = true;
-    return Object.keys(cache.flags).filter(function (k) { return prev[k] !== cache.flags[k]; });
+    var changed = Object.keys(cache.flags).filter(function (k) { return prev[k] !== cache.flags[k]; });
+    Object.keys(CHOICES).forEach(function (k) {
+      var v = choiceOf(k, settings && settings[k]);
+      if (v !== cache.choices[k]) { cache.choices[k] = v; changed.push(k); }
+    });
+    return changed;
   }
 
   var ready = hasChrome
@@ -273,12 +302,28 @@
     take(s);
     return true;
   }
+  /** A choice setting's current value (CHOICES), e.g. choice('outlierFormula') → 'median'. */
+  function choice(name) { return cache.choices[name] != null ? cache.choices[name] : choiceOf(name); }
+  /** Store a choice setting (rs:settings.<name>). */
+  async function setChoice(name, value) {
+    if (!CHOICES[name] || CHOICES[name].values.indexOf(value) === -1 || !hasChrome) return false;
+    var r = await root.chrome.storage.local.get(SETTINGS_KEY);
+    var s = Object.assign({}, r[SETTINGS_KEY]);
+    s[name] = value;
+    var o = {};
+    o[SETTINGS_KEY] = s;
+    await root.chrome.storage.local.set(o);
+    take(s);
+    return true;
+  }
+
   /** Back to the defaults (forgets every choice). */
   async function reset() {
     if (!hasChrome) return;
     var r = await root.chrome.storage.local.get(SETTINGS_KEY);
     var s = Object.assign({}, r[SETTINGS_KEY]);
     delete s.features;
+    Object.keys(CHOICES).forEach(function (k) { delete s[k]; });
     var o = {};
     o[SETTINGS_KEY] = s;
     await root.chrome.storage.local.set(o);
@@ -305,7 +350,7 @@
   }
 
   return {
-    SETTINGS_KEY: SETTINGS_KEY, GROUPS: GROUPS, FEATURES: FEATURES,
+    SETTINGS_KEY: SETTINGS_KEY, GROUPS: GROUPS, FEATURES: FEATURES, CHOICES: CHOICES, choiceOf: choiceOf, choice: choice, setChoice: setChoice,
     get: get, defaults: defaults, sanitize: sanitize, resolve: resolve, isOnIn: isOnIn, missing: missing, lang: lang,
     ready: ready, isOn: isOn, flags: flags, onChange: onChange, set: set, reset: reset, env: env,
     uiLang: function () { return lang(cache.uiLang); }

@@ -803,8 +803,23 @@
       });
       overlay.refresh();
       mountTrackButton();
+      libSubs.slice().forEach(function (fn) { try { fn(); } catch (e) { console.warn('[OpenOutlier] library listener failed', e); } });
     }, 250);
   }
+
+  // ---- what the phase 3 scripts (youtube-cards.js, youtube-pages.js) read -----------------
+  // The saved videos and channel facts this tab already holds, so they don't load storage again.
+  var libSubs = [];
+  self.OpenOutlierYTLib = {
+    accounts: accounts,
+    profiles: profiles,
+    ucMap: ucMap,
+    findPost: findPost,
+    pageAccount: function () { return pageAccount(); },
+    /** cb() after the saved videos changed (throttled with the panel's render). */
+    onChange: function (cb) { libSubs.push(cb); return function () { libSubs = libSubs.filter(function (x) { return x !== cb; }); }; }
+  };
+  try { document.dispatchEvent(new CustomEvent('openoutlier-yt-lib')); } catch (e) { /* ignore */ }
 
   function mount() {
     var parent = document.body || document.documentElement;

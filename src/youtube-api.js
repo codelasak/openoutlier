@@ -141,7 +141,9 @@
       subscribers: st.hiddenSubscriberCount ? null : int(st.subscriberCount),
       videos: int(st.videoCount),
       views: int(st.viewCount),
-      uploads: typeof uploads === 'string' ? uploads : null
+      uploads: typeof uploads === 'string' ? uploads : null,
+      publishedAt: sn.publishedAt && isFinite(Date.parse(sn.publishedAt)) ? Date.parse(sn.publishedAt) : null,
+      country: typeof sn.country === 'string' && sn.country ? sn.country : null
     };
   }
 
@@ -212,6 +214,14 @@
       return channelInfo((body.items || [])[0]);
     }
 
+    /** channels.list for up to 50 UC ids in one call (1 unit) → [channelInfo] (missing ones left out). */
+    async function channels(ids) {
+      var list = (ids || []).filter(function (x) { return CHANNEL_ID_RE.test(String(x)); }).slice(0, PER_CALL);
+      if (!list.length) return [];
+      var body = await get('channels', { part: 'snippet,statistics', id: list.join(','), maxResults: PER_CALL });
+      return (body.items || []).map(channelInfo).filter(Boolean);
+    }
+
     /** Video ids in a playlist, newest first, up to max. A missing playlist → null. */
     async function playlistIds(playlistId, max) {
       var ids = [];
@@ -233,7 +243,7 @@
       return ids;
     }
 
-    return { get: get, videos: videos, channel: channel, playlistIds: playlistIds };
+    return { get: get, videos: videos, channel: channel, channels: channels, playlistIds: playlistIds };
   }
 
   /**

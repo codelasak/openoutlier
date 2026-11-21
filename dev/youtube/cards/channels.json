@@ -1,0 +1,79 @@
+{
+ "items": [
+  {
+   "id": "UCsheetAcademy0000000000",
+   "snippet": {
+    "title": "Sheet Academy",
+    "customUrl": "@sheetacademy",
+    "publishedAt": "2013-03-14T10:00:00Z",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "1240000",
+    "viewCount": "98100000",
+    "videoCount": "623",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCdemoExcelChannel000000",
+   "snippet": {
+    "title": "Excel Demo",
+    "customUrl": "@exceldemo",
+    "publishedAt": "2016-09-02T10:00:00Z",
+    "country": "TR"
+   },
+   "statistics": {
+    "subscriberCount": "712000",
+    "viewCount": "61200000",
+    "videoCount": "776",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCformulaFriday000000000",
+   "snippet": {
+    "title": "Formula Friday",
+    "customUrl": "@formulafriday",
+    "publishedAt": "2021-01-08T10:00:00Z",
+    "country": "GB"
+   },
+   "statistics": {
+    "subscriberCount": "18300",
+    "viewCount": "1900000",
+    "videoCount": "141",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCpivotPointTV0000000000",
+   "snippet": {
+    "title": "Pivot Point",
+    "customUrl": "@pivotpointtv",
+    "publishedAt": "2023-06-19T10:00:00Z",
+    "country": "TR"
+   },
+   "statistics": {
+    "subscriberCount": "3400",
+    "viewCount": "220000",
+    "videoCount": "58",
+    "hiddenSubscriberCount": false
+   }
+  },
+  {
+   "id": "UCcellCraft0000000000000",
+   "snippet": {
+    "title": "Cell Craft",
+    "customUrl": "@cellcraft",
+    "publishedAt": "2011-11-30T10:00:00Z",
+    "country": "IN"
+   },
+   "statistics": {
+    "subscriberCount": "655000",
+    "viewCount": "61000000",
+    "videoCount": "890",
+    "hiddenSubscriberCount": false
+   }
+  }
+ ]
+}

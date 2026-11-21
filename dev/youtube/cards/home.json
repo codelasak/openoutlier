@@ -1,0 +1,1581 @@
+{
+ "contents": {
+  "twoColumnBrowseResultsRenderer": {
+   "tabs": [
+    {
+     "tabRenderer": {
+      "selected": true,
+      "content": {
+       "richGridRenderer": {
+        "contents": [
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx12/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "12:09",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "The 5 Excel functions I use every single day"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Sheet Academy"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "1.1M views"
+                     },
+                     "accessibilityLabel": "1,104,882 views"
+                    },
+                    {
+                     "text": {
+                      "content": "1 year ago"
+                     },
+                     "accessibilityLabel": "1 year ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCsheetAcademy0000000000",
+                      "canonicalBaseUrl": "/@SheetAcademy"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx12",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx12"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx13/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "8:02",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "From messy CSV to dashboard in 8 minutes"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Pivot Point"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "94K views"
+                     },
+                     "accessibilityLabel": "94,230 views"
+                    },
+                    {
+                     "text": {
+                      "content": "6 days ago"
+                     },
+                     "accessibilityLabel": "6 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCpivotPointTV0000000000",
+                      "canonicalBaseUrl": "/@PivotPointTV"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx13",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx13"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx14/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "13:37",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "LET and LAMBDA explained with coffee"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Excel Demo"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "27K views"
+                     },
+                     "accessibilityLabel": "27,418 views"
+                    },
+                    {
+                     "text": {
+                      "content": "2 weeks ago"
+                     },
+                     "accessibilityLabel": "2 weeks ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCdemoExcelChannel000000",
+                      "canonicalBaseUrl": "/@ExcelDemo"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx14",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx14"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx15/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "5:44",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Conditional formatting that actually helps"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Formula Friday"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "6.8K views"
+                     },
+                     "accessibilityLabel": "6,812 views"
+                    },
+                    {
+                     "text": {
+                      "content": "3 days ago"
+                     },
+                     "accessibilityLabel": "3 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCformulaFriday000000000",
+                      "canonicalBaseUrl": "/@FormulaFriday"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx15",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx15"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentId": "RDmixdemo0001",
+             "contentType": "LOCKUP_CONTENT_TYPE_PLAYLIST",
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Mix – Excel Demo"
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx16/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "18:55",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Power Query: merge 50 files at once"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Cell Craft"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "412K views"
+                     },
+                     "accessibilityLabel": "412,770 views"
+                    },
+                    {
+                     "text": {
+                      "content": "7 months ago"
+                     },
+                     "accessibilityLabel": "7 months ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCcellCraft0000000000000",
+                      "canonicalBaseUrl": "/@CellCraft"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx16",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx16"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx17/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "9:01",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Dynamic arrays in 9 minutes"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Excel Demo"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "48K views"
+                     },
+                     "accessibilityLabel": "48,061 views"
+                    },
+                    {
+                     "text": {
+                      "content": "1 month ago"
+                     },
+                     "accessibilityLabel": "1 month ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCdemoExcelChannel000000",
+                      "canonicalBaseUrl": "/@ExcelDemo"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx17",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx17"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx18/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "4:20",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Stop using VLOOKUP (seriously)"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Pivot Point"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "1.9K views"
+                     },
+                     "accessibilityLabel": "1,930 views"
+                    },
+                    {
+                     "text": {
+                      "content": "9 hours ago"
+                     },
+                     "accessibilityLabel": "9 hours ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCpivotPointTV0000000000",
+                      "canonicalBaseUrl": "/@PivotPointTV"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx18",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx18"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx19/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "15:30",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Excel keyboard shortcuts cheat sheet"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Sheet Academy"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "3.3M views"
+                     },
+                     "accessibilityLabel": "3,301,442 views"
+                    },
+                    {
+                     "text": {
+                      "content": "3 years ago"
+                     },
+                     "accessibilityLabel": "3 years ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCsheetAcademy0000000000",
+                      "canonicalBaseUrl": "/@SheetAcademy"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx19",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx19"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richSectionRenderer": {
+           "content": {
+            "richShelfRenderer": {
+             "title": {
+              "runs": [
+               {
+                "text": "Shorts"
+               }
+              ]
+             },
+             "contents": [
+              {
+               "richItemRenderer": {
+                "content": {
+                 "shortsLockupViewModel": {
+                  "entityId": "shorts-shelf-item-hmShxxxxx24",
+                  "accessibilityText": "Flash Fill magic, 2,701,950 views - play Short",
+                  "overlayMetadata": {
+                   "primaryText": {
+                    "content": "Flash Fill magic"
+                   },
+                   "secondaryText": {
+                    "content": "2.7M views"
+                   }
+                  },
+                  "onTap": {
+                   "innertubeCommand": {
+                    "reelWatchEndpoint": {
+                     "videoId": "hmShxxxxx24"
+                    }
+                   }
+                  },
+                  "thumbnailViewModel": {
+                   "thumbnailViewModel": {
+                    "image": {
+                     "sources": [
+                      {
+                       "url": "https://i.ytimg.com/vi/hmShxxxxx24/oardefault.jpg",
+                       "width": 405
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "richItemRenderer": {
+                "content": {
+                 "shortsLockupViewModel": {
+                  "entityId": "shorts-shelf-item-hmShxxxxx25",
+                  "accessibilityText": "Freeze panes, 15,004 views - play Short",
+                  "overlayMetadata": {
+                   "primaryText": {
+                    "content": "Freeze panes"
+                   },
+                   "secondaryText": {
+                    "content": "15K views"
+                   }
+                  },
+                  "onTap": {
+                   "innertubeCommand": {
+                    "reelWatchEndpoint": {
+                     "videoId": "hmShxxxxx25"
+                    }
+                   }
+                  },
+                  "thumbnailViewModel": {
+                   "thumbnailViewModel": {
+                    "image": {
+                     "sources": [
+                      {
+                       "url": "https://i.ytimg.com/vi/hmShxxxxx25/oardefault.jpg",
+                       "width": 405
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "richItemRenderer": {
+                "content": {
+                 "shortsLockupViewModel": {
+                  "entityId": "shorts-shelf-item-hmShxxxxx26",
+                  "accessibilityText": "Ctrl + T, 540,311 views - play Short",
+                  "overlayMetadata": {
+                   "primaryText": {
+                    "content": "Ctrl + T"
+                   },
+                   "secondaryText": {
+                    "content": "540K views"
+                   }
+                  },
+                  "onTap": {
+                   "innertubeCommand": {
+                    "reelWatchEndpoint": {
+                     "videoId": "hmShxxxxx26"
+                    }
+                   }
+                  },
+                  "thumbnailViewModel": {
+                   "thumbnailViewModel": {
+                    "image": {
+                     "sources": [
+                      {
+                       "url": "https://i.ytimg.com/vi/hmShxxxxx26/oardefault.jpg",
+                       "width": 405
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "richItemRenderer": {
+                "content": {
+                 "shortsLockupViewModel": {
+                  "entityId": "shorts-shelf-item-hmShxxxxx27",
+                  "accessibilityText": "Sum with Alt =, 88,402 views - play Short",
+                  "overlayMetadata": {
+                   "primaryText": {
+                    "content": "Sum with Alt ="
+                   },
+                   "secondaryText": {
+                    "content": "88K views"
+                   }
+                  },
+                  "onTap": {
+                   "innertubeCommand": {
+                    "reelWatchEndpoint": {
+                     "videoId": "hmShxxxxx27"
+                    }
+                   }
+                  },
+                  "thumbnailViewModel": {
+                   "thumbnailViewModel": {
+                    "image": {
+                     "sources": [
+                      {
+                       "url": "https://i.ytimg.com/vi/hmShxxxxx27/oardefault.jpg",
+                       "width": 405
+                      }
+                     ]
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             ]
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx20/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "11:11",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "INDEX MATCH for people who hate INDEX MATCH"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Formula Friday"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "22K views"
+                     },
+                     "accessibilityLabel": "22,515 views"
+                    },
+                    {
+                     "text": {
+                      "content": "1 month ago"
+                     },
+                     "accessibilityLabel": "1 month ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCformulaFriday000000000",
+                      "canonicalBaseUrl": "/@FormulaFriday"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx20",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx20"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx21/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "21:48",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "The budget template I actually use"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Cell Craft"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "75K views"
+                     },
+                     "accessibilityLabel": "75,064 views"
+                    },
+                    {
+                     "text": {
+                      "content": "2 weeks ago"
+                     },
+                     "accessibilityLabel": "2 weeks ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCcellCraft0000000000000",
+                      "canonicalBaseUrl": "/@CellCraft"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx21",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx21"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx22/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "7:07",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Charts: the 3 that matter"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Excel Demo"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "19K views"
+                     },
+                     "accessibilityLabel": "19,240 views"
+                    },
+                    {
+                     "text": {
+                      "content": "4 days ago"
+                     },
+                     "accessibilityLabel": "4 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCdemoExcelChannel000000",
+                      "canonicalBaseUrl": "/@ExcelDemo"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx22",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx22"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/homexxxxx23/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "10:59",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Excel vs Sheets in 2026"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Pivot Point"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "7.7K views"
+                     },
+                     "accessibilityLabel": "7,702 views"
+                    },
+                    {
+                     "text": {
+                      "content": "2 days ago"
+                     },
+                     "accessibilityLabel": "2 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCpivotPointTV0000000000",
+                      "canonicalBaseUrl": "/@PivotPointTV"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "homexxxxx23",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "homexxxxx23"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+}

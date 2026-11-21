@@ -163,7 +163,27 @@
             if (!Array.isArray(text)) return h('p', { class: 'ft-note' }, text);
             return h('p', { class: 'ft-note' }, text[0], h('a', { href: f.link, target: '_blank', rel: 'noopener noreferrer', text: f.link.replace(/^https:\/\/|\/$/g, '') }), text[1]);
           })),
-        h('label', { class: 'ft-switch', title: on ? L.switchOn : L.switchOff }, input, h('span', { 'aria-hidden': 'true' })));
+        h('label', { class: 'ft-switch', title: on ? L.switchOn : L.switchOff }, input, h('span', { 'aria-hidden': 'true' })),
+        choices(f, on));
+    }
+
+    /** Choice settings that belong to this feature (F.CHOICES), as a small segmented control. */
+    function choices(f, on) {
+      var names = Object.keys(F.CHOICES || {}).filter(function (k) { return F.CHOICES[k].feature === f.id; });
+      if (!names.length) return null;
+      return h('div', { class: 'ft-choices' + (on ? '' : ' is-off') }, names.map(function (name) {
+        var c = F.CHOICES[name];
+        var cur = opts.choices && opts.choices[name] ? opts.choices[name] : F.choice(name);
+        var gid = 'ft-c-' + name + '-' + (++uid);
+        return h('div', { class: 'ft-choice', role: 'radiogroup', 'aria-labelledby': gid, 'data-choice': name },
+          h('span', { class: 'ft-choice-label', id: gid, text: c.label[lang] }),
+          h('span', { class: 'ft-seg' }, c.values.map(function (v) {
+            var b = h('button', { type: 'button', role: 'radio', class: 'ft-seg-btn' + (v === cur ? ' is-on' : ''), 'aria-checked': v === cur ? 'true' : 'false', 'data-value': v,
+              onclick: function () { if (opts.onChoice) opts.onChoice(name, v); else F.setChoice(name, v); } }, c.options[v][lang]);
+            return b;
+          })),
+          c.hint ? h('p', { class: 'ft-note ft-choice-hint', text: c.hint[lang] }) : null);
+      }));
     }
   }
 

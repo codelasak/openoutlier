@@ -777,3 +777,23 @@ test('own-channel history (phase 2): the Kanalım page route, collect-now, miles
   assert.ok(yq.data.paths.find((p) => p.id === 'shorts').metric.current > 1e6);
   s.close();
 });
+
+test('in-page badges and cards (phase 3): /youtube/cards, /youtube/channel-card, /youtube/video-card', async () => {
+  const health = await (await bridge('/health')).json();
+  assert.ok(health.features.includes('cards'));
+  const r = await (await bridge('/youtube/cards', { method: 'POST', body: { videos: ['yTnothing01', 'x'], channels: ['UCdemoExcelChannel000001', 'nope'] } })).json();
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.videos, {});
+  assert.ok(r.channels.UCdemoExcelChannel000001, 'a channel the niche test tracked');
+  assert.deepEqual(Object.keys(r.channels.UCdemoExcelChannel000001.baseline), ['long', 'short']);
+  const ch = await (await bridge('/youtube/channel-card?as=get&channel=UCdemoExcelChannel000001', { method: 'POST', body: {} })).json();
+  assert.equal(ch.ok, true);
+  assert.ok(Array.isArray(ch.series));
+  const none = await (await bridge('/youtube/channel-card?as=get&channel=UCnotTrackedChannel00000', { method: 'POST', body: {} })).json();
+  assert.deepEqual(none, { ok: true, tracked: false });
+  assert.equal((await bridge('/youtube/channel-card?as=get&channel=bad', { method: 'POST', body: {} })).status, 400);
+  const v = await (await bridge('/youtube/video-card?as=get&id=yTnothing01', { method: 'POST', body: {} })).json();
+  assert.deepEqual([v.ok, v.tracked, v.own], [true, false, null]);
+  assert.equal((await bridge('/youtube/video-card?as=get&id=bad', { method: 'POST', body: {} })).status, 400);
+  assert.equal((await bridge('/youtube/cards', { method: 'POST', body: {}, origin: 'https://evil.example' })).status, 403);
+});

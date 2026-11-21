@@ -55,9 +55,29 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   // The dislike feature credits its source.
   assert.equal(F.get('dislikes').link, 'https://returnyoutubedislike.com/');
   assert.ok(F.get('dislikes').notes.includes('thirdParty'));
-  // Phase 0 builds the retention purge; the rest are "coming soon".
-  // Phase 0: the 30-day purge; phase 1: niche tracking, the Track button, growth, title history, breakouts, the digest.
-  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), ['channel-growth', 'channel-track', 'title-history', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']);
+  // Phase 0: the 30-day purge; phase 1: niche tracking, the Track button, growth, title history, breakouts, the digest;
+  // phase 2: own-channel history; phase 3: the in-page badges and cards. The rest are "coming soon".
+  assert.deepEqual(F.FEATURES.filter((f) => f.available).map((f) => f.id), [
+    'card-vph', 'card-outlier', 'card-subs', 'card-velocity', 'feed-filters', 'hide-shorts', 'channel-sort',
+    'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'video-card', 'video-monetization', 'title-history', 'dislikes',
+    'shorts-overlay', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']);
+  assert.deepEqual(F.FEATURES.filter((f) => f.phase === 3 && !f.available).map((f) => f.id), ['channel-rpm'], 'only the RPM estimate of phase 3 is left');
+  // Subscriber counts work without a key (page data, saved channels); the key adds channels.list.
+  assert.deepEqual(F.get('card-subs').requires, []);
+  assert.ok(F.get('card-subs').optional.includes('apiKey'));
+});
+
+test('the outlier formula is a choice, not a switch: median by default, mean on request', () => {
+  assert.deepEqual(F.CHOICES.outlierFormula.values, ['median', 'mean']);
+  assert.equal(F.CHOICES.outlierFormula.feature, 'card-outlier');
+  assert.equal(F.choiceOf('outlierFormula'), 'median');
+  assert.equal(F.choiceOf('outlierFormula', 'mean'), 'mean');
+  assert.equal(F.choiceOf('outlierFormula', 'mode'), 'median', 'unknown values fall back');
+  assert.equal(F.choiceOf('nope', 'x'), null);
+  for (const l of ['tr', 'en']) {
+    assert.ok(F.CHOICES.outlierFormula.label[l] && F.CHOICES.outlierFormula.hint[l]);
+    for (const v of F.CHOICES.outlierFormula.values) assert.ok(F.CHOICES.outlierFormula.options[v][l], v + ' ' + l);
+  }
 });
 
 test('stored choices: unknown keys and non-booleans are dropped, missing keys fall back to the default', () => {
@@ -77,9 +97,10 @@ test('stored choices: unknown keys and non-booleans are dropped, missing keys fa
 
 test('missing requirements: direct, through the tracker, and unknown state is never reported', () => {
   const flags = F.defaults();
-  assert.deepEqual(F.missing('card-subs', { apiKey: false }, flags), ['apiKey']);
-  assert.deepEqual(F.missing('card-subs', { apiKey: true }, flags), []);
-  assert.deepEqual(F.missing('card-subs', {}, flags), [], 'unknown is not missing');
+  assert.deepEqual(F.missing('channel-sponsors', { apiKey: false }, flags), ['apiKey']);
+  assert.deepEqual(F.missing('channel-sponsors', { apiKey: true }, flags), []);
+  assert.deepEqual(F.missing('channel-sponsors', {}, flags), [], 'unknown is not missing');
+  assert.deepEqual(F.missing('card-subs', { apiKey: false }, flags), [], 'optional: works on page data and saved channels');
   assert.deepEqual(F.missing('tracker', { bridge: true, bridgeKey: false }, flags), ['bridgeKey']);
   // A feature that needs the tracker inherits what the tracker misses…
   assert.deepEqual(F.missing('card-velocity', { bridge: false, bridgeKey: false }, flags), ['bridge', 'bridgeKey']);
@@ -158,6 +179,27 @@ test('browser: isOn reads rs:settings.features, set() stores only the choice, on
   assert.equal(local['rs:settings'].features, undefined);
   assert.deepEqual({ ...B.flags() }, { ...B.defaults() });
   assert.equal(await B.set('nope', true), false);
+});
+
+test('browser: the outlier formula is stored in rs:settings, reaches other pages and goes back with reset()', async () => {
+  const { F: B, local, chrome } = browser({ 'rs:settings': { outlierFormula: 'bogus' } });
+  await B.ready;
+  assert.equal(B.choice('outlierFormula'), 'median', 'a bad stored value means the default');
+  const seen = [];
+  B.onChange((changed) => seen.push([...changed]));
+  assert.equal(await B.setChoice('outlierFormula', 'mean'), true);
+  assert.equal(B.choice('outlierFormula'), 'mean');
+  assert.equal(local['rs:settings'].outlierFormula, 'mean');
+  assert.equal(await B.setChoice('outlierFormula', 'mode'), false);
+  assert.equal(await B.setChoice('nope', 'mean'), false);
+  await chrome.storage.local.set({ 'rs:settings': Object.assign({}, local['rs:settings'], { outlierFormula: 'median' }) });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.equal(B.choice('outlierFormula'), 'median');
+  assert.ok(seen.some((c) => c.includes('outlierFormula')), 'listeners hear which choice changed');
+  await B.setChoice('outlierFormula', 'mean');
+  await B.reset();
+  assert.equal(B.choice('outlierFormula'), 'median');
+  assert.equal(local['rs:settings'].outlierFormula, undefined);
 });
 
 test('browser: env() says what is set up, from the popup key and the bridge state', async () => {

@@ -137,5 +137,5 @@
     if (msg.type === 'reelscope:yt-api') { run(msg).then(sendResponse); return true; }
   });
 
-  self.OpenOutlierYouTubeApiBg = { run: run, status: status, save: save };
+  self.OpenOutlierYouTubeApiBg = { run: run, status: status, save: save, spend: spend, quota: quota };
 })();

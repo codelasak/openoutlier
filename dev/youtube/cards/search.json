@@ -1,0 +1,612 @@
+{
+ "contents": {
+  "twoColumnSearchResultsRenderer": {
+   "primaryContents": {
+    "sectionListRenderer": {
+     "contents": [
+      {
+       "itemSectionRenderer": {
+        "contents": [
+         {
+          "videoRenderer": {
+           "videoId": "srchxxxxxx1",
+           "title": {
+            "runs": [
+             {
+              "text": "Pivot Tables in 10 minutes (complete beginner guide)"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "10:14"
+           },
+           "viewCountText": {
+            "simpleText": "2,412,903 views"
+           },
+           "shortViewCountText": {
+            "simpleText": "2.4M views"
+           },
+           "publishedTimeText": {
+            "simpleText": "2 years ago"
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "url": "/watch?v=srchxxxxxx1"
+             }
+            }
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Sheet Academy",
+              "navigationEndpoint": {
+               "browseEndpoint": {
+                "browseId": "UCsheetAcademy0000000000",
+                "canonicalBaseUrl": "/@SheetAcademy"
+               }
+              }
+             }
+            ]
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "srchxxxxxx2",
+           "title": {
+            "runs": [
+             {
+              "text": "I made a pivot table that updates itself"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "7:48"
+           },
+           "viewCountText": {
+            "simpleText": "186,442 views"
+           },
+           "shortViewCountText": {
+            "simpleText": "186K views"
+           },
+           "publishedTimeText": {
+            "simpleText": "3 weeks ago"
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "url": "/watch?v=srchxxxxxx2"
+             }
+            }
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Pivot Point",
+              "navigationEndpoint": {
+               "browseEndpoint": {
+                "browseId": "UCpivotPointTV0000000000",
+                "canonicalBaseUrl": "/@PivotPointTV"
+               }
+              }
+             }
+            ]
+           }
+          }
+         },
+         {
+          "reelShelfRenderer": {
+           "title": {
+            "simpleText": "Shorts"
+           },
+           "items": [
+            {
+             "shortsLockupViewModel": {
+              "entityId": "shorts-shelf-item-srShxxxxxx9",
+              "accessibilityText": "Pivot in one click, 1,203,331 views - play Short",
+              "overlayMetadata": {
+               "primaryText": {
+                "content": "Pivot in one click"
+               },
+               "secondaryText": {
+                "content": "1.2M views"
+               }
+              },
+              "onTap": {
+               "innertubeCommand": {
+                "reelWatchEndpoint": {
+                 "videoId": "srShxxxxxx9"
+                }
+               }
+              },
+              "thumbnailViewModel": {
+               "thumbnailViewModel": {
+                "image": {
+                 "sources": [
+                  {
+                   "url": "https://i.ytimg.com/vi/srShxxxxxx9/oardefault.jpg",
+                   "width": 405
+                  }
+                 ]
+                }
+               }
+              }
+             }
+            },
+            {
+             "shortsLockupViewModel": {
+              "entityId": "shorts-shelf-item-srShxxxxx10",
+              "accessibilityText": "Refresh all pivots, 44,019 views - play Short",
+              "overlayMetadata": {
+               "primaryText": {
+                "content": "Refresh all pivots"
+               },
+               "secondaryText": {
+                "content": "44K views"
+               }
+              },
+              "onTap": {
+               "innertubeCommand": {
+                "reelWatchEndpoint": {
+                 "videoId": "srShxxxxx10"
+                }
+               }
+              },
+              "thumbnailViewModel": {
+               "thumbnailViewModel": {
+                "image": {
+                 "sources": [
+                  {
+                   "url": "https://i.ytimg.com/vi/srShxxxxx10/oardefault.jpg",
+                   "width": 405
+                  }
+                 ]
+                }
+               }
+              }
+             }
+            },
+            {
+             "shortsLockupViewModel": {
+              "entityId": "shorts-shelf-item-srShxxxxx11",
+              "accessibilityText": "Group dates fast, 310,420 views - play Short",
+              "overlayMetadata": {
+               "primaryText": {
+                "content": "Group dates fast"
+               },
+               "secondaryText": {
+                "content": "310K views"
+               }
+              },
+              "onTap": {
+               "innertubeCommand": {
+                "reelWatchEndpoint": {
+                 "videoId": "srShxxxxx11"
+                }
+               }
+              },
+              "thumbnailViewModel": {
+               "thumbnailViewModel": {
+                "image": {
+                 "sources": [
+                  {
+                   "url": "https://i.ytimg.com/vi/srShxxxxx11/oardefault.jpg",
+                   "width": 405
+                  }
+                 ]
+                }
+               }
+              }
+             }
+            }
+           ]
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "srchxxxxxx3",
+           "title": {
+            "runs": [
+             {
+              "text": "XLOOKUP + pivot: the 60-second dashboard"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "9:52"
+           },
+           "viewCountText": {
+            "simpleText": "63,118 views"
+           },
+           "shortViewCountText": {
+            "simpleText": "63K views"
+           },
+           "publishedTimeText": {
+            "simpleText": "1 month ago"
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "url": "/watch?v=srchxxxxxx3"
+             }
+            }
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Excel Demo",
+              "navigationEndpoint": {
+               "browseEndpoint": {
+                "browseId": "UCdemoExcelChannel000000",
+                "canonicalBaseUrl": "/@ExcelDemo"
+               }
+              }
+             }
+            ]
+           }
+          }
+         },
+         {
+          "lockupViewModel": {
+           "contentImage": {
+            "thumbnailViewModel": {
+             "image": {
+              "sources": [
+               {
+                "url": "https://i.ytimg.com/vi/srcLxxxxxx7/hq720.jpg",
+                "width": 720,
+                "height": 404
+               }
+              ]
+             },
+             "overlays": [
+              {
+               "thumbnailBottomOverlayViewModel": {
+                "badges": [
+                 {
+                  "thumbnailBadgeViewModel": {
+                   "text": "6:12",
+                   "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                  }
+                 }
+                ]
+               }
+              }
+             ]
+            }
+           },
+           "metadata": {
+            "lockupMetadataViewModel": {
+             "title": {
+              "content": "GETPIVOTDATA is underrated"
+             },
+             "metadata": {
+              "contentMetadataViewModel": {
+               "metadataRows": [
+                {
+                 "metadataParts": [
+                  {
+                   "text": {
+                    "content": "Pivot Point"
+                   }
+                  }
+                 ]
+                },
+                {
+                 "metadataParts": [
+                  {
+                   "text": {
+                    "content": "12K views"
+                   },
+                   "accessibilityLabel": "12,044 views"
+                  },
+                  {
+                   "text": {
+                    "content": "19 hours ago"
+                   },
+                   "accessibilityLabel": "19 hours ago"
+                  }
+                 ]
+                }
+               ],
+               "delimiter": " • "
+              }
+             },
+             "image": {
+              "decoratedAvatarViewModel": {
+               "avatar": {
+                "avatarViewModel": {
+                 "image": {
+                  "sources": [
+                   {
+                    "url": "https://yt3.ggpht.com/demo",
+                    "width": 68
+                   }
+                  ]
+                 }
+                }
+               },
+               "rendererContext": {
+                "commandContext": {
+                 "onTap": {
+                  "innertubeCommand": {
+                   "browseEndpoint": {
+                    "browseId": "UCpivotPointTV0000000000",
+                    "canonicalBaseUrl": "/@PivotPointTV"
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "contentId": "srcLxxxxxx7",
+           "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+           "rendererContext": {
+            "commandContext": {
+             "onTap": {
+              "innertubeCommand": {
+               "watchEndpoint": {
+                "videoId": "srcLxxxxxx7"
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "srchxxxxxx4",
+           "title": {
+            "runs": [
+             {
+              "text": "Pivot table tricks nobody shows you"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "14:03"
+           },
+           "viewCountText": {
+            "simpleText": "41,207 views"
+           },
+           "shortViewCountText": {
+            "simpleText": "41K views"
+           },
+           "publishedTimeText": {
+            "simpleText": "5 days ago"
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "url": "/watch?v=srchxxxxxx4"
+             }
+            }
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Formula Friday",
+              "navigationEndpoint": {
+               "browseEndpoint": {
+                "browseId": "UCformulaFriday000000000",
+                "canonicalBaseUrl": "/@FormulaFriday"
+               }
+              }
+             }
+            ]
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "srchxxxxxx6",
+           "title": {
+            "runs": [
+             {
+              "text": "Slicers in 30 seconds"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "0:31"
+           },
+           "viewCountText": {
+            "simpleText": "9,104 views"
+           },
+           "shortViewCountText": {
+            "simpleText": "9.1K views"
+           },
+           "publishedTimeText": {
+            "simpleText": "2 days ago"
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "url": "/shorts/srchxxxxxx6"
+             }
+            }
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Formula Friday",
+              "navigationEndpoint": {
+               "browseEndpoint": {
+                "browseId": "UCformulaFriday000000000",
+                "canonicalBaseUrl": "/@FormulaFriday"
+               }
+              }
+             }
+            ]
+           }
+          }
+         },
+         {
+          "lockupViewModel": {
+           "contentImage": {
+            "thumbnailViewModel": {
+             "image": {
+              "sources": [
+               {
+                "url": "https://i.ytimg.com/vi/srcLxxxxxx8/hq720.jpg",
+                "width": 720,
+                "height": 404
+               }
+              ]
+             },
+             "overlays": [
+              {
+               "thumbnailBottomOverlayViewModel": {
+                "badges": [
+                 {
+                  "thumbnailBadgeViewModel": {
+                   "text": "11:20",
+                   "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                  }
+                 }
+                ]
+               }
+              }
+             ]
+            }
+           },
+           "metadata": {
+            "lockupMetadataViewModel": {
+             "title": {
+              "content": "Pivot charts that don't look like 2007"
+             },
+             "metadata": {
+              "contentMetadataViewModel": {
+               "metadataRows": [
+                {
+                 "metadataParts": [
+                  {
+                   "text": {
+                    "content": "Sheet Academy"
+                   }
+                  }
+                 ]
+                },
+                {
+                 "metadataParts": [
+                  {
+                   "text": {
+                    "content": "322K views"
+                   },
+                   "accessibilityLabel": "322,910 views"
+                  },
+                  {
+                   "text": {
+                    "content": "4 months ago"
+                   },
+                   "accessibilityLabel": "4 months ago"
+                  }
+                 ]
+                }
+               ],
+               "delimiter": " • "
+              }
+             },
+             "image": {
+              "decoratedAvatarViewModel": {
+               "avatar": {
+                "avatarViewModel": {
+                 "image": {
+                  "sources": [
+                   {
+                    "url": "https://yt3.ggpht.com/demo",
+                    "width": 68
+                   }
+                  ]
+                 }
+                }
+               },
+               "rendererContext": {
+                "commandContext": {
+                 "onTap": {
+                  "innertubeCommand": {
+                   "browseEndpoint": {
+                    "browseId": "UCsheetAcademy0000000000",
+                    "canonicalBaseUrl": "/@SheetAcademy"
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "contentId": "srcLxxxxxx8",
+           "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+           "rendererContext": {
+            "commandContext": {
+             "onTap": {
+              "innertubeCommand": {
+               "watchEndpoint": {
+                "videoId": "srcLxxxxxx8"
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "videoRenderer": {
+           "videoId": "srchxxxxxx5",
+           "title": {
+            "runs": [
+             {
+              "text": "Excel pivot table tutorial – 2026 edition"
+             }
+            ]
+           },
+           "lengthText": {
+            "simpleText": "22:41"
+           },
+           "viewCountText": {
+            "simpleText": "880,310 views"
+           },
+           "shortViewCountText": {
+            "simpleText": "880K views"
+           },
+           "publishedTimeText": {
+            "simpleText": "8 months ago"
+           },
+           "navigationEndpoint": {
+            "commandMetadata": {
+             "webCommandMetadata": {
+              "url": "/watch?v=srchxxxxxx5"
+             }
+            }
+           },
+           "ownerText": {
+            "runs": [
+             {
+              "text": "Cell Craft",
+              "navigationEndpoint": {
+               "browseEndpoint": {
+                "browseId": "UCcellCraft0000000000000",
+                "canonicalBaseUrl": "/@CellCraft"
+               }
+              }
+             }
+            ]
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  }
+ }
+}

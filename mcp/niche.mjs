@@ -537,7 +537,7 @@ export function rssLagReport(store, { now = Date.now(), days = 7 } = {}) {
   return r;
 }
 
-function growthOf(store, channels, now, days = 90) {
+export function growthOf(store, channels, now, days = 90) {
   const from = new Date(now - days * DAY).toISOString().slice(0, 10);
   return channels.map((c) => {
     const series = store.db.prepare('SELECT day, subs, views, videos FROM channel_stats WHERE channel_id = ? AND day >= ? ORDER BY day').all(c.channel_id, from);

@@ -848,6 +848,152 @@
     return a;
   }
 
+  // ---- video cards anywhere (search, home, subscriptions, watch sidebar) -------------
+  // Phase 3's badges need each card's channel too, which the channel-grid parsers above
+  // don't keep (they know the channel from the page). One walk over any response finds
+  // every video item, whatever renderer YouTube used, and reuses the same per-item parsers.
+  var CARD_KEYS = ['lockupViewModel', 'videoRenderer', 'compactVideoRenderer', 'gridVideoRenderer', 'reelItemRenderer', 'shortsLockupViewModel', 'playlistVideoRenderer'];
+
+  /** The channel a browseEndpoint names → { channelId, handle } (either may be null). */
+  function endpointChannel(be) {
+    if (!be) return null;
+    var id = CHANNEL_ID_RE.test(String(be.browseId || '')) ? be.browseId : null;
+    var handle = handleOf(be.canonicalBaseUrl);
+    return id || handle ? { channelId: id, handle: handle } : null;
+  }
+
+  /** A runs-style text's first channel link (ownerText / longBylineText / shortBylineText). */
+  function runsChannel(v) {
+    var runs = v && v.runs;
+    if (!Array.isArray(runs)) return null;
+    for (var i = 0; i < runs.length; i++) {
+      var c = endpointChannel(getPath(runs[i], ['navigationEndpoint', 'browseEndpoint']));
+      if (c) { c.name = String(runs[i].text || '').trim() || null; return c; }
+    }
+    return null;
+  }
+
+  /** The channel of a lockupViewModel: its avatar's link (home, search) or the first metadata row (watch sidebar). */
+  function lockupOwner(lvm) {
+    var meta = getPath(lvm, ['metadata', 'lockupMetadataViewModel']) || {};
+    var rows = getPath(meta, ['metadata', 'contentMetadataViewModel', 'metadataRows']) || [];
+    var out = null;
+    var av = lockupChannel(lvm);
+    if (av && (av.channelId || av.handle)) out = { channelId: av.channelId, handle: av.handle, name: null };
+    for (var i = 0; i < rows.length && (!out || !out.name); i++) {
+      var parts = rows[i] && rows[i].metadataParts || [];
+      for (var j = 0; j < parts.length; j++) {
+        var t = parts[j] && parts[j].text;
+        var cr = t && t.commandRuns;
+        var be = Array.isArray(cr) && cr.length ? getPath(cr[0], ['onTap', 'innertubeCommand', 'browseEndpoint']) : null;
+        var c = endpointChannel(be);
+        if (c) {
+          out = Object.assign(out || {}, { channelId: (out && out.channelId) || c.channelId, handle: (out && out.handle) || c.handle, name: text(t).trim() || null });
+          break;
+        }
+      }
+    }
+    if (out && !out.name && rows[0]) {
+      // Home cards: channel name first, without a link of its own (the avatar carries it).
+      var first = text(getPath(rows[0], ['metadataParts', 0, 'text'])).trim();
+      if (first && !/\d/.test(first)) out.name = first;
+    }
+    return out;
+  }
+
+  function cardRecord(key, node, opts) {
+    var ch = null;
+    if (key === 'lockupViewModel') ch = lockupOwner(node);
+    else if (key === 'videoRenderer' || key === 'compactVideoRenderer' || key === 'gridVideoRenderer' || key === 'playlistVideoRenderer') {
+      ch = runsChannel(node.ownerText) || runsChannel(node.longBylineText) || runsChannel(node.shortBylineText);
+    }
+    var fake = ch ? { id: ytId(ch.handle || ch.channelId), handle: ch.handle || null, channelId: ch.channelId || null, name: ch.name || null } : { id: null, handle: null, channelId: null, name: null };
+    var r = null;
+    if (key === 'lockupViewModel') r = parseLockup(node, fake, opts);
+    else if (key === 'shortsLockupViewModel') r = parseShortsLockup(node, fake, opts);
+    else if (key === 'reelItemRenderer') r = parseLegacy(node, fake, opts, true);
+    else r = parseLegacy(node, fake, opts, false);
+    if (!r) return null;
+    if (!ch) { r.owner = null; r.author = null; r.ownerId = null; r.ownerName = null; }
+    if (key !== 'lockupViewModel' && key !== 'shortsLockupViewModel' && r.views != null) {
+      // Search and the sidebar show the long count ("801,352 views") next to a short one ("801K"):
+      // the long one is exact.
+      var long = a11y(node.viewCountText) || text(node.viewCountText);
+      if (long && !isRounded(long, opts.lang)) r.viewsApprox = false;
+    }
+    if (key === 'videoRenderer' || key === 'compactVideoRenderer') {
+      // Search: "/shorts/…" results ride in videoRenderer too.
+      var url = String(getPath(node, ['navigationEndpoint', 'commandMetadata', 'webCommandMetadata', 'url']) || '');
+      if (/^\/shorts\//.test(url)) { r.type = 'short'; r.url = videoUrl(r.code, 'short'); }
+    }
+    delete r.files;
+    return r;
+  }
+
+  /**
+   * Every video item in any YouTube JSON (search, home, subscriptions, the watch sidebar,
+   * channel grids, continuations). opts: { lang, now }. → [record] with owner fields when the
+   * item names its channel (ownerId = UC…, author = handle, ownerName); owner is "yt/…" or null.
+   */
+  function parseCards(json, opts) {
+    opts = opts || {};
+    var o = { lang: opts.lang, now: opts.now || Date.now(), tab: null };
+    var out = [];
+    var seen = {};
+    if (!json || typeof json !== 'object') return out;
+    var stack = [json];
+    var budget = 400000;
+    while (stack.length && budget-- > 0) {
+      var cur = stack.pop();
+      if (!cur || typeof cur !== 'object') continue;
+      if (Array.isArray(cur)) { for (var i = cur.length - 1; i >= 0; i--) if (cur[i] && typeof cur[i] === 'object') stack.push(cur[i]); continue; }
+      var hit = false;
+      for (var k = 0; k < CARD_KEYS.length; k++) {
+        var key = CARD_KEYS[k];
+        if (cur[key] && typeof cur[key] === 'object') {
+          hit = true;
+          var r = null;
+          try { r = cardRecord(key, cur[key], o); } catch (e) { r = null; }
+          if (r && !seen[r.code]) { seen[r.code] = true; out.push(r); }
+        }
+      }
+      if (hit) continue;
+      var keys = Object.keys(cur);
+      for (var j = keys.length - 1; j >= 0; j--) {
+        var v = cur[keys[j]];
+        if (v && typeof v === 'object') stack.push(v);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * A card's visible metadata texts (DOM fallback when no response named it):
+   * ["Excel Campus", "63K views", "3 weeks ago", "9:52"] → { views, viewsApprox, takenAt, dateApprox, duration, live }.
+   */
+  function parseMetaTexts(texts, lang, now) {
+    var L = langOf(lang);
+    var out = {};
+    (texts || []).forEach(function (raw) {
+      var s = String(raw || '').replace(/\s+/g, ' ').trim();
+      if (!s) return;
+      s.split(/\s*[•·]\s*/).forEach(function (t) {
+        if (!t) return;
+        if (out.takenAt == null) {
+          var ago = parseAgo(t, lang, now);
+          if (ago) { out.takenAt = ago; out.dateApprox = true; return; }
+        }
+        if (out.duration == null && /^\d{1,2}(:\d{2}){1,2}$/.test(t)) { out.duration = parseDuration(t); return; }
+        if (L.watching.test(t)) { out.live = true; return; }
+        if (out.views == null && (L.views.test(t) || L.none.test(t))) {
+          var n = parseCount(t, lang);
+          if (n != null) { out.views = n; out.viewsApprox = isRounded(t, lang); }
+        }
+      });
+    });
+    return out;
+  }
+
   // ---- responses and pages ------------------------------------------------------
   /**
    * Any parsed YouTube JSON → { posts, channel, tab, hasMore, items, kind }.
@@ -1125,6 +1271,8 @@
     parseText: parseText,
     extractVar: extractVar,
     parsePage: parsePage,
+    parseCards: parseCards,
+    parseMetaTexts: parseMetaTexts,
     pageContext: pageContext,
     merge: merge,
     mergePostMaps: mergePostMaps,

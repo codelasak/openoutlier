@@ -1,0 +1,805 @@
+{
+ "contents": {
+  "twoColumnBrowseResultsRenderer": {
+   "tabs": [
+    {
+     "tabRenderer": {
+      "selected": true,
+      "content": {
+       "richGridRenderer": {
+        "contents": [
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/subsxxxxx28/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "58:12",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Live: building a KPI dashboard from scratch"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Pivot Point"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "3.1K views"
+                     },
+                     "accessibilityLabel": "3,108 views"
+                    },
+                    {
+                     "text": {
+                      "content": "5 hours ago"
+                     },
+                     "accessibilityLabel": "5 hours ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCpivotPointTV0000000000",
+                      "canonicalBaseUrl": "/@PivotPointTV"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "subsxxxxx28",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "subsxxxxx28"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/subsxxxxx29/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "6:33",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "IFS vs SWITCH (which one wins?)"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Excel Demo"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "8.4K views"
+                     },
+                     "accessibilityLabel": "8,402 views"
+                    },
+                    {
+                     "text": {
+                      "content": "1 day ago"
+                     },
+                     "accessibilityLabel": "1 day ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCdemoExcelChannel000000",
+                      "canonicalBaseUrl": "/@ExcelDemo"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "subsxxxxx29",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "subsxxxxx29"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/subsxxxxx30/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "9:18",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Data validation drop-downs, done right"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Formula Friday"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "2.2K views"
+                     },
+                     "accessibilityLabel": "2,231 views"
+                    },
+                    {
+                     "text": {
+                      "content": "2 days ago"
+                     },
+                     "accessibilityLabel": "2 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCformulaFriday000000000",
+                      "canonicalBaseUrl": "/@FormulaFriday"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "subsxxxxx30",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "subsxxxxx30"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/subsxxxxx31/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "16:40",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Excel just changed forever (Copilot test)"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Sheet Academy"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "211K views"
+                     },
+                     "accessibilityLabel": "211,004 views"
+                    },
+                    {
+                     "text": {
+                      "content": "3 days ago"
+                     },
+                     "accessibilityLabel": "3 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCsheetAcademy0000000000",
+                      "canonicalBaseUrl": "/@SheetAcademy"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "subsxxxxx31",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "subsxxxxx31"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/subsxxxxx32/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "12:05",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "Gantt chart in Excel – free template"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Cell Craft"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "31K views"
+                     },
+                     "accessibilityLabel": "31,770 views"
+                    },
+                    {
+                     "text": {
+                      "content": "4 days ago"
+                     },
+                     "accessibilityLabel": "4 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCcellCraft0000000000000",
+                      "canonicalBaseUrl": "/@CellCraft"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "subsxxxxx32",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "subsxxxxx32"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "lockupViewModel": {
+             "contentImage": {
+              "thumbnailViewModel": {
+               "image": {
+                "sources": [
+                 {
+                  "url": "https://i.ytimg.com/vi/subsxxxxx33/hq720.jpg",
+                  "width": 720,
+                  "height": 404
+                 }
+                ]
+               },
+               "overlays": [
+                {
+                 "thumbnailBottomOverlayViewModel": {
+                  "badges": [
+                   {
+                    "thumbnailBadgeViewModel": {
+                     "text": "8:48",
+                     "badgeStyle": "THUMBNAIL_OVERLAY_BADGE_STYLE_DEFAULT"
+                    }
+                   }
+                  ]
+                 }
+                }
+               ]
+              }
+             },
+             "metadata": {
+              "lockupMetadataViewModel": {
+               "title": {
+                "content": "TEXTSPLIT in 4 real examples"
+               },
+               "metadata": {
+                "contentMetadataViewModel": {
+                 "metadataRows": [
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "Excel Demo"
+                     }
+                    }
+                   ]
+                  },
+                  {
+                   "metadataParts": [
+                    {
+                     "text": {
+                      "content": "12K views"
+                     },
+                     "accessibilityLabel": "12,610 views"
+                    },
+                    {
+                     "text": {
+                      "content": "6 days ago"
+                     },
+                     "accessibilityLabel": "6 days ago"
+                    }
+                   ]
+                  }
+                 ],
+                 "delimiter": " • "
+                }
+               },
+               "image": {
+                "decoratedAvatarViewModel": {
+                 "avatar": {
+                  "avatarViewModel": {
+                   "image": {
+                    "sources": [
+                     {
+                      "url": "https://yt3.ggpht.com/demo",
+                      "width": 68
+                     }
+                    ]
+                   }
+                  }
+                 },
+                 "rendererContext": {
+                  "commandContext": {
+                   "onTap": {
+                    "innertubeCommand": {
+                     "browseEndpoint": {
+                      "browseId": "UCdemoExcelChannel000000",
+                      "canonicalBaseUrl": "/@ExcelDemo"
+                     }
+                    }
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "contentId": "subsxxxxx33",
+             "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+             "rendererContext": {
+              "commandContext": {
+               "onTap": {
+                "innertubeCommand": {
+                 "watchEndpoint": {
+                  "videoId": "subsxxxxx33"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "gridVideoRenderer": {
+             "videoId": "subsxxxxx34",
+             "title": {
+              "runs": [
+               {
+                "text": "Why your SUMIFS returns 0"
+               }
+              ]
+             },
+             "lengthText": {
+              "simpleText": "5:02"
+             },
+             "viewCountText": {
+              "simpleText": "903 views"
+             },
+             "shortViewCountText": {
+              "simpleText": "900 views"
+             },
+             "publishedTimeText": {
+              "simpleText": "1 week ago"
+             },
+             "navigationEndpoint": {
+              "commandMetadata": {
+               "webCommandMetadata": {
+                "url": "/watch?v=subsxxxxx34"
+               }
+              }
+             },
+             "shortBylineText": {
+              "runs": [
+               {
+                "text": "Pivot Point",
+                "navigationEndpoint": {
+                 "browseEndpoint": {
+                  "browseId": "UCpivotPointTV0000000000",
+                  "canonicalBaseUrl": "/@PivotPointTV"
+                 }
+                }
+               }
+              ]
+             }
+            }
+           }
+          }
+         },
+         {
+          "richItemRenderer": {
+           "content": {
+            "gridVideoRenderer": {
+             "videoId": "subsxxxxx35",
+             "title": {
+              "runs": [
+               {
+                "text": "Excel for accountants: the 10 must-knows"
+               }
+              ]
+             },
+             "lengthText": {
+              "simpleText": "19:30"
+             },
+             "viewCountText": {
+              "simpleText": "14,288 views"
+             },
+             "shortViewCountText": {
+              "simpleText": "14K views"
+             },
+             "publishedTimeText": {
+              "simpleText": "1 week ago"
+             },
+             "navigationEndpoint": {
+              "commandMetadata": {
+               "webCommandMetadata": {
+                "url": "/watch?v=subsxxxxx35"
+               }
+              }
+             },
+             "shortBylineText": {
+              "runs": [
+               {
+                "text": "Formula Friday",
+                "navigationEndpoint": {
+                 "browseEndpoint": {
+                  "browseId": "UCformulaFriday000000000",
+                  "canonicalBaseUrl": "/@FormulaFriday"
+                 }
+                }
+               }
+              ]
+             }
+            }
+           }
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+}

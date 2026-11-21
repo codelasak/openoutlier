@@ -75,6 +75,11 @@
             if (m.type === 'reelscope:open-dashboard') { console.log('[demo] would open the Library at', m.hash); window.__demoOpened = m.hash; return; }
             if (m.type === 'reelscope:yt-api-status') return { configured: demoQ.has('ytapi'), quota: { used: 37, limit: 10000 } };
             if (m.type === 'reelscope:yt-api') { await new Promise(function (r) { setTimeout(r, 500); }); return { ok: true, updated: 12, added: m.action === 'uploads' ? 30 : 0, units: m.action === 'uploads' ? 31 : 1, quota: { used: m.action === 'uploads' ? 68 : 38, limit: 10000 } }; }
+            // Phase 3 (src/youtube-insights-bg.js, src/agent-bridge.js → mcp/cards.mjs) stand-ins.
+            if (m.type === 'reelscope:yt-channels') return demoChannels(m);
+            if (m.type === 'reelscope:yt-cards') return demoCards(m);
+            if (m.type === 'reelscope:yt-monetization') return demoMonetization(m);
+            if (m.type === 'reelscope:yt-ryd') { window.__demoRyd = (window.__demoRyd || 0) + 1; await new Promise(function (r) { setTimeout(r, 300); }); return demoQ.get('ryd') === 'fail' ? { ok: false, error: 'network' } : { ok: true, dislikes: 1234, likes: 13398, rating: 4.6 }; }
             if (m.type === 'reelscope:download' && m.what !== 'cover') return { ok: false, queued: 0, errors: ['YouTube video files are downloaded with yt-dlp through the OpenOutlier bridge, not by the extension.'] };
             if (m.type !== 'reelscope:download') return { ok: true };
             // Mirror what background.js would save (it picks maxresdefault → sddefault → hqdefault).
@@ -114,6 +119,74 @@
       function findDemoPost(id) {
         for (var k in data) if (data[k] && data[k].posts && data[k].posts[id]) return data[k].posts[id];
         return null;
+      }
+      // ---- phase 3 stand-ins -------------------------------------------------------------
+      // ?surface=home|search|subscriptions|watch|channel|shorts builds YouTube's DOM (dev/youtube-surfaces.js).
+      // ?ytapi: channels.list answers from dev/youtube/cards/channels.json (else "no key").
+      // ?bridge=off: no bridge; otherwise velocity / growth / the watch card's curve from the fake bridge below.
+      // ?mon=no|unknown|music: the monetization verdict (default yes after a short "checking"); ?ryd=fail; ?own: the watch video is yours.
+      var demoChannelsJson = null;
+      function demoChannels(m) {
+        window.__demoChannelCalls = (window.__demoChannelCalls || []).concat([m.ids]);
+        if (!demoQ.has('ytapi')) return Promise.resolve({ ok: true, channels: {}, noKey: true });
+        return (demoChannelsJson || (demoChannelsJson = realFetch('/dev/youtube/cards/channels.json').then(function (r) { return r.json(); }))).then(function (j) {
+          var out = {};
+          (m.ids || []).forEach(function (id) {
+            var it = j.items.filter(function (x) { return x.id === id; })[0];
+            out[id] = it ? { name: it.snippet.title, handle: it.snippet.customUrl.slice(1), subscribers: Number(it.statistics.subscriberCount), views: Number(it.statistics.viewCount),
+              videos: Number(it.statistics.videoCount), publishedAt: Date.parse(it.snippet.publishedAt), country: it.snippet.country } : null;
+          });
+          return { ok: true, channels: out };
+        });
+      }
+      var H = 36e5;
+      function demoCards(m) {
+        window.__demoCardsCalls = (window.__demoCardsCalls || []).concat([m]);
+        if (demoBridge === 'off') return Promise.resolve({ ok: false, noBridge: true });
+        var now = Date.now();
+        if (m.what === 'cards') {
+          var vel = {
+            homexxxxx13: { views: 94230, published_at: now - 6 * 24 * H, velocity: { at: '72h', hours: 72, score: 3.4, views: 61200, expected: 18000 } },
+            subsxxxxx28: { views: 3108, published_at: now - 5 * H, velocity: { at: '3h', hours: 3, score: 2.1, views: 2410, expected: 1150 } },
+            homexxxxx18: { views: 1930, published_at: now - 9 * H, velocity: { at: '6h', hours: 6, score: 0.8, views: 1420, expected: 1780 } },
+            sidexxxxx38: { views: 5540, published_at: now - 4 * 24 * H, velocity: { at: '72h', hours: 72, score: 1.6, views: 4900, expected: 3060 } },
+            srcLxxxxxx7: { views: 12044, published_at: now - 19 * H, velocity: { at: '12h', hours: 12, score: 4.7, views: 9800, expected: 2080 } }
+          };
+          var videos = {};
+          (m.videos || []).forEach(function (id) { if (vel[id]) videos[id] = Object.assign({ tracked: true, ts: now - 600000, source: 'api', type: 'video' }, vel[id]); });
+          var channels = {};
+          (m.channels || []).forEach(function (uc) { if (uc === 'UCpivotPointTV0000000000') channels[uc] = { tracked: true, mine: false, niche: 'Excel', name: 'Pivot Point', subs: 3420, views: 221000, videos: 58, baseline: { long: 2600, short: 9000 } }; });
+          return Promise.resolve({ ok: true, videos: videos, channels: channels });
+        }
+        if (m.what === 'channel') {
+          if (m.channel !== 'UCdemoExcelChannel000000') return Promise.resolve({ ok: true, tracked: false });
+          var series = [];
+          for (var d = 44; d >= 0; d--) series.push({ day: new Date(now - d * 864e5).toISOString().slice(0, 10), subs: Math.round(404200 + (44 - d) * 170 + Math.sin(d / 3) * 260), views: 31000000 + (44 - d) * 9000, videos: 230 + Math.floor((44 - d) / 15) });
+          return Promise.resolve({ ok: true, tracked: true, niche: 'Excel', series: series, delta_7d: { subs: 1190 }, delta_28d: { subs: 4760 } });
+        }
+        if (m.what === 'video') {
+          var out = { ok: true, tracked: true, vph24: { vph: 412, hours: 24 }, velocity: { at: '7d', hours: 168, score: 2.6, views: 520000, expected: 200000 },
+            curve: [{ h: 1, views: 3100, expected: 1500 }, { h: 3, views: 9800, expected: 4200 }, { h: 6, views: 21000, expected: 8100 }, { h: 12, views: 52000, expected: 17000 }, { h: 24, views: 120000, expected: 41000 },
+              { h: 48, views: 230000, expected: 80000 }, { h: 72, views: 310000, expected: 112000 }, { h: 168, views: 520000, expected: 200000 }, { h: 336, views: 690000, expected: 260000 }, { h: 720, views: 780000, expected: 300000 }] };
+          if (demoQ.has('own')) out.own = { days: 197, through: new Date(now - 2 * 864e5).toISOString().slice(0, 10), views: 798240, watch_hours: 6120, avg_pct: 71.4, subs_gained: 2311, likes: 13300, comments: 231 };
+          return Promise.resolve(out);
+        }
+        return Promise.resolve({ ok: false });
+      }
+      var monSeen = {};
+      function demoMonetization(m) {
+        var key = m.kind === 'channel' ? 'c:' + m.channel : 'v:' + m.id;
+        window.__demoMonCalls = (window.__demoMonCalls || []).concat([key]);
+        var verdict = demoQ.get('mon') || 'yes';
+        if (m.kind === 'channel' && m.shortsOnly && !(m.ids || []).length) return Promise.resolve({ ok: true, state: 'shorts-only' });
+        if (monSeen[key]) return Promise.resolve({ ok: true, state: verdict, at: monSeen[key], checked: 5, sampled: 5 });
+        setTimeout(function () {
+          monSeen[key] = Date.now();
+          var c = Object.assign({}, data['rs:yt-mon-cache']);
+          c[key] = { at: Date.now(), v: { state: verdict } };
+          chrome.storage.local.set({ 'rs:yt-mon-cache': c });
+        }, demoQ.has('slowmon') ? 600000 : 1500);
+        return Promise.resolve({ ok: true, state: 'checking' });
       }
       // Stand-in for src/youtube-exact.js (the service worker): instead of opening each video's page
       // in a background tab, it posts that video's player response, as the page would have, and reports progress.
@@ -191,7 +264,9 @@
         if (url.indexOf('/youtubei/v1/') === -1) return realFetch.apply(this, arguments);
         window.__demoApiCalls.push(url);
         var body;
-        if (/browse\?tab=shorts/.test(url)) body = realFetch('/dev/youtube/channel-shorts' + (hl === 'tr' ? '.tr' : '') + '.html').then(function (r) { return r.text(); }).then(inline);
+        var dm = url.match(/[?&]demo=([a-z]+)/);
+        if (dm) body = realFetch('/dev/youtube/cards/' + dm[1] + '.json').then(function (r) { return r.text(); });
+        else if (/browse\?tab=shorts/.test(url)) body = realFetch('/dev/youtube/channel-shorts' + (hl === 'tr' ? '.tr' : '') + '.html').then(function (r) { return r.text(); }).then(inline);
         else if (/browse/.test(url)) body = browseCalls++ ? Promise.resolve('{"onResponseReceivedActions":[{"appendContinuationItemsAction":{"continuationItems":[]}}],"x":"videoId"}') : realFetch('/dev/youtube/browse-videos.json').then(function (r) { return r.text(); });
         else if (/get_watch/.test(url)) body = realFetch('/dev/youtube/get_watch.json').then(function (r) { return r.text(); });
         else if (/player\?short/.test(url)) body = realFetch('/dev/youtube/player-short.json').then(function (r) { return r.text(); });
@@ -234,10 +309,74 @@
   <script src="../src/features.js"></script>
   <script src="../src/features-view.js"></script>
   <script src="../src/tracking.js"></script>
+  <script src="../src/yt-insights.js"></script>
   <script src="../src/brand.js"></script>
   <script src="../src/panel.js"></script>
   <script src="../src/overlay.js"></script>
+  <script src="youtube-surfaces.js"></script>
   <script>
+    // ---- phase 3: ?surface=home|search|subscriptions|watch|channel|shorts --------------------------
+    window.__demoSurface = new URLSearchParams(location.search).get('surface');
+    if (window.__demoSurface) (function () {
+      var surface = window.__demoSurface;
+      var hl = window.__demoHl;
+      var q = new URLSearchParams(location.search);
+      var keep = ['hl', 'dark', 'ytapi', 'bridge', 'mon', 'ryd', 'own', 'slowmon', 'off', 'surface'].filter(function (k) { return q.has(k); }).map(function (k) { return k + (q.get(k) ? '=' + q.get(k) : ''); }).join('&');
+      // ?off=card-vph,dislikes: start with those switched off (the Features tab can turn them back on).
+      if (q.get('off')) { var feats = {}; q.get('off').split(',').forEach(function (f) { feats[f] = false; }); window.__demoStore['rs:settings'] = Object.assign({}, window.__demoStore['rs:settings'], { features: feats }); }
+      function loadScripts(list, done) {
+        if (!list.length) { if (done) done(); return; }
+        var sc = document.createElement('script');
+        sc.src = list[0] + '?v=' + Date.now();
+        sc.onload = function () { loadScripts(list.slice(1), done); };
+        document.body.appendChild(sc);
+      }
+      var CS = ['/src/youtube-content.js', '/src/youtube-cards.js', '/src/youtube-pages.js'];
+      var paths = { home: '/', search: '/results?search_query=excel+pivot+table', subscriptions: '/feed/subscriptions', watch: '/watch?v=yTdemo00029', channel: '/@ExcelDemo/videos', shorts: '/shorts/yTdemo00035' };
+      var path = paths[surface] || '/';
+      // The saved channels (Library) that give the median, with their dates made relative to now.
+      fetch('/dev/youtube/cards/library.json').then(function (r) { return r.json(); }).then(function (lib) {
+        Object.keys(lib).forEach(function (acct) {
+          var rec = lib[acct];
+          Object.keys(rec.posts).forEach(function (c) { var p = rec.posts[c]; p.takenAt = Date.now() - p.takenAtDaysAgo * 864e5; delete p.takenAtDaysAgo; p.seenAt = Date.now() - 864e5; });
+          rec.updatedAt = Date.now();
+          window.__demoStore['rs:p:' + acct] = rec;
+        });
+        var fixture = { home: 'home', search: 'search', subscriptions: 'subscriptions', watch: 'next' }[surface];
+        if (surface === 'channel') {
+          return fetch('/dev/youtube/channel-videos' + (hl === 'tr' ? '.tr' : '') + '.html').then(function (r) { return r.text(); }).then(function (html) {
+            var src = html.match(/var ytInitialData = ([\s\S]*?);<\/script>/)[1];
+            var inline = document.createElement('script');
+            inline.textContent = 'var ytInitialData = ' + src + ';';
+            document.body.appendChild(inline);
+            var recs = OpenOutlierYouTube.parseCards(JSON.parse(src), { lang: hl });
+            history.replaceState(null, '', path + (keep ? '?' + keep : ''));
+            OpenOutlierDemoSurfaces.build('channel', null, { lang: hl, records: recs });
+            loadScripts(CS, function () {
+              // "Scroll": YouTube's next page of the grid arrives through the hook.
+              setTimeout(function () { fetch('/youtubei/v1/browse?prettyPrint=false', { method: 'POST' }); }, 600);
+            });
+          });
+        }
+        return fetch('/dev/youtube/cards/' + (fixture || 'home') + '.json').then(function (r) { return r.json(); }).then(function (data) {
+          history.replaceState(null, '', path + (path.indexOf('?') === -1 ? '?' : '&') + keep);
+          OpenOutlierDemoSurfaces.build(surface, data, { lang: hl });
+          loadScripts(CS, function () {
+            // YouTube's own requests for this page, through the hook like on youtube.com.
+            if (surface === 'watch') {
+              fetch('/youtubei/v1/get_watch?prettyPrint=false', { method: 'POST' }).then(function () { return fetch('/youtubei/v1/next?demo=next', { method: 'POST' }); });
+            } else if (surface === 'shorts') {
+              fetch('/youtubei/v1/reel/reel_item_watch?prettyPrint=false', { method: 'POST' }).then(function () { return fetch('/youtubei/v1/player?short', { method: 'POST' }); });
+            } else {
+              fetch('/youtubei/v1/' + (surface === 'search' ? 'search' : 'browse') + '?demo=' + fixture, { method: 'POST' });
+            }
+          });
+        });
+      });
+    })();
+  </script>
+  <script>
+    if (!window.__demoSurface) {
     var hl = window.__demoHl;
     var loading = false;
     var done = false;
@@ -293,6 +432,7 @@
       cs.onload = function () { setTimeout(window.__demoOpenPanel, 900); };
       document.body.appendChild(cs);
     });
+    }
   </script>
 </body>
 </html>

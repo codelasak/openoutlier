@@ -13,7 +13,7 @@
 // /api/ response that carries video items). TikTok signs these requests, so
 // OpenOutlier never replays them; it only reads what the page already got.
 //
-// YouTube: /youtubei/v1/browse (channel tabs and their continuations),
+// YouTube: /youtubei/v1/browse (channel tabs, home, subscriptions and their continuations), search,
 // get_watch (in-app clicks on a video: [playerResponse, watchNextResponse]),
 // player, next, reel/reel_item_watch and reel/reel_watch_sequence (Shorts).
 // They all go through fetch, so this must stay at document_start.
@@ -26,7 +26,7 @@
   var TIKTOK = /(^|\.)tiktok\.com$/.test(location.hostname) || window.__reelscopeSite === 'tiktok';
   var YOUTUBE = /(^|\.)youtube\.com$/.test(location.hostname) || window.__reelscopeSite === 'youtube';
   var URL_RE = YOUTUBE
-    ? /\/youtubei\/v1\/(browse|next|player|get_watch|reel\/reel_item_watch|reel\/reel_watch_sequence)(\?|$)/
+    ? /\/youtubei\/v1\/(browse|next|player|get_watch|search|reel\/reel_item_watch|reel\/reel_watch_sequence)(\?|$)/
     : TIKTOK
       ? /\/api\/(?!comment\/|im\/|user\/(?!detail)|notice\/|upload\/|report|ba\/|v1\/web\/report)/
       : /\/graphql|\/api\/v1\//;

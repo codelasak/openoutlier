@@ -534,6 +534,18 @@ span.s-attach-pic { cursor: default; }
   .ft-switch input:not(:checked) + span::after { background: var(--muted); }
 }
 .ft-foot { display: flex; align-items: center; gap: 10px; }
+.ft-row:has(.ft-choices) { flex-wrap: wrap; }
+.ft-choices { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; margin-top: -2px; }
+.ft-choices.is-off { opacity: 0.55; }
+.ft-choice { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.ft-choice-label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.ft-seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 4px; overflow: hidden; }
+.ft-seg-btn { height: 24px; padding: 0 10px; border: 0; background: var(--card); color: var(--text-2); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.ft-seg-btn + .ft-seg-btn { border-left: 1px solid var(--line-2); }
+.ft-seg-btn:hover { background: var(--sunk); }
+.ft-seg-btn.is-on { background: var(--blue); color: var(--paper); }
+.ft-seg-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.ft-choice-hint { flex-basis: 100%; margin: 0; }
 .ft-msg { font-size: 12.5px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .ft-switch span, .ft-switch span::after { transition: none; } }
 
