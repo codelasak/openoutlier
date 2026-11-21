@@ -341,3 +341,27 @@ test('phase 5: a provider\'s missing key is reported only when the bridge says s
   assert.deepEqual(F.missing('provider-ryd', { bridge: true, providers: { ryd: { configured: true } } }, flags), []);
   assert.deepEqual(F.missing('niche-radar', { bridge: true, bridgeKey: false }, F.resolve({ 'niche-radar': true })), ['bridgeKey']);
 });
+
+test('shared formatting (review B4, B5): plural forms, signed percents in TR/EN order, rate changes in points', () => {
+  const F = require('../src/features.js');
+  const forms = { one: '{n} video', other: '{n} videos' };
+  assert.equal(F.plural(1, forms, 'en'), '1 video');
+  assert.equal(F.plural(3, forms, 'en'), '3 videos');
+  assert.equal(F.plural(1234, forms, 'en'), '1,234 videos');
+  assert.equal(F.plural(1, { one: 'last {n} week', other: 'last {n} weeks' }, 'en'), 'last 1 week');
+  assert.equal(F.plural(5, { other: '{n} video' }, 'tr'), '5 video');
+  assert.equal(F.plural(1234, '{n} kanal', 'tr'), '1.234 kanal');
+  // Percent changes: the sign and % follow the language; the minus is a real minus sign.
+  assert.equal(F.signedPct(-0.13, 'en'), '−13%');
+  assert.equal(F.signedPct(-0.13, 'tr'), '−%13');
+  assert.equal(F.signedPct(0.21, 'tr'), '+%21');
+  assert.equal(F.signedPct(0.008, 'tr'), '+%0,8');
+  assert.equal(F.signedPct(0, 'en'), '0%');
+  assert.equal(F.signedPct(null, 'en'), '');
+  assert.equal(F.pct(0.032, 'tr'), '%3,2');
+  assert.equal(F.pct(0.032, 'en'), '3.2%');
+  // A CTR change is percentage points, not percent.
+  assert.equal(F.signedPts(0.8, 'tr'), '+0,8 puan');
+  assert.equal(F.signedPts(-1.25, 'en'), '−1.3 pts');
+  assert.equal(F.locale('tr'), 'tr-TR');
+});

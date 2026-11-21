@@ -279,6 +279,46 @@
     } catch (e) { return 'en'; }
   }
 
+  // ---- shared TR/EN formatting (every page and content script loads this file) -----------
+  function locale(l) { return (l || lang()) === 'tr' ? 'tr-TR' : 'en-US'; }
+  var MINUS = '\u2212';
+  /**
+   * A count with its noun: plural(3, { one: '{n} video', other: '{n} videos' }) → '3 videos'.
+   * Intl.PluralRules picks the form; Turkish strings give the same text for both. n is formatted
+   * for the language ('1.234' in TR); forms may also be a plain string (no plural).
+   */
+  function plural(n, forms, l) {
+    l = l || lang();
+    var f = typeof forms === 'string' ? { other: forms } : forms || {};
+    var rule = 'other';
+    try { rule = new Intl.PluralRules(locale(l)).select(Number(n)); } catch (e) { rule = Number(n) === 1 ? 'one' : 'other'; }
+    var text = f[rule] != null ? f[rule] : f.other != null ? f.other : '';
+    var shown = typeof n === 'number' && isFinite(n) ? n.toLocaleString(locale(l)) : String(n);
+    return String(text).replace(/\{n\}/g, shown);
+  }
+  /** A signed percent change from a fraction (0.21 → '+21%' / '+%21', −0.13 → '−13%' / '−%13'); 0 has no sign. */
+  function signedPct(x, l, digits) {
+    if (x == null || !isFinite(x)) return '';
+    var d = digits != null ? digits : Math.abs(x) < 0.1 ? 1 : 0;
+    return new Intl.NumberFormat(locale(l), { style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: d, minimumFractionDigits: 0 }).format(x).replace('-', MINUS);
+  }
+  /** A plain percent from a fraction (0.032 → '3.2%' / '%3,2'). */
+  function pct(x, l, digits) {
+    if (x == null || !isFinite(x)) return '';
+    return new Intl.NumberFormat(locale(l), { style: 'percent', maximumFractionDigits: digits != null ? digits : 1 }).format(x);
+  }
+  /** A change of a rate in percentage points (0.8 → '+0.8 pts' / '+0,8 puan'). */
+  function signedPts(x, l, digits) {
+    if (x == null || !isFinite(x)) return '';
+    l = l || lang();
+    var v = new Intl.NumberFormat(locale(l), { signDisplay: 'exceptZero', maximumFractionDigits: digits != null ? digits : 1 }).format(x).replace('-', MINUS);
+    return v + (l === 'tr' ? ' puan' : ' pts');
+  }
+  /** Put the UI language on an element (the document, a shadow host) so CSS uppercase and hyphenation follow it (İ, ı). */
+  function applyLang(el, l) {
+    try { (el || (root.document && root.document.documentElement)).setAttribute('lang', l || lang(cache.uiLang)); } catch (e) { /* no DOM */ }
+  }
+
   // ---- chrome.storage (extension pages, content scripts, service worker) ----------
   var hasChrome = !!(root.chrome && root.chrome.storage && root.chrome.storage.local);
   var cache = { stored: {}, flags: defaults(), uiLang: null, loaded: false, choices: {} };
@@ -470,6 +510,9 @@
     get: get, defaults: defaults, sanitize: sanitize, resolve: resolve, isOnIn: isOnIn, missing: missing, lang: lang,
     ready: ready, isOn: isOn, flags: flags, onChange: onChange, set: set, reset: reset, env: env,
     SPLIT: SPLIT, updateSettings: updateSettings, readSetting: readSetting, migrateSplit: migrateSplit,
+    locale: function (l) { return locale(l || lang(cache.uiLang)); }, plural: function (n, forms, l) { return plural(n, forms, l || lang(cache.uiLang)); },
+    signedPct: function (x, l, d) { return signedPct(x, l || lang(cache.uiLang), d); }, pct: function (x, l, d) { return pct(x, l || lang(cache.uiLang), d); },
+    signedPts: function (x, l, d) { return signedPts(x, l || lang(cache.uiLang), d); }, applyLang: applyLang,
     uiLang: function () { return lang(cache.uiLang); }
   };
 });
