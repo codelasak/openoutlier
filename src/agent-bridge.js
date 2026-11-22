@@ -404,6 +404,23 @@
     return false;
   }
 
+  // organize_library: folders, tags and tracking in rs:org, applied here in one write (src/org-ops.js).
+  // No tab; the storage change syncs the record to the bridge, which starts tracking new niche members.
+  async function orgEdit(port, command) {
+    var O = self.OpenOutlierOrgOps;
+    var result;
+    try {
+      if (!O) throw new Error('This extension version can\'t edit folders yet: reload it.');
+      var r = await chrome.storage.local.get(ORG_KEY);
+      var out = O.apply(r[ORG_KEY] || { folders: [], accounts: {} }, (command.args || {}).ops, Date.now());
+      if (out.changes.length) { var patch = {}; patch[ORG_KEY] = out.org; await chrome.storage.local.set(patch); }
+      result = { ok: true, changed: out.changes.length, changes: out.changes.slice(0, 300), errors: out.errors, folders: out.org.folders.map(function (f) { return f.name; }) };
+    } catch (e) {
+      result = { ok: false, error: e.message };
+    }
+    try { await post(port, '/commands/result', { id: command.id, result: result }); } catch (e) { /* server gone */ }
+  }
+
   async function finish(id, result) {
     var map = await getRunning();
     var job = map[id];
@@ -492,6 +509,7 @@
   async function startCommand(port, command) {
     var map = await getRunning();
     if (map[command.id]) return;
+    if (command.type === 'org_edit') return orgEdit(port, command);
     var reddit = command.type === 'collect_reddit';
     var tiktok = /^(collect|refresh|download)_tiktok$/.test(command.type);
     var youtube = /^(collect|refresh)_youtube$/.test(command.type);

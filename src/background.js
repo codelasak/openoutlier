@@ -2,7 +2,7 @@
 // scripts can't download cross-origin CDN files themselves); the MCP bridge and
 // the Reddit Mentions checker live in their own files (imported below).
 'use strict';
-importScripts('metrics.js', 'youtube.js', 'features.js', 'agent-bridge.js', 'mentions.js', 'mentions-bg.js', 'youtube-exact.js', 'youtube-api.js', 'youtube-api-bg.js', 'yt-insights.js', 'youtube-insights-bg.js'); // fileBaseName + local MCP bridge + Reddit mentions + YouTube "Get exact stats" + the optional Data API key + phase 3's badges (channels.list cache, monetization, Return YouTube Dislike)
+importScripts('metrics.js', 'youtube.js', 'features.js', 'org-ops.js', 'agent-bridge.js', 'mentions.js', 'mentions-bg.js', 'youtube-exact.js', 'youtube-api.js', 'youtube-api-bg.js', 'yt-insights.js', 'youtube-insights-bg.js'); // fileBaseName + local MCP bridge + Reddit mentions + YouTube "Get exact stats" + the optional Data API key + phase 3's badges (channels.list cache, monetization, Return YouTube Dislike)
 
 // rs:settings.radar / .niche / .ownProfit → their own keys (src/features.js SPLIT), once.
 try { self.OpenOutlierFeatures.migrateSplit().catch(function () {}); } catch (e) { /* ignore */ }

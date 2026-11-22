@@ -457,6 +457,25 @@ server.registerTool('compare_platforms', {
   annotations: { readOnlyHint: true }
 }, (args) => safe(() => json(comparePlatforms(readLibrary(), args))));
 
+server.registerTool('organize_library', {
+  title: 'Organize the Library (folders, tags, tracking)',
+  description: 'Change the user\'s Library organisation through the extension (it owns folders, tags and the niche tracking list): create folders, move accounts into folders (by name; a missing folder is created), add or remove tags, mark a folder as a tracked niche, and track a YouTube channel (yt/handle, with its UC id) inside a niche. Nothing is deleted. A folder marked as a tracked niche tracks every YouTube channel in it (niche tracking: RSS every 15 min, Data API measurements, a one-time 500-upload backfill per new channel), so moving channels into a niche folder starts tracking them; the niche is the folder\'s name. Tags follow the Library\'s rule (lower case, letters, digits, _ and -). Show the user the plan before a large reorganisation. Waits up to wait_seconds for the extension (it checks for commands every 30 s).',
+  inputSchema: {
+    ops: z.array(z.union([
+      z.object({ op: z.literal('folder'), name: z.string().min(1).max(60) }),
+      z.object({ op: z.literal('move'), account: z.string().min(1).max(120), folder: z.string().max(60).nullable() }),
+      z.object({ op: z.literal('tag'), account: z.string().min(1).max(120), add: z.array(z.string().max(40)).optional(), remove: z.array(z.string().max(40)).optional() }),
+      z.object({ op: z.literal('niche'), folder: z.string().min(1).max(60), on: z.boolean().optional() }),
+      z.object({ op: z.literal('track'), account: z.string().regex(/^yt\//), channelId: z.string().regex(/^UC[A-Za-z0-9_-]{22}$/).optional(), name: z.string().max(120).optional(), niche: z.string().max(80).optional(), on: z.boolean().optional() })
+    ])).min(1).max(500),
+    wait_seconds: z.number().int().min(0).max(110).optional().describe('How long to wait for the extension (default 60)')
+  }
+}, ({ ops, wait_seconds = 60 }) => safe(async () => {
+  const cmd = await queueCommand('org_edit', { ops });
+  const st = await waitForCommand(cmd.id, wait_seconds);
+  return json({ command_id: cmd.id, ...st, hint: st.state === 'done' ? undefined : (bridgeInfo().extension_connected ? 'Not applied yet: the extension checks every 30 s. Check with command_status.' : noExtensionHint()) });
+}));
+
 server.registerTool('command_status', {
   title: 'Command status',
   description: 'Check a collect_profile / collect_subreddit / refresh_reel / download_reel (TikTok) command started earlier. (YouTube downloads are not commands: call download_reel again with the same code.)',
