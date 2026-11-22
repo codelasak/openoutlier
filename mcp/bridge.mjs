@@ -165,7 +165,7 @@ async function handle(req, res, port) {
       if (n && JSON.stringify(n) !== JSON.stringify(st.getMeta(NICHE.SETTINGS_META, null))) st.setMeta(NICHE.SETTINGS_META, n);
     }
     // Phase 5: the radar's keyword lists, thresholds and hl/gl (rs:settings.radar).
-    if (body.radar && typeof body.radar === 'object') DISC.saveRadarSettings(st, body.radar);
+    if (body.radar && typeof body.radar === 'object') { DISC.saveRadarSettings(st, body.radar); DISC.settleRadarProposal(st); }
     return send(res, 200, await settingsAnswer(), origin);
   }
   if (req.method === 'POST' && url.pathname === '/settings/youtube-api-key') {
@@ -348,6 +348,8 @@ async function settingsAnswer() {
     oauth,
     quota: apiQuota(),
     bridgeQuota: bridgeQuotaState() || null,
+    // Radar keywords added on the bridge side (radar_keywords): the extension merges them into rs:radar once.
+    radarProposal: (() => { try { return store().getMeta(DISC.RADAR_PROPOSAL_META, null); } catch { return null; } })(),
     // Breakouts the extension hasn't shown as a Chrome notification yet (it acks them).
     niche: (() => { try { return { tracked: store().db.prepare('SELECT COUNT(*) AS n FROM tracked_channels WHERE active = 1').get().n, alerts: NICHE.pendingAlerts(store()), settings: NICHE.nicheSettings(store()) }; } catch { return null; } })(),
     // New milestones of the connected channels (the extension notifies when own-milestones is on, and acks).

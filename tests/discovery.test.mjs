@@ -364,8 +364,11 @@ test('MCP tools: similar_channels, keyword_ideas, niche_radar, niche_sample', as
   const safe = async (fn) => { try { return await fn(); } catch (e) { return { isError: true, content: [{ type: 'text', text: e.message }] }; } };
   const { z } = await import(createRequire(join(process.cwd(), 'mcp', 'package.json')).resolve('zod'));
   DISC.registerDiscoveryTools(server, { z, json, safe, store: () => s });
-  assert.deepEqual(Object.keys(tools).sort(), ['keyword_ideas', 'niche_radar', 'niche_sample', 'similar_channels']);
-  for (const t of Object.values(tools)) assert.equal(t.meta.annotations.readOnlyHint, true);
+  assert.deepEqual(Object.keys(tools).sort(), ['keyword_ideas', 'niche_radar', 'niche_sample', 'radar_keywords', 'similar_channels']);
+  for (const [name, t] of Object.entries(tools)) if (name !== 'radar_keywords') assert.equal(t.meta.annotations.readOnlyHint, true, name);
+  const rk = JSON.parse((await tools.radar_keywords.fn({ niche: 'Excel', keywords: ['Excel Dashboard', 'excel budget template'] })).content[0].text);
+  assert.deepEqual([rk.keywords, rk.added, rk.cost_per_day], [['excel dashboard', 'excel budget template'], ['excel dashboard', 'excel budget template'], 202]);
+  assert.match(rk.hint, /off/);
   assert.match(tools.keyword_ideas.meta.description, /vidIQ/);
   const sc = JSON.parse((await tools.similar_channels.fn({ channel: sim.channels[0].channel_id })).content[0].text);
   assert.equal(sc.similar[0].id, sim.channels[1].channel_id);
@@ -510,4 +513,22 @@ test('niche sample: one search per length (medium, long, short by default), the 
   assert.equal(DISC.samplePage(s, { niche: 'Excel', lang: 'all', searches: ['any', 'medium', 'long'], now: NOW + 2 * DAY }).videos, 4);
   assert.equal(p.cost.search, 200, 'two searches a day');
   assert.equal(p.cost.total_steady, 200 + 2 * Math.ceil(31 * 100 / 50));
+});
+
+test('radar keywords from the bridge: used at once, offered to the extension, dropped once its push has them', () => {
+  const s = store();
+  DISC.saveRadarSettings(s, { keywords: { Excel: ['power query'] }, maxSubs: 20000 });
+  const r = DISC.proposeRadarKeywords(s, { niche: 'Excel', keywords: ['excel dashboard', 'Power Query', ' excel  budget template '], now: NOW });
+  assert.deepEqual(r.keywords, ['power query', 'excel dashboard', 'excel budget template']);
+  assert.deepEqual(r.added, ['excel dashboard', 'excel budget template']);
+  assert.equal(DISC.radarSettings(s).maxSubs, 20000, 'the rest of the settings stay');
+  assert.deepEqual(s.getMeta(DISC.RADAR_PROPOSAL_META).keywords.Excel, ['excel dashboard', 'power query', 'excel budget template']);
+  // The extension pushes its old settings first (overwrites the bridge's copy): the offer stays.
+  DISC.saveRadarSettings(s, { keywords: { Excel: ['power query'] } });
+  assert.equal(DISC.settleRadarProposal(s), false);
+  assert.ok(s.getMeta(DISC.RADAR_PROPOSAL_META));
+  // After merging the offer, its push has them all: the offer is dropped.
+  DISC.saveRadarSettings(s, { keywords: { Excel: ['power query', 'excel dashboard', 'excel budget template'] } });
+  assert.equal(DISC.settleRadarProposal(s), true);
+  assert.equal(s.getMeta(DISC.RADAR_PROPOSAL_META), null);
 });

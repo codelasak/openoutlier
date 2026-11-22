@@ -209,6 +209,7 @@
     var res = await post(found.port, '/settings', JSON.parse(body));
     lastSettings = { body: body, at: Date.now() };
     await saveSettingsAnswer(res);
+    if (res.radarProposal && res.radarProposal.keywords) await applyRadarProposal(res.radarProposal).catch(function () {});
     if (res.niche && Array.isArray(res.niche.alerts) && res.niche.alerts.length) await showBreakouts(found.port, res.niche.alerts);
     if (res.own && Array.isArray(res.own.milestones) && res.own.milestones.length) await showMilestones(found.port, res.own.milestones);
   }
@@ -273,6 +274,27 @@
       chrome.tabs.create({ url: chrome.runtime.getURL('dashboard/dashboard.html#/' + (id.indexOf('openoutlier-milestone-') === 0 ? 'my-youtube' : 'niche')) });
       chrome.notifications.clear(id);
     });
+  }
+
+  // Radar keywords the bridge offers (added by an agent with radar_keywords): merged into rs:radar once
+  // per offer, after the user's own; the storage change pushes them back, and the bridge drops the offer.
+  async function applyRadarProposal(p) {
+    var F = self.OpenOutlierFeatures;
+    if (!F || !F.updateSettings || !F.readSetting) return;
+    var state = await getState();
+    if (state.radarProposalAt === p.at) return;
+    await F.updateSettings(async function () {
+      var rd = Object.assign({}, (await F.readSetting('radar')) || {});
+      var kw = Object.assign({}, rd.keywords && typeof rd.keywords === 'object' ? rd.keywords : {});
+      Object.keys(p.keywords).forEach(function (n) {
+        var cur = Array.isArray(kw[n]) ? kw[n].slice() : [];
+        (Array.isArray(p.keywords[n]) ? p.keywords[n] : []).forEach(function (k) { k = String(k || '').trim().toLowerCase().slice(0, 80); if (k && cur.indexOf(k) === -1) cur.push(k); });
+        kw[n] = cur.slice(0, 30);
+      });
+      rd.keywords = kw;
+      return { radar: rd };
+    });
+    await setState({ radarProposalAt: p.at });
   }
 
   function saveSettingsAnswer(res) {

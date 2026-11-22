@@ -33,6 +33,10 @@ const DAY = 24 * HOUR;
 const CHANNEL_ID_RE = /^UC[A-Za-z0-9_-]{22}$/;
 const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
 export const RADAR_META = 'radar_settings';
+// Keywords added from the bridge side (an agent, a script). The extension owns the radar settings
+// (rs:radar) and pushes them one way, so the bridge offers these in its /settings answer; the
+// extension merges them into rs:radar once and pushes back; the offer is cleared when they arrive.
+export const RADAR_PROPOSAL_META = 'radar_proposal';
 export const BUDGET = 9000;           // the tracker's daily budget (mcp/tracker.mjs)
 export const RADAR_RESERVE = 500;     // left for the tracker's own jobs when the radar runs
 export const SUGGEST_TTL = 7 * DAY;
@@ -50,6 +54,32 @@ export function saveRadarSettings(store, s) {
   const next = D.sanitizeRadar(s);
   if (JSON.stringify(next) !== JSON.stringify(store.getMeta(RADAR_META, null))) store.setMeta(RADAR_META, next);
   return next;
+}
+/**
+ * Add radar keywords for a niche from the bridge: applied here at once (the next radar run uses
+ * them) and offered to the extension, which keeps them. → { ok, niche, keywords (the niche's list now), added }
+ */
+export function proposeRadarKeywords(store, { niche, keywords, now = Date.now() } = {}) {
+  const n = String(niche ?? '').slice(0, 80);
+  const clean = D.sanitizeRadar({ keywords: { [n]: Array.isArray(keywords) ? keywords : [] } }).keywords[n] || [];
+  const cur = radarSettings(store);
+  const had = cur.keywords[n] || [];
+  const added = clean.filter((k) => !had.includes(k));
+  saveRadarSettings(store, { ...cur, keywords: { ...cur.keywords, [n]: had.concat(added).slice(0, 30) } });
+  const prev = store.getMeta(RADAR_PROPOSAL_META, null);
+  const kw = { ...(prev && prev.keywords) };
+  kw[n] = [...new Set((kw[n] || []).concat(clean))].slice(0, 30);
+  store.setMeta(RADAR_PROPOSAL_META, { keywords: kw, at: now });
+  return { ok: true, niche: n || null, keywords: radarSettings(store).keywords[n] || [], added };
+}
+/** The extension pushed its radar settings: drop the offer once every offered keyword is in them. */
+export function settleRadarProposal(store) {
+  const p = store.getMeta(RADAR_PROPOSAL_META, null);
+  if (!p || !p.keywords) return false;
+  const cur = radarSettings(store).keywords;
+  const done = Object.entries(p.keywords).every(([n, list]) => list.every((k) => (cur[n] || []).includes(k)));
+  if (done) store.setMeta(RADAR_PROPOSAL_META, null);
+  return done;
 }
 function pickNiche(store, niche) {
   const names = nicheNames(store);
@@ -714,6 +744,16 @@ export function registerDiscoveryTools(server, { z, json, safe, store }) {
   }, ({ niche: n }) => safe(() => {
     const p = radarPage(store(), { niche: n });
     return json({ ...p, breakouts: p.breakouts.slice(0, 20), rising: p.rising.slice(0, 12), hint: p.feature ? undefined : 'The radar is off (Features → Niche radar). Turning it on spends about ' + p.cost.total + ' Data API units a day for this niche\'s keywords.' });
+  }));
+  server.registerTool('radar_keywords', {
+    title: 'Add niche radar keywords',
+    description: 'Add search keywords to a niche\'s radar (the daily small-channel breakout search; 100 Data API units per keyword a day, quota is free but shared with niche tracking). The bridge uses them from the next run and the extension keeps them in its radar settings (Niche tracking → Radar), where the user can remove them. Up to 30 per niche. Say the daily cost to the user.',
+    inputSchema: { niche, keywords: z.array(z.string().min(2).max(80)).min(1).max(30).describe('Keywords to add, e.g. "excel budget template"') }
+  }, ({ niche: n, keywords }) => safe(() => {
+    const pick = pickNiche(store(), n).pick;
+    const r = proposeRadarKeywords(store(), { niche: pick, keywords });
+    const p = radarPage(store(), { niche: pick });
+    return json({ ...r, cost_per_day: p.cost.total, radar_on: p.feature, hint: p.feature ? undefined : 'The radar is off (Features → Niche radar): nothing runs until it is on.' });
   }));
   server.registerTool('niche_sample', {
     title: 'Niche sample (base rates of new uploads)',
