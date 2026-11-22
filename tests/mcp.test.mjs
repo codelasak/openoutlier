@@ -185,7 +185,7 @@ test('settings: feature flags and the extension\'s quota reach the bridge; "Copy
   assert.deepEqual(st.data.features.on, ['hide-shorts']);
   assert.equal(st.data.tracker.enabled, false);
   assert.ok(st.data.tracker.jobs.heartbeat >= 1, 'the server holding the bridge seeded the tracker');
-  assert.equal(st.data.database.schema_version, 6);
+  assert.equal(st.data.database.schema_version, 8);
 
   r = await bridge('/settings/youtube-api-key', { method: 'POST', body: { remove: true } });
   assert.equal((await r.json()).apiKey.configured, false);

@@ -70,7 +70,7 @@ export const KINDS = {
     units: 0,
     run(ctx) {
       const removed = ctx.store.purgeApiData(ctx.now, 30);
-      if (removed.video_stats || removed.channel_stats) ctx.log('api-retention-30d removed', JSON.stringify(removed));
+      if (removed.video_stats || removed.channel_stats || removed.sample_stats) ctx.log('api-retention-30d removed', JSON.stringify(removed));
       return { data: removed };
     }
   },

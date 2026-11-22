@@ -37,11 +37,11 @@ function quotaCtx(budget = Infinity) {
 
 test('migration 5: discovery tables, idempotent', () => {
   const s = store();
-  assert.equal(SCHEMA_VERSION, 6);
-  assert.equal(Number(s.getMeta("schema_version")), 6);
+  assert.equal(SCHEMA_VERSION, 8);
+  assert.equal(Number(s.getMeta("schema_version")), 8);
   const tables = s.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((r) => r.name);
   for (const t of ['co_recs', 'seen_channels', 'radar_runs', 'radar_videos', 'thumb_hashes', 'keyword_cache', 'serp_ranks', 'provider_log']) assert.ok(tables.includes(t), t);
-  assert.equal(s.migrate(), 6);
+  assert.equal(s.migrate(), 8);
 });
 
 test('radar job: one search.list per keyword (100 units), then videos.list and channels.list; results and lists', async () => {
@@ -305,6 +305,19 @@ test('Social Blade: the credit quote first, a confirmed backfill into channel_st
   // Asked again within 30 days: free.
   assert.deepEqual([SB.quote(s, { history: '1y', now: NOW + DAY }).credits, SB.quote(s, { history: '1y', now: NOW + DAY }).free.length], [0, 2]);
   assert.equal(SB.parseStats({ status: { success: false, error: 'Not enough credits' } }).error, 'Not enough credits');
+  // maxSubs: only tracked channels under the limit (unknown counts left out), so free credits go to small channels.
+  s.db.prepare("UPDATE tracked_channels SET subs = 4000 WHERE channel_id = ?").run(chans[0]);
+  s.db.prepare("UPDATE tracked_channels SET subs = 3000000 WHERE channel_id = ?").run(chans[1]);
+  const small = SB.quote(s, { history: '3y', maxSubs: 100000, now: NOW + 40 * DAY });
+  assert.deepEqual([small.channels, small.credits, small.max_subs], [[chans[0]], 3, 100000]);
+  assert.equal(SB.quote(s, { history: '3y', now: NOW + 40 * DAY }).credits, 6, 'no limit: every tracked channel');
+  const sized = await SB.backfill(s, { history: '3y', maxSubs: 100000, confirm: 6, fetch, home, now: NOW + 40 * DAY, on: true });
+  assert.equal(sized.needs_confirm, true, 'the confirmed number must match the filtered quote');
+  // The shape of Social Blade's public example (developers page, 2026-11): `subs`, ISO dates.
+  const pub = SB.parseStats({ status: { success: true, status: 200 }, data: { id: { id: 'UCl6vWwMCjufI8OPtOInHf0g', display_name: 'Social Blade' },
+    daily: [{ date: '2026-11-22T00:00:00.000Z', subs: 358000, views: 43192512 }, { date: '2026-11-21T00:00:00.000Z', subs: 358000, views: 43192471 }] } });
+  assert.deepEqual(pub.daily[0], { day: '2026-11-22', subs: 358000, views: 43192512 });
+  assert.equal(pub.name, 'Social Blade');
 });
 
 test('DataForSEO: where your channel ranks, stored per keyword and day; RYD for video_velocity', async () => {
@@ -341,7 +354,7 @@ test('DataForSEO: where your channel ranks, stored per keyword and day; RYD for 
   assert.equal(await RYD.votes('bad'), null);
 });
 
-test('MCP tools: similar_channels, keyword_ideas, niche_radar', async () => {
+test('MCP tools: similar_channels, keyword_ideas, niche_radar, niche_sample', async () => {
   const s = store();
   const sim = simulate(s, { now: Date.now(), seed: 7 });
   DISC.putCoRecs(s, { source: sim.channels[0].channel_id, recs: [{ id: sim.channels[1].channel_id }] });
@@ -351,7 +364,7 @@ test('MCP tools: similar_channels, keyword_ideas, niche_radar', async () => {
   const safe = async (fn) => { try { return await fn(); } catch (e) { return { isError: true, content: [{ type: 'text', text: e.message }] }; } };
   const { z } = await import(createRequire(join(process.cwd(), 'mcp', 'package.json')).resolve('zod'));
   DISC.registerDiscoveryTools(server, { z, json, safe, store: () => s });
-  assert.deepEqual(Object.keys(tools).sort(), ['keyword_ideas', 'niche_radar', 'similar_channels']);
+  assert.deepEqual(Object.keys(tools).sort(), ['keyword_ideas', 'niche_radar', 'niche_sample', 'similar_channels']);
   for (const t of Object.values(tools)) assert.equal(t.meta.annotations.readOnlyHint, true);
   assert.match(tools.keyword_ideas.meta.description, /vidIQ/);
   const sc = JSON.parse((await tools.similar_channels.fn({ channel: sim.channels[0].channel_id })).content[0].text);
@@ -362,6 +375,139 @@ test('MCP tools: similar_channels, keyword_ideas, niche_radar', async () => {
   const nr = JSON.parse((await tools.niche_radar.fn({ niche: 'Excel' })).content[0].text);
   assert.equal(nr.feature, false);
   assert.match(nr.hint, /off/);
+  const ns = JSON.parse((await tools.niche_sample.fn({ niche: 'Excel' })).content[0].text);
+  assert.deepEqual([ns.feature, ns.videos, ns.terms], [false, 0, ['excel']], 'off, empty, the niche prefix as its term');
+  assert.match(ns.hint, /off/);
+  assert.match(DISC.INSTRUCTIONS, /niche_sample/);
   assert.match(DISC.INSTRUCTIONS, /NexLev MCP \(about 50 calls a week\)/);
   assert.match(DISC.INSTRUCTIONS, /vidIQ MCP \(about 30 calls a month\)/);
+});
+
+// ---- niche sample ------------------------------------------------------------------------------------
+function sampleFetch({ found = [], views = () => 0, subs = {}, created = {} }) {
+  const calls = [];
+  let searches = 0;
+  const fetch = async (url) => {
+    calls.push(url);
+    const u = new URL(url);
+    const path = u.pathname.split('/').pop();
+    let body;
+    if (path === 'search') {
+      body = { items: searches++ === 0 ? found.map((v) => ({ id: { kind: 'youtube#video', videoId: v.id }, snippet: { channelId: v.ch, title: v.title, publishedAt: new Date(v.pub).toISOString() } })) : [] };
+    } else if (path === 'videos') {
+      const ids = u.searchParams.get('id').split(',');
+      body = { items: found.filter((v) => ids.includes(v.id) && !v.gone).map((v) => ({ id: v.id, snippet: { channelId: v.ch, title: v.title, publishedAt: new Date(v.pub).toISOString(), description: '', defaultAudioLanguage: v.lang || 'en', defaultLanguage: 'en' },
+        statistics: { viewCount: String(views(v)), likeCount: '1', commentCount: '0' }, contentDetails: { duration: v.short ? 'PT40S' : 'PT9M' } })) };
+    } else if (path === 'channels') {
+      const ids = u.searchParams.get('id').split(',');
+      body = { items: ids.map((id) => ({ id, snippet: { title: 'Chan ' + id.slice(5, 9), publishedAt: new Date(created[id] || NOW - 5 * 365 * DAY).toISOString() },
+        statistics: { subscriberCount: String(typeof subs[id] === 'function' ? subs[id]() : subs[id] ?? 100), videoCount: '10', viewCount: '1000', hiddenSubscriberCount: false } })) };
+    } else body = { items: [] };
+    return { ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body), headers: { get: () => null } };
+  };
+  return { fetch, calls };
+}
+
+test('niche sample: newest uploads (order=date), measured daily for 30 days, then base rates by channel size', async () => {
+  const s = store();
+  s.db.prepare("INSERT INTO tracked_channels (channel_id, account_id, niche, mine, added_at, active) VALUES (?, 'yt/x', 'Excel', 0, ?, 1)").run(uc('tracked'), NOW);
+  s.db.prepare("INSERT INTO tracked_channels (channel_id, account_id, niche, mine, added_at, active) VALUES (?, 'yt/y', NULL, 0, ?, 1)").run(uc('loose'), NOW);
+  DISC.saveRadarSettings(s, { sampleTerms: { Excel: ['excel'] }, sampleDurations: ['any'] });
+  const tiny = uc('tiny'), mid = uc('mid'), big = uc('big');
+  const found = [
+    { id: 'smpTiny0001', ch: tiny, title: 'My first Excel dashboard', pub: NOW - 3 * H },
+    { id: 'smpTiny0002', ch: tiny, title: 'Excel budget', pub: NOW - 5 * H, short: true },
+    { id: 'smpMid00001', ch: mid, title: 'Pivot tables', pub: NOW - 2 * H },
+    { id: 'smpBig00001', ch: big, title: 'XLOOKUP', pub: NOW - 6 * H },
+    { id: 'smpGone0001', ch: mid, title: 'Deleted later', pub: NOW - 1 * H, gone: false }
+  ];
+  let t = NOW;
+  // Views grow with age: the tiny channel's dashboard breaks out (20K at 30 days), the rest stay small.
+  const per = { smpTiny0001: 700, smpTiny0002: 3, smpMid00001: 30, smpBig00001: 400, smpGone0001: 1 };
+  const views = (v) => Math.round(per[v.id] * Math.max(0, (t - v.pub) / DAY));
+  let tinySubs = 40;
+  const fx = sampleFetch({ found, views, subs: { [tiny]: () => tinySubs, [mid]: 4000, [big]: 250000 }, created: { [tiny]: NOW - 60 * DAY } });
+  const q = quotaCtx();
+  const r = await DISC.DISCOVERY_KINDS.sample.run({ store: s, now: t, apiKey: KEY, fetch: fx.fetch, quota: q });
+  const search = new URL(fx.calls.find((u) => u.includes('/search?')));
+  assert.deepEqual([search.searchParams.get('order'), search.searchParams.get('q'), search.searchParams.get('publishedAfter'), search.searchParams.get('maxResults')],
+    ['date', 'excel', new Date(NOW - DAY).toISOString(), '50'], 'the newest uploads of the last 24 h, not the most viewed');
+  assert.equal(fx.calls.filter((u) => u.includes('/search?')).length, 1, 'a channel tracked outside a niche doesn\'t repeat the niche\'s search');
+  assert.equal(q.used, 100 + 1 + 1, 'one search, one videos.list, one channels.list');
+  assert.deepEqual(r.data.runs.find((x) => x.niche === 'Excel'), { niche: 'Excel', terms: ['excel'], durations: ['any'], found: 5, measured: 5, units: 102, error: null });
+  assert.deepEqual(s.db.prepare("SELECT subs_found FROM sample_videos WHERE video_id = 'smpTiny0001'").get().subs_found, 40);
+  assert.equal(s.db.prepare("SELECT type FROM sample_videos WHERE video_id = 'smpTiny0002'").get().type, 'short');
+  // A month of daily runs; one video disappears on day 3, the tiny channel gains subscribers.
+  for (let d = 1; d <= 32; d++) {
+    t = NOW + d * DAY;
+    if (d === 3) found[4].gone = true;
+    tinySubs = 40 + d * 30;
+    await DISC.DISCOVERY_KINDS.sample.run({ store: s, now: t, apiKey: KEY, fetch: fx.fetch, quota: quotaCtx() });
+  }
+  assert.equal(s.db.prepare('SELECT COUNT(*) AS n FROM sample_videos WHERE done_at IS NULL').get().n, 0, 'everything stops after 31 days (or when gone)');
+  const goneRows = s.db.prepare("SELECT COUNT(*) AS n FROM sample_stats WHERE video_id = 'smpGone0001'").get().n;
+  assert.equal(goneRows, 3, 'measured until it disappeared');
+  const p = DISC.samplePage(s, { niche: 'Excel', now: t });
+  assert.deepEqual([p.videos, p.channels, p.terms, p.days_collecting], [5, 3, ['excel'], 32]);
+  assert.equal(p.at[30].all.n, 4, 'the deleted video has no 30-day value');
+  assert.equal(p.at[30].by_subs['<1K'].n, 2);
+  assert.ok(Math.abs(p.at[30].by_subs['<1K'].max - 21000) <= 1, 'interpolated between daily readings');
+  assert.equal(p.at[30].all.share_at_least['10000'], 0.5, 'the tiny dashboard (21K) and the big channel\'s XLOOKUP (12K)');
+  assert.equal(p.at[30].by_subs['<1K'].share_at_least['10000'], 0.5);
+  assert.equal(p.at[30].by_format.short.n, 1);
+  assert.deepEqual(p.channels_hit_10k_by_30d['<1K'], { channels: 1, judged: 1, hit_10k: 1, share: 1 });
+  assert.deepEqual(p.channels_hit_10k_by_30d['1K-10K'], { channels: 1, judged: 1, hit_10k: 0, share: 0 });
+  assert.deepEqual(p.new_channels, { channels: 1, judged: 1, hit_10k: 1, share: 1 }, 'the tiny channel is two months old');
+  assert.ok(p.sub_growth_30d['<1K'].median_pct_with_hit > 1000, 'the tiny channel grew from 40 subscribers');
+  assert.equal(p.top_small[0].video_id, 'smpTiny0001');
+  assert.ok(Math.abs(p.top_small[0].views_30d - 21000) <= 1);
+  assert.ok(!p.top_small.some((v) => v.video_id === 'smpBig00001'), 'only channels under 10K');
+  assert.ok(p.runs.length && p.cost.total_steady === 100 + 2 * Math.ceil(31 * 50 / 50));
+  // Off by default in the tracker; the purge (when switched on) includes it.
+  assert.equal(DISC.DISCOVERY_KINDS.sample.feature, 'niche-sample');
+  assert.equal(s.purgeApiData(t + 40 * DAY, 30).sample_stats > 0, true);
+});
+
+test('niche sample: viewsAt interpolates between close readings only', () => {
+  const D = createRequire(import.meta.url)('../src/discovery.js');
+  const rows = [{ ts: 0, views: 0 }, { ts: DAY, views: 100 }, { ts: 6 * DAY, views: 600 }];
+  assert.equal(D.viewsAt(rows, 12 * H), 50);
+  assert.equal(D.viewsAt(rows, 3 * DAY), null, 'readings 5 days apart: unknown');
+  assert.equal(D.viewsAt(rows, 6 * DAY + 6 * H), 600, 'within 12 h of the last reading');
+  assert.equal(D.viewsAt([], DAY), null);
+});
+
+test('niche sample: one search per length (medium, long, short by default), the audio language kept, the report filtered to it', async () => {
+  const s = store();
+  s.db.prepare("INSERT INTO tracked_channels (channel_id, account_id, niche, mine, added_at, active) VALUES (?, 'yt/x', 'Excel', 0, ?, 1)").run(uc('tracked'), NOW);
+  DISC.saveRadarSettings(s, { sampleTerms: { Excel: ['excel'] } });
+  assert.deepEqual(DISC.radarSettings(s).sampleDurations, ['medium', 'long', 'short'], 'long-form and short by default');
+  DISC.saveRadarSettings(s, { sampleTerms: { Excel: ['excel'] }, sampleDurations: ['medium', 'long'] });
+  const found = [
+    { id: 'lngEn000001', ch: uc('a'), title: 'Excel dashboard', pub: NOW - H, lang: 'en-US' },
+    { id: 'lngHi000001', ch: uc('b'), title: 'Excel dashboard (Hindi, title tagged en)', pub: NOW - H, lang: 'hi' },
+    { id: 'lngEn000002', ch: uc('c'), title: 'Excel budget', pub: NOW - 2 * H, lang: 'en' }
+  ];
+  const fx = sampleFetch({ found, views: () => 50 });
+  const q = quotaCtx();
+  const r = await DISC.DISCOVERY_KINDS.sample.run({ store: s, now: NOW, apiKey: KEY, fetch: fx.fetch, quota: q });
+  const searches = fx.calls.filter((u) => u.includes('/search?')).map((u) => new URL(u).searchParams.get('videoDuration'));
+  assert.deepEqual(searches, ['medium', 'long']);
+  assert.equal(q.used, 2 * 100 + 1 + 1);
+  assert.deepEqual(r.data.runs[0].durations, ['medium', 'long']);
+  assert.deepEqual(s.db.prepare('SELECT video_id, search, lang FROM sample_videos ORDER BY video_id').all().map((x) => ({ ...x })), [
+    { video_id: 'lngEn000001', search: 'medium', lang: 'en-US' }, { video_id: 'lngEn000002', search: 'medium', lang: 'en' }, { video_id: 'lngHi000001', search: 'medium', lang: 'hi' }
+  ], 'the first search found them all (the fake answers once); the audio language, not the title language');
+  // An older 'any' row stays out of the default report.
+  s.db.prepare("INSERT INTO sample_videos (video_id, channel_id, niche, term, search, published_at, found_at, lang) VALUES ('oldAny00001', ?, 'Excel', 'excel', 'any', ?, ?, 'en')").run(uc('d'), NOW - 2 * H, NOW);
+  const p = DISC.samplePage(s, { niche: 'Excel', now: NOW + 2 * DAY });
+  DISC.saveRadarSettings(s, { sampleTerms: { Excel: ['excel'] } });
+  assert.equal(DISC.samplePage(s, { niche: 'Excel', now: NOW + 2 * DAY }).cost.search, 300, 'with short: three searches a day');
+  assert.deepEqual([p.filter.lang, p.filter.kept, p.filter.total, p.filter.other_searches, p.filter.other_lang], ['en', 2, 4, 1, 1]);
+  assert.equal(p.videos, 2);
+  assert.deepEqual(p.filter.languages[0], { lang: 'en', videos: 3 });
+  assert.equal(DISC.samplePage(s, { niche: 'Excel', lang: 'all', now: NOW + 2 * DAY }).videos, 3);
+  assert.equal(DISC.samplePage(s, { niche: 'Excel', lang: 'all', searches: ['any', 'medium', 'long'], now: NOW + 2 * DAY }).videos, 4);
+  assert.equal(p.cost.search, 200, 'two searches a day');
+  assert.equal(p.cost.total_steady, 200 + 2 * Math.ceil(31 * 100 / 50));
 });

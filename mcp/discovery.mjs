@@ -375,6 +375,174 @@ async function radarJob(ctx) {
   return { data: { runs, stopped: stop } };
 }
 
+// ---- niche sample (the radar's denominator) ------------------------------------------------------------
+export const SAMPLE_MEASURE_DAYS = 31;   // measured daily until a video is this old
+/** The sample's search terms for a niche: the saved ones, else the niche's prefix ("excel"). */
+function sampleTermsOf(store, s, niche, now) {
+  if (s.sampleTerms[niche || '']) return s.sampleTerms[niche || ''];
+  if (!niche) return []; // channels tracked outside a niche: only with terms set for them (they'd repeat the niche's search)
+  let sig = { titles: [], texts: [] };
+  try { sig = nicheSignals(store, { niche: niche ?? '', now }); } catch { /* nothing tracked */ }
+  const prefix = D.nichePrefix(sig.texts || sig.titles);
+  return prefix ? [prefix] : [];
+}
+/** Units of one daily run: one search.list per term, then videos.list / channels.list for everything still measured. */
+export function sampleCost(store, { terms = 1, now = Date.now() } = {}) {
+  const active = store.db.prepare('SELECT COUNT(*) AS n, COUNT(DISTINCT channel_id) AS c FROM sample_videos WHERE done_at IS NULL AND published_at >= ?').get(now - SAMPLE_MEASURE_DAYS * DAY);
+  const s = radarSettings(store);
+  terms *= s.sampleDurations.length; // one search per term and length
+  const steady = SAMPLE_MEASURE_DAYS * s.samplePerTerm * terms; // a month in: every day's finds still measured
+  return {
+    search: terms * D.SEARCH_UNITS,
+    measure_now: Math.ceil((active.n + s.samplePerTerm * terms) / 50) + Math.ceil((active.c + s.samplePerTerm * terms) / 50),
+    measure_steady: Math.ceil(steady / 50) * 2,
+    total_steady: terms * D.SEARCH_UNITS + Math.ceil(steady / 50) * 2
+  };
+}
+
+/**
+ * The daily job, per tracked niche: 1) search.list order=date for uploads of the last 24 h, once per
+ * term and length (videoDuration medium / long by default; the
+ * newest, not the most viewed, so videos that go nowhere are in it), 2) videos.list for every
+ * sampled video under 31 days old (50 per unit), 3) channels.list for their channels (subscribers
+ * when found, and now). Measuring comes first: a day without new finds is fine, a gap in a curve isn't.
+ */
+async function sampleJob(ctx) {
+  const store = ctx.store;
+  const s = radarSettings(store);
+  const niches = nicheNames(store).map((n) => n.name);
+  if (!niches.length) return { data: { idle: 'no tracked niche' } };
+  const client = A.client({ key: ctx.apiKey, fetch: ctx.fetch, onUnits: (n) => ctx.quota.spend(n) });
+  const now = ctx.now;
+  const insV = store.db.prepare(`INSERT OR IGNORE INTO sample_videos (video_id, channel_id, niche, term, search, title, published_at, found_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+  const setLang = store.db.prepare('UPDATE sample_videos SET lang = ? WHERE video_id = ? AND lang IS NULL');
+  const insS = store.db.prepare('INSERT OR REPLACE INTO sample_stats (video_id, ts, views, likes, comments) VALUES (?, ?, ?, ?, ?)');
+  const setMeta = store.db.prepare('UPDATE sample_videos SET title = COALESCE(?, title), type = ?, duration = COALESCE(?, duration), published_at = COALESCE(?, published_at) WHERE video_id = ?');
+  const done = store.db.prepare('UPDATE sample_videos SET done_at = ? WHERE video_id = ?');
+  const upC = store.db.prepare(`INSERT INTO sample_channels (channel_id, name, handle, created, first_seen, subs_first, videos_first, subs_last, videos_last, last_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(channel_id) DO UPDATE SET name = COALESCE(excluded.name, name), handle = COALESCE(excluded.handle, handle), created = COALESCE(created, excluded.created),
+      subs_last = excluded.subs_last, videos_last = excluded.videos_last, last_at = excluded.last_at`);
+  const subsFound = store.db.prepare('UPDATE sample_videos SET subs_found = ? WHERE channel_id = ? AND subs_found IS NULL AND found_at >= ?');
+  const runs = [];
+  let stop = null;
+  for (const niche of niches) {
+    const terms = sampleTermsOf(store, s, niche, now);
+    let units = 0;
+    let found = 0;
+    let error = null;
+    // 1) the newest uploads
+    for (const [term, dur] of terms.flatMap((t) => s.sampleDurations.map((d) => [t, d]))) {
+      if (stop || !ctx.quota.canSpend(D.SEARCH_UNITS + RADAR_RESERVE)) break;
+      try {
+        const params = { part: 'snippet', type: 'video', order: 'date', publishedAfter: new Date(now - DAY).toISOString(), maxResults: s.samplePerTerm, q: term, regionCode: s.region, relevanceLanguage: s.lang };
+        if (dur !== 'any') params.videoDuration = dur;
+        const body = await client.get('search', params);
+        ctx.quota.spend(D.SEARCH_UNITS - 1); // the client counted 1; search.list costs 100
+        units += D.SEARCH_UNITS;
+        for (const it of body.items || []) {
+          const id = it && it.id && it.id.videoId;
+          const sn = (it && it.snippet) || {};
+          if (!VIDEO_ID_RE.test(String(id || '')) || !CHANNEL_ID_RE.test(String(sn.channelId || ''))) continue;
+          const pub = Date.parse(sn.publishedAt || '');
+          found += Number(insV.run(id, sn.channelId, niche, term, dur, typeof sn.title === 'string' ? sn.title.slice(0, 300) : null, Number.isFinite(pub) ? pub : null, now).changes);
+        }
+      } catch (e) {
+        if (e.code !== 'network') { ctx.quota.spend(D.SEARCH_UNITS - 1); units += D.SEARCH_UNITS; }
+        error = e.message;
+        if (e.code === 'quota' || e.code === 'bad_key' || e.code === 'api_disabled') stop = e.message;
+      }
+    }
+    // 2) measure everything still young
+    const active = store.db.prepare('SELECT video_id, channel_id, published_at FROM sample_videos WHERE niche IS ? AND done_at IS NULL').all(niche);
+    const ids = active.map((v) => v.video_id);
+    let measured = 0;
+    if (ids.length && !stop) {
+      const items = await client.videos(ids);
+      units += Math.ceil(ids.length / 50);
+      const seen = new Set();
+      store.db.exec('BEGIN');
+      try {
+        for (const it of items) {
+          const r = A.videoRecord(it, { now });
+          if (!r || !r.code) continue;
+          seen.add(r.code);
+          insS.run(r.code, now, r.views ?? null, r.likes ?? null, r.comments ?? null);
+          setMeta.run(r.caption || null, videoType(r), r.duration || null, r.takenAt || null, r.code);
+          // The audio language (YouTube detects it); the title language (defaultLanguage) is often 'en' on Hindi videos.
+          const lang = it && it.snippet && typeof it.snippet.defaultAudioLanguage === 'string' ? it.snippet.defaultAudioLanguage.slice(0, 12) : null;
+          if (lang) setLang.run(lang, r.code);
+          measured++;
+        }
+        for (const v of active) {
+          const pub = v.published_at || now;
+          if (!seen.has(v.video_id) || now - pub >= SAMPLE_MEASURE_DAYS * DAY) done.run(now, v.video_id); // deleted / private, or old enough
+        }
+        store.db.exec('COMMIT');
+      } catch (e) { store.db.exec('ROLLBACK'); throw e; }
+      // 3) their channels
+      const chans = [...new Set(active.map((v) => v.channel_id))];
+      for (let i = 0; i < chans.length; i += 50) {
+        const infos = await client.channels(chans.slice(i, i + 50));
+        units += 1;
+        for (const c of infos) {
+          upC.run(c.channelId, c.name || null, c.handle || null, c.publishedAt || null, now, c.subscribers ?? null, c.videos ?? null, c.subscribers ?? null, c.videos ?? null, now);
+          if (c.subscribers != null) subsFound.run(c.subscribers, c.channelId, now - 2 * DAY);
+        }
+      }
+    }
+    store.db.prepare('INSERT INTO sample_runs (at, niche, terms, found, measured, units, error) VALUES (?, ?, ?, ?, ?, ?, ?)').run(now, niche, JSON.stringify(terms), found, measured, units, error);
+    runs.push({ niche, terms, durations: s.sampleDurations, found, measured, units, error });
+  }
+  store.db.prepare('DELETE FROM sample_runs WHERE at < ?').run(now - 180 * DAY);
+  return { data: { runs, stopped: stop } };
+}
+
+/**
+ * The sample's answer for one niche (niche_sample). lang: an audio language to keep ('en' keeps en,
+ * en-US, en-IN …; default the radar's language; 'all' keeps every video, unknown included).
+ * searches: which searches count (default the current lengths; videos found by an older setting are
+ * reported, not mixed in).
+ */
+export function samplePage(store, { niche, now = Date.now(), top = 10, lang, searches } = {}) {
+  const { names, pick } = pickNiche(store, niche);
+  const s = radarSettings(store);
+  const flags = flagsOf(store);
+  const terms = sampleTermsOf(store, s, pick, now);
+  const want = String(lang || s.lang).toLowerCase();
+  const keepSearch = Array.isArray(searches) && searches.length ? searches : s.sampleDurations;
+  const all = store.db.prepare('SELECT video_id, channel_id, title, type, published_at, subs_found, found_at, search, lang FROM sample_videos WHERE niche IS ?').all(pick);
+  const langs = {};
+  for (const v of all) { const k = v.lang ? v.lang.split('-')[0].toLowerCase() : 'unknown'; langs[k] = (langs[k] || 0) + 1; }
+  const inSearch = all.filter((v) => keepSearch.includes(v.search || 'any'));
+  const videos = want === 'all' ? inSearch : inSearch.filter((v) => v.lang && v.lang.split('-')[0].toLowerCase() === want);
+  const filter = {
+    lang: want, searches: keepSearch, kept: videos.length, total: all.length,
+    other_searches: all.length - inSearch.length, other_lang: inSearch.length - videos.length - (want === 'all' ? 0 : inSearch.filter((v) => !v.lang).length),
+    lang_unknown: want === 'all' ? 0 : inSearch.filter((v) => !v.lang).length,
+    languages: Object.entries(langs).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => ({ lang: k, videos: n }))
+  };
+  const stats = {};
+  if (videos.length) {
+    for (const r of store.db.prepare('SELECT s.video_id, s.ts, s.views FROM sample_stats s JOIN sample_videos v ON v.video_id = s.video_id WHERE v.niche IS ? ORDER BY s.video_id, s.ts').iterate(pick)) {
+      (stats[r.video_id] ||= []).push({ ts: r.ts, views: r.views });
+    }
+  }
+  const keepIds = new Set(videos.map((v) => v.video_id));
+  for (const k of Object.keys(stats)) if (!keepIds.has(k)) delete stats[k];
+  const channels = {};
+  for (const c of store.db.prepare('SELECT * FROM sample_channels WHERE channel_id IN (SELECT DISTINCT channel_id FROM sample_videos WHERE niche IS ?)').all(pick)) channels[c.channel_id] = c;
+  const summary = D.sampleSummary(videos, stats, channels, { now, top });
+  const runs = store.db.prepare('SELECT at, terms, found, measured, units, error FROM sample_runs WHERE niche IS ? ORDER BY at DESC LIMIT 7').all(pick).map((r) => ({ ...r, terms: parse(r.terms, []) }));
+  const first = all.reduce((m, v) => Math.min(m, v.found_at), Infinity);
+  return {
+    ok: true, now, niche: pick, niches: names, feature: !!flags['niche-sample'], api_key: !!apiKeyInfo().key, terms,
+    per_term: s.samplePerTerm, durations: s.sampleDurations, region: s.region, filter, cost: sampleCost(store, { terms: terms.length || 1, now }),
+    collecting_since: Number.isFinite(first) ? first : null, days_collecting: Number.isFinite(first) ? Math.floor((now - first) / DAY) : 0,
+    ...summary, runs,
+    how_to_read: 'Every video is a recent upload found by search.list order=date (the newest, not the most viewed), once per length (videoDuration: medium = 4–20 min, long = over 20 min), measured daily for 30 days. filter says which videos count: the audio language YouTube detected (lang; \'all\' for every language) and the searches of the current setting. at[1|7|30] = views at that age (only videos old enough); share_at_least = share of those videos at or above 100 / 1K / 10K / 100K views. by_subs buckets use the channel\'s subscribers when the video was found. channels_hit_10k_by_30d = share of channels with at least one sampled video at 10K+ by day 30 (judged = channels with a 30-day value). new_channels = channels created within a year before they were found. sub_growth_30d = median subscriber change of channels watched ≥ 25 days, split by whether they had such a hit. Limits: YouTube search still filters and orders by relevance inside "newest", region/language settings apply, and only one or a few terms are sampled; the 30-day numbers need about 5 weeks of collecting.'
+  };
+}
+
 /** "Run now": the radar job's next run moves to the next tracker tick. */
 export function radarRunNow(store, now = Date.now()) {
   upsertJob(store, 'radar', { kind: 'radar' }, now);
@@ -507,12 +675,13 @@ async function serpJob(ctx) {
 /** Tracker job kinds (mcp/tracker.mjs): the radar, the thumbnail index and the optional rank check. */
 export const DISCOVERY_KINDS = {
   radar: { singleton: true, feature: 'niche-radar', every: DAY, jitter: 30 * MIN, units: D.SEARCH_UNITS + 2, run: radarJob },
+  sample: { singleton: true, feature: 'niche-sample', every: DAY, jitter: 30 * MIN, units: D.SEARCH_UNITS + 2, run: sampleJob },
   'thumb-index': { singleton: true, feature: 'channel-similar', every: 20 * MIN, jitter: 2 * MIN, units: 0, run: thumbIndexJob },
   'serp-ranks': { singleton: true, feature: 'provider-dataforseo', every: DAY, jitter: 30 * MIN, units: 0, run: serpJob }
 };
 
 // ---- MCP ---------------------------------------------------------------------------------------------------
-export const INSTRUCTIONS = 'Discovery (YouTube, phase 5): similar_channels ranks channels like a given one by co-recommendations (the "Up Next" lists the extension saw, decaying) and TF-IDF over titles, tags and descriptions; keyword_ideas merges YouTube autocomplete (free, unofficial, rate-limited) with the niche\'s fast title words, topic gaps and the user\'s own search terms (ranks = viewers already find the user with it); niche_radar shows this week\'s small-channel breakouts and rising channels the user doesn\'t track (from the optional daily search.list radar, 100 units per keyword). ' +
+export const INSTRUCTIONS = 'Discovery (YouTube, phase 5): similar_channels ranks channels like a given one by co-recommendations (the "Up Next" lists the extension saw, decaying) and TF-IDF over titles, tags and descriptions; keyword_ideas merges YouTube autocomplete (free, unofficial, rate-limited) with the niche\'s fast title words, topic gaps and the user\'s own search terms (ranks = viewers already find the user with it); niche_radar shows this week\'s small-channel breakouts and rising channels the user doesn\'t track (from the optional daily search.list radar, 100 units per keyword); the radar searches by view count, so it only sees winners: for base rates (what a typical new upload gets, how often a small channel breaks out) use niche_sample, the newest uploads measured for 30 days. ' +
   'Third-party connectors, if the user connected them in Claude, are for what OpenOutlier cannot know, and their free limits are small: NexLev MCP (about 50 calls a week) for channels outside the Library (similar-channel and niche overviews, monetization and RPM estimates, faceless checks); vidIQ MCP (about 30 calls a month) for YouTube search volume and competition of keywords. Use OpenOutlier\'s own tools first, then at most a few connector calls per question (batch keywords in one vidIQ call where possible), never repeat a lookup already done this week/month, and say when a limit is reached instead of guessing.';
 
 export function registerDiscoveryTools(server, { z, json, safe, store }) {
@@ -545,5 +714,19 @@ export function registerDiscoveryTools(server, { z, json, safe, store }) {
   }, ({ niche: n }) => safe(() => {
     const p = radarPage(store(), { niche: n });
     return json({ ...p, breakouts: p.breakouts.slice(0, 20), rising: p.rising.slice(0, 12), hint: p.feature ? undefined : 'The radar is off (Features → Niche radar). Turning it on spends about ' + p.cost.total + ' Data API units a day for this niche\'s keywords.' });
+  }));
+  server.registerTool('niche_sample', {
+    title: 'Niche sample (base rates of new uploads)',
+    description: 'The denominator the radar can\'t give: once a day the newest uploads for the niche\'s search term (search.list order=date, so videos that never get views are included; one search per length, medium 4–20 min, long 20+ min and short under 4 min by default; filtered by the audio language, English by default), each measured daily for 30 days, with its channel\'s subscribers. Answers "what does a typical new upload get at 1 / 7 / 30 days", "what share passes 1K / 10K", by channel size (<1K, 1K–10K, 10K–100K, 100K+) and format, how many small channels have a 10K hit within 30 days, new channels (under a year old), subscriber growth with and without a hit, and the best small-channel videos. Off by default (Features → Niche sample); about 100 units per search a day plus ~1 per 50 measured videos (three searches: ~300 a day, ~490 once a month is measured). The Data API quota is free.',
+    inputSchema: {
+      niche,
+      top: z.number().int().min(1).max(50).optional().describe('How many small-channel videos to list (default 10)'),
+      lang: z.string().regex(/^([a-z]{2,3}|all)$/).optional().describe('Audio language to keep (en keeps en, en-US, en-IN …); default the radar language (en); all = every video'),
+      searches: z.array(z.enum(['any', 'short', 'medium', 'long'])).optional().describe('Which searches count (default the current setting: medium, long and short)')
+    },
+    annotations: { readOnlyHint: true }
+  }, ({ niche: n, top, lang, searches }) => safe(() => {
+    const p = samplePage(store(), { niche: n, top, lang, searches });
+    return json({ ...p, hint: p.feature ? (p.days_collecting < 35 ? 'Still collecting: 30-day numbers need about 5 weeks.' : undefined) : 'The sample is off (Features → Niche sample). It spends about ' + p.cost.total_steady + ' Data API units a day once a month of videos is being measured.' });
   }));
 }

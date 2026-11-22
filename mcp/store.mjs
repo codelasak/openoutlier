@@ -338,6 +338,55 @@ CREATE TABLE IF NOT EXISTS provider_log (
 );
 `;
 
+// The niche sample (mcp/discovery.mjs → sampleJob): the denominator the radar can't give. Once a
+// day the newest uploads for the niche's search term (search.list order=date, not viewCount), so
+// videos that never get views are in it too; each is measured daily for 30 days, and its channel's
+// subscribers when found and since. Kept until the user deletes it (or the 30-day purge, when on).
+const SCHEMA_SAMPLE = `
+CREATE TABLE IF NOT EXISTS sample_videos (
+  video_id     TEXT PRIMARY KEY,
+  channel_id   TEXT NOT NULL,
+  niche        TEXT,
+  term         TEXT,                    -- the search term that found it
+  title        TEXT,
+  type         TEXT,                    -- video | short | live
+  duration     INTEGER,
+  published_at INTEGER,
+  found_at     INTEGER NOT NULL,
+  subs_found   INTEGER,                 -- the channel's subscribers when the video was found (NULL = hidden)
+  done_at      INTEGER                  -- measuring stopped (30 days old, or gone)
+);
+CREATE INDEX IF NOT EXISTS sample_videos_by_niche ON sample_videos (niche, published_at);
+CREATE TABLE IF NOT EXISTS sample_stats (
+  video_id TEXT NOT NULL,
+  ts       INTEGER NOT NULL,
+  views INTEGER, likes INTEGER, comments INTEGER,
+  PRIMARY KEY (video_id, ts)
+);
+CREATE TABLE IF NOT EXISTS sample_channels (
+  channel_id    TEXT PRIMARY KEY,
+  name          TEXT,
+  handle        TEXT,
+  created       INTEGER,
+  first_seen    INTEGER NOT NULL,
+  subs_first    INTEGER,
+  videos_first  INTEGER,
+  subs_last     INTEGER,
+  videos_last   INTEGER,
+  last_at       INTEGER
+);
+CREATE TABLE IF NOT EXISTS sample_runs (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  at      INTEGER NOT NULL,
+  niche   TEXT,
+  terms   TEXT,                         -- JSON
+  found   INTEGER,                      -- new videos this run
+  measured INTEGER,
+  units   INTEGER,
+  error   TEXT
+);
+`;
+
 /** Ordered, each run once (meta schema_version); `up` must be safe to run again anyway. */
 export const MIGRATIONS = [
   { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) },
@@ -378,6 +427,18 @@ export const MIGRATIONS = [
   {
     version: 6, name: 'video_stats: collapse runs of unchanged RSS readings (curves unchanged), stats revision counter',
     up: (st) => { collapseRssRuns(st); st.setMeta('stats_rev', (Number(st.getMeta('stats_rev', 0)) || 0) + 1); }
+  },
+  {
+    version: 7, name: 'niche sample: newest uploads for the niche\'s term, measured daily for 30 days (the radar\'s denominator)',
+    up: (st) => st.db.exec(SCHEMA_SAMPLE)
+  },
+  {
+    version: 8, name: 'niche sample: which search found a video (videoDuration) and its audio language',
+    up: (st) => {
+      st.addColumn('sample_videos', 'search', 'TEXT');   // any | short | medium | long
+      st.addColumn('sample_videos', 'lang', 'TEXT');     // snippet.defaultAudioLanguage (en, en-US, hi …)
+      st.db.exec("UPDATE sample_videos SET search = 'any' WHERE search IS NULL");
+    }
   }
 ];
 
@@ -537,7 +598,8 @@ export class Store {
       AND video_id NOT IN (SELECT p.code FROM posts p JOIN tracked_channels c ON c.account_id = p.account_id WHERE c.mine = 1)`).run(before).changes;
     const channels = this.db.prepare(`DELETE FROM channel_stats WHERE source = 'api' AND day < ?
       AND channel_id NOT IN (SELECT channel_id FROM tracked_channels WHERE mine = 1)`).run(beforeDay).changes;
-    return { video_stats: Number(videos), channel_stats: Number(channels) };
+    const sample = this.db.prepare('DELETE FROM sample_stats WHERE ts < ?').run(before).changes;
+    return { video_stats: Number(videos), channel_stats: Number(channels), sample_stats: Number(sample) };
   }
 
   getMeta(key, fallback = null) {

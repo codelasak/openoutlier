@@ -210,6 +210,7 @@
 
   // ---- niche radar (6.5) --------------------------------------------------------------------------
   var SEARCH_UNITS = 100;
+  var SAMPLE_DURATIONS = ['any', 'short', 'medium', 'long'];
   var RADAR_DEFAULTS = { maxSubs: 50000, minRatio: 1, minViews: 1000, region: 'US', lang: 'en', perKeyword: 25 };
   /**
    * Data API units for one radar run: search.list costs 100 per keyword; the results' videos.list
@@ -247,6 +248,21 @@
       });
       out.keywords[String(niche).slice(0, 80)] = clean.slice(0, 30);
     });
+    // The niche sample's search terms per niche (default: the niche's prefix, "excel") and how many
+    // of the newest uploads one daily run keeps (one search.list call, ≤ 50).
+    out.sampleTerms = {};
+    var st = s.sampleTerms && typeof s.sampleTerms === 'object' ? s.sampleTerms : {};
+    Object.keys(st).slice(0, 20).forEach(function (niche) {
+      var list = (Array.isArray(st[niche]) ? st[niche] : []).map(function (k) { return String(k || '').replace(/\s+/g, ' ').trim().toLowerCase().slice(0, 80); })
+        .filter(function (k, i, a) { return k && a.indexOf(k) === i; }).slice(0, 3);
+      if (list.length) out.sampleTerms[String(niche).slice(0, 80)] = list;
+    });
+    out.samplePerTerm = Math.round(num(s.samplePerTerm, 10, 50, 50));
+    // One search per term and length: medium = 4–20 min, long = over 20 min, short = under 4 min, any = no filter
+    // (YouTube's videoDuration). Default: long-form (medium + long) and short (under 4 min: Shorts and short videos,
+    // told apart by the video's type when measured).
+    var durs = (Array.isArray(s.sampleDurations) ? s.sampleDurations : []).filter(function (d, i, a) { return SAMPLE_DURATIONS.indexOf(d) !== -1 && a.indexOf(d) === i; });
+    out.sampleDurations = durs.length ? durs : ['medium', 'long', 'short'];
     // Keywords whose YouTube rank DataForSEO checks (optional provider).
     out.rankKeywords = (Array.isArray(s.rankKeywords) ? s.rankKeywords : []).map(function (k) { return String(k || '').trim().toLowerCase().slice(0, 80); })
       .filter(function (k, i, a) { return k && a.indexOf(k) === i; }).slice(0, 50);
@@ -297,6 +313,114 @@
     });
     var rising = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.best_ratio - a.best_ratio || b.views - a.views; });
     return { breakouts: out, rising: rising };
+  }
+
+  // ---- niche sample (the radar's denominator) -----------------------------------------------------
+  // The radar searches by view count, so it only ever sees winners. The sample takes the newest
+  // uploads for the niche's term (order=date) and measures each for 30 days: what a typical new
+  // upload gets, how often one breaks out, by channel size and format.
+  var SAMPLE_DAYS = [1, 7, 30];
+  var SAMPLE_BUCKETS = [{ id: '<1K', max: 1000 }, { id: '1K-10K', max: 10000 }, { id: '10K-100K', max: 100000 }, { id: '100K+', max: Infinity }];
+  var SAMPLE_THRESHOLDS = [100, 1000, 10000, 100000];
+  function bucketOf(subs) {
+    if (subs == null) return 'hidden';
+    for (var i = 0; i < SAMPLE_BUCKETS.length; i++) if (subs < SAMPLE_BUCKETS[i].max) return SAMPLE_BUCKETS[i].id;
+    return '100K+';
+  }
+  /**
+   * Views at time t from a video's readings (ts ascending): linear between the readings around t
+   * when they are ≤ 3 days apart, or a reading within 12 h of t. null when unknown.
+   */
+  function viewsAt(rows, t) {
+    var before = null, after = null;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.views == null) continue;
+      if (r.ts <= t) before = r; else { after = r; break; }
+    }
+    if (before && after && after.ts - before.ts <= 3 * DAY) return Math.round(before.views + (after.views - before.views) * (t - before.ts) / (after.ts - before.ts));
+    if (before && t - before.ts <= 12 * HOUR) return before.views;
+    if (after && after.ts - t <= 12 * HOUR) return after.views;
+    return null;
+  }
+  function quantile(sorted, q) {
+    if (!sorted.length) return null;
+    var pos = (sorted.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+    return Math.round(sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo));
+  }
+  function dist(values) {
+    var v = values.filter(function (x) { return x != null; }).sort(function (a, b) { return a - b; });
+    var share = {};
+    SAMPLE_THRESHOLDS.forEach(function (th) { share[th] = v.length ? round(v.filter(function (x) { return x >= th; }).length / v.length, 3) : null; });
+    return { n: v.length, median: quantile(v, 0.5), p75: quantile(v, 0.75), p90: quantile(v, 0.9), max: v.length ? v[v.length - 1] : null, share_at_least: share };
+  }
+  /**
+   * The sample's answer. videos: [{ video_id, channel_id, type, published_at, subs_found, title }],
+   * stats: { video_id: [{ ts, views }] ascending }, channels: { UC: { created, first_seen, subs_first, subs_last, last_at, name } }.
+   * → { videos, channels, at: { 1|7|30: { all, by_format, by_subs } }, channels_hit, new_channels, sub_growth, top_small }
+   */
+  function sampleSummary(videos, stats, channels, opts) {
+    opts = opts || {};
+    var now = opts.now || Date.now();
+    channels = channels || {};
+    var at = {};
+    var perVideo = (videos || []).map(function (v) {
+      var rows = stats[v.video_id] || [];
+      var o = { v: v, bucket: bucketOf(v.subs_found), views: {} };
+      SAMPLE_DAYS.forEach(function (d) {
+        var t = v.published_at + d * DAY;
+        o.views[d] = v.published_at && t <= now ? viewsAt(rows, t) : null;
+      });
+      var last = null;
+      for (var i = rows.length - 1; i >= 0; i--) if (rows[i].views != null) { last = rows[i]; break; }
+      o.latest = last ? last.views : null;
+      return o;
+    });
+    SAMPLE_DAYS.forEach(function (d) {
+      var by = function (key, ids) {
+        var out = {};
+        ids.forEach(function (id) { out[id] = dist(perVideo.filter(function (o) { return key(o) === id; }).map(function (o) { return o.views[d]; })); });
+        return out;
+      };
+      at[d] = {
+        all: dist(perVideo.map(function (o) { return o.views[d]; })),
+        by_format: by(function (o) { return o.v.type === 'short' ? 'short' : 'video'; }, ['video', 'short']),
+        by_subs: by(function (o) { return o.bucket; }, SAMPLE_BUCKETS.map(function (b) { return b.id; }).concat('hidden'))
+      };
+    });
+    // Channels: did any of their sampled videos pass 10K by day 30, and how did their subscribers move?
+    var byChan = {};
+    perVideo.forEach(function (o) { (byChan[o.v.channel_id] = byChan[o.v.channel_id] || []).push(o); });
+    var hit = {}, growth = {};
+    SAMPLE_BUCKETS.map(function (b) { return b.id; }).concat('hidden').forEach(function (id) { hit[id] = { channels: 0, judged: 0, hit_10k: 0 }; growth[id] = []; });
+    var newChannels = { channels: 0, judged: 0, hit_10k: 0 };
+    Object.keys(byChan).forEach(function (cid) {
+      var list = byChan[cid];
+      var ch = channels[cid] || {};
+      var bucket = bucketOf(ch.subs_first != null ? ch.subs_first : list[0].v.subs_found);
+      var judged = list.filter(function (o) { return o.views[30] != null; });
+      var isHit = judged.some(function (o) { return o.views[30] >= 10000; });
+      hit[bucket].channels++;
+      if (judged.length) { hit[bucket].judged++; if (isHit) hit[bucket].hit_10k++; }
+      var isNew = ch.created && ch.first_seen && ch.first_seen - ch.created <= 365 * DAY;
+      if (isNew) { newChannels.channels++; if (judged.length) { newChannels.judged++; if (isHit) newChannels.hit_10k++; } }
+      if (ch.subs_first && ch.subs_last != null && ch.last_at && ch.last_at - ch.first_seen >= 25 * DAY) growth[bucket].push({ pct: (ch.subs_last - ch.subs_first) / ch.subs_first, hit: isHit });
+    });
+    Object.keys(hit).forEach(function (k) { hit[k].share = hit[k].judged ? round(hit[k].hit_10k / hit[k].judged, 3) : null; });
+    newChannels.share = newChannels.judged ? round(newChannels.hit_10k / newChannels.judged, 3) : null;
+    var subGrowth = {};
+    Object.keys(growth).forEach(function (k) {
+      var g = growth[k];
+      var med = function (arr) { var s = arr.map(function (x) { return x.pct; }).sort(function (a, b) { return a - b; }); return s.length ? round(s[Math.floor((s.length - 1) / 2)] * 100, 1) : null; };
+      subGrowth[k] = { n: g.length, median_pct: med(g), median_pct_with_hit: med(g.filter(function (x) { return x.hit; })), median_pct_without_hit: med(g.filter(function (x) { return !x.hit; })) };
+    });
+    var topSmall = perVideo.filter(function (o) { return o.v.subs_found != null && o.v.subs_found < 10000 && o.latest != null; })
+      .sort(function (a, b) { return (b.views[30] != null ? b.views[30] : b.latest) - (a.views[30] != null ? a.views[30] : a.latest); }).slice(0, opts.top || 10)
+      .map(function (o) {
+        return { video_id: o.v.video_id, title: o.v.title || null, channel: (channels[o.v.channel_id] || {}).name || null, subs_found: o.v.subs_found, type: o.v.type,
+          published_at: o.v.published_at, views_7d: o.views[7], views_30d: o.views[30], views_latest: o.latest };
+      });
+    return { videos: perVideo.length, channels: Object.keys(byChan).length, at: at, channels_hit_10k_by_30d: hit, new_channels: newChannels, sub_growth_30d: subGrowth, top_small: topSmall };
   }
   /**
    * Keyword suggestions for a niche's radar list, from what the niche already says works.
@@ -514,6 +638,7 @@
     words: words, isStop: isStop, isFiller: isFiller, termCounts: termCounts, tfidf: tfidf, cosine: cosine, similarByText: similarByText,
     decayed: decayed, coRecPairs: coRecPairs, addCoRec: addCoRec, coRecScores: coRecScores, combineSimilar: combineSimilar,
     radarCost: radarCost, sanitizeRadar: sanitizeRadar, radarMetrics: radarMetrics, radarLists: radarLists, suggestKeywords: suggestKeywords, nichePrefix: nichePrefix,
+    sampleSummary: sampleSummary, viewsAt: viewsAt, SAMPLE_BUCKETS: SAMPLE_BUCKETS,
     suggestUrl: suggestUrl, parseSuggest: parseSuggest, expansions: expansions, keywordIdeas: keywordIdeas, volumePrompt: volumePrompt,
     mainCategory: mainCategory, monthlyViews: monthlyViews, rpmEstimate: rpmEstimate
   };

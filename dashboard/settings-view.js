@@ -37,7 +37,7 @@
         scraping: 'scraping-based', scrapingTip: 'The provider scrapes YouTube. YouTube\'s API policy (§III.E.6) doesn\'t allow that data next to an API key in the same app, so it is a separate switch and its rows are labelled.',
         paid: 'paid', free: 'free', save: 'Save key', remove: 'Remove key', savedMsg: 'Saved on the bridge.', removedMsg: 'Removed from the bridge.',
         fields: { clientId: 'Client ID', token: 'Token', login: 'API login', password: 'API password' },
-        sbHistory: 'History', sb30: '30 days (1 credit)', sb1y: '1 year (2 credits)', sb3y: '3 years (3 credits)', sbQuote: 'Show the cost', sbQuoteLine: { one: '{n} tracked channel × {p} credits = {c} credits (about ${u}).', other: '{n} tracked channels × {p} credits = {c} credits (about ${u}).' }, sbFree: { one: '{n} asked in the last 30 days: free.', other: '{n} asked in the last 30 days: free.' },
+        sbScope: 'Channels', sbScopeSmall: 'Tracked, under 100K subscribers', sbScopeAll: 'All tracked', sbHistory: 'History', sb30: '30 days (1 credit)', sb1y: '1 year (2 credits)', sb3y: '3 years (3 credits)', sbQuote: 'Show the cost', sbQuoteLine: { one: '{n} tracked channel × {p} credits = {c} credits (about ${u}).', other: '{n} tracked channels × {p} credits = {c} credits (about ${u}).' }, sbFree: { one: '{n} asked in the last 30 days: free.', other: '{n} asked in the last 30 days: free.' },
         sbGo: 'Backfill for {c} credits', sbDone: { one: 'Backfilled {n} channel ({d} days); {u} credits used.', other: 'Backfilled {n} channels ({d} days); {u} credits used.' }, sbLeft: '{l} credits left.', sbOff: 'Turn on Social Blade in Features to backfill.',
         dfsLine: { one: '{n} keyword tracked for rank (Niche tracking → Keywords), about ${c} a day.', other: '{n} keywords tracked for rank (Niche tracking → Keywords), about ${c} a day.' }, dfsCheck: 'Check now', dfsDone: { one: 'Checked {n} keyword.', other: 'Checked {n} keywords.' }, dfsNone: 'Pick keywords in Niche tracking → Keywords → Track rank.'
       }
@@ -67,7 +67,7 @@
         scraping: 'scraping tabanlı', scrapingTip: 'Servis YouTube\'u kazıyor. YouTube\'un API politikası (§III.E.6) bu veriyi aynı uygulamada bir API anahtarıyla kullanmaya izin vermiyor; bu yüzden ayrı bir ayar ve satırları ayrı etiketli.',
         paid: 'ücretli', free: 'bedava', save: 'Anahtarı kaydet', remove: 'Anahtarı sil', savedMsg: 'Bridge\'e kaydedildi.', removedMsg: 'Bridge\'den silindi.',
         fields: { clientId: 'Client ID', token: 'Token', login: 'API kullanıcı adı', password: 'API parolası' },
-        sbHistory: 'Geçmiş', sb30: '30 gün (1 kredi)', sb1y: '1 yıl (2 kredi)', sb3y: '3 yıl (3 kredi)', sbQuote: 'Maliyeti göster', sbQuoteLine: '{n} takip edilen kanal × {p} kredi = {c} kredi (yaklaşık ${u}).', sbFree: '{n} kanal son 30 günde soruldu: bedava.',
+        sbScope: 'Kanallar', sbScopeSmall: 'Takip edilenler, 100K abone altı', sbScopeAll: 'Tüm takip edilenler', sbHistory: 'Geçmiş', sb30: '30 gün (1 kredi)', sb1y: '1 yıl (2 kredi)', sb3y: '3 yıl (3 kredi)', sbQuote: 'Maliyeti göster', sbQuoteLine: '{n} takip edilen kanal × {p} kredi = {c} kredi (yaklaşık ${u}).', sbFree: '{n} kanal son 30 günde soruldu: bedava.',
         sbGo: '{c} krediyle geçmişi çek', sbDone: '{n} kanalın geçmişi yüklendi ({d} gün); {u} kredi kullanıldı.', sbLeft: '{l} kredi kaldı.', sbOff: 'Geçmiş çekmek için Özellikler\'den Social Blade\'i aç.',
         dfsLine: 'Sırası takip edilen {n} kelime (Niş Takibi → Anahtar kelimeler), günde yaklaşık ${c}.', dfsCheck: 'Şimdi kontrol et', dfsDone: '{n} kelime kontrol edildi.', dfsNone: 'Kelimeleri Niş Takibi → Anahtar kelimeler → Sırayı takip et ile seç.'
       }
@@ -198,7 +198,7 @@
       if (s && typeof s === 'object') { var rule = 'other'; try { rule = new Intl.PluralRules(F.locale()).select(Number(o.n)); } catch (e) { /* other */ } s = s[rule] != null ? s[rule] : s.other; }
       return String(s).replace(/\{(\w+)\}/g, function (_, k) { return o[k] != null ? o[k] : ''; });
     }
-    var pv = { drafts: {}, msg: {}, sbHistory: '1y', quote: null, busy: false };
+    var pv = { drafts: {}, msg: {}, sbHistory: '1y', sbScope: '100000', quote: null, busy: false };
     async function provCall(what, extra) {
       pv.busy = true;
       env.rerender();
@@ -254,13 +254,17 @@
           else {
             var hsel = h('select', { 'aria-label': P.sbHistory, onchange: function () { pv.sbHistory = hsel.value; pv.quote = null; env.rerender(); } },
               [['30d', P.sb30], ['1y', P.sb1y], ['3y', P.sb3y]].map(function (o) { return h('option', { value: o[0], selected: pv.sbHistory === o[0], text: o[1] }); }));
-            rows.push(h('div', { class: 'm-actions set-actions' }, hsel,
-              h('button', { class: 'btn btn-ghost', type: 'button', disabled: pv.busy, onclick: async function () { var r = await provCall('sb-quote', { history: pv.sbHistory }); pv.quote = r.ok ? r : null; pv.msg[id] = r.ok ? '' : r.error; env.rerender(); } }, P.sbQuote)));
+            // The free account's 50 monthly credits: small channels' growth matters more than the giants'.
+            var ssel = h('select', { 'aria-label': P.sbScope, onchange: function () { pv.sbScope = ssel.value; pv.quote = null; env.rerender(); } },
+              [['100000', P.sbScopeSmall], ['', P.sbScopeAll]].map(function (o) { return h('option', { value: o[0], selected: pv.sbScope === o[0], text: o[1] }); }));
+            var maxSubs = function () { return pv.sbScope ? Number(pv.sbScope) : null; };
+            rows.push(h('div', { class: 'm-actions set-actions' }, ssel, hsel,
+              h('button', { class: 'btn btn-ghost', type: 'button', disabled: pv.busy, onclick: async function () { var r = await provCall('sb-quote', { history: pv.sbHistory, maxSubs: maxSubs() }); pv.quote = r.ok ? r : null; pv.msg[id] = r.ok ? '' : r.error; env.rerender(); } }, P.sbQuote)));
             if (pv.quote) {
               var q = pv.quote;
               rows.push(h('p', { class: 'small', text: fill2(P.sbQuoteLine, { n: q.channels.length, p: q.per_channel, c: q.credits, u: q.est_usd }) + (q.free.length ? ' ' + fill2(P.sbFree, { n: q.free.length }) : '') }));
               rows.push(h('div', { class: 'm-actions set-actions' }, h('button', { class: 'btn btn-primary', type: 'button', disabled: pv.busy || !q.channels.length, onclick: async function () {
-                var r = await provCall('sb-backfill', { history: q.history, confirm: q.credits });
+                var r = await provCall('sb-backfill', { history: q.history, maxSubs: q.max_subs, confirm: q.credits });
                 pv.quote = null;
                 pv.msg[id] = r.ok ? fill2(P.sbDone, { n: r.channels.filter(function (c) { return !c.error; }).length, d: r.channels.reduce(function (a, c) { return a + (c.days || 0); }, 0), u: r.credits_used }) + (r.credits_left != null ? ' ' + fill2(P.sbLeft, { l: r.credits_left }) : '') : r.error || '?';
                 env.rerender();

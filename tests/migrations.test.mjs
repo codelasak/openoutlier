@@ -101,11 +101,11 @@ test('purgeApiData (api-retention-30d) drops old Data API rows of other channels
   const day = (t) => new Date(t).toISOString().slice(0, 10);
   s.db.prepare("INSERT INTO channel_stats (channel_id, day, subs, source) VALUES ('UCother', ?, 100, 'api'), ('UCother', ?, 120, 'api'), ('UCmine', ?, 5, 'api')").run(day(old), day(recent), day(old));
   const r = s.purgeApiData(now, 30);
-  assert.deepEqual(r, { video_stats: 1, channel_stats: 1 });
+  assert.deepEqual(r, { video_stats: 1, channel_stats: 1, sample_stats: 0 });
   assert.deepEqual(s.videoStats('rivalVid01').map((x) => x.source), ['rss', 'page', 'api']);
   assert.equal(s.videoStats('mineJob001').length, 1);
   assert.equal(s.videoStats('minePost01').length, 1);
   assert.equal(s.db.prepare("SELECT COUNT(*) AS n FROM channel_stats WHERE channel_id = 'UCmine'").get().n, 1);
-  assert.deepEqual(s.purgeApiData(now, 30), { video_stats: 0, channel_stats: 0 }, 'nothing left to do');
+  assert.deepEqual(s.purgeApiData(now, 30), { video_stats: 0, channel_stats: 0, sample_stats: 0 }, 'nothing left to do');
   s.close();
 });

@@ -103,7 +103,7 @@ test('A1 migration 6: existing runs of equal RSS readings collapse, curves and c
   const beforeOld = s.videoStats('yTreviewOld');
   // Run migration 6 again from version 5.
   s.setMeta('schema_version', 5);
-  assert.equal(s.migrate(), 6);
+  assert.equal(s.migrate(), 8);
   const countAfter = s.db.prepare('SELECT COUNT(*) AS n FROM video_stats').get().n;
   assert.ok(countAfter < countAll * 0.5, `rows ${countAll} → ${countAfter}`);
   const afterNew = s.videoStats('yTreview001');

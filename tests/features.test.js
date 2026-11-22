@@ -14,7 +14,7 @@ const PLAN_IDS = [
   'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'channel-similar', 'channel-sponsors', 'channel-rpm',
   'video-card', 'video-monetization', 'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
   'shorts-overlay', 'thumb-compress', 'thumb-preview',
-  'tracker', 'breakout-alerts', 'weekly-digest', 'niche-radar', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d',
+  'tracker', 'breakout-alerts', 'weekly-digest', 'niche-radar', 'niche-sample', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d',
   // Phase 5: keyword ideas (6.6) and the optional providers (8.2).
   'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'
 ];
@@ -49,17 +49,18 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   // Everything is kept: the 30-day purge stays off.
   assert.equal(d['api-retention-30d'], false);
   // Off in the plan's table.
-  for (const id of ['hide-shorts', 'channel-rpm', 'niche-radar']) assert.equal(d[id], false, id);
+  for (const id of ['hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample']) assert.equal(d[id], false, id);
   // Milestone notifications are optional (plan 3.2: "Bildirim isteğe bağlı").
   assert.equal(d['own-milestones'], false);
   // The rest start on.
-  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'own-milestones', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'].includes(x))) assert.equal(d[id], true, id);
+  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample', 'own-milestones', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'].includes(x))) assert.equal(d[id], true, id);
   // Phase 5: keyword ideas start on (no quota, rate-limited); every optional provider starts off (budget $0, plan 10).
   assert.equal(d['keyword-ideas'], true);
   for (const id of ['provider-ryd', 'provider-socialblade', 'provider-dataforseo']) assert.equal(d[id], false, id);
   assert.ok(F.get('provider-dataforseo').notes.includes('scraping'), 'DataForSEO is marked scraping-based');
   assert.ok(!F.get('provider-socialblade').notes.includes('scraping'));
   assert.ok(F.get('niche-radar').notes.includes('quota'));
+  assert.ok(F.get('niche-sample').notes.includes('quota'));
   // The dislike feature credits its source.
   assert.equal(F.get('dislikes').link, 'https://returnyoutubedislike.com/');
   assert.ok(F.get('dislikes').notes.includes('thirdParty'));
@@ -70,7 +71,7 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
     'channel-stats', 'channel-growth', 'channel-track', 'channel-monetization', 'channel-sponsors', 'video-card', 'video-monetization',
     'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
     'shorts-overlay', 'thumb-compress', 'thumb-preview', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']
-    .concat(['channel-similar', 'channel-rpm', 'niche-radar', 'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo']).sort());
+    .concat(['channel-similar', 'channel-rpm', 'niche-radar', 'niche-sample', 'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo']).sort());
   // Phase 5: nothing is "coming soon" any more.
   assert.deepEqual(F.FEATURES.filter((f) => !f.available).map((f) => f.id), [], 'every feature is built');
   // Subscriber counts work without a key (page data, saved channels); the key adds channels.list.

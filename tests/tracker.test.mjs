@@ -254,7 +254,7 @@ test('api-retention-30d: the purge job runs only while the setting is on', async
   r = await tr.tick();
   assert.ok(r.ran.includes('api-retention'));
   assert.deepEqual(s.videoStats('rivalVid01').map((x) => x.source), ['rss']);
-  assert.deepEqual(tr.job('api-retention').data, { video_stats: 1, channel_stats: 0 });
+  assert.deepEqual(tr.job('api-retention').data, { video_stats: 1, channel_stats: 0, sample_stats: 0 });
   assert.equal(tr.job('api-retention').next_at, c.t + 864e5);
   s.close();
 });

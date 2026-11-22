@@ -705,8 +705,8 @@
         pushSettingsSoon();
         return j;
       }
-      case 'sb-quote': return post(found.port, '/providers/socialblade/quote', { channels: msg.channels, history: msg.history });
-      case 'sb-backfill': return post(found.port, '/providers/socialblade/backfill', { channels: msg.channels, history: msg.history, confirm: msg.confirm });
+      case 'sb-quote': return post(found.port, '/providers/socialblade/quote', { channels: msg.channels, history: msg.history, maxSubs: msg.maxSubs });
+      case 'sb-backfill': return post(found.port, '/providers/socialblade/backfill', { channels: msg.channels, history: msg.history, maxSubs: msg.maxSubs, confirm: msg.confirm });
       case 'dfs-check': return post(found.port, '/providers/dataforseo/check', {});
     }
     return { ok: false, error: 'bad request' };

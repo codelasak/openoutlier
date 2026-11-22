@@ -290,11 +290,11 @@ async function handle(req, res, port) {
   }
   if (req.method === 'POST' && url.pathname === '/providers/socialblade/quote') {
     const body = await readBody(req);
-    return send(res, 200, { ok: true, ...SB.quote(store(), { channels: Array.isArray(body.channels) ? body.channels.slice(0, 500) : undefined, history: body.history }) }, origin);
+    return send(res, 200, { ok: true, ...SB.quote(store(), { channels: Array.isArray(body.channels) ? body.channels.slice(0, 500) : undefined, history: body.history, maxSubs: body.maxSubs }) }, origin);
   }
   if (req.method === 'POST' && url.pathname === '/providers/socialblade/backfill') {
     const body = await readBody(req);
-    const r = await SB.backfill(store(), { channels: Array.isArray(body.channels) ? body.channels.slice(0, 500) : undefined, history: body.history, confirm: body.confirm,
+    const r = await SB.backfill(store(), { channels: Array.isArray(body.channels) ? body.channels.slice(0, 500) : undefined, history: body.history, maxSubs: body.maxSubs, confirm: body.confirm,
       on: !!Features.resolve(store().getMeta('features', null))['provider-socialblade'] });
     return send(res, 200, r, origin);
   }

@@ -10,8 +10,10 @@
 // The request (Social Blade's "matrix" endpoint) and its answer, as documented for the Business
 // API: GET https://matrix.sbapi.dev/b/youtube/statistics?query=<UC…>&history=default|extended|archive
 // with the headers clientid and token → { status: { success }, info: { credits: { available } },
-// data: { id: { id, username, display_name }, daily: [{ date, subscribers, views }] } }. Only
-// checked against fixtures here (budget $0): the first real call should be watched.
+// data: { id: { id, username, display_name }, daily: [{ date, subs, views }] } }. The public example on
+// socialblade.com/developers (2026-11) names the daily field `subs`; older docs said `subscribers`, so
+// both are read. Only checked against fixtures here: the first real call should be watched. A free
+// Social Blade account gets 50 Business API credits a month (they don't roll over).
 import { PROVIDERS, keyOf, logCall } from './index.mjs';
 
 export const ID = 'socialblade';
@@ -32,11 +34,13 @@ function recent(store, now) {
 
 /**
  * What a backfill would cost. channels: UC ids (default: every active tracked channel that isn't
- * yours). → { history, per_channel, channels, free, credits, est_usd, note }
+ * yours; maxSubs: only those under that many subscribers, so the free account's 50 monthly credits
+ * go to the channels whose growth story matters). → { history, per_channel, channels, free, credits, est_usd, max_subs, note }
  */
-export function quote(store, { channels, history = '1y', now = Date.now() } = {}) {
+export function quote(store, { channels, history = '1y', maxSubs = null, now = Date.now() } = {}) {
   const h = HISTORY[history] || HISTORY['1y'];
-  const list = (channels && channels.length ? channels : store.db.prepare('SELECT channel_id FROM tracked_channels WHERE active = 1 AND mine = 0').all().map((r) => r.channel_id))
+  const cap = Number.isFinite(Number(maxSubs)) && Number(maxSubs) > 0 ? Number(maxSubs) : null;
+  const list = (channels && channels.length ? channels : store.db.prepare('SELECT channel_id FROM tracked_channels WHERE active = 1 AND mine = 0' + (cap ? ' AND subs IS NOT NULL AND subs < ?' : '')).all(...(cap ? [cap] : [])).map((r) => r.channel_id))
     .filter((c) => CHANNEL_ID_RE.test(String(c)));
   const uniq = [...new Set(list)];
   const seen = recent(store, now);
@@ -44,8 +48,8 @@ export function quote(store, { channels, history = '1y', now = Date.now() } = {}
   const credits = (uniq.length - free.length) * h.credits;
   return {
     provider: PROVIDERS[ID].name, history: HISTORY[history] ? history : '1y', per_channel: h.credits, channels: uniq, free, credits,
-    est_usd: Math.round(credits * 0.5 * 100) / 100,
-    note: 'Social Blade sells 100 credits for about $50; a channel asked again within 30 days costs nothing.'
+    est_usd: Math.round(credits * 0.5 * 100) / 100, max_subs: channels && channels.length ? null : cap,
+    note: 'Social Blade sells 100 credits for about $50 (a free account gets 50 a month); a channel asked again within 30 days costs nothing.'
   };
 }
 
@@ -55,10 +59,11 @@ export function parseStats(body) {
   const st = body.status || {};
   if (st.success === false || st.error) return { ok: false, error: String(st.error || st.message || 'Social Blade refused the request.') };
   const d = body.data || {};
+  const n = (v) => (v != null && v !== '' && Number.isFinite(Number(v)) ? Math.round(Number(v)) : null);
   const daily = (Array.isArray(d.daily) ? d.daily : []).map((r) => ({
     day: typeof r.date === 'string' ? r.date.slice(0, 10) : null,
-    subs: Number.isFinite(Number(r.subscribers)) ? Math.round(Number(r.subscribers)) : null,
-    views: Number.isFinite(Number(r.views)) ? Math.round(Number(r.views)) : null
+    subs: n(r.subs ?? r.subscribers),
+    views: n(r.views)
   })).filter((r) => r.day && /^\d{4}-\d{2}-\d{2}$/.test(r.day) && (r.subs != null || r.views != null));
   const credits = body.info && body.info.credits && Number.isFinite(Number(body.info.credits.available)) ? Number(body.info.credits.available) : null;
   return { ok: true, daily, credits_left: credits, name: d.id && (d.id.display_name || d.id.username) || null };
@@ -68,11 +73,11 @@ export function parseStats(body) {
  * The backfill. confirm must repeat the quote's credits (what the user saw and accepted);
  * without the key or the switch it makes no request. → { ok, credits_used, credits_left, channels: [{ channel_id, days, from, to, error }] }
  */
-export async function backfill(store, { channels, history = '1y', confirm, fetch: doFetch = globalThis.fetch, home, now = Date.now(), on } = {}) {
+export async function backfill(store, { channels, history = '1y', maxSubs = null, confirm, fetch: doFetch = globalThis.fetch, home, now = Date.now(), on } = {}) {
   if (!on) return { ok: false, error: 'Social Blade is switched off (Features → Optional providers).' };
   const key = keyOf(ID, home);
   if (!key) return { ok: false, error: 'No Social Blade key yet (Library → Settings → Optional providers).' };
-  const q = quote(store, { channels, history, now });
+  const q = quote(store, { channels, history, maxSubs, now });
   if (confirm == null || Number(confirm) !== q.credits) return { ok: false, needs_confirm: true, quote: q, error: `This uses ${q.credits} credits; confirm with that number.` };
   const h = HISTORY[q.history];
   const ins = store.db.prepare("INSERT OR IGNORE INTO channel_stats (channel_id, day, subs, views, videos, source) VALUES (?, ?, ?, ?, NULL, 'socialblade')");
