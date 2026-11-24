@@ -12,7 +12,7 @@
 //     the Library (so a niche account's posts on Home, lists and search are kept too). Everyone
 //     else's posts stay in memory, only for the timeline badges. An account keeps its id when its
 //     handle changes: posts are matched to it by the author's rest_id (profile.restId).
-//   rs:x:raw:<operation> = { savedAt, url, data } — the latest accountOverviewDailyQuery and
+//   rs:x:raw:<operation> = { savedAt, url, data, vars } — the latest accountOverviewDailyQuery and
 //     contentPageQuery responses, raw, for Phase 2 (own account, Original Content Rewards).
 //   rs:x:rate = { <operation>: { limit, remaining, reset, status, at } } — the last rate-limit headers.
 (async function () {
@@ -207,8 +207,13 @@
   function saveRaw(op, url, data) {
     if (!on('x.collect')) return;
     var o = {};
-    o[RAW_PREFIX + op] = { savedAt: Date.now(), url: String(url).split('?')[0], data: data };
+    o[RAW_PREFIX + op] = { savedAt: Date.now(), url: String(url).split('?')[0], data: data, vars: varsOf(url) };
     chrome.storage.local.set(o).catch(function () {});
+  }
+
+  /** The request's GraphQL variables (Phase 2 reads the analytics range from them), or null. */
+  function varsOf(url) {
+    try { var v = new URL(url, location.origin).searchParams.get('variables'); return v ? JSON.parse(v) : null; } catch (e) { return null; }
   }
 
   var rateTimer = null;

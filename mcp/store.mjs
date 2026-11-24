@@ -387,6 +387,42 @@ CREATE TABLE IF NOT EXISTS sample_runs (
 );
 `;
 
+// X "My account" (docs/x-plan.md 3.4, Phase 2; mcp/x-own.mjs). x_own_daily: one row per own account and
+// UTC day: the analytics day (Displayed from verified / other users, follows) and, on days the extension
+// captured them, the follower snapshot and the 90-day verified-impressions sum (an upper bound) with its
+// source. x_post_stats: every measurement of an X post the extension saw (own posts always, Library
+// accounts' posts while under 7 days old), for the first-hours curves.
+export const SCHEMA_X_OWN = `
+CREATE TABLE IF NOT EXISTS x_own_daily (
+  handle             TEXT NOT NULL,     -- x/<handle lowercase>
+  day                TEXT NOT NULL,     -- UTC day, YYYY-MM-DD
+  followers          INTEGER,           -- snapshot that day (NULL on days without one)
+  verified_followers INTEGER,
+  imp_v              INTEGER,           -- Displayed from verified users that day (analytics)
+  imp_u              INTEGER,           -- Displayed from everyone else
+  follows            INTEGER,
+  unfollows          INTEGER,
+  follows_v          INTEGER,
+  unfollows_v        INTEGER,
+  imp90_v            INTEGER,           -- the 90-day verified sum computed that day (upper bound)
+  imp90_source       TEXT,              -- analytics | estimate_views
+  metric             TEXT,              -- JSON: every engagement type that day { type: { v, u, n } }
+  updated_at         INTEGER NOT NULL,
+  PRIMARY KEY (handle, day)
+);
+CREATE TABLE IF NOT EXISTS x_post_stats (
+  post_id    TEXT NOT NULL,
+  ts         INTEGER NOT NULL,          -- when the extension read it (post.seenAt)
+  account_id TEXT,
+  taken_at   INTEGER,
+  kind       TEXT,                      -- original | reply | thread-part
+  format     TEXT,
+  views INTEGER, likes INTEGER, replies INTEGER, reposts INTEGER, quotes INTEGER, bookmarks INTEGER,
+  PRIMARY KEY (post_id, ts)
+);
+CREATE INDEX IF NOT EXISTS x_post_stats_by_account ON x_post_stats (account_id, taken_at);
+`;
+
 /** Ordered, each run once (meta schema_version); `up` must be safe to run again anyway. */
 export const MIGRATIONS = [
   { version: 1, name: 'youtube niche tracking + own channel history tables', up: (st) => st.db.exec(SCHEMA_YOUTUBE_NICHE) },
@@ -439,7 +475,9 @@ export const MIGRATIONS = [
       st.addColumn('sample_videos', 'lang', 'TEXT');     // snippet.defaultAudioLanguage (en, en-US, hi …)
       st.db.exec("UPDATE sample_videos SET search = 'any' WHERE search IS NULL");
     }
-  }
+  },
+  // X Phase 2 (docs/x-plan.md 3.4). Other X phases add theirs after this one; renumber on merge if two collide.
+  { version: 9, name: 'X own account: daily history (x_own_daily) and every post measurement (x_post_stats)', up: (st) => st.db.exec(SCHEMA_X_OWN) }
 ];
 
 // ---- unchanged RSS readings ---------------------------------------------------------------
@@ -515,6 +553,7 @@ export class Store {
     this.db.exec(SCHEMA_OWN_HISTORY);
     this.db.exec(SCHEMA_CONTENT_TOOLS);
     this.db.exec(SCHEMA_DISCOVERY);
+    this.db.exec(SCHEMA_X_OWN);
     let v = Number(this.getMeta('schema_version', 0)) || 0;
     for (const m of MIGRATIONS) {
       if (m.version <= v) continue;

@@ -196,6 +196,7 @@
     if (kind === 'niche') return { kind: 'niche' };
     if (kind === 'swipe') return { kind: 'swipe' };
     if (kind === 'thumb-test') return { kind: 'thumb-test' };
+    if (kind === 'x-own') return { kind: 'x-own' }; // X Phase 2
     if (kind === 'compare') return { kind: 'compare', a: parts[1] || null, b: parts[2] || null };
     if (kind === 'folder' || kind === 'tag') return { kind: kind, id: parts[1], tab: parts[2] === 'reels' ? 'reels' : 'accounts' };
     if (kind === 'unsorted') return { kind: 'unsorted', tab: parts[1] === 'reels' ? 'reels' : 'accounts' };
@@ -477,6 +478,8 @@
     getOrg: function () { return org; },
     accounts: function () { return accounts; }
   }) : null;
+  // X Phase 2: My X (#/x-own, dashboard/x-own-view.js).
+  var xOwnView = self.OpenOutlierXOwnView ? self.OpenOutlierXOwnView.create({ h: h, rerender: function () { if (route().kind === 'x-own') { renderSidebar(route()); xOwnView.render(main); document.title = xOwnView.title() + ' · OpenOutlier'; } } }) : null;
   var mentionsView = self.ReelScopeMentionsView.create({ h: h, ago: ago, rerender: function () { if (route().kind === 'mentions') { renderSidebar(route()); mentionsView.render(main); } } });
   var studioView = self.ReelScopeStudioView.create({ h: h, ago: ago, fmt: fmt, rerender: function () { if (route().kind === 'studio') { renderSidebar(route()); studioView.render(main); document.title = studioView.title() + ' · OpenOutlier'; } } });
   var reelsPanel = P.create(Object.assign({}, common, { preEnriched: true, showOwner: true, defaultSort: 'viralScore', listTabLabel: 'Posts' }));
@@ -547,6 +550,7 @@
     lib.appendChild(navItem(c.mentions, unreadMentions ? self.OpenOutlierFeatures.plural(unreadMentions, c.mentionsNew, uiLang()) : null, '#/mentions', r.kind === 'mentions', { icon: 'bell', badge: !!unreadMentions }));
     lib.appendChild(navItem(c.myAccount, null, '#/studio', r.kind === 'studio', { icon: 'user' }));
     lib.appendChild(navItem(ytChannelView.navLabel ? ytChannelView.navLabel() : 'My YouTube channel', null, '#/my-youtube', r.kind === 'my-youtube', { icon: 'play' }));
+    if (xOwnView && self.OpenOutlierFeatures && self.OpenOutlierFeatures.isOn('x.own')) lib.appendChild(navItem(xOwnView.navLabel(), null, '#/x-own', r.kind === 'x-own', { icon: 'user' })); // X Phase 2
     if (nicheView) lib.appendChild(navItem(nicheView.navLabel(), nicheAlerts.unseen ? String(nicheAlerts.unseen) : null, '#/niche', r.kind === 'niche', { icon: 'trend', badge: !!nicheAlerts.unseen }));
     var F4 = self.OpenOutlierFeatures;
     if (swipeView && (!F4 || F4.isOn('swipe-save') || swipeView.count())) lib.appendChild(navItem(swipeView.navLabel(), swipeView.count() || null, '#/swipe', r.kind === 'swipe', { icon: 'swipe' }));
@@ -1110,9 +1114,10 @@
     else if (r.kind === 'niche' && nicheView) nicheView.render(main);
     else if (r.kind === 'swipe' && swipeView) swipeView.render(main);
     else if (r.kind === 'thumb-test' && thumbTestView) thumbTestView.render(main);
+    else if (r.kind === 'x-own' && xOwnView) xOwnView.render(main);
     else if (r.kind === 'compare') renderCompare(r);
     else renderScope(r);
-    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? CL().mentions : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'niche' && nicheView ? nicheView.title() : r.kind === 'swipe' && swipeView ? swipeView.title() : r.kind === 'thumb-test' && thumbTestView ? thumbTestView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
+    document.title = (r.kind === 'account' ? fullLabel(r.id) : r.kind === 'mentions' ? CL().mentions : r.kind === 'studio' ? studioView.title() : r.kind === 'my-youtube' ? ytChannelView.title() : r.kind === 'settings' && settingsView ? settingsView.title() : r.kind === 'niche' && nicheView ? nicheView.title() : r.kind === 'swipe' && swipeView ? swipeView.title() : r.kind === 'thumb-test' && thumbTestView ? thumbTestView.title() : r.kind === 'x-own' && xOwnView ? xOwnView.title() : r.kind === 'compare' ? 'Compare' : scopeTitle(r)) + ' · OpenOutlier';
   }
 
   // ---- wiring ---------------------------------------------------------------
@@ -1122,7 +1127,7 @@
   });
   document.getElementById('search').addEventListener('input', function (e) {
     search = e.target.value.trim();
-    if (['account', 'mentions', 'studio', 'my-youtube', 'settings', 'niche', 'swipe', 'thumb-test', 'compare'].indexOf(route().kind) !== -1) go(lastScopeHash); else render();
+    if (['account', 'mentions', 'studio', 'my-youtube', 'settings', 'niche', 'swipe', 'thumb-test', 'x-own', 'compare'].indexOf(route().kind) !== -1) go(lastScopeHash); else render();
   });
   document.getElementById('show-small').addEventListener('change', function (e) {
     showSmall = e.target.checked;

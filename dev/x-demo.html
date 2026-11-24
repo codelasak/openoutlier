@@ -37,7 +37,11 @@
               [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; });
               return o;
             },
-            set: async function (o) { Object.assign(data, JSON.parse(JSON.stringify(o))); },
+            set: async function (o) {
+              var c = {};
+              Object.keys(o).forEach(function (k) { c[k] = { oldValue: data[k], newValue: JSON.parse(JSON.stringify(o[k])) }; data[k] = JSON.parse(JSON.stringify(o[k])); });
+              setTimeout(function () { changeListeners.forEach(function (fn) { fn(c, 'local'); }); }, 0); // like Chrome: every context hears it
+            },
             remove: async function (k) { [].concat(k).forEach(function (x) { delete data[x]; }); }
           },
           onChanged: { addListener: function (fn) { changeListeners.push(fn); } }
@@ -50,6 +54,7 @@
         }
       };
       window.__demoStorage = data;
+      data['rs:x-own'] = { handle: 'ExcelBugs_Demo' }; // Phase 2: the demo profile is "my" account
       window.__reelscopeSite = 'x'; // hook.js: treat this page as x.com
       window.__demoOpenPanel = function () { listeners.forEach(function (fn) { fn({ type: 'reelscope:toggle' }, {}, function () {}); }); };
       window.__demoCommand = function (cmd) { return new Promise(function (resolve) {
@@ -100,13 +105,14 @@
 <body>
   <header>
     <h1>OpenOutlier X demo page</h1>
-    <p>Stands in for x.com. The page "loads" fake GraphQL responses (dev/x, made by dev/make-x-fixture.mjs) through the same hook the extension uses. Profile: two pages of UserOriginalsTimeline (scroll for the second). Home and Post show the badges and the post toolbar. All data is made up.</p>
+    <p>Stands in for x.com. The page "loads" fake GraphQL responses (dev/x, made by dev/make-x-fixture.mjs) through the same hook the extension uses. Profile: two pages of UserOriginalsTimeline (scroll for the second). Home and Post show the badges and the post toolbar. Analytics loads accountOverviewDailyQuery for Phase 2's My X card (@ExcelBugs_Demo is set as "my" account). All data is made up.</p>
   </header>
   <nav>
     <button type="button" id="go-profile">Profile @ExcelBugs_Demo</button>
     <button type="button" id="go-home">Home</button>
     <button type="button" id="go-status">Post page (thread)</button>
     <button type="button" id="go-panel">Open panel</button>
+    <button type="button" id="go-analytics">Analytics (My X)</button>
   </nav>
   <main id="feed"></main>
   <p id="more"></p>
@@ -117,6 +123,12 @@
   <script src="../src/brand.js"></script>
   <script src="../src/panel.js"></script>
   <script src="../src/x-content.js"></script>
+  <!-- Phase 2 (My X): the content script, and src/x-own-bg.js standing in for the service worker. -->
+  <script src="../src/own-metrics.js"></script>
+  <script src="../src/velocity.js"></script>
+  <script src="../src/x-own.js"></script>
+  <script src="../src/x-own-content.js"></script>
+  <script src="../src/x-own-bg.js"></script>
   <script>
     var feed = document.getElementById('feed');
     var view = null;
@@ -157,6 +169,7 @@
       fetch('/dev/x/meta.json').then(function (r) { return r.json(); }).then(function (meta) { go('/ExcelBugs_Demo/status/' + meta.ids.root, 'status', ['TweetDetail']); });
     };
     document.getElementById('go-panel').onclick = function () { __demoOpenPanel(); };
+    document.getElementById('go-analytics').onclick = function () { go('/i/account_analytics', 'analytics', ['accountOverviewDailyQuery']); };
     var start = location.hash.slice(1) || 'profile';
     setTimeout(function () { document.getElementById('go-' + start).click(); }, 300);
   </script>

@@ -18,7 +18,7 @@ const PLAN_IDS = [
   // Phase 5: keyword ideas (6.6) and the optional providers (8.2).
   'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo',
   // X (docs/x-plan.md section 9), phase 1.
-  'x.collect', 'x.badges', 'x.autoscroll'
+  'x.collect', 'x.badges', 'x.autoscroll', 'x.own'
 ];
 
 test('every feature in the plan is defined once, with TR/EN text, a known group and requirements', () => {
@@ -74,7 +74,7 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
     'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
     'shorts-overlay', 'thumb-compress', 'thumb-preview', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']
     .concat(['channel-similar', 'channel-rpm', 'niche-radar', 'niche-sample', 'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'])
-    .concat(['x.collect', 'x.badges', 'x.autoscroll']).sort());
+    .concat(['x.collect', 'x.badges', 'x.autoscroll', 'x.own']).sort());
   // Phase 5: nothing is "coming soon" any more.
   assert.deepEqual(F.FEATURES.filter((f) => !f.available).map((f) => f.id), [], 'every feature is built');
   // Subscriber counts work without a key (page data, saved channels); the key adds channels.list.

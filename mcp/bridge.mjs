@@ -31,6 +31,7 @@ import * as DISC from './discovery.mjs';
 import * as PROV from './providers/index.mjs';
 import * as SB from './providers/socialblade.mjs';
 import * as DFS from './providers/dataforseo.mjs';
+import * as XOWN from './x-own.mjs';
 import { createRequire } from 'node:module';
 
 const Features = createRequire(import.meta.url)('../src/features.js');
@@ -49,7 +50,8 @@ const VERSION = '0.1.0';
 // 'content-tools': phase 4 (/youtube/comments, /youtube/sponsors, title history in /youtube/video-card, sponsors on the niche page).
 // 'discovery': phase 5 (/youtube/discovery/*: radar, channel map, similar channels and thumbnails, keyword ideas, co-recommendations).
 // 'providers': phase 5's optional third-party providers (/providers*: status, keys, Social Blade backfill, DataForSEO ranks).
-const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools', 'discovery', 'providers'];
+// 'x-own': X Phase 2 (/x/own/*: own analytics days, the Library's My X page, early curves; x_post_stats from /sync).
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools', 'discovery', 'providers', 'x-own'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 const seenWrittenAt = {}; // port → when "extension last seen" was last written to status.json
@@ -148,6 +150,7 @@ async function handle(req, res, port) {
     // The tracking list lives in the org record (src/tracking.js): keep tracked_channels and its jobs in step.
     let tracking = null;
     try { tracking = NICHE.syncTracked(store(), lib); } catch (e) { log('niche tracking sync failed:', e.message); }
+    try { XOWN.recordStats(store(), body.accounts); } catch (e) { log('x_post_stats failed:', e.message); } // X Phase 2
     return send(res, 200, { ok: true, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length, tracking }, origin);
   }
   // Feature flags (src/features.js) and the extension's Data API unit count. Answers what the
@@ -319,6 +322,11 @@ async function handle(req, res, port) {
   if (req.method === 'POST' && url.pathname === '/youtube/own/milestones/ack') {
     const body = await readBody(req);
     return send(res, 200, { ok: true, acked: OWN.ackMilestones(store(), Array.isArray(body.milestones) ? body.milestones.slice(0, 200) : []) }, origin);
+  }
+  // X Phase 2: My X (mcp/x-own.mjs).
+  if (url.pathname.startsWith('/x/own/')) {
+    const r = await XOWN.handleRoute(method, url, { store: store(), readBody: () => readBody(req) });
+    if (r) return send(res, r[0], r[1], origin);
   }
   // My YouTube channel (YouTube Analytics API, the user's own OAuth client).
   if (url.pathname.startsWith('/youtube/analytics/')) {

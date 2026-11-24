@@ -69,6 +69,7 @@
             if (m.type === 'reelscope:own') return demoOwn(m, qs.get('ytanalytics'));
             if (m.type === 'reelscope:niche') return demoNiche(m, qs.get('niche'));
             if (m.type === 'reelscope:discovery') return demoDiscovery(m, qs);
+            if (m.type === 'reelscope:x-own') return { ok: false, noBridge: true };
             if (m.type === 'reelscope:bridge-key') {
               await new Promise(function (r) { setTimeout(r, 300); });
               if (!store['rs:bridge'].connected) return { ok: false, error: 'The OpenOutlier bridge on your Mac isn\'t running, so there is nowhere to copy the key to.' };
@@ -345,6 +346,12 @@
         if (Object.keys(store[k].posts).length < 5) { delete store[k]; return; }
         if (xUsers[xid]) store[k].profile = Object.assign({}, xUsers[xid], { seenAt: Date.now() - 1200e3 });
       });
+      // X Phase 2 (My X, #/x-own): the own handle and the analytics capture, times moved to now (as src/x-own-bg.js would merge it).
+      store['rs:x-own'] = { handle: 'ExcelBugs_Demo' };
+      await new Promise(function (res) { var s = document.createElement('script'); s.src = '/src/x-own.js'; s.onload = res; document.body.appendChild(s); });
+      var xAn = (await (await fetch('/dev/x/accountOverviewDailyQuery.json')).json())[0].body;
+      xAn.data.viewer_v2.user_results.result.current_time_series.forEach(function (r) { r.timestamp = String(Number(r.timestamp) + xShift); });
+      store['rs:x-own:history'] = Object.assign(OpenOutlierXOwn.mergeHistory(null, OpenOutlierXOwn.parseOverview(xAn), Date.now() - 3600e3), { handle: 'ExcelBugs_Demo', lastRawAt: Date.now() - 3600e3 });
       var DEMO_TITLES = [['XLOOKUP: the only lookup you need', 'xlookup'], ['Pivot tables in 10 minutes', 'pivot'], ['Power Query for beginners (full course)', 'power-query'], ['Stop using VLOOKUP', 'index-match'],
         ['Build an Excel dashboard from scratch', 'dashboard'], ['LAMBDA: write your own functions', 'lambda'], ['Copilot in Excel: is it any good?', 'copilot'], ['Conditional formatting tricks pros use', 'conditional'],
         ['Data validation drop-downs, the right way', 'validation'], ['FILTER + SORT: dynamic lists', 'dynamic'], ['Excel budget template (free download)', 'budget'], ['Charts that don\'t look like Excel', 'charts'],
@@ -463,7 +470,7 @@
         });
         store['rs:org'] = o;
       }
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/src/discovery.js', '/dashboard/discovery-view.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/top-filters.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/src/discovery.js', '/dashboard/discovery-view.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/top-filters.js', '/src/velocity.js', '/src/x-own.js', '/src/x-patterns.js', '/dashboard/x-own-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

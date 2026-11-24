@@ -37,11 +37,11 @@ function quotaCtx(budget = Infinity) {
 
 test('migration 5: discovery tables, idempotent', () => {
   const s = store();
-  assert.equal(SCHEMA_VERSION, 8);
-  assert.equal(Number(s.getMeta("schema_version")), 8);
+  assert.ok(SCHEMA_VERSION >= 8);
+  assert.equal(Number(s.getMeta("schema_version")), SCHEMA_VERSION);
   const tables = s.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((r) => r.name);
   for (const t of ['co_recs', 'seen_channels', 'radar_runs', 'radar_videos', 'thumb_hashes', 'keyword_cache', 'serp_ranks', 'provider_log']) assert.ok(tables.includes(t), t);
-  assert.equal(s.migrate(), 8);
+  assert.equal(s.migrate(), SCHEMA_VERSION);
 });
 
 test('radar job: one search.list per keyword (100 units), then videos.list and channels.list; results and lists', async () => {
