@@ -479,6 +479,8 @@ span.s-attach-pic { cursor: default; }
 .set-keyrow input { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border: 1.5px solid var(--border-2); border-radius: var(--r-md); background: var(--bg); color: inherit; font: inherit; }
 .set-keyrow input:hover { border-color: var(--text-2); }
 .set-actions { margin-top: 10px; }
+.set-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.set-field select { height: 30px; max-width: 60%; padding: 0 8px; border: 1.5px solid var(--border-2); border-radius: var(--r-md); background: var(--bg); color: inherit; font: inherit; font-size: 13px; }
 .set-code { margin: 8px 0 0; padding: 8px 10px; border-radius: var(--r-md); background: var(--surface); font: 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
 /* Narrower: the setup cards go in a row above the list; on phones below it (the fix links scroll to them). */
 @media (max-width: 1100px) { .set-grid { grid-template-columns: 1fr; } .set-side { position: static; order: -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: start; } }

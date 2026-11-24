@@ -64,6 +64,7 @@
               await chrome.storage.local.set({ ['rs:p:' + m.owner]: rec });
               return { ok: true, updated: n, units: Math.ceil(Object.keys(rec.posts).length / 50), quota: { used: window.__ytUnits, limit: 10000 } };
             }
+            if (m.type && m.type.indexOf('reelscope:x-llm-') === 0) return demoXLlm(m);
             if (m.type === 'reelscope:yt-analytics') return demoAnalytics(m, qs.get('ytanalytics'));
             if (m.type === 'reelscope:own') return demoOwn(m, qs.get('ytanalytics'));
             if (m.type === 'reelscope:niche') return demoNiche(m, qs.get('niche'));
@@ -235,6 +236,15 @@
         var ids = Object.keys(f.pages).filter(function (k) { return k !== 'all'; });
         var key = m.channel && f.pages[m.channel] ? m.channel : ids[0];
         return f.pages[key];
+      }
+      // X writing helper with your own key (src/x-llm-bg.js): the Settings card's messages. No key is kept here.
+      var xllm = { enabled: false, hint: null, model: 'claude-opus-5-5', effortScore: 'low', effortWrite: 'medium', dailyCapUsd: 1, spent: 0.0123, calls: 3 };
+      async function demoXLlm(m) {
+        if (m.type === 'reelscope:x-llm-settings') { Object.assign(xllm, m.patch); return Object.assign({ ok: true }, xllm); }
+        if (m.type === 'reelscope:x-llm-key') { xllm.hint = m.action === 'remove' ? null : '…' + String(m.key).slice(-4); return { ok: true, hasKey: !!xllm.hint }; }
+        return { ok: true, enabled: xllm.enabled, hasKey: !!xllm.hint, keyHint: xllm.hint || undefined, permission: xllm.enabled, sdk: true, model: xllm.model, effortScore: xllm.effortScore, effortWrite: xllm.effortWrite,
+          dailyCapUsd: xllm.dailyCapUsd, spentTodayUsd: xllm.spent, callsToday: xllm.calls,
+          models: [{ id: 'claude-opus-5-5', label: 'Claude Opus 5.5', input: 4, output: 20 }, { id: 'claude-sonnet-5-5', label: 'Claude Sonnet 5.5', input: 2, output: 10 }, { id: 'claude-haiku-5-5', label: 'Claude Haiku 5.5', input: 0.1, output: 0.5 }] };
       }
       async function demoAnalytics(m, mode) {
         var connected = mode && mode !== 'setup' && mode !== 'connect' || window.__ytConnected;
