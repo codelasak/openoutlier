@@ -318,3 +318,10 @@ The tools were called through a fresh `mcp/server.mjs` over stdio, against the r
   - Cost $0.011: 481 input tokens, a 1,716-token cache write, 533 output tokens.
   - Nothing was posted.
 - **Not yet run:** "3 variants with this fix" and "Put in compose box" (the next paid call).
+- **3 variants** (sent with the user's OK): about $0.027 estimated, $0.0076 actual (209 in, 958 cache write, 481 out). Each of the three variants comes with its reason.
+- **Fixed: "Put in compose box" appended the variant to the old draft instead of replacing it.**
+  - Cause: Draft.js reads the DOM selection on `selectionchange` one tick later, so a paste dispatched right after selecting used its old caret, at the end. The result was 354 / 280 characters and the old text left in place.
+  - Fix: `fillBox` now selects, waits 60 ms, pastes and checks the result, with one slower retry. It returns a Promise. The two callers wait for it: the strip's button and the growth drawer's "Put in reply box".
+  - Checked by hand in the page with the same steps: the box held only the variant, and Post was enabled (`disabled: false`).
+  - After reloading the extension, the button itself still needs one live check.
+- The test drafts were deleted from the compose box afterwards. Nothing was posted.

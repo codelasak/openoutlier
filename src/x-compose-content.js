@@ -145,17 +145,22 @@
     return t.replace(/​/g, '').replace(/\n$/, '');
   }
   /**
-   * Replace the box's text with `text`. Only the text: nothing is clicked or sent.
+   * Replace the box's text with `text`. Only the text: nothing is clicked or sent. → Promise<boolean>.
    * Draft.js (x.com) takes a paste event; a plain contenteditable takes execCommand('insertText').
+   * Draft.js reads the DOM selection on selectionchange, a tick later: pasting right after selecting used its old
+   * caret and appended the text to the draft (live 2026-11-24). So select, wait, then paste.
    */
   function fillBox(box, text) {
-    try {
+    var norm = function (s) { return String(s).replace(/\s+/g, ' ').trim(); };
+    function selectAll() {
       box.focus();
       var sel = window.getSelection();
       var r = document.createRange();
       r.selectNodeContents(box);
       sel.removeAllRanges();
       sel.addRange(r);
+    }
+    function paste() {
       var handled = false;
       try {
         var dt = new DataTransfer();
@@ -165,9 +170,16 @@
         handled = ev.defaultPrevented;
       } catch (e) { handled = false; }
       if (!handled) document.execCommand('insertText', false, text);
-    } catch (e) { /* checked below */ }
-    var norm = function (s) { return String(s).replace(/\s+/g, ' ').trim(); };
-    return norm(boxText(box)) === norm(text);
+    }
+    var wait = function (ms) { return new Promise(function (res) { setTimeout(res, ms); }); };
+    return (async function () {
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try { selectAll(); await wait(60 + attempt * 140); paste(); } catch (e) { /* checked below */ }
+        await wait(80);
+        if (norm(boxText(box)) === norm(text)) return true;
+      }
+      return false;
+    })();
   }
 
   // ---- strips -------------------------------------------------------------------------------------------
@@ -327,10 +339,13 @@
   function fillButton(s, text) {
     var b = btn(T('Put in compose box', 'Yazma kutusuna aktar'), function () {
       if (!s.box.isConnected) { b.textContent = T('The compose box is gone', 'Yazma kutusu kapandı'); return; }
-      var ok = fillBox(s.box, text);
-      if (!ok) { try { navigator.clipboard.writeText(text); } catch (e) { /* no clipboard */ } }
-      b.textContent = ok ? T('In the box — edit it, then press Post yourself', 'Kutuda — düzenle, Post\'a sen bas') : T('Could not fill; copied instead', 'Doldurulamadı; kopyalandı');
-      s.text = null;
+      b.disabled = true;
+      fillBox(s.box, text).then(function (ok) {
+        if (!ok) { try { navigator.clipboard.writeText(text); } catch (e) { /* no clipboard */ } }
+        b.textContent = ok ? T('In the box — edit it, then press Post yourself', 'Kutuda — düzenle, Post\'a sen bas') : T('Could not fill; copied instead', 'Doldurulamadı; kopyalandı');
+        b.disabled = false;
+        s.text = null;
+      });
     });
     return b;
   }

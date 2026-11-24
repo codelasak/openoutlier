@@ -576,8 +576,9 @@
     var bx = F.boxes()[0];
     if (!bx) return null;
     var b = h('button', { class: 'b', onclick: function () {
-      var ok = F.fill(bx, text);
-      b.textContent = ok ? 'In the reply box — edit it, then press Reply yourself' : 'Could not fill the reply box';
+      Promise.resolve(F.fill(bx, text)).then(function (ok) {
+        b.textContent = ok ? 'In the reply box — edit it, then press Reply yourself' : 'Could not fill the reply box';
+      });
     } }, 'Put in reply box');
     return b;
   }
