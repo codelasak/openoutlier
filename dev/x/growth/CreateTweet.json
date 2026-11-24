@@ -1,0 +1,96 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/Q3JlYXRlVHdlZXQ/CreateTweet?variables=%7B%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 500,
+   "remaining": 480,
+   "reset": 1795533300
+  },
+  "body": {
+   "data": {
+    "create_tweet": {
+     "tweet_results": {
+      "result": {
+       "__typename": "Tweet",
+       "rest_id": "2125242534589366304",
+       "core": {
+        "user_results": {
+         "result": {
+          "__typename": "User",
+          "rest_id": "1500000000000104729",
+          "avatar": {
+           "image_url": "https://pbs.twimg.com/profile_images/1500000000000104729/demo_normal.jpg"
+          },
+          "core": {
+           "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+           "name": "Me (demo)",
+           "screen_name": "oo_me_demo"
+          },
+          "is_blue_verified": true,
+          "verification": {
+           "verified": false
+          },
+          "privacy": {
+           "protected": false
+          },
+          "relationship_counts": {
+           "followers": 80,
+           "following": 200
+          },
+          "tweet_counts": {
+           "tweets": 500,
+           "media_tweets": 50
+          },
+          "relationship_perspectives": {},
+          "pinned_items": []
+         }
+        }
+       },
+       "views": {
+        "count": "0",
+        "state": "EnabledWithCount"
+       },
+       "legacy": {
+        "bookmark_count": 0,
+        "created_at": "Tue Nov 24 14:58:00 +0000 2026",
+        "conversation_id_str": "2125220388664246287",
+        "display_text_range": [
+         0,
+         10
+        ],
+        "entities": {
+         "hashtags": [],
+         "symbols": [],
+         "urls": [],
+         "user_mentions": [
+          {
+           "id_str": "1500000000000418916",
+           "screen_name": "niche_fit_demo",
+           "name": "Fitting Niche",
+           "indices": [
+            0,
+            0
+           ]
+          }
+         ]
+        },
+        "favorite_count": 0,
+        "full_text": "@niche_fit_demo Nice one",
+        "is_quote_status": false,
+        "lang": "en",
+        "quote_count": 0,
+        "reply_count": 0,
+        "retweet_count": 0,
+        "user_id_str": "1500000000000104729",
+        "id_str": "2125242534589366304",
+        "in_reply_to_status_id_str": "2125220388664246287",
+        "in_reply_to_user_id_str": "1500000000000418916",
+        "in_reply_to_screen_name": "niche_fit_demo"
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+]

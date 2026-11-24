@@ -18,7 +18,9 @@ const PLAN_IDS = [
   // Phase 5: keyword ideas (6.6) and the optional providers (8.2).
   'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo',
   // X (docs/x-plan.md section 9), phase 1.
-  'x.collect', 'x.badges', 'x.autoscroll'
+  'x.collect', 'x.badges', 'x.autoscroll',
+  // X phase 3 (growth).
+  'x.niche', 'x.nicheRefresh', 'x.replyFeed', 'x.crm', 'x.consistency'
 ];
 
 test('every feature in the plan is defined once, with TR/EN text, a known group and requirements', () => {
@@ -51,11 +53,13 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   // Everything is kept: the 30-day purge stays off.
   assert.equal(d['api-retention-30d'], false);
   // Off in the plan's table.
-  for (const id of ['hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample']) assert.equal(d[id], false, id);
+  for (const id of ['hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample', 'x.nicheRefresh']) assert.equal(d[id], false, id);
+  // X phase 3 (docs/x-plan.md section 9): on, except the list-tab reload.
+  for (const id of ['x.niche', 'x.replyFeed', 'x.crm', 'x.consistency']) assert.equal(d[id], true, id);
   // Milestone notifications are optional (plan 3.2: "Bildirim isteğe bağlı").
   assert.equal(d['own-milestones'], false);
   // The rest start on.
-  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample', 'own-milestones', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'].includes(x))) assert.equal(d[id], true, id);
+  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample', 'own-milestones', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo', 'x.nicheRefresh'].includes(x))) assert.equal(d[id], true, id);
   // Phase 5: keyword ideas start on (no quota, rate-limited); every optional provider starts off (budget $0, plan 10).
   assert.equal(d['keyword-ideas'], true);
   for (const id of ['provider-ryd', 'provider-socialblade', 'provider-dataforseo']) assert.equal(d[id], false, id);
@@ -74,7 +78,8 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
     'transcript-tools', 'comment-tools', 'frame-capture', 'title-history', 'swipe-save', 'dislikes',
     'shorts-overlay', 'thumb-compress', 'thumb-preview', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']
     .concat(['channel-similar', 'channel-rpm', 'niche-radar', 'niche-sample', 'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'])
-    .concat(['x.collect', 'x.badges', 'x.autoscroll']).sort());
+    .concat(['x.collect', 'x.badges', 'x.autoscroll'])
+    .concat(['x.niche', 'x.nicheRefresh', 'x.replyFeed', 'x.crm', 'x.consistency']).sort());
   // Phase 5: nothing is "coming soon" any more.
   assert.deepEqual(F.FEATURES.filter((f) => !f.available).map((f) => f.id), [], 'every feature is built');
   // Subscriber counts work without a key (page data, saved channels); the key adds channels.list.

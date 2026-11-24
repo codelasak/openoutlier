@@ -1,0 +1,190 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/SG9tZUxhdGVzdFRpbWVsaW/HomeLatestTimeline?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 500,
+   "remaining": 480,
+   "reset": 1795533300
+  },
+  "body": {
+   "data": {
+    "home": {
+     "home_timeline_urt": {
+      "instructions": [
+       {
+        "type": "TimelineAddEntries",
+        "entries": [
+         {
+          "entryId": "tweet-2125227938411446293",
+          "sortIndex": "2125227938411446293",
+          "content": {
+           "entryType": "TimelineTimelineItem",
+           "itemContent": {
+            "itemType": "TimelineTweet",
+            "__typename": "TimelineTweet",
+            "tweet_results": {
+             "result": {
+              "__typename": "TweetWithVisibilityResults",
+              "tweet": {
+               "__typename": "Tweet",
+               "rest_id": "2125227938411446293",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000209458",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Mutual Niche",
+                   "screen_name": "niche_mut_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 1200,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": true,
+                   "followed_by": true
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "700",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 14:00:00 +0000 2026",
+                "conversation_id_str": "2125227938411446293",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 14,
+                "full_text": "An hour old, doing well",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 3,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000209458",
+                "id_str": "2125227938411446293"
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         {
+          "entryId": "tweet-2125220388664246287",
+          "sortIndex": "2125220388664246287",
+          "content": {
+           "entryType": "TimelineTimelineItem",
+           "itemContent": {
+            "itemType": "TimelineTweet",
+            "__typename": "TimelineTweet",
+            "tweet_results": {
+             "result": {
+              "__typename": "Tweet",
+              "rest_id": "2125220388664246287",
+              "core": {
+               "user_results": {
+                "result": {
+                 "__typename": "User",
+                 "rest_id": "1500000000000418916",
+                 "avatar": {
+                  "image_url": "https://pbs.twimg.com/profile_images/1500000000000418916/demo_normal.jpg"
+                 },
+                 "core": {
+                  "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                  "name": "Fitting Niche",
+                  "screen_name": "niche_fit_demo"
+                 },
+                 "is_blue_verified": true,
+                 "verification": {
+                  "verified": false
+                 },
+                 "privacy": {
+                  "protected": false
+                 },
+                 "relationship_counts": {
+                  "followers": 900,
+                  "following": 200
+                 },
+                 "tweet_counts": {
+                  "tweets": 500,
+                  "media_tweets": 50
+                 },
+                 "relationship_perspectives": {
+                  "following": true,
+                  "followed_by": false
+                 },
+                 "pinned_items": []
+                }
+               }
+              },
+              "views": {
+               "count": "150",
+               "state": "EnabledWithCount"
+              },
+              "legacy": {
+               "bookmark_count": 0,
+               "created_at": "Tue Nov 24 13:30:00 +0000 2026",
+               "conversation_id_str": "2125220388664246287",
+               "display_text_range": [
+                0,
+                10
+               ],
+               "entities": {
+                "hashtags": [],
+                "symbols": [],
+                "urls": [],
+                "user_mentions": []
+               },
+               "favorite_count": 3,
+               "full_text": "A quiet post with no replies yet",
+               "is_quote_status": false,
+               "lang": "en",
+               "quote_count": 0,
+               "reply_count": 0,
+               "retweet_count": 0,
+               "user_id_str": "1500000000000418916",
+               "id_str": "2125220388664246287"
+              }
+             }
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   }
+  }
+ }
+]

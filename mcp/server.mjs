@@ -28,6 +28,7 @@ import { registerContentTools, INSTRUCTIONS as CONTENT_INSTRUCTIONS } from './co
 import { registerOwnTools } from './own-tools.mjs';
 import { registerDiscoveryTools, INSTRUCTIONS as DISCOVERY_INSTRUCTIONS } from './discovery.mjs';
 import { status as providerStatus } from './providers/index.mjs';
+import { registerXGrowthTools, INSTRUCTIONS as X_GROWTH_INSTRUCTIONS } from './x-growth-tools.mjs'; // X Phase 3
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
@@ -74,7 +75,8 @@ const server = new McpServer(
       YT_ANALYTICS_INSTRUCTIONS,
       NICHE_INSTRUCTIONS,
       CONTENT_INSTRUCTIONS,
-      DISCOVERY_INSTRUCTIONS
+      DISCOVERY_INSTRUCTIONS,
+      X_GROWTH_INSTRUCTIONS
     ].join('\n')
   }
 );
@@ -563,6 +565,7 @@ registerNicheTools(server, { z, json, safe, store });
 registerContentTools(server, { z, json, safe, store });
 registerDiscoveryTools(server, { z, json, safe, store });
 registerOwnTools(server, { z, json, safe, store });
+registerXGrowthTools(server, { z, json, safe, store }); // X Phase 3: x_reply_opportunities, x_reply_roi
 registerTranscriptTool(server, { z, json, safe, fail, youtubeIdOf, findReel, readLibrary });
 // The bridge port Google's sign-in redirects to; it must be a bridge that knows the callback.
 registerAnalyticsTools(server, { z, json, safe, bridgePort: async () => {

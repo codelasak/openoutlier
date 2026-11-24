@@ -1,0 +1,1002 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/VXNlck9yaWdpbmFsc1RpbW/UserOriginalsTimeline?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 500,
+   "remaining": 480,
+   "reset": 1795533300
+  },
+  "body": {
+   "data": {
+    "user": {
+     "result": {
+      "__typename": "User",
+      "timeline": {
+       "timeline": {
+        "instructions": [
+         {
+          "type": "TimelineAddEntries",
+          "entries": [
+           {
+            "entryId": "tweet-2124518262174646273",
+            "sortIndex": "2124518262174646273",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2124518262174646273",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "800",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Sun Nov 22 15:00:00 +0000 2026",
+                 "conversation_id_str": "2124518262174646273",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 16,
+                 "full_text": "Spreadsheet tip 0",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 4,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2124518262174646273"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2123612292510646274",
+            "sortIndex": "2123612292510646274",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2123612292510646274",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "900",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Fri Nov 20 03:00:00 +0000 2026",
+                 "conversation_id_str": "2123612292510646274",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 18,
+                 "full_text": "Spreadsheet tip 1",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 5,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2123612292510646274"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2122706322846646275",
+            "sortIndex": "2122706322846646275",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2122706322846646275",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "950",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Tue Nov 17 15:00:00 +0000 2026",
+                 "conversation_id_str": "2122706322846646275",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 19,
+                 "full_text": "Spreadsheet tip 2",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 5,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2122706322846646275"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2121800353182646276",
+            "sortIndex": "2121800353182646276",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2121800353182646276",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1000",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Sun Nov 15 03:00:00 +0000 2026",
+                 "conversation_id_str": "2121800353182646276",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 20,
+                 "full_text": "Spreadsheet tip 3",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 5,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2121800353182646276"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2120894383518646277",
+            "sortIndex": "2120894383518646277",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2120894383518646277",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1000",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Thu Nov 12 15:00:00 +0000 2026",
+                 "conversation_id_str": "2120894383518646277",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 20,
+                 "full_text": "Spreadsheet tip 4",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 5,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2120894383518646277"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2119988413854646278",
+            "sortIndex": "2119988413854646278",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2119988413854646278",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1000",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Tue Nov 10 03:00:00 +0000 2026",
+                 "conversation_id_str": "2119988413854646278",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 20,
+                 "full_text": "Spreadsheet tip 5",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 5,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2119988413854646278"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2119082444190646279",
+            "sortIndex": "2119082444190646279",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2119082444190646279",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1050",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Sat Nov 07 15:00:00 +0000 2026",
+                 "conversation_id_str": "2119082444190646279",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 21,
+                 "full_text": "Spreadsheet tip 6",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 5,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2119082444190646279"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2118176474526646280",
+            "sortIndex": "2118176474526646280",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2118176474526646280",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1100",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Thu Nov 05 03:00:00 +0000 2026",
+                 "conversation_id_str": "2118176474526646280",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 22,
+                 "full_text": "Spreadsheet tip 7",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 6,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2118176474526646280"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2117270504862646281",
+            "sortIndex": "2117270504862646281",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2117270504862646281",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1200",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Mon Nov 02 15:00:00 +0000 2026",
+                 "conversation_id_str": "2117270504862646281",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 24,
+                 "full_text": "Spreadsheet tip 8",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 6,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2117270504862646281"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2116364535198646282",
+            "sortIndex": "2116364535198646282",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2116364535198646282",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "700",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Sat Oct 31 03:00:00 +0000 2026",
+                 "conversation_id_str": "2116364535198646282",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 14,
+                 "full_text": "Spreadsheet tip 9",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 4,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2116364535198646282"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2115458565534646283",
+            "sortIndex": "2115458565534646283",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2115458565534646283",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1300",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Wed Oct 28 15:00:00 +0000 2026",
+                 "conversation_id_str": "2115458565534646283",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 26,
+                 "full_text": "Spreadsheet tip 10",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 7,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2115458565534646283"
+                }
+               }
+              }
+             }
+            }
+           },
+           {
+            "entryId": "tweet-2114552595870646284",
+            "sortIndex": "2114552595870646284",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2114552595870646284",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000209458",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Mutual Niche",
+                    "screen_name": "niche_mut_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 1200,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "1000",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Mon Oct 26 03:00:00 +0000 2026",
+                 "conversation_id_str": "2114552595870646284",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 20,
+                 "full_text": "Spreadsheet tip 11",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 5,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000209458",
+                 "id_str": "2114552595870646284"
+                }
+               }
+              }
+             }
+            }
+           }
+          ]
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+]
