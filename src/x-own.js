@@ -179,19 +179,30 @@
   /** The requested range from the GraphQL variables (names unknown: any from/start + to/end time). */
   function rangeOf(vars) {
     if (!vars || typeof vars !== 'object') return null;
-    var from = null;
-    var to = null;
+    // Live variables (2026-11-24): current_from/_to (the chosen range), prev_from/_to (the comparison period),
+    // backfill_from/_to (the last two days, hourly). chrome.storage hands the object back with its keys sorted,
+    // so the first "…from" key is backfill_from: pick by name, never by key order.
+    var cand = { from: [], to: [] };
     walk(vars, function (o) {
       if (Array.isArray(o)) return;
       Object.keys(o).forEach(function (k) {
         var lk = k.toLowerCase();
         var t = typeof o[k] === 'object' ? null : tsOf(o[k]);
         if (t == null || t < 1.1e12) return; // only plausible times (after 2004)
-        if (/from|start|since/.test(lk) && from == null) from = t;
-        else if (/(^|_)to|end|until/.test(lk) && to == null) to = t;
+        if (/prev|backfill|compar|baseline/.test(lk)) return;
+        var rank = /current/.test(lk) ? 0 : 1;
+        if (/from|start|since/.test(lk)) cand.from.push({ t: t, rank: rank });
+        else if (/(^|_)to($|_)|end|until/.test(lk)) cand.to.push({ t: t, rank: rank });
       });
     });
-    return from ? { from: from, to: to } : null;
+    function pick(list, earliest) {
+      if (!list.length) return null;
+      var best = Math.min.apply(null, list.map(function (c) { return c.rank; }));
+      var ts = list.filter(function (c) { return c.rank === best; }).map(function (c) { return c.t; });
+      return earliest ? Math.min.apply(null, ts) : Math.max.apply(null, ts);
+    }
+    var from = pick(cand.from, true);
+    return from ? { from: from, to: pick(cand.to, false) } : null;
   }
 
   // ---- contentPageQuery (shape unknown) -------------------------------------------------------

@@ -267,11 +267,12 @@ This check ran in the user's Chrome, logged in, with the extension loaded unpack
 - **Consistency counter.** Moved to `bottom: 78px` so it no longer covers x.com's account switcher.
 
 ### Open
-- **`coveredFrom` reads 2026-11-23** although the stored days go back to 09-14.
-  - Effect: `impressions90.complete` stays false and shows a needless "may be incomplete" note. The totals are right.
-  - Likely cause: x.com also sends a two-day overview request (`current_from` = backfill start), and only the latest `rs:x:raw:accountOverviewDailyQuery` is merged.
-  - Seen variables: `current_from/_to`, `prev_from/_to`, `backfill_from/_to`, `include_previous`, `show_realtime_active_followers`, `show_verified_followers`. `rangeOf` reads them correctly; it was tested with the 4W request.
-  - Needs a look at `rs:x-own:history.captures` in the extension's storage.
+- ~~**`coveredFrom` reads 2026-11-23**~~ Fixed after this check.
+  - **Cause:** `rangeOf` took the first "…from" key. `chrome.storage` returns the stored request variables with sorted keys, so `backfill_from` (the last two days) came before `current_from`.
+  - **Effect:** every capture was recorded as covering only the last two days. The My X card said "the captured analytics start on 2026-11-23 … choose the 3M range" even with 3M chosen.
+  - **Fix:** `rangeOf` now picks by name: `current_*` first, ignoring `prev_*` and `backfill_*`. The order doesn't matter any more (test in `tests/x-own.test.js`).
+  - The wrong captures already stored are outvoted by the next correct one (`coveredFrom` takes the earliest), so a visit to x.com/i/account_analytics after reloading the extension corrects it.
+  - **How it was found:** the extension hook's own `postMessage` carried the full URL. The bridge's `putDaily`, run on a copy of the DB, lowered the coverage as it should. That left the stored variables: `rangeOf` on them with sorted keys returns 11-23.
 - **Not reachable by the browser tool:** the Library pages (My X, X ideas). Extension pages can't be opened.
 - **Not checked:** "Put in compose box" (needs the LLM turned on), `contentPageQuery` with posts, and `ListLatestTweetsTimeline` (no List).
 - **Ops note.** While the bridge restarted, an older OpenOutlier MCP server (from a Claude session started before the merge) took port 47811 and served the old code. It was stopped and the bridge restarted. Restarting the bridge again can repeat this while such a session is open.

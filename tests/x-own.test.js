@@ -333,3 +333,18 @@ test('parseOverview: live shape without rest_id → rest_id from the base64 user
   assert.equal(p.activeFollowers, 36);
   assert.equal(p.rows, 1);
 });
+
+// Live 2026-11-24: chrome.storage returns the request variables with sorted keys, and backfill_from sorts first.
+test('rangeOf: picks current_from / current_to whatever the key order; ignores prev_* and backfill_*', () => {
+  const v = { include_previous: true, current_from: Date.UTC(2026, 7, 27), current_from_iso: '2026-08-27T00:00:00.000Z',
+    current_to: Date.UTC(2026, 10, 25), prev_from: Date.UTC(2026, 4, 29), prev_to: Date.UTC(2026, 7, 27),
+    backfill_from: Date.UTC(2026, 10, 23), backfill_to: Date.UTC(2026, 10, 25), show_verified_followers: true };
+  const sorted = Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]]));
+  for (const x of [v, sorted]) {
+    const r = O.rangeOf(x);
+    assert.equal(O.dayOf(r.from), '2026-08-27');
+    assert.equal(O.dayOf(r.to), '2026-11-25');
+  }
+  assert.equal(O.dayOf(O.rangeOf({ start_time: Date.UTC(2026, 0, 1), end_time: Date.UTC(2026, 1, 1) }).from), '2026-01-01');
+  assert.equal(O.rangeOf({ backfill_from: Date.UTC(2026, 10, 23) }), null);
+});
