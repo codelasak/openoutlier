@@ -1,6 +1,8 @@
 // OpenOutlier Library – Settings (#/settings): the Features list (the same one the
 // YouTube panel's Features tab shows, src/features-view.js), the YouTube Data API
-// key with "Copy key to bridge", the bridge's state and the label language.
+// key with "Copy key to bridge", the bridge's state and the label language; the X writing
+// helper with the user's own Anthropic key (off by default; src/x-llm-bg.js holds the key and
+// answers every reelscope:x-llm-* message, this page never reads the key back).
 // Everything is stored in chrome.storage (rs:settings); the service worker
 // (src/agent-bridge.js) passes the feature switches on to the bridge.
 (function (root) {
@@ -74,10 +76,123 @@
     }
   };
 
+  // ---- X writing helper with your own Anthropic key (docs/x-plan.md 1 "BYOK", docs/x-llm-notes.md) ----
+  var XLLM_ORIGIN = 'https://api.anthropic.com/*';
+  var XS = {
+    en: {
+      title: 'X writing helper (your own Anthropic key)',
+      text: 'Off by default. Claude through MCP does the same without a key. When this is on, the x.com panel can score a draft and suggest fixes with your key. Every call first shows the text that will be sent and its estimated cost, and the result is only a starting draft: you edit it and press Post yourself.',
+      on: 'On', off: 'Off', toggle: 'Use my own key',
+      permDenied: 'Chrome needs permission to reach api.anthropic.com. It stays off.',
+      keySaved: 'Key saved ({k}). It stays in this browser and is only read by the extension\'s background worker.', keyNone: 'No key in this browser.',
+      keyPh: 'sk-ant-…', keyReplace: 'Paste a new key to replace it', keyLabel: 'Anthropic API key', save: 'Save', remove: 'Remove the key',
+      keyBad: 'That does not look like an Anthropic API key (it starts with sk-ant-).', keyRemoved: 'Removed from this browser.',
+      model: 'Model', price: '${i} / ${o} per 1M tokens (input / output)',
+      effortScore: 'Effort for scoring', effortWrite: 'Effort for writing', efforts: { low: 'Low', medium: 'Medium', high: 'High' },
+      cap: 'Daily spend cap ($)', capHint: 'A call is not sent if its worst case (max tokens) could pass the cap. Resets at local midnight.',
+      spent: 'Today: {u} of {c} ({n} calls).', noSdk: 'The bundled Anthropic SDK did not load: reload the extension.',
+      saved: 'Saved.'
+    },
+    tr: {
+      title: 'X yazım yardımcısı (kendi Anthropic anahtarın)',
+      text: 'Varsayılan olarak kapalı. MCP üzerinden Claude aynısını anahtarsız yapar. Açıkken x.com paneli taslağı senin anahtarınla puanlayıp düzeltme önerebilir. Her çağrı önce gönderilecek metni ve tahmini maliyetini gösterir; sonuç yalnız bir başlangıç taslağıdır: düzenleyip Post\'a sen basarsın.',
+      on: 'Açık', off: 'Kapalı', toggle: 'Kendi anahtarımı kullan',
+      permDenied: 'Chrome\'un api.anthropic.com\'a erişim izni gerekiyor. Kapalı kaldı.',
+      keySaved: 'Anahtar kayıtlı ({k}). Bu tarayıcıda kalır ve yalnız eklentinin arka plan işçisi okur.', keyNone: 'Bu tarayıcıda anahtar yok.',
+      keyPh: 'sk-ant-…', keyReplace: 'Değiştirmek için yeni anahtarı yapıştır', keyLabel: 'Anthropic API anahtarı', save: 'Kaydet', remove: 'Anahtarı sil',
+      keyBad: 'Bu bir Anthropic API anahtarına benzemiyor (sk-ant- ile başlar).', keyRemoved: 'Bu tarayıcıdan silindi.',
+      model: 'Model', price: '1M token başına ${i} / ${o} (giriş / çıkış)',
+      effortScore: 'Puanlama eforu', effortWrite: 'Yazım eforu', efforts: { low: 'Düşük', medium: 'Orta', high: 'Yüksek' },
+      cap: 'Günlük harcama sınırı ($)', capHint: 'En kötü durumda (max token) sınırı geçebilecek bir çağrı gönderilmez. Yerel saatle gece yarısı sıfırlanır.',
+      spent: 'Bugün: {u} / {c} ({n} çağrı).', noSdk: 'Paketteki Anthropic SDK yüklenmedi: eklentiyi yeniden yükle.',
+      saved: 'Kaydedildi.'
+    }
+  };
+
+  /** The card; state lives in xs (create() keeps one per page). */
+  function xLlmCard(h, lang, xs, rerender) {
+    var T = XS[lang] || XS.en;
+    var s = xs.status;
+    if (!s) return null;
+    function msg(m) { xs.msg = m; rerender(); }
+    function put(t, o) { return t.replace(/\{(\w)\}/g, function (_, k) { return o[k] != null ? String(o[k]) : ''; }); }
+    async function call(type, extra) {
+      var r = await chrome.runtime.sendMessage(Object.assign({ type: type }, extra || {})).catch(function (e) { return { ok: false, error: e.message }; });
+      return r || { ok: false, error: '?' };
+    }
+    async function refresh() { xs.status = await call('reelscope:x-llm-status'); }
+    async function setOn(on) {
+      if (on) {
+        var granted = false;
+        try { granted = await chrome.permissions.request({ origins: [XLLM_ORIGIN] }); } catch (e) { granted = false; }
+        if (!granted) { msg(T.permDenied); return; }
+      }
+      var r = await call('reelscope:x-llm-settings', { patch: { enabled: on } });
+      if (!on) chrome.permissions.remove({ origins: [XLLM_ORIGIN] }).catch(function () {});
+      await refresh();
+      msg(r.ok ? '' : r.error);
+    }
+    async function patch(p) {
+      var r = await call('reelscope:x-llm-settings', { patch: p });
+      await refresh();
+      msg(r.ok ? T.saved : r.error);
+    }
+    var keyInput = h('input', { type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: s.hasKey ? T.keyReplace : T.keyPh, 'aria-label': T.keyLabel,
+      oninput: function (e) { xs.keyDraft = e.target.value; } });
+    keyInput.value = xs.keyDraft || '';
+    var nf2 = function (x) { return '$' + Number(x || 0).toFixed(x && x < 0.1 ? 4 : 2); };
+    var body = [
+      h('h2', { text: T.title }),
+      h('p', { class: 'muted small', text: T.text }),
+      h('div', { class: 'seg', role: 'group', 'aria-label': T.toggle },
+        [[true, T.on], [false, T.off]].map(function (o) {
+          return h('button', { type: 'button', 'aria-pressed': s.enabled === o[0] ? 'true' : 'false', onclick: function () { if (s.enabled !== o[0]) setOn(o[0]); } }, o[1]);
+        }))
+    ];
+    if (s.enabled) {
+      body.push(
+        h('p', { class: 'set-state' + (s.hasKey ? ' is-ok' : ''), text: s.hasKey ? put(T.keySaved, { k: s.keyHint || '' }) : T.keyNone }),
+        h('form', { class: 'set-keyrow', onsubmit: async function (e) {
+          e.preventDefault();
+          var k = keyInput.value.trim();
+          if (!/^sk-ant-[A-Za-z0-9_-]{20,300}$/.test(k)) { msg(T.keyBad); return; }
+          var r = await call('reelscope:x-llm-key', { action: 'set', key: k });
+          k = '';
+          xs.keyDraft = '';
+          await refresh();
+          msg(r.ok ? T.saved : r.error);
+        } }, keyInput, h('button', { class: 'btn', type: 'submit' }, T.save)),
+        s.hasKey ? h('div', { class: 'm-actions set-actions' }, h('button', { class: 'btn btn-ghost', type: 'button', onclick: async function () {
+          await call('reelscope:x-llm-key', { action: 'remove' });
+          await refresh();
+          msg(T.keyRemoved);
+        } }, T.remove)) : null);
+      var cur = (s.models || []).filter(function (m) { return m.id === s.model; })[0];
+      body.push(
+        h('label', { class: 'set-field' }, h('span', { class: 'small', text: T.model }),
+          h('select', { 'aria-label': T.model, onchange: function (e) { patch({ model: e.target.value }); } },
+            (s.models || []).map(function (m) { return h('option', { value: m.id, selected: m.id === s.model, text: m.label }); }))),
+        cur ? h('p', { class: 'muted small', text: put(T.price, { i: cur.input, o: cur.output }) }) : null,
+        ['effortScore', 'effortWrite'].map(function (k) {
+          return h('label', { class: 'set-field' }, h('span', { class: 'small', text: T[k] }),
+            h('select', { 'aria-label': T[k], onchange: function (e) { var p = {}; p[k] = e.target.value; patch(p); } },
+              ['low', 'medium', 'high'].map(function (v) { return h('option', { value: v, selected: s[k] === v, text: T.efforts[v] }); })));
+        }),
+        h('form', { class: 'set-keyrow', onsubmit: function (e) { e.preventDefault(); patch({ dailyCapUsd: Number(e.target.querySelector('input').value) }); } },
+          h('input', { type: 'number', min: '0.05', max: '100', step: '0.05', value: String(s.dailyCapUsd), 'aria-label': T.cap }),
+          h('button', { class: 'btn', type: 'submit' }, T.save)),
+        h('p', { class: 'muted small', text: T.cap + '. ' + T.capHint }),
+        h('p', { class: 'small', text: put(T.spent, { u: nf2(s.spentTodayUsd), c: nf2(s.dailyCapUsd), n: s.callsToday }) }),
+        s.sdk ? null : h('p', { class: 'm-msg', text: T.noSdk }));
+    }
+    if (xs.msg) body.push(h('p', { class: 'm-msg', role: 'status', text: xs.msg }));
+    return h('section', { class: 'm-card set-card', id: 'set-xllm' }, body);
+  }
+
   function create(env) {
     var h = env.h;
     function nf() { return new Intl.NumberFormat(F.uiLang() === 'tr' ? 'tr-TR' : 'en-US'); }
-    var st = { flags: F.flags(), env: {}, settings: {}, bridge: {}, quota: null, msg: '', apiMsg: '', bridgeMsg: '', busy: false };
+    var st = { flags: F.flags(), env: {}, settings: {}, bridge: {}, quota: null, msg: '', apiMsg: '', bridgeMsg: '', busy: false, xllm: { status: null, msg: '', keyDraft: '' } };
 
     async function load() {
       await F.ready;
@@ -92,6 +207,8 @@
         st.providers = p && p.ok ? p.providers : null;
         st.providersOld = !!(p && p.oldBridge);
       } else st.providers = null;
+      st.xllm.status = await chrome.runtime.sendMessage({ type: 'reelscope:x-llm-status' }).catch(function () { return null; });
+      if (st.xllm.status && !st.xllm.status.ok) st.xllm.status = null;
     }
 
     function L() { return S[F.uiLang()] || S.en; }
@@ -302,7 +419,7 @@
       });
       main.appendChild(h('div', { class: 'set-grid' },
         h('section', { class: 'set-main', 'aria-label': T.features }, h('h2', { class: 'set-h', text: T.features }), list),
-        h('aside', { class: 'set-side' }, apiCard(T), bridgeCard(T), providersCard(T), langCard(T))));
+        h('aside', { class: 'set-side' }, apiCard(T), xLlmCard(h, F.uiLang(), st.xllm, env.rerender), bridgeCard(T), providersCard(T), langCard(T))));
       if (refocus) { var el = main.querySelector(refocus); if (el) el.focus({ preventScroll: true }); }
     }
 
@@ -310,7 +427,7 @@
 
     // Any change (this page, the popup, a YouTube tab, the bridge state) re-renders.
     F.onChange(function () { load().then(env.rerender); });
-    chrome.storage.onChanged.addListener(function (c, area) { if (area === 'local' && c['rs:yt-api-quota']) load().then(env.rerender); });
+    chrome.storage.onChanged.addListener(function (c, area) { if (area === 'local' && (c['rs:yt-api-quota'] || c['rs:x-llm'] || c['rs:x-llm-spend'])) load().then(env.rerender); });
 
     return { load: load, render: render, title: title };
   }

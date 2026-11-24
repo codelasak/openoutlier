@@ -7,6 +7,11 @@ importScripts('metrics.js', 'youtube.js', 'features.js', 'org-ops.js', 'agent-br
 // X Phase 2 (My X): merges x.com/i/account_analytics captures, pushes them to the bridge.
 importScripts('own-metrics.js', 'x-own.js', 'x-own-bg.js');
 
+// X writing helper with the user's own Anthropic key (off by default): the bundled official SDK, then the
+// pure layer and the message API. A missing bundle must not stop the rest of the worker.
+try { importScripts('../vendor/anthropic-sdk.js'); } catch (e) { /* x-llm-bg.js answers no_sdk */ }
+importScripts('x-composer.js', 'x-llm.js', 'x-llm-bg.js');
+
 // rs:settings.radar / .niche / .ownProfit → their own keys (src/features.js SPLIT), once.
 try { self.OpenOutlierFeatures.migrateSplit().catch(function () {}); } catch (e) { /* ignore */ }
 

@@ -8,9 +8,14 @@
     "test": "node --test tests/*.test.js tests/*.test.mjs",
     "fixture": "node dev/make-fixture.mjs",
     "demo": "python3 -m http.server 8791 --bind 127.0.0.1",
-    "zip": "zip -r openoutlier.zip manifest.json src popup dashboard icons fonts brand/v2/wordmark/openoutlier-inline-trail3-transparent.svg brand/v2/mark/openoutlier-mark.svg brand/v2/mark/openoutlier-mark-on-ink.svg LICENSE README.md -x \"*.DS_Store\"",
+    "zip": "zip -r openoutlier.zip manifest.json src vendor popup dashboard icons fonts brand/v2/wordmark/openoutlier-inline-trail3-transparent.svg brand/v2/mark/openoutlier-mark.svg brand/v2/mark/openoutlier-mark-on-ink.svg LICENSE README.md -x \"*.DS_Store\"",
     "fixture:reddit": "node dev/make-reddit-fixture.mjs",
     "fixture:tiktok": "node dev/make-tiktok-fixture.mjs",
-    "fixture:youtube": "node dev/make-youtube-fixture.mjs"
+    "fixture:youtube": "node dev/make-youtube-fixture.mjs",
+    "build:vendor": "node dev/build-vendor.mjs"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "1.13.0",
+    "esbuild": "0.28.2"
   }
 }
