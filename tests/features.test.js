@@ -20,7 +20,9 @@ const PLAN_IDS = [
   // X (docs/x-plan.md section 9), phase 1.
   'x.collect', 'x.badges', 'x.autoscroll', 'x.own',
   // X phase 3 (growth).
-  'x.niche', 'x.nicheRefresh', 'x.replyFeed', 'x.crm', 'x.consistency'
+  'x.niche', 'x.nicheRefresh', 'x.replyFeed', 'x.crm', 'x.consistency',
+  // X phases 4–6 (composer, LLM, algorithm badge, reach forecast, bridge watch jobs).
+  'x.composer', 'x.llm', 'x.algoBadge', 'x.reachForecast', 'x.weightsUpdate', 'x.schemaWatch'
 ];
 
 test('every feature in the plan is defined once, with TR/EN text, a known group and requirements', () => {
@@ -38,7 +40,7 @@ test('every feature in the plan is defined once, with TR/EN text, a known group 
     assert.equal(typeof f.default, 'boolean', f.id);
     f.requires.concat(f.optional).forEach((r) => assert.ok(REQ.includes(r), f.id + ' needs ' + r));
     assert.ok(f.surface.length, f.id + ' surface');
-    assert.ok(Number.isInteger(f.phase) && f.phase >= 0 && f.phase <= 5, f.id + ' phase');
+    assert.ok(Number.isInteger(f.phase) && f.phase >= 0 && f.phase <= (f.group === 'x' ? 6 : 5), f.id + ' phase'); // X has its own phases 1–6 (docs/x-plan.md 10)
   }
   for (const g of F.GROUPS) assert.ok(F.FEATURES.some((f) => f.group === g.id), 'group ' + g.id + ' has features');
 });
@@ -59,7 +61,10 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
   // Milestone notifications are optional (plan 3.2: "Bildirim isteğe bağlı").
   assert.equal(d['own-milestones'], false);
   // The rest start on.
-  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample', 'own-milestones', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo', 'x.nicheRefresh'].includes(x))) assert.equal(d[id], true, id);
+  // X phases 4–6 (plan section 9): the BYOK helper, the algorithm badge and the reach forecast start off.
+  for (const id of ['x.llm', 'x.algoBadge', 'x.reachForecast']) assert.equal(d[id], false, id);
+  for (const id of ['x.composer', 'x.weightsUpdate', 'x.schemaWatch']) assert.equal(d[id], true, id);
+  for (const id of PLAN_IDS.filter((x) => !['api-retention-30d', 'hide-shorts', 'channel-rpm', 'niche-radar', 'niche-sample', 'own-milestones', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo', 'x.nicheRefresh', 'x.llm', 'x.algoBadge', 'x.reachForecast'].includes(x))) assert.equal(d[id], true, id);
   // Phase 5: keyword ideas start on (no quota, rate-limited); every optional provider starts off (budget $0, plan 10).
   assert.equal(d['keyword-ideas'], true);
   for (const id of ['provider-ryd', 'provider-socialblade', 'provider-dataforseo']) assert.equal(d[id], false, id);
@@ -79,7 +84,8 @@ test('defaults follow the plan and the user\'s decisions (section 10)', () => {
     'shorts-overlay', 'thumb-compress', 'thumb-preview', 'tracker', 'breakout-alerts', 'weekly-digest', 'own-history', 'own-revenue', 'own-milestones', 'api-retention-30d']
     .concat(['channel-similar', 'channel-rpm', 'niche-radar', 'niche-sample', 'keyword-ideas', 'provider-ryd', 'provider-socialblade', 'provider-dataforseo'])
     .concat(['x.collect', 'x.badges', 'x.autoscroll', 'x.own'])
-    .concat(['x.niche', 'x.nicheRefresh', 'x.replyFeed', 'x.crm', 'x.consistency']).sort());
+    .concat(['x.niche', 'x.nicheRefresh', 'x.replyFeed', 'x.crm', 'x.consistency'])
+    .concat(['x.composer', 'x.llm', 'x.algoBadge', 'x.reachForecast', 'x.weightsUpdate', 'x.schemaWatch']).sort());
   // Phase 5: nothing is "coming soon" any more.
   assert.deepEqual(F.FEATURES.filter((f) => !f.available).map((f) => f.id), [], 'every feature is built');
   // Subscriber counts work without a key (page data, saved channels); the key adds channels.list.
