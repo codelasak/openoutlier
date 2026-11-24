@@ -40,13 +40,14 @@
    */
   var REWARDS = {
     checked: '2026-11-24',
-    source: 'https://help.x.com/en/using-x/creator-revenue-sharing',
+    // Original Content Rewards replaced Creator Revenue Sharing (closed to new members on 2026-08-07).
+    source: 'https://help.x.com/en/using-x/original-content-rewards',
     verifiedFollowers: 500,
     impressions: 500000,
     windowDays: 90,
     paceDays: 28,
     premium: true,
-    note: 'Needs X Premium (or Verified Organizations), 500 verified followers and 500K organic impressions from verified users on the Home timeline in the last 90 days; replies do not count.'
+    note: 'Original Content Rewards: an active Premium, Premium+ or Premium Business subscription (or a Plus, Premium, Super or Ultra plan on The X Subscription), age 18+, 500 verified followers and 500,000 Home Timeline impressions from verified users in the last 90 days (impressions on replies are excluded), and original content. Meeting them does not guarantee admission.'
   };
 
   /** Early-hours checkpoints (hours). */

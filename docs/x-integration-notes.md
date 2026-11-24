@@ -279,3 +279,30 @@ This check ran in the user's Chrome, logged in, with the extension loaded unpack
 - **Not reachable by the browser tool:** the Library pages (My X, X ideas). Extension pages can't be opened.
 - **Not checked:** "Put in compose box" (needs the LLM turned on), `contentPageQuery` with posts, and `ListLatestTweetsTimeline` (no List).
 - **Ops note.** While the bridge restarted, an older OpenOutlier MCP server (from a Claude session started before the merge) took port 47811 and served the old code. It was stopped and the bridge restarted. Restarting the bridge again can repeat this while such a session is open.
+
+## Live check, round 3 (2026-11-24): growth drawer and MCP tools
+
+### Growth drawer (x.com, extension loaded)
+
+- **Reply now.**
+  - It filled from Home → Following: originals from the last 120 minutes with age, views, the author's followers, the score, the reply count and the `mutual` / `cold start` chips.
+  - The note says no folder is marked "X niche", so it uses the accounts the user follows.
+- **Reply ROI and People.** After opening the user's Replies tab, Reply ROI showed 3 replies in 90 days (median 29 views; best 241, to @alicankiraz0). People listed the three accounts, with @mojomatt replying back 0 of 1.
+- **Today, Niche and Searches.** They render with their empty states and instructions.
+
+### MCP tools
+
+The tools were called through a fresh `mcp/server.mjs` over stdio, against the real library.
+- `my_x_account`, `my_x_progress`, `x_patterns`, `x_reply_opportunities`, `x_reply_roi`, `x_ideas`, `x_voice_profile`, `x_draft_check`, `bridge_status` and `account_summary` (`x/levelsio`) all answer with real data.
+- Values seen:
+  - 79 followers (8 verified), 250 days since the last original post, and the single-hit warning (mean 3.2× the median).
+  - levelsio's quote median is 79.6K over 200 posts.
+  - One reply opportunity on levelsio, with velocity computed from history.
+  - The draft check flags the "Like and RT" bait.
+- **Fixed:** `REWARDS.source` and `REWARDS.note` still pointed at the closed Creator Revenue Sharing page and its wording. They now point at Original Content Rewards and give the requirements from its help page (read 2026-11-24).
+
+### Still not checked live
+
+- **Algo badge and reach forecast** (`x.algoBadge`, `x.reachForecast`). Both are off by default. Turning them on is done on the Library's Features page, which the browser tool can't open. Their logic is covered by `tests/x-algo.test.js` and `tests/x-forecast.test.js`.
+- **LLM tools and "Put in compose box"**: they need `x.llm` and the user's Anthropic key.
+- **List feed and the Content tab's per-post shape**: the user has no List and no posts in the last 3 months.
