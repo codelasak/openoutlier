@@ -233,3 +233,45 @@ Done in the user's Chrome, logged in as @heyEshagh. The extension was **not** lo
 - My X page with real analytics, the reply feed from Following and communities, and the Library pages.
 - `contentPageQuery` with posts: the user has no posts in the last 3 months.
 - `ListLatestTweetsTimeline`: the user has no List.
+
+## Live check on x.com (2026-11-24, UI with the extension loaded)
+
+This check ran in the user's Chrome, logged in, with the extension loaded unpacked from the main folder and the bridge restarted on the new code. The only writes were two test drafts typed into Home's compose box; both were deleted without posting.
+
+### Works
+- **Profile panel (@levelsio).**
+  - Originals are ranked against their format median, and formats with fewer than 8 posts are marked `≈`.
+  - The explanatory text, the Auto-scroll control, Clear, and the Analytics and Export tabs are all there.
+  - In-page badges appear on the profile, and on Home for accounts already in the Library.
+- **Post page toolbar:** ×median, Viral Score, "thread · N posts", Save to swipe file and Panel.
+- **Draft strip.**
+  - The weighted count works (68 / 280).
+  - The bait warning fires on "Like and RT".
+  - The link note appears.
+  - With the LLM off, the strip points to Settings and MCP.
+- **Bridge.**
+  - `x/heyeshagh` and `x/levelsio` arrive in `accounts`, with `x_post_stats` rows.
+  - After a visit to x.com/i/account_analytics, `x_own_daily` held 19 days (2026-09-14 → 11-24), with verified and unverified impressions of 78 and 231. These match Phase 0.
+  - Today's snapshot: 79 followers, 8 verified, imp90 78 (analytics).
+  - `rest_id` is decoded.
+- **Auto-scroll on @levelsio:** 168 posts in 30 s, back to 20 days, still running. Before the fix it stopped after one page.
+
+### Fixed in this pass (commit 2331f71)
+- **Draft strip placement.** It was inserted next to `tweetTextarea_0_label` inside a flex row and squeezed the editor to 0 px, so typed text was invisible.
+  - `placeAfter()` now climbs out of row parents.
+  - Live result: the editor is 514 px wide and the strip sits under the text.
+- **Hook filter.** The analytics overview has no `rest_id`, so My X never received it.
+  - `current_time_series` and `tweets_results` now pass on their own.
+- **Overview `rest_id`.** It is now decoded from `viewer_v2.user_results.id`, which is base64 `User:<id>`.
+- **Embedded posts.** A quoted or reposted post is flagged `embedded`, and auto-scroll's age and count checks skip it.
+- **Consistency counter.** Moved to `bottom: 78px` so it no longer covers x.com's account switcher.
+
+### Open
+- **`coveredFrom` reads 2026-11-23** although the stored days go back to 09-14.
+  - Effect: `impressions90.complete` stays false and shows a needless "may be incomplete" note. The totals are right.
+  - Likely cause: x.com also sends a two-day overview request (`current_from` = backfill start), and only the latest `rs:x:raw:accountOverviewDailyQuery` is merged.
+  - Seen variables: `current_from/_to`, `prev_from/_to`, `backfill_from/_to`, `include_previous`, `show_realtime_active_followers`, `show_verified_followers`. `rangeOf` reads them correctly; it was tested with the 4W request.
+  - Needs a look at `rs:x-own:history.captures` in the extension's storage.
+- **Not reachable by the browser tool:** the Library pages (My X, X ideas). Extension pages can't be opened.
+- **Not checked:** "Put in compose box" (needs the LLM turned on), `contentPageQuery` with posts, and `ListLatestTweetsTimeline` (no List).
+- **Ops note.** While the bridge restarted, an older OpenOutlier MCP server (from a Claude session started before the merge) took port 47811 and served the old code. It was stopped and the bridge restarted. Restarting the bridge again can repeat this while such a session is open.
