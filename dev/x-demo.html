@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenOutlier X demo</title>
+  <style>
+    body { margin: 0; font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; color: #0f1419; }
+    header { padding: 20px 32px; border-bottom: 1px solid #eff3f4; }
+    header h1 { margin: 0 0 4px; font-size: 20px; }
+    header p { margin: 0; color: #536471; max-width: 760px; }
+    nav { display: flex; gap: 8px; padding: 12px 32px; flex-wrap: wrap; }
+    nav button { font: inherit; padding: 6px 12px; border-radius: 999px; border: 1px solid #cfd9de; background: #fff; cursor: pointer; }
+    main { max-width: 600px; margin: 0 auto; border-left: 1px solid #eff3f4; border-right: 1px solid #eff3f4; min-height: 100vh; }
+    article { padding: 12px 16px; border-bottom: 1px solid #eff3f4; }
+    .who { display: flex; gap: 4px; align-items: center; color: #536471; }
+    .who b { color: #0f1419; }
+    .who a { color: #536471; text-decoration: none; }
+    .txt { margin: 4px 0 8px; white-space: pre-wrap; }
+    [role="group"] { display: flex; justify-content: space-between; max-width: 425px; color: #536471; font-size: 13px; }
+    #more { color: #536471; padding: 16px; text-align: center; }
+    @media (prefers-color-scheme: dark) { body { background: #000; color: #e7e9ea; } article, main, header { border-color: #2f3336; } .who b { color: #e7e9ea; } nav button { background: #000; color: #e7e9ea; border-color: #536471; } }
+  </style>
+  <!-- Stand-in for the chrome.* APIs so the content scripts run on a normal page. -->
+  <script>
+    (function () {
+      var data = {};
+      var listeners = [];
+      var changeListeners = [];
+      window.chrome = {
+        storage: {
+          local: {
+            get: async function (k) {
+              var all = JSON.parse(JSON.stringify(data));
+              if (k == null) return all;
+              var o = {};
+              [].concat(k).forEach(function (x) { if (x in all) o[x] = all[x]; });
+              return o;
+            },
+            set: async function (o) { Object.assign(data, JSON.parse(JSON.stringify(o))); },
+            remove: async function (k) { [].concat(k).forEach(function (x) { delete data[x]; }); }
+          },
+          onChanged: { addListener: function (fn) { changeListeners.push(fn); } }
+        },
+        runtime: {
+          id: 'demo',
+          getURL: function (p) { return '/' + p; },
+          onMessage: { addListener: function (fn) { listeners.push(fn); } },
+          sendMessage: async function (m) { console.log('[demo] sendMessage', m.type, m); return { ok: true, queued: (m.posts || []).length }; }
+        }
+      };
+      window.__demoStorage = data;
+      window.__reelscopeSite = 'x'; // hook.js: treat this page as x.com
+      window.__demoOpenPanel = function () { listeners.forEach(function (fn) { fn({ type: 'reelscope:toggle' }, {}, function () {}); }); };
+      window.__demoCommand = function (cmd) { return new Promise(function (resolve) {
+        var orig = window.chrome.runtime.sendMessage;
+        window.chrome.runtime.sendMessage = async function (m) { if (m.type === 'reelscope:command-done') { window.chrome.runtime.sendMessage = orig; resolve(m.result); } return { ok: true }; };
+        listeners.forEach(function (fn) { fn({ type: 'reelscope:command', command: cmd }, {}, function () {}); });
+      }); };
+      // Fake x.com GraphQL over XMLHttpRequest (x.com uses XHR). Installed before hook.js, so the hook
+      // wraps it exactly like the real one. Responses come from dev/x/<Operation>.json, page by page.
+      var fixtures = {};
+      window.__demoRemaining = null; // set to e.g. 15 to watch auto-scroll stop on a low rate limit
+      function FakeXHR() { this._l = {}; this.responseType = ''; this.readyState = 0; this.status = 0; }
+      FakeXHR.prototype.open = function (m, u) { this._url = u; };
+      FakeXHR.prototype.setRequestHeader = function () {};
+      FakeXHR.prototype.addEventListener = function (t, fn) { (this._l[t] = this._l[t] || []).push(fn); };
+      FakeXHR.prototype.getResponseHeader = function (n) { return this._h ? (this._h[n.toLowerCase()] != null ? String(this._h[n.toLowerCase()]) : null) : null; };
+      FakeXHR.prototype.send = function () {
+        var xhr = this;
+        var m = /\/graphql\/[^/]+\/([A-Za-z]+)\?.*page=(\d+)/.exec(xhr._url);
+        var op = m[1];
+        var n = Number(m[2]);
+        (fixtures[op] = fixtures[op] || fetch('/dev/x/' + op + '.json').then(function (r) { return r.json(); })).then(function (pages) {
+          var pg = pages[n];
+          setTimeout(function () {
+            xhr.readyState = 4;
+            xhr.status = pg ? 200 : 200;
+            var rem = window.__demoRemaining != null ? window.__demoRemaining : pg ? pg.rateLimit.remaining - n : 200;
+            xhr._h = { 'x-rate-limit-limit': pg ? pg.rateLimit.limit : 250, 'x-rate-limit-remaining': rem, 'x-rate-limit-reset': Math.floor(Date.now() / 1000) + 600 };
+            xhr.responseText = JSON.stringify(pg ? pg.body : { data: { user: { result: { timeline: { timeline: { instructions: [] } } } } } });
+            (xhr._l.load || []).forEach(function (fn) { fn(); });
+            if (xhr.onload) xhr.onload();
+          }, 150);
+        });
+      };
+      window.XMLHttpRequest = FakeXHR;
+      window.__demoGraphql = function (op, page) {
+        return new Promise(function (resolve) {
+          var x = new XMLHttpRequest();
+          x.open('GET', 'https://x.com/i/api/graphql/demoQueryId/' + op + '?variables=%7B%7D&page=' + (page || 0));
+          x.addEventListener('load', function () { resolve(JSON.parse(x.responseText)); });
+          x.send();
+        });
+      };
+    })();
+  </script>
+  <script src="../src/hook.js"></script>
+</head>
+<body>
+  <header>
+    <h1>OpenOutlier X demo page</h1>
+    <p>Stands in for x.com. The page "loads" fake GraphQL responses (dev/x, made by dev/make-x-fixture.mjs) through the same hook the extension uses. Profile: two pages of UserOriginalsTimeline (scroll for the second). Home and Post show the badges and the post toolbar. All data is made up.</p>
+  </header>
+  <nav>
+    <button type="button" id="go-profile">Profile @ExcelBugs_Demo</button>
+    <button type="button" id="go-home">Home</button>
+    <button type="button" id="go-status">Post page (thread)</button>
+    <button type="button" id="go-panel">Open panel</button>
+  </nav>
+  <main id="feed"></main>
+  <p id="more"></p>
+  <script src="../src/metrics.js"></script>
+  <script src="../src/x.js"></script>
+  <script src="../src/features.js"></script>
+  <script src="../src/swipe.js"></script>
+  <script src="../src/brand.js"></script>
+  <script src="../src/panel.js"></script>
+  <script src="../src/x-content.js"></script>
+  <script>
+    var feed = document.getElementById('feed');
+    var view = null;
+    var nextPage = 0;
+    var loading = false;
+    function esc(s) { return String(s || '').replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function render(json, op) {
+      var r = OpenOutlierX.parseResponse(op, json);
+      r.posts.forEach(function (p) {
+        if (document.querySelector('[data-id="' + p.code + '"]')) return;
+        var a = document.createElement('article');
+        a.setAttribute('data-testid', 'tweet');
+        a.setAttribute('data-id', p.code);
+        a.innerHTML = '<div class="who"><b>' + esc(p.ownerName) + '</b> <span>@' + esc(p.author) + '</span> · <a href="/' + esc(p.author) + '/status/' + p.code + '"><time datetime="' + new Date(p.takenAt).toISOString() + '">' + new Date(p.takenAt).toLocaleDateString() + '</time></a></div>' +
+          '<div class="txt" data-testid="tweetText">' + esc(p.kind === 'repost' ? '(repost)' : p.caption.slice(0, 280)) + '</div>' +
+          '<div role="group"><span>' + (p.comments || 0) + ' replies</span><span>' + (p.shares || 0) + ' reposts</span><span>' + (p.likes || 0) + ' likes</span><span>' + (p.views == null ? '' : p.views + ' views') + '</span></div>';
+        feed.appendChild(a);
+      });
+    }
+    function load(op, page) {
+      if (loading) return;
+      loading = true;
+      return __demoGraphql(op, page).then(function (j) { render(j, op); loading = false; nextPage = page + 1; document.getElementById('more').textContent = view === 'profile' && nextPage < 2 ? 'Scroll down to load more…' : 'No more posts.'; });
+    }
+    function go(path, v, ops) {
+      history.pushState(null, '', path);
+      feed.textContent = '';
+      view = v;
+      nextPage = 0;
+      ops.reduce(function (p, op) { return p.then(function () { loading = false; return load(op, 0); }); }, Promise.resolve());
+    }
+    window.addEventListener('scroll', function () {
+      if (view === 'profile' && nextPage === 1 && window.innerHeight + window.scrollY > document.documentElement.scrollHeight - 200) load('UserOriginalsTimeline', 1);
+    });
+    document.getElementById('go-profile').onclick = function () { go('/ExcelBugs_Demo', 'profile', ['UserByScreenName', 'UserOriginalsTimeline']); };
+    document.getElementById('go-home').onclick = function () { go('/home', 'home', ['HomeTimeline']); };
+    document.getElementById('go-status').onclick = function () {
+      fetch('/dev/x/meta.json').then(function (r) { return r.json(); }).then(function (meta) { go('/ExcelBugs_Demo/status/' + meta.ids.root, 'status', ['TweetDetail']); });
+    };
+    document.getElementById('go-panel').onclick = function () { __demoOpenPanel(); };
+    var start = location.hash.slice(1) || 'profile';
+    setTimeout(function () { document.getElementById('go-' + start).click(); }, 300);
+  </script>
+</body>
+</html>

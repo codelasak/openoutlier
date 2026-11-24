@@ -6,14 +6,14 @@ var nf = new Intl.NumberFormat();
 var STR = {
   en: {
     library: 'Open the Library', libraryAside: 'all saved accounts', open: 'Open the panel on this tab', mentions: 'Reddit mentions', mentionsAdd: ': add a keyword watch', newN: '{n} new',
-    hint: 'Open <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> (a profile\'s <b>Reels</b> tab), a profile on <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a>, a channel\'s <b>Videos</b> or <b>Shorts</b> tab on <a href="https://www.youtube.com/" target="_blank" rel="noopener">youtube.com</a> or a subreddit on <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>, then scroll. Reload the tab if you just installed OpenOutlier.',
+    hint: 'Open <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> (a profile\'s <b>Reels</b> tab), a profile on <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a>, a channel\'s <b>Videos</b> or <b>Shorts</b> tab on <a href="https://www.youtube.com/" target="_blank" rel="noopener">youtube.com</a>, a subreddit on <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a> or a profile on <a href="https://x.com/" target="_blank" rel="noopener">x.com</a>, then scroll. Reload the tab if you just installed OpenOutlier.',
     details: 'Load missing views &amp; dates', detailsHint: 'Asks Instagram for each post\'s details, one at a time, the same way its own post page does. Turn off if Instagram shows "try again later".',
     agents: 'Save to this Mac &amp; connect AI agents', checking: 'Checking…',
     apiTitle: 'YouTube Data API key', apiOff: 'optional, off', apiBridgeOnly: 'on the bridge only', apiOn: 'on · {u} / {l} units today',
     apiText: 'Your own key from Google Cloud (YouTube Data API v3) gives exact views, likes, comments and dates for 50 videos per quota unit, and a channel\'s full upload list, without opening pages. Free quota: 10,000 units a day. Without a key OpenOutlier never calls the API.',
     save: 'Save', removeKey: 'Remove the key', copy: 'Copy key to bridge', copyAgain: 'Copy again', uncopy: 'Remove from bridge',
     features: 'YouTube features', featuresAside: 'turn on / off', saved: 'Saved accounts &amp; subreddits',
-    none: 'Nothing saved yet. Open a profile on Instagram or TikTok, a YouTube channel, or a subreddit, then scroll.', clear: 'Delete all data', foot: 'Free &amp; open source · MIT',
+    none: 'Nothing saved yet. Open a profile on Instagram, TikTok or X, a YouTube channel, or a subreddit, then scroll.', clear: 'Delete all data', foot: 'Free &amp; open source · MIT',
     openLib: 'Open in the library', postsN: { one: '{n} post saved', other: '{n} posts saved' }, outliersN: { one: '{n} outlier (≥ 2× median)', other: '{n} outliers (≥ 2× median)' },
     clearConfirm: 'Delete all saved OpenOutlier data from this browser?',
     agentsOff: 'Off. Agents (Claude, Cursor…) cannot see your library.', backupOk: ' Last backup to your server: ', backupBad: ' Last backup FAILED: ', noBackup: ' No backup yet.',
@@ -28,14 +28,14 @@ var STR = {
   },
   tr: {
     library: 'Kütüphaneyi aç', libraryAside: 'kayıtlı bütün hesaplar', open: 'Bu sekmede paneli aç', mentions: 'Reddit bahsedilmeleri', mentionsAdd: ': bir kelime takibi ekle', newN: '{n} yeni',
-    hint: '<a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a>\'da bir profilin <b>Reels</b> sekmesini, <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a>\'da bir profili, <a href="https://www.youtube.com/" target="_blank" rel="noopener">youtube.com</a>\'da bir kanalın <b>Videolar</b> ya da <b>Shorts</b> sekmesini veya <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>\'da bir subreddit\'i aç ve kaydır. OpenOutlier\'ı yeni kurduysan sekmeyi yenile.',
+    hint: '<a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a>\'da bir profilin <b>Reels</b> sekmesini, <a href="https://www.tiktok.com/" target="_blank" rel="noopener">tiktok.com</a>\'da bir profili, <a href="https://www.youtube.com/" target="_blank" rel="noopener">youtube.com</a>\'da bir kanalın <b>Videolar</b> ya da <b>Shorts</b> sekmesini, <a href="https://www.reddit.com/r/excel/top/?t=year" target="_blank" rel="noopener">reddit.com</a>\'da bir subreddit\'i veya <a href="https://x.com/" target="_blank" rel="noopener">x.com</a>\'da bir profili aç ve kaydır. OpenOutlier\'ı yeni kurduysan sekmeyi yenile.',
     details: 'Eksik izlenme ve tarihleri yükle', detailsHint: 'Her gönderinin ayrıntısını Instagram\'a tek tek, kendi gönderi sayfasının sorduğu gibi sorar. Instagram "daha sonra tekrar dene" derse kapat.',
     agents: 'Bu Mac\'e kaydet ve AI ajanlarını bağla', checking: 'Kontrol ediliyor…',
     apiTitle: 'YouTube Data API anahtarı', apiOff: 'isteğe bağlı, kapalı', apiBridgeOnly: 'yalnız bridge\'de', apiOn: 'açık · bugün {u} / {l} birim',
     apiText: 'Google Cloud\'dan kendi anahtarın (YouTube Data API v3); sayfa açmadan, kota birimi başına 50 videonun kesin izlenme, beğeni, yorum ve tarihini ve bir kanalın bütün yükleme listesini verir. Bedava kota günde 10.000 birim. Anahtar yoksa OpenOutlier API\'yi hiç çağırmaz.',
     save: 'Kaydet', removeKey: 'Anahtarı sil', copy: 'Anahtarı bridge\'e kopyala', copyAgain: 'Tekrar kopyala', uncopy: 'Bridge\'den sil',
     features: 'YouTube özellikleri', featuresAside: 'aç / kapat', saved: 'Kayıtlı hesaplar ve subreddit\'ler',
-    none: 'Henüz kayıt yok. Instagram ya da TikTok\'ta bir profil, bir YouTube kanalı veya bir subreddit aç ve kaydır.', clear: 'Bütün veriyi sil', foot: 'Bedava ve açık kaynak · MIT',
+    none: 'Henüz kayıt yok. Instagram, TikTok ya da X\'te bir profil, bir YouTube kanalı veya bir subreddit aç ve kaydır.', clear: 'Bütün veriyi sil', foot: 'Bedava ve açık kaynak · MIT',
     openLib: 'Kütüphanede aç', postsN: '{n} gönderi kayıtlı', outliersN: '{n} outlier (medyanın ≥ 2 katı)',
     clearConfirm: 'Bu tarayıcıdaki bütün OpenOutlier verisi silinsin mi?',
     agentsOff: 'Kapalı. Ajanlar (Claude, Cursor…) kütüphaneni göremez.', backupOk: ' Sunucuna son yedek: ', backupBad: ' Son yedek BAŞARISIZ: ', noBackup: ' Henüz yedek yok.',
@@ -103,20 +103,22 @@ document.getElementById('open').addEventListener('click', async function () {
   }
 });
 
-/** Outliers (≥ 2× the account's median) among its reels/videos, or all posts on Reddit. */
+/** Outliers (≥ 2× the account's median) among its reels/videos, all posts on Reddit, original posts on X. */
 function outliersOf(posts) {
   var M = self.ReelScopeMetrics;
   if (!M) return 0;
   try {
     return M.enrich(Object.values(posts)).filter(function (p) {
+      if (p.platform === 'x') return p.outlier && M.xKind(p) === 'original';
       return p.outlier && (p.platform === 'reddit' || p.platform === 'youtube' || p.type === 'reel' || p.type === 'video');
     }).length;
   } catch (e) { return 0; }
 }
 
-/** Reddit: r/excel, u/name · TikTok: tt/name → "@name (TikTok)" · YouTube: yt/name → "@name (YouTube)", yt/UC… → "UC… (YouTube)". */
+/** Reddit: r/excel, u/name · TikTok: tt/name → "@name (TikTok)" · YouTube: yt/name → "@name (YouTube)", yt/UC… → "UC… (YouTube)" · X: x/name → "@name (X)". */
 function accountLabel(id) {
   if (/^(r|u)\//.test(id)) return id;
+  if (/^x\//.test(id)) return '@' + id.slice(2) + ' (X)';
   if (/^tt\//.test(id)) return '@' + id.slice(3) + ' (TikTok)';
   if (/^yt\/UC[A-Za-z0-9_-]{22}$/.test(id)) return id.slice(3) + ' (YouTube)';
   if (/^yt\//.test(id)) return '@' + id.slice(3) + ' (YouTube)';

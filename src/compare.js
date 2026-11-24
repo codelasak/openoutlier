@@ -13,6 +13,10 @@
 // only counts when it is exact or a calendar day (watch page, yt-dlp, Data API);
 // "3 weeks ago" from a channel tab is treated as no date, and the Shorts tab
 // shows none at all, so those Shorts only match on clearly similar titles.
+// X: an account's original video posts (type 'video'; replies, reposts and every
+// other format are left out), dated exactly from the post id. Their ratio is
+// against the author's video-format median (medianApprox when the author has too
+// few video posts and the overall originals median stood in).
 (function (root, factory) {
   var api = factory(typeof module === 'object' && module.exports ? require('./metrics.js') : root.ReelScopeMetrics);
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -125,8 +129,12 @@
     return { score: Math.round(score * 1000) / 1000, days: days, parts: parts, numClash: !!numClash };
   }
 
-  /** Short-form videos only: reels, TikTok videos, YouTube Shorts. */
-  function isVideo(p) { return p.platform === 'youtube' ? p.type === 'short' : p.type === 'reel' || p.type === 'video'; }
+  /** Short-form videos only: reels, TikTok videos, YouTube Shorts, X original video posts. */
+  function isVideo(p) {
+    if (p.platform === 'youtube') return p.type === 'short';
+    if (p.platform === 'x') return p.type === 'video' && M.xKind(p) === 'original';
+    return p.type === 'reel' || p.type === 'video';
+  }
 
   function side(p) {
     return {
@@ -136,6 +144,8 @@
       duration: p.duration || null, engagement: p.engagement == null ? null : p.engagement,
       ratio: p.ratio == null ? null : p.ratio, viralScore: p.viralScore == null ? null : p.viralScore,
       caption: p.caption || '', thumb: p.thumb || null,
+      // X: scored against the author's overall originals median instead of its video median (≈).
+      medianApprox: p.platform === 'x' ? !!(p.ratio != null && p.baselineApprox) : false,
       // YouTube: how sure the date is (exact | day | approximate | none); other platforms are exact.
       date: p.platform === 'youtube' ? (!p.takenAt ? 'none' : p.dateApprox === false ? 'exact' : p.dateDay ? 'day' : 'approximate') : (p.takenAt ? 'exact' : 'none')
     };
@@ -210,8 +220,8 @@
     };
   }
 
-  var PLATFORM_ORDER = ['instagram', 'tiktok', 'youtube'];
-  /** Which side a platform goes on: Instagram, then TikTok, then YouTube (so IG ↔ TT keeps IG as "a"). */
+  var PLATFORM_ORDER = ['instagram', 'tiktok', 'youtube', 'x'];
+  /** Which side a platform goes on: Instagram, then TikTok, then YouTube, then X (so IG ↔ TT keeps IG as "a"). */
   function sideOrder(pa, pb) { return PLATFORM_ORDER.indexOf(pa) <= PLATFORM_ORDER.indexOf(pb) ? [pa, pb] : [pb, pa]; }
 
   return { match: match, similarity: function (a, b) { return similarity(prep(a), prep(b)); }, cleanCaption: cleanCaption, isVideo: isVideo, dateOf: dateOf,

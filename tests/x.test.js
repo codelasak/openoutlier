@@ -356,3 +356,57 @@ test('analyze and CSV for X lists', () => {
   assert.ok(header.includes('median_approx') && header.includes('author_followers') && header.includes('bookmarks'));
   assert.match(M.fileBaseName(e[0]), /_x_\d+$/);
 });
+
+// ---- hook (src/hook.js on x.com) ------------------------------------------------
+const vm = require('node:vm');
+function runXHook(responses) {
+  const posted = [];
+  function FakeXHR() { this.listeners = {}; this.responseType = ''; }
+  FakeXHR.prototype.open = function (m, u) { this.url = u; };
+  FakeXHR.prototype.send = function () {
+    const r = responses[this.url] || { status: 200, text: '{}', headers: {} };
+    this.status = r.status;
+    this.responseText = r.text;
+    this.getResponseHeader = (n) => (r.headers[n] !== undefined ? String(r.headers[n]) : null);
+    (this.listeners.load || []).forEach((fn) => fn());
+  };
+  FakeXHR.prototype.addEventListener = function (t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); };
+  const window = { fetch: undefined, XMLHttpRequest: FakeXHR, postMessage: (m) => posted.push(m), location: { origin: 'https://x.com' } };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'src', 'hook.js'), 'utf8'), { window, location: { hostname: 'x.com' } });
+  for (const u of Object.keys(responses)) { const x = new window.XMLHttpRequest(); x.open('GET', u); x.send(); }
+  return posted;
+}
+
+test('hook: x.com GraphQL responses are forwarded with their rate-limit headers; 429 still reports', () => {
+  const pg = pages('UserOriginalsTimeline')[0];
+  const rl = { 'x-rate-limit-limit': 250, 'x-rate-limit-remaining': 18, 'x-rate-limit-reset': 1795000000 };
+  const posted = runXHook({
+    [pg.url]: { status: 200, text: JSON.stringify(pg.body), headers: rl },
+    [pages('UserByScreenName')[0].url]: { status: 200, text: JSON.stringify(pages('UserByScreenName')[0].body), headers: rl },
+    'https://x.com/i/api/graphql/q/UserOriginalsTimeline?variables=2': { status: 429, text: '{"errors":[{"message":"Rate limit exceeded"}]}', headers: { 'x-rate-limit-remaining': 0, 'x-rate-limit-reset': 1795000000 } },
+    'https://x.com/i/api/1.1/jot/client_event.json': { status: 200, text: '{"rest_id":"1","tweet_results":{}}', headers: {} }
+  });
+  const payloads = posted.filter((m) => m.type === 'payload');
+  assert.equal(payloads.length, 2);
+  assert.deepEqual(JSON.parse(JSON.stringify(payloads[0].rateLimit)), { limit: '250', remaining: '18', reset: '1795000000' });
+  assert.equal(X.parsePayload(payloads[0].url, payloads[0].text).posts.length > 10, true);
+  const rates = posted.filter((m) => m.type === 'ratelimit');
+  assert.equal(rates.length, 3);
+  assert.equal(rates[2].status, 429);
+  assert.equal(X.rateLimit(rates[2].rateLimit).remaining, 0);
+});
+
+test('swipe file: X posts are saved with the post id, format, account and × median; links go to x.com', () => {
+  const SW = require('../src/swipe.js');
+  const out = SW.save({ folders: [], accounts: {} }, { platform: 'x', video: meta.ids.bigImage, type: 'image', title: 'The 3 Excel shortcuts', channel: 'Excel Bugs (demo)', account: DEMO, views: 36000, ratio: 12, clip: { start: 1, end: 5 } }, 1000);
+  assert.equal(out.added, true);
+  assert.equal(out.item.platform, 'x');
+  assert.equal(out.item.type, 'image');
+  assert.equal(out.item.account, DEMO);
+  assert.equal(out.item.ratio, 12);
+  assert.equal(out.item.clip, null);
+  assert.equal(SW.url(out.item), 'https://x.com/excelbugs_demo/status/' + meta.ids.bigImage);
+  assert.equal(SW.save({ folders: [] }, { platform: 'x', video: 'not-an-id' }).item, null);
+  // YouTube items are unchanged.
+  assert.equal(SW.save({ folders: [] }, { video: 'abcdefghijk', type: 'short' }).item.platform, 'youtube');
+});

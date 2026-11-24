@@ -37,6 +37,7 @@
     { id: 'video', label: { tr: 'Video sayfası', en: 'Watch page' }, hint: null },
     { id: 'shorts', label: { tr: 'Shorts akışı', en: 'Shorts feed' }, hint: null },
     { id: 'studio', label: { tr: 'YouTube Studio', en: 'YouTube Studio' }, hint: null },
+    { id: 'x', label: { tr: 'X (x.com)', en: 'X (x.com)' }, hint: { tr: 'Sadece x.com\'un zaten yüklediğini okur; hiçbir şey paylaşmaz, beğenmez ya da takip etmez', en: 'Reads only what x.com already loaded; never posts, likes or follows' } },
     { id: 'background', label: { tr: 'Arka plan (bridge)', en: 'Background (bridge)' }, hint: { tr: 'Mac\'teki OpenOutlier bridge\'i çalıştırır; Chrome kapalıyken de devam eder', en: 'Run by the OpenOutlier bridge on your Mac, also while Chrome is closed' } },
     { id: 'providers', label: { tr: 'İsteğe bağlı servisler', en: 'Optional providers' }, hint: { tr: 'Üçüncü parti API\'ler; hepsi kapalı başlar, açıp anahtarını eklemeden hiçbir istek atılmaz. Anahtarlar Ayarlar\'da, bu Mac\'te (~/.openoutlier/providers.json) durur.', en: 'Third-party APIs; all start off, and none makes a request until you turn it on and add its key. Keys are set in Settings and stay on this Mac (~/.openoutlier/providers.json).' } }
   ];
@@ -139,6 +140,17 @@
     F('thumb-preview', 'studio', 4, true, 'Thumbnail ve başlık testi', 'Thumbnail & title tester',
       'Thumbnail\'ini ve başlığını nişteki rakiplerin yanında, sahte bir ana sayfa ve arama listesinde gör (açık/koyu, masaüstü/mobil).', 'See your thumbnail and title next to the niche\'s competitors on a mock home grid and search list (light/dark, desktop/mobile).',
       { available: true, surface: ['studio', 'library'] }),
+
+    // X (docs/x-plan.md section 9). Ids are dotted like the plan's: x.collect, x.badges, x.autoscroll.
+    F('x.collect', 'x', 1, true, 'Toplama ve panel', 'Collection & panel',
+      'x.com\'un yüklediği postları kaydeder; profillerde OpenOutlier paneli (Postlar, Analiz, Dışa aktar).', 'Saves the posts x.com loads; the OpenOutlier panel on profiles (Posts, Analytics, Export).',
+      { available: true, surface: ['x:profile', 'library'] }),
+    F('x.badges', 'x', 1, true, 'Zaman akışı rozetleri', 'Timeline badges',
+      'Her postta yazarın medyanına göre × ve Viral Skor (Ana Sayfa, arama, listeler, profil, post sayfası). Yazar Library\'de değilse sayfadaki postlardan ≈ ile.', '× median and Viral Score on every post (Home, search, lists, profiles, post pages). From the page\'s posts, marked ≈, when the author isn\'t in the Library.',
+      { available: true, surface: ['x:home', 'x:search', 'x:list', 'x:profile', 'x:status'] }),
+    F('x.autoscroll', 'x', 1, true, 'Yavaş otomatik kaydırma', 'Slow auto-scroll',
+      'Profilde sayfalar arasında en az 3 sn bekler; 6 ay, 300 post ya da rate limit düşünce durur.', 'Waits at least 3 s between pages on a profile; stops at 6 months, 300 posts or when X\'s rate limit runs low.',
+      { available: true, surface: ['x:profile'] }),
 
     F('tracker', 'background', 1, true, 'Niş takibi', 'Niche tracking',
       'Takip edilen kanalları RSS ve Data API ile düzenli ölçer.', 'Measures tracked channels on a schedule with RSS and the Data API.',

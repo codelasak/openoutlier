@@ -8,6 +8,9 @@
 //   item = { id, platform: 'youtube', video, type: 'video' | 'short', title, channel, account,
 //            channelId, thumb, views, duration, publishedAt, folder (an rs:org folder id, or null =
 //            "Swipe file"), note, tags: [...], clip: { start, end } | null, savedAt, updatedAt }
+//   X posts (docs/x-plan.md 2.2, 5.1): platform 'x', video = the post id, type = its format
+//   (text, image, video, thread, article, link, quote), title = the text, channel = the author's
+//   name, account = 'x/<handle>', ratio = its × median when saved; no clip.
 //
 // Tags are normalised exactly like account tags in the Library, so one tag list serves both;
 // folders are the Library's own folders (rs:org.folders). Pure functions; UMD: self.OpenOutlierSwipe.
@@ -22,6 +25,8 @@
   var MAX_NOTE = 2000;
   var MAX_TAGS = 12;
   var VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+  var X_ID_RE = /^\d{5,25}$/;
+  var X_FORMATS = ['text', 'image', 'video', 'thread', 'article', 'link', 'quote'];
 
   /** The Library's tag rule (dashboard.js): lower case, no "#", other characters → "-", at most 40. */
   function normTag(t) {
@@ -51,18 +56,19 @@
 
   /** A clean item from any input (the save form, a backup, the bridge). Returns null when it has no video. */
   function normItem(x, now) {
-    if (!x || typeof x !== 'object' || !VIDEO_ID_RE.test(String(x.video || ''))) return null;
+    var isX = !!x && x.platform === 'x';
+    if (!x || typeof x !== 'object' || !(isX ? X_ID_RE : VIDEO_ID_RE).test(String(x.video || ''))) return null;
     now = now || Date.now();
     var dur = num(x.duration);
-    return {
+    var out = {
       id: typeof x.id === 'string' && /^[A-Za-z0-9_-]{4,40}$/.test(x.id) ? x.id : newId(x.video, now),
-      platform: 'youtube',
+      platform: isX ? 'x' : 'youtube',
       video: x.video,
-      type: x.type === 'short' ? 'short' : 'video',
-      title: x.title ? String(x.title).slice(0, 300) : null,
+      type: isX ? (X_FORMATS.indexOf(x.type) !== -1 ? x.type : 'text') : x.type === 'short' ? 'short' : 'video',
+      title: x.title ? String(x.title).slice(0, isX ? 1000 : 300) : null,
       channel: x.channel ? String(x.channel).slice(0, 120) : null,
-      account: typeof x.account === 'string' && /^yt\//.test(x.account) ? x.account : null,
-      channelId: /^UC[A-Za-z0-9_-]{22}$/.test(String(x.channelId || '')) ? x.channelId : null,
+      account: typeof x.account === 'string' && (isX ? /^x\/[a-z0-9_]{1,15}$/ : /^yt\//).test(x.account) ? x.account : null,
+      channelId: !isX && /^UC[A-Za-z0-9_-]{22}$/.test(String(x.channelId || '')) ? x.channelId : null,
       thumb: typeof x.thumb === 'string' && /^https:\/\//.test(x.thumb) ? x.thumb : null,
       views: num(x.views),
       duration: dur,
@@ -70,10 +76,12 @@
       folder: typeof x.folder === 'string' && x.folder ? x.folder : null,
       note: x.note ? String(x.note).slice(0, MAX_NOTE) : '',
       tags: normTags(x.tags),
-      clip: normClip(x.clip, dur),
+      clip: isX ? null : normClip(x.clip, dur),
       savedAt: num(x.savedAt) || now,
       updatedAt: num(x.updatedAt) || num(x.savedAt) || now
     };
+    if (isX) out.ratio = num(x.ratio);
+    return out;
   }
   /** org.swipe in a known shape (unknown items dropped). */
   function state(org) {
@@ -166,6 +174,7 @@
   /** The link that opens the video at the clip's start (&t=). Shorts open as a watch page when clipped (Shorts ignore t=). */
   function url(it) {
     if (!it) return '';
+    if (it.platform === 'x') return 'https://x.com/' + (it.account ? it.account.slice(2) : 'i/web') + '/status/' + it.video;
     if (it.type === 'short' && !it.clip) return 'https://www.youtube.com/shorts/' + it.video;
     return 'https://www.youtube.com/watch?v=' + it.video + (it.clip && it.clip.start > 0 ? '&t=' + it.clip.start + 's' : '');
   }

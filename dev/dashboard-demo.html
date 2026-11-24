@@ -18,6 +18,7 @@
   <script src="../src/youtube.js"></script>
   <script src="../src/reddit.js"></script>
   <script src="../src/mentions.js"></script>
+  <script src="../src/x.js"></script>
   <script>
     (async function () {
       var store = {};
@@ -320,6 +321,30 @@
         ytBugs[code] = q;
       });
       store['rs:p:yt/excel.bugs.demo'] = { posts: ytBugs, updatedAt: Date.now() - 600e3, platform: 'youtube', profile: { handle: 'excel.bugs.demo', name: 'Excel Bugs (demo)', subscribers: 18400 } };
+      // X accounts (dev/x, made by dev/make-x-fixture.mjs): profile timelines parsed by src/x.js, times moved to now.
+      var xMeta = await (await fetch('/dev/x/meta.json')).json();
+      var xShift = Date.now() - xMeta.now;
+      var xUsers = {};
+      for (var xop of ['UserOriginalsTimeline', 'UserRepliesTimeline', 'UserRepostsTimeline', 'UserVideoTimeline', 'UserPhotoTimeline', 'UserTweets', 'UserByScreenName', 'HomeTimeline']) {
+        var xPages = await (await fetch('/dev/x/' + xop + '.json')).json();
+        xPages.forEach(function (pg) {
+          var res = OpenOutlierX.parsePayload(pg.url, JSON.stringify(pg.body));
+          if (!res) return;
+          res.users.forEach(function (u) { xUsers[u.id] = OpenOutlierX.mergeProfile(xUsers[u.id], u); });
+          res.posts.forEach(function (p) {
+            if (p.promoted) return;
+            var rec = store['rs:p:' + p.owner] || (store['rs:p:' + p.owner] = { posts: {}, updatedAt: Date.now() - 1200e3, platform: 'x' });
+            var q = Object.assign({}, p, { takenAt: p.takenAt ? p.takenAt + xShift : p.takenAt, seenAt: Date.now() - 1200e3 });
+            rec.posts[q.code] = OpenOutlierX.merge(rec.posts[q.code], q);
+          });
+        });
+      }
+      Object.keys(store).forEach(function (k) {
+        if (k.indexOf('rs:p:x/') !== 0) return;
+        var xid = k.slice(5);
+        if (Object.keys(store[k].posts).length < 5) { delete store[k]; return; }
+        if (xUsers[xid]) store[k].profile = Object.assign({}, xUsers[xid], { seenAt: Date.now() - 1200e3 });
+      });
       var DEMO_TITLES = [['XLOOKUP: the only lookup you need', 'xlookup'], ['Pivot tables in 10 minutes', 'pivot'], ['Power Query for beginners (full course)', 'power-query'], ['Stop using VLOOKUP', 'index-match'],
         ['Build an Excel dashboard from scratch', 'dashboard'], ['LAMBDA: write your own functions', 'lambda'], ['Copilot in Excel: is it any good?', 'copilot'], ['Conditional formatting tricks pros use', 'conditional'],
         ['Data validation drop-downs, the right way', 'validation'], ['FILTER + SORT: dynamic lists', 'dynamic'], ['Excel budget template (free download)', 'budget'], ['Charts that don\'t look like Excel', 'charts'],
@@ -341,7 +366,7 @@
       });
       var nicheMode = new URLSearchParams(location.search).get('niche');
       var excelIds = ['yt/kevinstratvert', 'yt/leilagharani', 'yt/kenjiexplains', 'yt/myonlinetraininghub', 'yt/excelcampus', 'yt/simonsezit', 'yt/codybaldwin', 'yt/marganalytics', 'yt/handsonexcel'];
-      store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] }, 'excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'tt/excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'yt/exceldemo': { folder: 'f2', tags: ['competitor'] } } };
+      store['rs:org'] = { folders: [{ id: 'f1', name: 'Food creators' }, { id: 'f2', name: 'Excel' }], accounts: { 'demo.kitchen': { folder: 'f1', tags: ['competitor', 'recipes'] }, 'spreadsheet.tips': { folder: 'f2', tags: ['competitor'] }, 'r/excel': { folder: 'f2', tags: ['research'] }, 'r/spreadsheets': { folder: 'f2', tags: ['research'] }, 'excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'tt/excel.bugs.demo': { folder: 'f2', tags: ['mine'] }, 'yt/exceldemo': { folder: 'f2', tags: ['competitor'] }, 'x/excelbugs_demo': { folder: 'f2', tags: ['mine'] }, 'x/sheettips_demo': { folder: 'f2', tags: ['competitor'] } } };
       if (nicheMode !== 'empty' && nicheMode !== 'off') {
         excelIds.forEach(function (id) { store['rs:org'].accounts[id] = { folder: 'f2', tags: [] }; });
         store['rs:org'].niches = { folders: ['f2'], tags: [] };
@@ -438,7 +463,7 @@
         });
         store['rs:org'] = o;
       }
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/src/discovery.js', '/dashboard/discovery-view.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/src/discovery.js', '/dashboard/discovery-view.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/top-filters.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();

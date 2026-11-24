@@ -283,6 +283,7 @@
     comments: function (p) { return p.comments; },
     shares: function (p) { return p.shares; },
     saves: function (p) { return p.saves; },
+    quotes: function (p) { return p.quotes; },
     engagement: function (p) { return p.engagement; },
     date: function (p) { return p.takenAt; },
     duration: function (p) { return p.duration; }

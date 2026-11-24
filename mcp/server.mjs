@@ -14,7 +14,7 @@ import { pipeline } from 'node:stream/promises';
 import { startBridge, PORTS } from './bridge.mjs';
 import {
   M, MIN_POSTS, postCount, hiddenSmall, readLibrary, readStatus, postHistory, store, DB_FILE, selectAccounts, accountRow, accountSummary, topReels, searchReels,
-  findReel, brief, normUser, normSubreddit, isRedditId, isTikTokId, isYouTubeId, youtubeIdOf, platformOf, subredditSummary, topPosts, contentIdeas, mentionsQuery,
+  findReel, brief, normUser, normSubreddit, isRedditId, isTikTokId, isYouTubeId, isXId, youtubeIdOf, xPostIdOf, platformOf, subredditSummary, topPosts, contentIdeas, mentionsQuery,
   comparePlatforms, queueCommand, waitForCommand, readCommandState, linkExpiry, T
 } from './library.mjs';
 import { startJob, waitJob, isVideoId as isYouTubeVideoId, tildify, locateYtDlp, findExecutable, INSTALL_HINT } from './youtube-dl.mjs';
@@ -59,15 +59,16 @@ const server = new McpServer(
   { name: 'openoutlier', version: '0.1.0' },
   {
     instructions: [
-      'OpenOutlier is a local library of Instagram Reels, TikTok videos, YouTube videos and Shorts, and Reddit posts the user collected with the OpenOutlier browser extension.',
-      'Start with list_accounts (or list_folders_and_tags) to see what is saved. Accounts are organized in folders and tags by the user; a folder can mix Instagram accounts (username), TikTok accounts (tt/username), YouTube channels (yt/handle, or yt/UC… for a channel without a handle) and subreddits (r/name) / Reddit users (u/name). The same handle can exist on several platforms: "name" is Instagram, "tt/name" is TikTok, "yt/name" is YouTube.',
+      'OpenOutlier is a local library of Instagram Reels, TikTok videos, YouTube videos and Shorts, Reddit posts and X (x.com) posts the user collected with the OpenOutlier browser extension.',
+      'Start with list_accounts (or list_folders_and_tags) to see what is saved. Accounts are organized in folders and tags by the user; a folder can mix Instagram accounts (username), TikTok accounts (tt/username), YouTube channels (yt/handle, or yt/UC… for a channel without a handle), subreddits (r/name) / Reddit users (u/name) and X accounts (x/name). The same handle can exist on several platforms: "name" is Instagram, "tt/name" is TikTok, "yt/name" is YouTube, "x/name" is X.',
       'Instagram, TikTok and YouTube: x_account_median = views ÷ that account\'s median views. YouTube Shorts and long-form videos have separate medians inside one channel (a Short is compared with the channel\'s Shorts, a video or past live stream with its long-form videos). Reddit: the same with score (upvotes) ÷ the subreddit\'s (or user\'s) median score. viral_score = 50 + 25·log2(x), capped 0–100. ≥2× is an outlier. TikTok engagement counts likes + comments + shares + saves (TikTok shows them publicly); Instagram and YouTube count likes + comments.',
+      'X: x_account_median = views ÷ the author\'s median views of ORIGINAL posts of the same format (text, image, video, thread, article, link, quote; the last 90 days or the last 50 originals). A format with fewer than 8 such posts uses the author\'s overall originals median instead: those scores are approximate (median_approx: true, shown as ≈); with fewer than 8 originals there is no score. Replies, thread parts and reposts stay out of the medians, and reposts are never scored. Posts from before 2023 have no view count (no_views) and no score. X views are X\'s own count of how often a post was shown, not the monetized impressions of its creator revenue sharing. X engagement = likes + replies + reposts + quotes + bookmarks. OpenOutlier only reads what x.com shows in the user\'s browser: it never calls the X API and never posts, likes, reposts or follows anything on X.',
       'YouTube channel pages show rounded views ("63K") and relative dates ("3 weeks ago"): views_exact and date ("exact" | "day" | "approximate") say which. refresh_reel opens a video\'s watch page for exact views, likes, comments, date, chapters and the most-replayed heatmap; download_reel does the same through yt-dlp. Best posting times use exact dates only.',
-      'compare_platforms matches the same short videos posted to Instagram and TikTok, or a YouTube channel\'s Shorts and Instagram or TikTok (caption / title, hashtags, length, date ±3 days) and shows how each did on both, relative to each account\'s median (the Shorts median for YouTube).',
+      'compare_platforms matches the same short videos posted to Instagram and TikTok, a YouTube channel\'s Shorts and Instagram or TikTok, or an X account\'s video posts and any of those (caption / title / post text, hashtags, length, date ±3 days) and shows how each did on both, relative to each account\'s median (the Shorts median for YouTube, the video-format median for X).',
       'Reddit tools: subreddit_summary (one subreddit: best times, title analysis, flair, post types), top_posts (rank posts across subreddits), content_ideas (most-upvoted questions and pain points in a folder of subreddits, with how much Instagram competitors in that folder already cover each theme — use it to turn Reddit demand into new reel ideas).',
       'To analyze a video itself, use download_reel to save the mp4 locally and work with the returned file path. Instagram CDN links expire after a few days; refresh_reel gets fresh ones. YouTube videos are downloaded by yt-dlp on this computer (bridge_status says whether yt-dlp and ffmpeg are installed).',
       'mentions: Reddit posts and comments that matched the user\'s keyword watches (checked every ~15 min by the extension, and 24/7 by the optional reddit-watch home server; source tells which).',
-      'collect_profile / collect_subreddit ask the extension to collect an Instagram profile, a TikTok profile (tt/name), a YouTube channel (yt/name: its Videos tab, then its Shorts tab) or a subreddit in a background Chrome tab or small window (logged-in session); they need Chrome running.',
+      'collect_profile / collect_subreddit ask the extension to collect an Instagram profile, a TikTok profile (tt/name), a YouTube channel (yt/name: its Videos tab, then its Shorts tab), an X profile (x/name: scrolled slowly, at most 300 posts or 6 months) or a subreddit in a background Chrome tab or small window (logged-in session); they need Chrome running.',
       STUDIO_INSTRUCTIONS,
       'YouTube extras (optional, each off until the user sets it up): get_transcript (captions via yt-dlp, with the first ~30 s as hook), youtube_api_stats (exact stats through the user\'s own YouTube Data API key; makes no request without one).',
       YT_ANALYTICS_INSTRUCTIONS,
@@ -86,11 +87,11 @@ const scope = {
 
 server.registerTool('list_accounts', {
   title: 'List saved accounts',
-  description: 'All accounts saved in the OpenOutlier library — Instagram profiles (username), TikTok profiles (tt/username), YouTube channels (yt/handle), subreddits (r/name) and Reddit users (u/name) — with platform, folder, tags, post count, median views (Instagram, TikTok; YouTube: separate long-form and Shorts medians) or median score (Reddit) and outliers. Filter by folder, tag or platform.',
+  description: 'All accounts saved in the OpenOutlier library — Instagram profiles (username), TikTok profiles (tt/username), YouTube channels (yt/handle), subreddits (r/name), Reddit users (u/name) and X accounts (x/name) — with platform, folder, tags, post count, median views (Instagram, TikTok; YouTube: separate long-form and Shorts medians; X: the originals median, per-format medians and which formats fall back to it) or median score (Reddit) and outliers. Filter by folder, tag or platform.',
   inputSchema: {
     folder: scope.folder,
     tag: scope.tag,
-    platform: z.enum(['instagram', 'tiktok', 'youtube', 'reddit', 'all']).optional().describe('Default all'),
+    platform: z.enum(['instagram', 'tiktok', 'youtube', 'reddit', 'x', 'all']).optional().describe('Default all'),
     include_small_accounts: z.boolean().optional().describe(`Also list accounts with fewer than ${MIN_POSTS} saved posts (usually single reels picked up while scrolling the feed). Default false.`)
   },
   annotations: { readOnlyHint: true }
@@ -119,7 +120,8 @@ server.registerTool('list_folders_and_tags', {
       const reddit = inF.filter((u) => platformOf(lib, u) === 'reddit').length;
       const tiktok = inF.filter((u) => platformOf(lib, u) === 'tiktok').length;
       const youtube = inF.filter((u) => platformOf(lib, u) === 'youtube').length;
-      return { name: f.name, accounts: inF.length, ...(reddit || tiktok || youtube ? { instagram: inF.length - reddit - tiktok - youtube, ...(tiktok ? { tiktok } : {}), ...(youtube ? { youtube } : {}), ...(reddit ? { reddit } : {}) } : {}) };
+      const x = inF.filter((u) => platformOf(lib, u) === 'x').length;
+      return { name: f.name, accounts: inF.length, ...(reddit || tiktok || youtube || x ? { instagram: inF.length - reddit - tiktok - youtube - x, ...(tiktok ? { tiktok } : {}), ...(youtube ? { youtube } : {}), ...(reddit ? { reddit } : {}), ...(x ? { x } : {}) } : {}) };
     }),
     unsorted_accounts: real.filter((u) => !lib.org.accounts?.[u]?.folder).length,
     small_accounts_hidden: users.length - real.length,
@@ -129,20 +131,21 @@ server.registerTool('list_folders_and_tags', {
 
 server.registerTool('account_summary', {
   title: 'Account analytics',
-  description: 'Analytics for one Instagram, TikTok or YouTube account: median/total views, engagement, posting frequency, best posting day & time, hashtags that bring views, best video length, original vs licensed audio (TikTok: original sound vs music, top music, shares and saves per 100 views), and its top 10 videos. Instagram also returns carousels_and_photos (no public views, so scored by likes against their own median: formats, carousel length, best times, top posts) and comment stats for both (median comments, comments per 100 likes, "comment KEYWORD" posts vs the rest, each keyword, most commented posts), plus followers and posts_on_profile once the profile was collected. YouTube channels get two sections, long_form and shorts, each against its own median (plus title words, exact vs approximate dates; best times from exact dates only). (Given r/name or u/name it returns subreddit_summary instead.)',
-  inputSchema: { username: z.string().describe('Instagram username, with or without @; TikTok as tt/name or a tiktok.com/@name URL; YouTube as yt/name, a youtube.com/@name or /channel/UC… URL (or r/name, u/name)') },
+  description: 'Analytics for one Instagram, TikTok or YouTube account: median/total views, engagement, posting frequency, best posting day & time, hashtags that bring views, best video length, original vs licensed audio (TikTok: original sound vs music, top music, shares and saves per 100 views), and its top 10 videos. Instagram also returns carousels_and_photos (no public views, so scored by likes against their own median: formats, carousel length, best times, top posts) and comment stats for both (median comments, comments per 100 likes, "comment KEYWORD" posts vs the rest, each keyword, most commented posts), plus followers and posts_on_profile once the profile was collected. YouTube channels get two sections, long_form and shorts, each against its own median (plus title words, exact vs approximate dates; best times from exact dates only). X accounts (x/name): originals vs replies, thread parts and reposts, per-format medians (approximate ones marked), posts without a view count, followers, best times, text length, links vs none, and the top 10 originals by viral score. (Given r/name or u/name it returns subreddit_summary instead.)',
+  inputSchema: { username: z.string().describe('Instagram username, with or without @; TikTok as tt/name or a tiktok.com/@name URL; YouTube as yt/name, a youtube.com/@name or /channel/UC… URL; X as x/name or an x.com/name (twitter.com/name) URL (or r/name, u/name)') },
   annotations: { readOnlyHint: true }
 }, ({ username }) => safe(() => json(accountSummary(readLibrary(), normUser(username)))));
 
 server.registerTool('top_reels', {
   title: 'Top reels',
-  description: 'Rank Instagram reels, TikTok videos and YouTube videos and Shorts across accounts (a folder, a tag, a list of usernames, or everything). post_type: "carousels_photos" ranks Instagram carousels and photos instead (scored by likes, since Instagram shows no views on them), "all" ranks both together. Each video is scored against its own account\'s median (YouTube: the channel\'s Shorts median for Shorts, its long-form median for videos), so viral_score compares fairly across big and small accounts and across platforms. Every result has a platform field. For Reddit posts use top_posts.',
+  description: 'Rank Instagram reels, TikTok videos, YouTube videos and Shorts and X posts across accounts (a folder, a tag, a list of usernames, or everything). post_type: "carousels_photos" ranks Instagram carousels and photos instead (scored by likes, since Instagram shows no views on them), "all" ranks both together. Each post is scored against its own account\'s median (YouTube: the channel\'s Shorts median for Shorts, its long-form median for videos; X: the author\'s median for that format, ≈ when approximate), so viral_score compares fairly across big and small accounts and across platforms. X: originals only (no replies or reposts); with the default post_type "reels" only X video posts are included, platform "x" ranks every X format. Every result has a platform field. For Reddit posts use top_posts.',
   inputSchema: {
     ...scope,
-    platform: z.enum(['instagram', 'tiktok', 'youtube', 'all']).optional().describe('Default all (Instagram, TikTok and YouTube)'),
+    platform: z.enum(['instagram', 'tiktok', 'youtube', 'x', 'all']).optional().describe('Default all (Instagram, TikTok, YouTube and X video posts)'),
     format: z.enum(['shorts', 'long_form']).optional().describe('YouTube only: just Shorts or just long-form videos (and past live streams)'),
+    x_format: z.enum(['text', 'image', 'video', 'thread', 'article', 'link', 'quote']).optional().describe('X only: just this format (implies platform x)'),
     sort: z.enum(['viral_score', 'views', 'likes', 'comments', 'comments_x_median', 'shares', 'saves', 'engagement', 'date', 'duration']).optional().describe('Default viral_score. saves: TikTok only. comments_x_median: comments ÷ the account\'s median comments for that format'),
-    post_type: z.enum(['reels', 'carousels_photos', 'all']).optional().describe('Default reels (videos). carousels_photos: Instagram carousels and photos, ranked by likes. all: both'),
+    post_type: z.enum(['reels', 'carousels_photos', 'all']).optional().describe('Default reels (videos; all for platform x). carousels_photos: Instagram carousels and photos, ranked by likes. all: both'),
     since_days: z.number().positive().optional().describe('Only reels posted in the last N days'),
     min_views: z.number().min(0).optional(),
     limit: z.number().int().min(1).max(200).optional().describe('Default 20'),
@@ -154,18 +157,19 @@ server.registerTool('top_reels', {
 
 server.registerTool('search_reels', {
   title: 'Search reels and posts',
-  description: 'Find Instagram reels and TikTok videos (caption, hashtags, audio title), YouTube videos and Shorts (title, hashtags, tags, description) and Reddit posts (title, text, flair) that contain all the given words. Results ranked by viral score (each against its own account\'s median).',
-  inputSchema: { query: z.string().describe('Words or #hashtags'), ...scope, platform: z.enum(['instagram', 'tiktok', 'youtube', 'reddit', 'all']).optional().describe('Default all'), format: z.enum(['shorts', 'long_form']).optional().describe('YouTube only: just Shorts or just long-form videos'), limit: z.number().int().min(1).max(200).optional(), include_small_accounts: z.boolean().optional() },
+  description: 'Find Instagram reels and TikTok videos (caption, hashtags, audio title), YouTube videos and Shorts (title, hashtags, tags, description), Reddit posts (title, text, flair) and X posts (text, hashtags, article title; originals, replies and thread parts, not reposts) that contain all the given words. Results ranked by viral score (each against its own account\'s median).',
+  inputSchema: { query: z.string().describe('Words or #hashtags'), ...scope, platform: z.enum(['instagram', 'tiktok', 'youtube', 'reddit', 'x', 'all']).optional().describe('Default all'), format: z.enum(['shorts', 'long_form']).optional().describe('YouTube only: just Shorts or just long-form videos'), limit: z.number().int().min(1).max(200).optional(), include_small_accounts: z.boolean().optional() },
   annotations: { readOnlyHint: true }
 }, (args) => safe(() => json(searchReels(readLibrary(), args))));
 
 server.registerTool('get_reel', {
   title: 'Get one reel or post',
-  description: 'Everything saved about one reel or video, including the full caption, the mp4 video_url and cover_url, and when those links expire. Accepts an Instagram shortcode or instagram.com/reel/… URL, a TikTok video id or tiktok.com/@name/video/… URL, a YouTube video id or youtube.com/watch?v=… / /shorts/… / youtu.be/… URL (format short/video/live, exact or rounded views, exact or approximate date, description, category, tags, chapters, the most-replayed heatmap and its peaks, captions), or a Reddit post id or reddit.com/r/…/comments/… URL (full title and text).',
-  inputSchema: { code: z.string().describe('Shortcode (e.g. DZPcVltsTAa), reel URL, TikTok video id / URL, YouTube video id / URL, or Reddit post id / URL') },
+  description: 'Everything saved about one reel or video, including the full caption, the mp4 video_url and cover_url, and when those links expire. Accepts an Instagram shortcode or instagram.com/reel/… URL, a TikTok video id or tiktok.com/@name/video/… URL, a YouTube video id or youtube.com/watch?v=… / /shorts/… / youtu.be/… URL (format short/video/live, exact or rounded views, exact or approximate date, description, category, tags, chapters, the most-replayed heatmap and its peaks, captions), a Reddit post id or reddit.com/r/…/comments/… URL (full title and text), or an X post id or x.com/…/status/… (twitter.com) URL (kind, format, full text, views, likes, replies, reposts, quotes, bookmarks, × the author\'s format median with ≈ when approximate, media, links, thread / quote / reply ids).',
+  inputSchema: { code: z.string().describe('Shortcode (e.g. DZPcVltsTAa), reel URL, TikTok video id / URL, YouTube video id / URL, Reddit post id / URL, or X post id / x.com status URL') },
   annotations: { readOnlyHint: true }
 }, ({ code }) => safe(() => {
   const p = findReel(readLibrary(), code);
+  if (!p && xPostIdOf(code)) return fail(`X post ${code} is not in the library. Collect its author with collect_profile (x/name), or open the post on x.com with the extension installed.`);
   if (!p) return fail(`Reel ${code} is not in the library. If it belongs to a saved account, run collect_profile for that account; or refresh_reel to load just this one.`);
   const out = brief(p, { full: true });
   if (out.link_expired) out.hint = 'The video link has expired. Call refresh_reel to get a fresh one.';
@@ -192,11 +196,13 @@ server.registerTool('download_reel', {
   }
 }, ({ code, what = 'video', directory, wait_seconds = 100 }) => safe(async () => {
   const ytUrlId = youtubeIdOf(code);
+  if (!ytUrlId && xPostIdOf(code)) return fail('That is an X post. OpenOutlier does not download X media from here; get_reel returns its text, counts and media links.');
   const p = findReel(readLibrary(), ytUrlId || code);
   if (ytUrlId && (!p || p.platform === 'youtube')) return downloadYouTubeTool(ytUrlId, p, what, directory, wait_seconds);
   if (!p) return fail(`Reel ${code} is not in the library. Use refresh_reel or collect_profile first.${isYouTubeVideoId(String(code).trim()) ? ' For a YouTube video that is not saved yet, pass its full URL (youtube.com/watch?v=… or /shorts/…).' : ''}`);
   if (p.platform === 'youtube') return downloadYouTubeTool(p.code, p, what, directory, wait_seconds);
   if (p.platform === 'reddit') return fail('That is a Reddit post. OpenOutlier does not download Reddit media; use get_reel for its title, text and link.');
+  if (p.platform === 'x') return fail('That is an X post. OpenOutlier does not download X media from here; get_reel returns its text, counts and media links.');
   if (p.platform === 'tiktok') return downloadTikTok(p, what, directory);
   const dir = directory ? resolve(directory.replace(/^~(?=$|\/)/, homedir())) : join(homedir(), 'Downloads', 'OpenOutlier', safeName(p.owner));
   await fs.mkdir(dir, { recursive: true });
@@ -302,15 +308,21 @@ async function downloadTikTok(p, what, directory) {
 
 server.registerTool('collect_profile', {
   title: 'Collect a profile',
-  description: 'Ask the OpenOutlier extension to collect an Instagram profile in a background Chrome tab: it pages the profile\'s feed, newest first (reels, carousels and photos together, about 33 per request), with views, likes, comments, dates, slides and files, and notes its followers and how many posts it has. New and existing accounts both work; results land in the library, and the result counts reels, carousels and photos. Waits up to wait_seconds, then returns a command id you can check with command_status. Given tt/name or a tiktok.com/@name URL it collects that TikTok profile: the extension opens it in a small unfocused Chrome window and scrolls it for up to ~4 minutes, reading the videos TikTok loads (no TikTok API calls of its own; if TikTok shows a puzzle, the user has to solve it once). Given yt/name, a youtube.com/@name or /channel/UC… URL it collects that YouTube channel: the extension opens its Videos tab in a small unfocused Chrome window, scrolls it (up to ~3 minutes, max_reels videos), then does the same on its Shorts tab, reading what YouTube loads (no YouTube API calls of its own). Views from channel tabs are YouTube\'s rounded ones and dates are relative ("3 weeks ago"); use refresh_reel on the videos that matter for exact numbers. Given r/name or u/name it collects that subreddit / Reddit user instead (see collect_subreddit).',
+  description: 'Ask the OpenOutlier extension to collect an Instagram profile in a background Chrome tab: it pages the profile\'s feed, newest first (reels, carousels and photos together, about 33 per request), with views, likes, comments, dates, slides and files, and notes its followers and how many posts it has. New and existing accounts both work; results land in the library, and the result counts reels, carousels and photos. Waits up to wait_seconds, then returns a command id you can check with command_status. Given tt/name or a tiktok.com/@name URL it collects that TikTok profile: the extension opens it in a small unfocused Chrome window and scrolls it for up to ~4 minutes, reading the videos TikTok loads (no TikTok API calls of its own; if TikTok shows a puzzle, the user has to solve it once). Given yt/name, a youtube.com/@name or /channel/UC… URL it collects that YouTube channel: the extension opens its Videos tab in a small unfocused Chrome window, scrolls it (up to ~3 minutes, max_reels videos), then does the same on its Shorts tab, reading what YouTube loads (no YouTube API calls of its own). Views from channel tabs are YouTube\'s rounded ones and dates are relative ("3 weeks ago"); use refresh_reel on the videos that matter for exact numbers. Given x/name or an x.com/name (twitter.com/name) URL it collects that X profile: the extension opens x.com/name in a small unfocused Chrome window and scrolls it slowly (at least 3 s between pages), reading the posts x.com loads in the user\'s logged-in session (no X API calls of its own; nothing is posted, liked or followed). It stops at 300 posts, at posts older than 6 months, or when X\'s rate limit runs low; the result says why (stopped_because) and how much rate limit is left. This can take a few minutes. Given r/name or u/name it collects that subreddit / Reddit user instead (see collect_subreddit).',
   inputSchema: {
-    username: z.string().describe('Instagram username, TikTok as tt/name or tiktok.com/@name, YouTube as yt/name or youtube.com/@name (or r/name, u/name for Reddit)'),
-    max_reels: z.number().int().min(12).max(2000).optional().describe('Stop after this many posts (default 300; Instagram counts reels, carousels and photos together; YouTube: per tab)'),
+    username: z.string().describe('Instagram username, TikTok as tt/name or tiktok.com/@name, YouTube as yt/name or youtube.com/@name, X as x/name or x.com/name (or r/name, u/name for Reddit)'),
+    max_reels: z.number().int().min(12).max(2000).optional().describe('Stop after this many posts (default 300; Instagram counts reels, carousels and photos together; YouTube: per tab; X: at most 300)'),
     youtube_tabs: z.array(z.enum(['videos', 'shorts', 'streams'])).optional().describe('YouTube only: which channel tabs to collect, in order (default ["videos", "shorts"])'),
-    wait_seconds: z.number().int().min(0).max(110).optional().describe('How long to wait for it to finish (default 45)')
+    wait_seconds: z.number().int().min(0).max(110).optional().describe('How long to wait for it to finish (default 45; X: 100)')
   }
-}, ({ username, max_reels = 300, wait_seconds = 45, youtube_tabs }) => safe(async () => {
+}, ({ username, max_reels = 300, wait_seconds, youtube_tabs }) => safe(async () => {
   const u = normUser(username);
+  if (isXId(u)) {
+    const cmd = await queueCommand('collect_x', { username: u.slice(2), maxPosts: Math.min(300, max_reels) });
+    const st = await waitForCommand(cmd.id, wait_seconds ?? 100);
+    return json({ command_id: cmd.id, account: u, ...st, hint: st.state === 'done' ? (st.result?.note || undefined) : (bridgeInfo().extension_connected ? 'Still running (the extension scrolls the X profile slowly, at least 3 s per page, and can take a few minutes). Check again with command_status, or call account_summary later.' : noExtensionHint()) });
+  }
+  wait_seconds ??= 45;
   if (isRedditId(u)) return collectReddit({ id: u, max_posts: Math.min(1000, max_reels), wait_seconds });
   if (isYouTubeId(u)) {
     const tabs = [...new Set(youtube_tabs?.length ? youtube_tabs : ['videos', 'shorts'])];
@@ -364,15 +376,17 @@ server.registerTool('subreddit_summary', {
 }, ({ name }) => safe(() => json(subredditSummary(readLibrary(), normSubreddit(name)))));
 
 server.registerTool('top_posts', {
-  title: 'Top Reddit posts',
-  description: 'Rank Reddit posts across subreddits and users (a folder, a tag, a list, or every saved subreddit). Each post is scored against its own subreddit\'s median score, so small and big subreddits compare fairly.',
+  title: 'Top Reddit or X posts',
+  description: 'Rank Reddit posts across subreddits and users (a folder, a tag, a list, or every saved subreddit). Each post is scored against its own subreddit\'s median score, so small and big subreddits compare fairly. platform "x" ranks X original posts across X accounts instead (accounts: x/name list), each by views ÷ its author\'s median for that format (median_approx / ≈ when the author has fewer than 8 posts of that format); replies and reposts are left out; score and min_score mean views there.',
   inputSchema: {
+    platform: z.enum(['reddit', 'x']).optional().describe('Default reddit'),
     ...redditScope,
-    sort: z.enum(['viral_score', 'score', 'comments', 'upvote_ratio', 'discussion', 'date']).optional().describe('Default viral_score. discussion = comments per score'),
+    accounts: z.array(z.string()).optional().describe('platform x: limit to these X accounts (x/name, @name or x.com/name)'),
+    sort: z.enum(['viral_score', 'score', 'comments', 'upvote_ratio', 'discussion', 'date']).optional().describe('Default viral_score. discussion = comments per score (X: engagement). X: score = views, comments = replies'),
     since_days: z.number().positive().optional().describe('Only posts from the last N days'),
     min_score: z.number().min(0).optional(),
     flair: z.string().optional().describe('Only posts with this flair (e.g. "solved")'),
-    post_type: z.enum(['text', 'image', 'video', 'link', 'gallery', 'poll', 'crosspost']).optional(),
+    post_type: z.enum(['text', 'image', 'video', 'link', 'gallery', 'poll', 'crosspost', 'thread', 'article', 'quote']).optional().describe('Reddit: text, image, video, link, gallery, poll, crosspost. X: text, image, video, link, thread, article, quote'),
     questions_only: z.boolean().optional().describe('Only titles that ask a question'),
     limit: z.number().int().min(1).max(200).optional().describe('Default 20'),
     include_small_accounts: z.boolean().optional().describe(`Include subreddits with fewer than ${MIN_POSTS} saved posts (default false)`)
@@ -413,6 +427,10 @@ server.registerTool('refresh_reel', {
   description: 'Ask the extension to open one reel, TikTok video or YouTube video in a background tab (TikTok: a small window) so its stats and video/cover links are refreshed (links expire after a few days). Use before download_reel when the link is expired. YouTube: opens the watch (or Shorts) page and saves exact views, likes, comments, publish date, chapters and the most-replayed heatmap in place of the channel page\'s rounded counts; works for videos not in the library yet when given their URL.',
   inputSchema: { code: z.string().describe('Shortcode, reel URL, TikTok video id or URL, YouTube video id (if saved) or URL'), wait_seconds: z.number().int().min(0).max(110).optional() }
 }, ({ code, wait_seconds = 40 }) => safe(async () => {
+  const xKnown = xPostIdOf(code) ? findReel(readLibrary(), code) : /^\d{5,25}$/.test(String(code).trim()) ? findReel(readLibrary(), String(code).trim()) : null;
+  if (xPostIdOf(code) || xKnown?.platform === 'x') {
+    return fail('X posts are not refreshed one by one. collect_profile with x/<author> collects the account again (counts update), or the post updates whenever the user sees it on x.com with the extension installed.');
+  }
   const yid = youtubeIdOf(code);
   const savedYt = !yid && isYouTubeVideoId(String(code).trim()) ? findReel(readLibrary(), String(code).trim()) : null;
   if (yid || savedYt?.platform === 'youtube') {
@@ -444,12 +462,13 @@ server.registerTool('refresh_reel', {
 }));
 
 server.registerTool('compare_platforms', {
-  title: 'Compare Instagram, TikTok and YouTube Shorts',
-  description: 'Match the same short videos posted to two accounts on different platforms (e.g. an "Excel Bug" series cross-posted): Instagram ↔ TikTok, or a YouTube channel\'s Shorts ↔ Instagram or TikTok. Matched by caption / Shorts title similarity, hashtags, video length and posting date (±3 days; different episode numbers never match), then compared side by side: views, engagement and × each account\'s own median (YouTube: the channel\'s Shorts median; long-form videos are left out). YouTube dates only count when exact or day-precise; Shorts without one (the Shorts tab shows no dates) only match on clearly similar titles, and the summary says how many. Summary: how many matched, typical views ratio, which platform did better relative to its median, hits on both, and videos posted on only one side.',
+  title: 'Compare Instagram, TikTok, YouTube Shorts and X videos',
+  description: 'Match the same short videos posted to two accounts on different platforms (e.g. an "Excel Bug" series cross-posted): Instagram ↔ TikTok, a YouTube channel\'s Shorts ↔ Instagram or TikTok, or an X account\'s video posts ↔ Instagram, TikTok or YouTube Shorts. Matched by caption / Shorts title / X post text similarity, hashtags, video length and posting date (±3 days; different episode numbers never match), then compared side by side: views, engagement and × each account\'s own median (YouTube: the channel\'s Shorts median; long-form videos are left out. X: the author\'s video-format median, median_approx when it had too few video posts; X text and image posts, replies and reposts are left out). YouTube dates only count when exact or day-precise; Shorts without one (the Shorts tab shows no dates) only match on clearly similar titles, and the summary says how many. Summary: how many matched, typical views ratio, which platform did better relative to its median, hits on both, and videos posted on only one side.',
   inputSchema: {
     account_ig: z.string().optional().describe('Instagram username (default: same handle as the other account)'),
     account_tt: z.string().optional().describe('TikTok username, tt/name or tiktok.com/@name (default: same handle as account_ig)'),
     account_yt: z.string().optional().describe('YouTube channel: yt/handle, yt/UC… or youtube.com/@handle. Compare its Shorts with account_ig or account_tt (default: the same handle on Instagram, else TikTok)'),
+    account_x: z.string().optional().describe('X account: x/name, @name or x.com/name. Compare its video posts with account_ig, account_tt or account_yt (default: the same handle on Instagram, else TikTok, else YouTube). An x/name in another argument works too'),
     since_days: z.number().positive().optional().describe('Only videos from the last N days'),
     min_score: z.number().min(0.2).max(0.95).optional().describe('Match threshold 0–1 (default 0.45; raise it for stricter matches)'),
     limit: z.number().int().min(1).max(500).optional().describe('How many pairs to return (default 50)')
@@ -459,7 +478,7 @@ server.registerTool('compare_platforms', {
 
 server.registerTool('organize_library', {
   title: 'Organize the Library (folders, tags, tracking)',
-  description: 'Change the user\'s Library organisation through the extension (it owns folders, tags and the niche tracking list): create folders, move accounts into folders (by name; a missing folder is created), add or remove tags, mark a folder as a tracked niche, and track a YouTube channel (yt/handle, with its UC id) inside a niche. Nothing is deleted. A folder marked as a tracked niche tracks every YouTube channel in it (niche tracking: RSS every 15 min, Data API measurements, a one-time 500-upload backfill per new channel), so moving channels into a niche folder starts tracking them; the niche is the folder\'s name. Tags follow the Library\'s rule (lower case, letters, digits, _ and -). Show the user the plan before a large reorganisation. Waits up to wait_seconds for the extension (it checks for commands every 30 s).',
+  description: 'Change the user\'s Library organisation through the extension (it owns folders, tags and the niche tracking list): create folders, move accounts (Instagram username, tt/name, yt/handle, r/name, u/name, x/name; x.com and twitter.com profile URLs become x/name) into folders (by name; a missing folder is created), add or remove tags, mark a folder as a tracked niche, and track a YouTube channel (yt/handle, with its UC id) inside a niche. Nothing is deleted. A folder marked as a tracked niche tracks every YouTube channel in it (niche tracking: RSS every 15 min, Data API measurements, a one-time 500-upload backfill per new channel), so moving channels into a niche folder starts tracking them; the niche is the folder\'s name. Tags follow the Library\'s rule (lower case, letters, digits, _ and -). Show the user the plan before a large reorganisation. Waits up to wait_seconds for the extension (it checks for commands every 30 s).',
   inputSchema: {
     ops: z.array(z.union([
       z.object({ op: z.literal('folder'), name: z.string().min(1).max(60) }),
@@ -471,6 +490,8 @@ server.registerTool('organize_library', {
     wait_seconds: z.number().int().min(0).max(110).optional().describe('How long to wait for the extension (default 60)')
   }
 }, ({ ops, wait_seconds = 60 }) => safe(async () => {
+  // X references (x/Name, x.com/name, twitter.com/name) become the library id x/name; other accounts pass as given.
+  ops = ops.map((o) => (o.account && o.op !== 'track' && isXId(normUser(o.account)) ? { ...o, account: normUser(o.account) } : o));
   const cmd = await queueCommand('org_edit', { ops });
   const st = await waitForCommand(cmd.id, wait_seconds);
   return json({ command_id: cmd.id, ...st, hint: st.state === 'done' ? undefined : (bridgeInfo().extension_connected ? 'Not applied yet: the extension checks every 30 s. Check with command_status.' : noExtensionHint()) });

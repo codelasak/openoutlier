@@ -16,6 +16,8 @@
 //   unfocused window (its grid only loads more while it is rendered), scrolls it,
 //   then loads the Shorts tab in the same window and scrolls that (one step per
 //   tab, each a fresh page load so YouTube inlines that tab's first page).
+//   X: collect_x opens x.com/<name> in a small unfocused window; src/x-content.js scrolls it slowly
+//   (≥3 s per page, stops at 6 months / 300 posts / low rate limit) and reads what x.com loads.
 //   refresh_youtube opens one watch / Shorts page in a muted background tab and
 //   waits for its exact stats, like "Get exact stats" (youtube-exact.js).
 // • Sends the feature switches (src/features.js) and today's Data API unit count
@@ -506,6 +508,10 @@
     return 'https://www.tiktok.com/@' + (name || 'i') + '/video/' + encodeURIComponent(String(a.id || ''));
   }
 
+  function xUrl(a) {
+    return 'https://x.com/' + encodeURIComponent(String(a.username || '').replace(/^\/?(x\/|@)/i, ''));
+  }
+
   async function startCommand(port, command) {
     var map = await getRunning();
     if (map[command.id]) return;
@@ -513,6 +519,7 @@
     var reddit = command.type === 'collect_reddit';
     var tiktok = /^(collect|refresh|download)_tiktok$/.test(command.type);
     var youtube = /^(collect|refresh)_youtube$/.test(command.type);
+    var xcom = command.type === 'collect_x';
     var steps = null;
     if (command.type === 'collect_youtube') {
       // One step per channel tab: the first now, the rest after each finishes (stepDone).
@@ -520,7 +527,7 @@
       command = Object.assign({}, command, { args: Object.assign({}, command.args, { tab: steps.shift() }) });
     }
     var pageUrl = reddit ? redditUrl(command.args || {}) : tiktok ? tiktokUrl(command.type, command.args || {}) :
-      youtube ? youtubeUrl(command.type, command.args || {}, (command.args || {}).tab) : null;
+      youtube ? youtubeUrl(command.type, command.args || {}, (command.args || {}).tab) : xcom ? xUrl(command.args || {}) : null;
     var tab = pageUrl ? null : await instagramTab();
     var opened = false;
     if (command.type === 'refresh_youtube') {
@@ -549,8 +556,8 @@
     if (steps) { map[command.id].steps = steps; map[command.id].command = command; map[command.id].results = []; }
     await putRunning(map);
     var ok = await sendCommand(tab.id, command);
-    var site = reddit ? 'Reddit' : tiktok ? 'TikTok' : youtube ? 'YouTube' : 'Instagram';
-    var host = reddit ? 'www.reddit.com' : tiktok ? 'www.tiktok.com' : youtube ? 'www.youtube.com' : 'instagram.com';
+    var site = reddit ? 'Reddit' : tiktok ? 'TikTok' : youtube ? 'YouTube' : xcom ? 'X' : 'Instagram';
+    var host = reddit ? 'www.reddit.com' : tiktok ? 'www.tiktok.com' : youtube ? 'www.youtube.com' : xcom ? 'x.com' : 'instagram.com';
     if (!ok) finish(command.id, { ok: false, error: 'Could not reach ' + site + ' in the browser. Is ' + host + ' loading and are you logged in?' });
   }
 

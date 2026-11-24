@@ -212,6 +212,25 @@ main.has-panel { display: flex; flex-direction: column; overflow: hidden; paddin
 .panel-slot { flex: 1; min-height: 0; border: 1.5px solid var(--border); border-bottom: 0; border-radius: 6px 6px 0 0; overflow: hidden; background: var(--page); }
 .panel-slot > div { display: block; height: 100%; }
 
+/* Top posts filters (dashboard/top-filters.js): thresholds, follower range, format, date, export */
+.tp-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+.tp-bar .seg { margin-left: 0; }
+.tp-field { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); }
+.tp-label { font-weight: 600; }
+.tp-bar select, .tp-bar input.tp-num { height: 30px; font-size: 13px; }
+.tp-bar input.tp-num { width: 72px; padding: 0 8px; font-variant-numeric: tabular-nums; }
+.tp-reset { height: 30px; padding: 0 8px; color: var(--accent); }
+.tp-count { font-size: 12.5px; color: var(--muted); }
+.tp-count b { color: var(--text); font-variant-numeric: tabular-nums; }
+.tp-export { display: inline-flex; gap: 6px; margin-left: auto; }
+.tp-export .btn { height: 30px; padding: 0 10px; }
+.tp-msg { flex-basis: 100%; font-size: 12.5px; color: var(--ok); min-height: 0; }
+.tp-msg:empty { display: none; }
+@media (max-width: 760px) { .tp-export { margin-left: 0; } }
+
+/* X accounts: rest_id on the account page */
+.x-restid { font: 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 1px 4px; background: var(--surface); color: var(--text-2); user-select: all; }
+
 /* Reddit accounts */
 .top-titles { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; min-height: 96px; }
 .top-titles li { font-size: 12.5px; line-height: 1.35; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

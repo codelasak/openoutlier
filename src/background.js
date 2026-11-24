@@ -10,6 +10,8 @@ try { self.OpenOutlierFeatures.migrateSplit().catch(function () {}); } catch (e)
 var ALLOWED_HOST = /(^|\.)(cdninstagram\.com|fbcdn\.net)$/i;
 var TIKTOK_HOST = /(^|\.)(tiktokcdn(-[a-z]+)?\.com|tiktok\.com|tiktokv\.com|ibyteimg\.com|ibytedtos\.com|byteoversea\.com|muscdn\.com)$/i;
 var YT_THUMB_HOST = /^i[0-9]?\.ytimg\.com$/i;
+// X: photos on pbs.twimg.com, videos and GIFs on video.twimg.com.
+var X_MEDIA_HOST = /^(pbs|video)\.twimg\.com$/i;
 var YT_VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
 function safeName(s) {
@@ -27,7 +29,7 @@ function extensionFor(url, kind) {
 function isAllowed(url, tiktok) {
   try {
     var u = new URL(url);
-    return u.protocol === 'https:' && (tiktok ? TIKTOK_HOST : ALLOWED_HOST).test(u.hostname);
+    return u.protocol === 'https:' && ((tiktok ? TIKTOK_HOST : ALLOWED_HOST).test(u.hostname) || (!tiktok && X_MEDIA_HOST.test(u.hostname)));
   } catch (e) {
     return false;
   }

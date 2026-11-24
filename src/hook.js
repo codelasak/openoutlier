@@ -18,6 +18,13 @@
 // player, next (also the comments as they load), reel/reel_item_watch and reel/reel_watch_sequence
 // (Shorts), and /api/timedtext (the captions the player loads when CC is on: the transcript fallback).
 // They all go through fetch, so this must stay at document_start.
+//
+// X (x.com): /i/api/graphql/<queryId>/<Operation> (UserOriginalsTimeline, HomeTimeline, TweetDetail,
+// SearchTimeline, UserByScreenName, the analytics queries …). Query ids change weekly, so only the
+// path shape is matched here; src/x.js picks operations by name. X answers with XHR. Its
+// x-rate-limit-limit / -remaining / -reset headers ride along with each payload, and every
+// GraphQL response (also a 429 without posts) sends a small 'ratelimit' message, so the slow
+// auto-scroll can stop before X starts refusing.
 (function () {
   'use strict';
   if (window.__reelscopeHooked) return;
@@ -26,7 +33,10 @@
   // window.__reelscopeSite lets dev/tiktok-demo.html and dev/youtube-demo.html (served from localhost) pick a site.
   var TIKTOK = /(^|\.)tiktok\.com$/.test(location.hostname) || window.__reelscopeSite === 'tiktok';
   var YOUTUBE = /(^|\.)youtube\.com$/.test(location.hostname) || window.__reelscopeSite === 'youtube';
-  var URL_RE = YOUTUBE
+  var XCOM = /(^|\.)(x|twitter)\.com$/.test(location.hostname) || window.__reelscopeSite === 'x';
+  var URL_RE = XCOM
+    ? /\/i\/api\/graphql\/[^/?]+\/[A-Za-z]+/
+    : YOUTUBE
     ? /\/youtubei\/v1\/(browse|next|player|get_watch|search|reel\/reel_item_watch|reel\/reel_watch_sequence)(\?|$)|\/api\/timedtext\?/
     : TIKTOK
       ? /\/api\/(?!comment\/|im\/|user\/(?!detail)|notice\/|upload\/|report|ba\/|v1\/web\/report)/
@@ -34,6 +44,9 @@
   var MAX_BYTES = 15 * 1024 * 1024;
 
   function looksUseful(text) {
+    // X: a post or user object always has a rest_id; analytics carry current_time_series / tweets_results.
+    if (XCOM) return text.indexOf('"rest_id"') !== -1 && (text.indexOf('"tweet_results"') !== -1 || text.indexOf('"user_results"') !== -1 ||
+      text.indexOf('"tweetResult"') !== -1 || text.indexOf('"screen_name"') !== -1 || text.indexOf('"current_time_series"') !== -1 || text.indexOf('"tweets_results"') !== -1);
     // Cheap pre-filter. Instagram media objects always carry a shortcode ("code");
     // TikTok video items always carry createTime and a stats block.
     // YouTube: every useful response names a videoId (watch, Shorts) or a contentId (grid lockups).
@@ -46,9 +59,23 @@
       text.indexOf('"edge_followed_by"') !== -1 || text.indexOf('"follower_count"') !== -1;
   }
 
-  function forward(url, text) {
+  function forward(url, text, rl) {
     if (typeof text !== 'string' || text.length > MAX_BYTES || !looksUseful(text)) return;
-    window.postMessage({ __reelscope: 1, type: 'payload', url: String(url), text: text }, window.location.origin);
+    var msg = { __reelscope: 1, type: 'payload', url: String(url), text: text };
+    if (rl) msg.rateLimit = rl;
+    window.postMessage(msg, window.location.origin);
+  }
+
+  /** X: the rate-limit headers of a response (null when there are none). get(name) reads one header. */
+  function rateHeaders(get) {
+    try {
+      var rl = { limit: get('x-rate-limit-limit'), remaining: get('x-rate-limit-remaining'), reset: get('x-rate-limit-reset') };
+      return rl.limit == null && rl.remaining == null && rl.reset == null ? null : rl;
+    } catch (e) { return null; }
+  }
+  function forwardRate(url, status, rl) {
+    if (!XCOM || (!rl && status !== 429)) return;
+    window.postMessage({ __reelscope: 1, type: 'ratelimit', url: String(url), status: status, rateLimit: rl }, window.location.origin);
   }
 
   function urlOf(input) {
@@ -70,14 +97,29 @@
       if (URL_RE.test(url)) {
         p.then(function (res) {
           try {
+            var rl = XCOM ? rateHeaders(function (n) { return res.headers.get(n); }) : null;
+            forwardRate(url, res.status, rl);
             var ct = res.headers.get('content-type') || '';
             if (ct && ct.indexOf('json') === -1 && ct.indexOf('javascript') === -1 && ct.indexOf('text') === -1) return;
-            res.clone().text().then(function (t) { forward(url, t); }, function () {});
+            res.clone().text().then(function (t) { forward(url, t, rl); }, function () {});
           } catch (e) { /* ignore */ }
         }, function () {});
       }
       return p;
     };
+  }
+
+  // X is a single-page app with no navigation event of its own: tell the content script when
+  // the page's router changes the URL (popstate covers back/forward there).
+  if (XCOM && window.history && typeof window.history.pushState === 'function') {
+    ['pushState', 'replaceState'].forEach(function (name) {
+      var orig = window.history[name];
+      window.history[name] = function () {
+        var r = orig.apply(this, arguments);
+        try { window.postMessage({ __reelscope: 1, type: 'nav', path: String(window.location.pathname) }, window.location.origin); } catch (e) { /* ignore */ }
+        return r;
+      };
+    });
   }
 
   // XMLHttpRequest
@@ -94,8 +136,10 @@
       if (xhr.__reelscopeUrl && URL_RE.test(xhr.__reelscopeUrl)) {
         xhr.addEventListener('load', function () {
           try {
-            if (xhr.responseType === '' || xhr.responseType === 'text') forward(xhr.__reelscopeUrl, xhr.responseText);
-            else if (xhr.responseType === 'json' && xhr.response) forward(xhr.__reelscopeUrl, JSON.stringify(xhr.response));
+            var rl = XCOM ? rateHeaders(function (n) { return xhr.getResponseHeader(n); }) : null;
+            forwardRate(xhr.__reelscopeUrl, xhr.status, rl);
+            if (xhr.responseType === '' || xhr.responseType === 'text') forward(xhr.__reelscopeUrl, xhr.responseText, rl);
+            else if (xhr.responseType === 'json' && xhr.response) forward(xhr.__reelscopeUrl, JSON.stringify(xhr.response), rl);
           } catch (e) { /* ignore */ }
         });
       }

@@ -155,6 +155,19 @@
     ['comments', 'Comments'],
     ['engagement', 'Engagement rate']
   ];
+  // X: replies, reposts, quotes and bookmarks are all public.
+  var X_SORT_OPTIONS = [
+    ['viralScore', 'Viral Score'],
+    ['views', 'Views'],
+    ['likes', 'Likes'],
+    ['comments', 'Replies'],
+    ['shares', 'Reposts'],
+    ['quotes', 'Quotes'],
+    ['saves', 'Bookmarks'],
+    ['engagement', 'Engagement rate'],
+    ['date', 'Newest']
+  ];
+  var X_FORMAT_NAMES = { text: 'Text', image: 'Image', video: 'Video', thread: 'Thread', article: 'Article', link: 'Link', quote: 'Quote' };
   var YOUTUBE_SORT_TR = { views: 'İzlenme', viralScore: 'Viral Skor', duration: 'En uzun', date: 'En yeni', likes: 'Beğeni', comments: 'Yorum', engagement: 'Etkileşim oranı' };
 
   // The panel's chrome in Turkish when the page asks for it (opts.lang; the YouTube panel). Instagram, TikTok and
@@ -189,8 +202,10 @@
     var r = 0;
     var t = 0;
     var y = 0;
-    for (var i = 0; i < posts.length; i++) { if (posts[i].platform === 'reddit') r++; else if (posts[i].platform === 'tiktok') t++; else if (posts[i].platform === 'youtube') y++; }
+    var x = 0;
+    for (var i = 0; i < posts.length; i++) { if (posts[i].platform === 'reddit') r++; else if (posts[i].platform === 'tiktok') t++; else if (posts[i].platform === 'youtube') y++; else if (posts[i].platform === 'x') x++; }
     if (r) return r === posts.length ? 'reddit' : 'mixed';
+    if (x && x === posts.length) return 'x';
     if (y && y === posts.length) return 'youtube';
     return t && t === posts.length ? 'tiktok' : 'instagram';
   }
@@ -199,6 +214,7 @@
     var s = String(id || '');
     if (/^(r|u)\//.test(s)) return s;
     if (/^tt\//.test(s)) return '@' + s.slice(3) + ' (TikTok)';
+    if (/^x\//.test(s)) return '@' + s.slice(2) + ' (X)';
     if (/^yt\/UC/.test(s)) return s.slice(3) + ' (YouTube)';
     if (/^yt\//.test(s)) return '@' + s.slice(3) + ' (YouTube)';
     return '@' + s;
@@ -206,13 +222,24 @@
   function ownerHandle(p) {
     if (!p || !p.owner) return '';
     if (/^yt\//.test(p.owner)) return p.author ? '@' + p.author : p.ownerName || p.owner.slice(3);
+    if (isX(p)) return '@' + (p.author || p.owner.slice(2));
     return '@' + String(p.owner).replace(/^tt\//, '');
   }
   function isReddit(p) { return p && p.platform === 'reddit'; }
   function isTT(p) { return p && p.platform === 'tiktok'; }
   function isYT(p) { return p && p.platform === 'youtube'; }
-  function siteName(p) { return isReddit(p) ? 'Reddit' : isTT(p) ? 'TikTok' : isYT(p) ? 'YouTube' : 'Instagram'; }
+  function isX(p) { return !!p && p.platform === 'x'; }
+  function siteName(p) { return isReddit(p) ? 'Reddit' : isTT(p) ? 'TikTok' : isYT(p) ? 'YouTube' : isX(p) ? 'X' : 'Instagram'; }
+  /** X: what an X post's × median compares with, for tooltips. */
+  function xBaseTip(p) {
+    if (p.noViews) return 'X shows no view count on this post (posts before 2023 have none), so it has no score and stays out of the median';
+    if (p.ratio == null) return p.kind === 'repost' ? 'A repost has no views of its own' : 'Not enough data: the median needs 8 original posts with a view count';
+    var f = X_FORMAT_NAMES[p.type] || 'Text';
+    if (p.baselineScope === 'format') return 'Views ÷ the median of this account\'s ' + f.toLowerCase() + ' posts' + (p.baselineApprox ? ' (≈ estimated from the posts on this page)' : '');
+    return '≈ Views ÷ this account\'s overall median of original posts' + (p.kind === 'original' ? ' (fewer than 8 ' + f.toLowerCase() + ' posts with views to compare with)' : ' (replies and thread parts are compared with the originals)');
+  }
   function engagementTip(p) {
+    if (isX(p)) return '(likes + replies + reposts + quotes + bookmarks) ÷ views';
     if (isYT(p)) return p.likes == null && p.comments == null ? 'Likes and comments load when the video is opened on YouTube' : '(likes + comments) ÷ views';
     return isTT(p) ? '(likes + comments + shares + saves) ÷ views' : '(likes + comments) ÷ views';
   }
@@ -284,7 +311,7 @@
     var multiPlat = false;  // the list mixes platforms (rows get a platform badge)
     function sortOptions() {
       var yt = opts.lang && opts.lang() === 'tr' ? YOUTUBE_SORT_OPTIONS.map(function (o) { return [o[0], YOUTUBE_SORT_TR[o[0]] || o[1]]; }) : YOUTUBE_SORT_OPTIONS;
-      var all = plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : plat === 'youtube' ? yt : hasTT ? VIDEO_SORT_OPTIONS : SORT_OPTIONS;
+      var all = plat === 'reddit' ? REDDIT_SORT_OPTIONS : plat === 'mixed' ? MIXED_SORT_OPTIONS : plat === 'youtube' ? yt : plat === 'x' ? X_SORT_OPTIONS : hasTT ? VIDEO_SORT_OPTIONS : SORT_OPTIONS;
       // Carousels and photos have no views, length or view-based engagement to sort by.
       return basis === 'likes' ? all.filter(function (o) { return LIKES_ONLY_HIDDEN.indexOf(o[0]) === -1; }) : all;
     }
@@ -401,17 +428,30 @@
     }
 
     // ---- data shaping --------------------------------------------------------
+    function xTypeOk(p) {
+      var k = M.xKind(p);
+      if (ui.typeFilter === 'all') return true;
+      if (ui.typeFilter === 'replies') return k === 'reply' || k === 'thread-part';
+      if (ui.typeFilter === 'reposts') return k === 'repost';
+      if (ui.typeFilter.indexOf('fmt:') === 0) return k === 'original' && p.type === ui.typeFilter.slice(4);
+      return k === 'original';
+    }
     function filtered() {
+      if (plat === 'x') return finish(opts.preEnriched ? state.posts.filter(xTypeOk) : M.enrich(state.posts).filter(xTypeOk));
       var base = state.posts.filter(function (p) {
         // YouTube: one format at a time (Shorts and long-form have separate medians).
         if (isYT(p)) return plat !== 'youtube' || ytFormatOf(p) === ui.ytFormat;
         if (isReddit(p)) return ui.typeFilter === 'reels' || ui.typeFilter === 'all' || ui.typeFilter === 'posts' || p.type === ui.typeFilter;
+        // X in a mixed list (Library top posts): every original post, whatever its format.
+        if (isX(p)) return ui.typeFilter === 'all' || M.xKind(p) === 'original';
         if (ui.typeFilter === 'reels') return p.type === 'reel' || p.type === 'video';
         // Instagram carousels and photos: no view count, so they are ranked by likes on their own median.
         if (ui.typeFilter === 'posts') return M.isLikesScored(p);
         return ui.typeFilter === 'all';
       });
-      var enriched = opts.preEnriched ? base : M.enrich(base);
+      return finish(opts.preEnriched ? base : M.enrich(base));
+    }
+    function finish(enriched) {
       basis = basisOfList(enriched);
       var q = ui.query.trim().toLowerCase();
       var out = enriched.filter(function (p) {
@@ -430,7 +470,9 @@
       plat = state.platform || platformOf(state.posts);
       if (plat !== 'instagram') basis = 'views'; // likes-ranked lists are Instagram only (set again in filtered())
       hasTT = state.posts.some(isTT);
-      multiPlat = state.posts.some(isTT) + state.posts.some(isReddit) + state.posts.some(isYT) + state.posts.some(function (p) { return !isTT(p) && !isReddit(p) && !isYT(p); }) > 1;
+      multiPlat = state.posts.some(isTT) + state.posts.some(isReddit) + state.posts.some(isYT) + state.posts.some(isX) + state.posts.some(function (p) { return !isTT(p) && !isReddit(p) && !isYT(p) && !isX(p); }) > 1;
+      if (plat === 'x' && ['reels', 'all', 'replies', 'reposts'].indexOf(ui.typeFilter) === -1 && ui.typeFilter.indexOf('fmt:') !== 0) ui.typeFilter = 'reels';
+      if (plat !== 'x' && (ui.typeFilter === 'replies' || ui.typeFilter === 'reposts' || ui.typeFilter.indexOf('fmt:') === 0)) ui.typeFilter = 'reels';
       if (plat === 'youtube') {
         // Follow the channel tab that is open (Shorts tab → Shorts), but keep the user's own pick until it changes.
         if (state.view && state.view !== ui.ytHint) { ui.ytHint = state.view; ui.ytFormat = state.view; }
@@ -528,6 +570,15 @@
             h('li', { text: tx('ytE3', 'Open a video to get its exact views, likes and date. Come back here to sort, analyze and export.') })),
           h('p', { class: 'muted', text: tx('ytEnote', 'Everything stays in this browser. OpenOutlier only reads what YouTube already loaded; it never likes, subscribes, comments or posts.') }));
       }
+      if (opts.platform === 'x') {
+        return h('div', { class: 'empty' },
+          h('p', { class: 'empty-title', text: 'No X posts collected yet' }),
+          h('ol', null,
+            h('li', null, 'Open a profile, e.g. ', h('code', { text: 'x.com/name' })),
+            h('li', { text: 'Scroll down, or press Auto-scroll (slow on purpose: a page every few seconds, it stops at 6 months, 300 posts or when X\'s rate limit runs low).' }),
+            h('li', { text: 'Come back here to sort, analyze and export. Posts on Home, search, lists and post pages get a × median badge.' })),
+          h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier only reads what x.com already loaded; it never posts, replies, reposts, likes, follows or sends messages.' }));
+      }
       if (opts.platform === 'reddit') {
         return h('div', { class: 'empty' },
           h('p', { class: 'empty-title', text: 'No Reddit posts collected yet' }),
@@ -546,12 +597,28 @@
         h('p', { class: 'muted', text: 'Everything stays in this browser. OpenOutlier never asks for your password and never posts, likes or follows.' }));
     }
 
+    function xTypeOptions() {
+      var n = { original: 0, reply: 0, repost: 0, fmt: {} };
+      state.posts.forEach(function (p) {
+        var k = M.xKind(p);
+        if (k === 'original') { n.original++; n.fmt[p.type] = (n.fmt[p.type] || 0) + 1; } else if (k === 'repost') n.repost++; else n.reply++;
+      });
+      var o = [h('option', { value: 'reels', selected: ui.typeFilter === 'reels', text: 'Original posts (' + fmtFull(n.original) + ')' })];
+      Object.keys(X_FORMAT_NAMES).forEach(function (f) {
+        if (n.fmt[f]) o.push(h('option', { value: 'fmt:' + f, selected: ui.typeFilter === 'fmt:' + f, text: '· ' + X_FORMAT_NAMES[f] + ' (' + fmtFull(n.fmt[f]) + ')' }));
+      });
+      if (n.reply) o.push(h('option', { value: 'replies', selected: ui.typeFilter === 'replies', text: 'Replies & thread parts (' + fmtFull(n.reply) + ')' }));
+      if (n.repost) o.push(h('option', { value: 'reposts', selected: ui.typeFilter === 'reposts', text: 'Reposts (' + fmtFull(n.repost) + ')' }));
+      o.push(h('option', { value: 'all', selected: ui.typeFilter === 'all', text: 'Everything' }));
+      return o;
+    }
+
     function renderReels(data) {
       var wrap = h('div', { class: 'reels' });
       var sortSel = h('select', { 'aria-label': 'Sort by', onchange: function () { ui.sort = sortSel.value; ui.shown = PAGE; render(); } },
         sortOptions().map(function (o) { return h('option', { value: o[0], selected: o[0] === sortKey(), text: o[1] }); }));
       var typeSel = h('select', { 'aria-label': 'Post type', onchange: function () { ui.typeFilter = typeSel.value; ui.shown = PAGE; render(); } },
-        plat === 'reddit'
+        plat === 'x' ? xTypeOptions() : plat === 'reddit'
           ? REDDIT_TYPES.map(function (t) { return h('option', { value: t[0], selected: ui.typeFilter === t[0] || (t[0] === 'all' && ui.typeFilter === 'reels'), text: t[1] }); })
           : [h('option', { value: 'reels', selected: ui.typeFilter === 'reels', text: plat === 'mixed' ? 'Reels, videos & Reddit posts' : plat === 'tiktok' ? 'Videos' : 'Reels & videos' }),
             igPosts() ? h('option', { value: 'posts', selected: ui.typeFilter === 'posts', text: 'Carousels & photos (' + fmtFull(igPosts()) + ')' }) : null,
@@ -578,7 +645,17 @@
       wrap.appendChild(h('div', { class: 'controls' }, ytSwitch, h('label', { class: 'field' }, tx('sort', 'Sort'), sortSel), plat === 'youtube' ? null : typeSel, outl, search));
 
       var list = data.list;
-      wrap.appendChild(h('p', { class: 'summary' },
+      if (plat === 'x') {
+        var nApproxX = data.all.filter(function (p) { return p.ratio != null && p.baselineApprox; }).length;
+        var nNoViews = data.all.filter(function (p) { return p.noViews && M.xKind(p) !== 'repost'; }).length;
+        wrap.appendChild(h('p', { class: 'summary', text: fmtFull(list.length) + ' shown · each post against its account\'s median views for its format (text, image, video, thread, article, link, quote) · outlier = ' + M.OUTLIER_RATIO + '× median or more' }));
+        var xNotes = [];
+        if (nApproxX) xNotes.push(nApproxX + ' scored with ≈: fewer than 8 posts of that format, so against the overall median of original posts.');
+        if (nNoViews) xNotes.push(nNoViews + ' without a view count (X shows none before 2023): no score, not in the median.');
+        xNotes.push('Replies and reposts stay out of the medians. Views are not the impressions X pays for.');
+        wrap.appendChild(h('p', { class: 'muted small', text: xNotes.join(' ') }));
+        if (state.profile && state.profile.followers != null) wrap.appendChild(h('p', { class: 'muted small', text: fmtFull(state.posts.length) + ' posts saved' + (state.profile.posts ? ' (the profile shows ' + fmtFull(state.profile.posts) + ')' : '') + ' · ' + fmt(state.profile.followers) + ' followers' + (state.profile.blueVerified ? ' · verified' : '') + '.' }));
+      } else wrap.appendChild(h('p', { class: 'summary' },
         plat === 'youtube' && opts.lang && opts.lang() === 'tr'
           ? fmtFull(list.length) + ' gösteriliyor · medyan ' + fmt(M.baselineOf(data.all) !== null ? M.baselineOf(data.all) : M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' izlenme (' + (ui.ytFormat === 'short' ? 'Shorts' : 'uzun') + ') · outlier = medyanın ' + M.OUTLIER_RATIO + ' katı ya da fazlası'
           : fmtFull(list.length) + ' shown · ' + (plat === 'mixed' ? 'scored against each account\'s own median' : basis === 'mixed' ? 'reels scored on views, carousels and photos on likes, each against its own median' : 'median ' + fmt(M.baselineOf(data.all) !== null ? M.baselineOf(data.all) : M.median(data.all.map(function (p) { var v = M.val(p); return v > 0 ? v : null; }))) + ' ' + unit() + (plat === 'youtube' ? (ui.ytFormat === 'short' ? ' (Shorts)' : ' (long-form)') : '')) + ' · outlier = ' + M.OUTLIER_RATIO + '× median or more'));
@@ -754,6 +831,7 @@
       detailEl.hidden = false;
       detailEl.textContent = '';
       if (isReddit(p)) { renderRedditDetail(p); detailEl.scrollTop = st; return; }
+      if (isX(p)) { renderXDetail(p); detailEl.scrollTop = st; return; }
       var when = p.takenAt ? new Date(p.takenAt) : null;
       var nFiles = (p.files || []).length;
       var msg = h('p', { class: 'status-line', 'aria-live': 'polite', text: dlMsgs[p.code] || '' });
@@ -1003,6 +1081,74 @@
       }
     }
 
+    function renderXDetail(p) {
+      var when = p.takenAt ? new Date(p.takenAt) : null;
+      var msg = h('p', { class: 'status-line', 'aria-live': 'polite', text: dlMsgs[p.code] || '' });
+      msg.__code = p.code;
+      detailMsg = msg;
+      var nFiles = (p.files || []).length;
+      var fname = X_FORMAT_NAMES[p.type] || 'Text';
+      detailEl.appendChild(h('div', { class: 'd-top' },
+        h('button', { class: 'btn btn-ghost d-back', type: 'button', onclick: closeDetail }, pxIcon(PX_BACK, 14), 'Back'),
+        h('a', { class: 'd-open', href: p.url, target: '_blank', rel: 'noopener noreferrer' }, 'Open on X ↗')));
+      var dlBtn = h('button', { class: 'btn btn-primary', type: 'button', disabled: !nFiles, onclick: function () {
+        dlBtn.disabled = true;
+        var code = p.code;
+        opts.onDownloadMedia([p], 'media', function (label) { setDlMsg(code, label); }).then(function (r) {
+          setDlMsg(code, r && r.message ? r.message : r && r.queued ? 'Saved to Downloads/OpenOutlier/' + String(p.owner || '').replace('/', '_') + '/' : (r && r.errors && r.errors[0]) || 'Download failed.');
+        }, function () { setDlMsg(code, 'Download failed.'); }).then(function () { dlBtn.disabled = false; });
+      } }, nFiles > 1 ? 'Download ' + nFiles + ' files' : nFiles && p.files[0].kind === 'video' ? 'Download video' : 'Download photo');
+      detailEl.appendChild(h('div', { class: 'd-hero' },
+        image(p.thumb, 'd-cover'),
+        h('div', { class: 'd-side' },
+          h('p', { class: 'd-owner', text: ownerHandle(p) + (p.ownerName ? ' · ' + p.ownerName : '') + (multiPlat ? ' · X' : '') }),
+          h('p', { class: 'muted small d-when', text: when ? when.toLocaleString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '' }),
+          verdict(p, (p.baselineApprox ? '≈ ' : '') + (p.baselineScope === 'format' ? 'this account\'s median ' + fname.toLowerCase() + ' post' : 'this account\'s median original post')),
+          p.ratio == null ? h('p', { class: 'muted small', text: xBaseTip(p) }) : null,
+          h('div', { class: 'badges' },
+            h('span', { class: 'badge' }, p.kind === 'original' ? fname + (p.threadLength ? ' · ' + p.threadLength + ' posts' : '') : p.kind === 'repost' ? 'Repost' : p.kind === 'reply' ? 'Reply' + (p.replyToUser ? ' to @' + p.replyToUser : '') : 'Thread part'),
+            p.pinned ? h('span', { class: 'badge' }, 'Pinned') : null,
+            p.edit && p.edit.edited ? h('span', { class: 'badge', 'data-tip': 'Edited ' + (p.edit.ids.length - 1) + '×' }, 'Edited') : null,
+            p.aiGenerated ? h('span', { class: 'badge', 'data-tip': 'The author marked this as made with AI' }, 'AI') : null,
+            p.promoted ? h('span', { class: 'badge' }, 'Promoted') : null),
+          h('div', { class: 'd-actions' }, dlBtn,
+            h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () {
+              opts.onCopy(p.url).then(function () { msg.textContent = 'Link copied.'; }, function () { msg.textContent = p.url; });
+            } }, 'Copy link'),
+            h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () {
+              opts.onCopy(p.caption || '').then(function () { msg.textContent = 'Text copied.'; }, function () { msg.textContent = p.caption; });
+            } }, 'Copy text'),
+            opts.onSaveSwipe ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () {
+              Promise.resolve(opts.onSaveSwipe(p)).then(function (r) { msg.textContent = r && r.message || 'Saved to the swipe file.'; }, function () { msg.textContent = 'Could not save.'; });
+            } }, 'Save to swipe file') : null),
+          msg)));
+      detailEl.appendChild(h('div', { class: 'd-grid' },
+        big('Views', p.views != null ? fmt(p.views) : '–', p.views != null ? fmtFull(p.views) : xBaseTip(p)),
+        big('Likes', fmt(p.likes), p.likes != null ? fmtFull(p.likes) : null),
+        big('Replies', fmt(p.comments), p.comments != null ? fmtFull(p.comments) : null),
+        big('Reposts', fmt(p.shares), p.shares != null ? fmtFull(p.shares) : null),
+        big('Quotes', fmt(p.quotes), p.quotes != null ? fmtFull(p.quotes) : null),
+        big('Bookmarks', fmt(p.saves), p.saves != null ? fmtFull(p.saves) : null),
+        big('Engagement', pct(p.engagement), engagementTip(p)),
+        big('× median', p.ratio ? (p.baselineApprox ? '≈' : '') + p.ratio.toFixed(1) + '×' : '–', xBaseTip(p)),
+        big('Author', p.ownerFollowers != null ? fmt(p.ownerFollowers) : '–', 'Followers of ' + ownerHandle(p) + ' when the post was seen'),
+        p.duration ? big('Duration', dur(p.duration)) : big('Characters', fmtFull((p.caption || '').length))));
+      var facts = [];
+      if (p.article && p.article.title) facts.push('Article: “' + p.article.title + '”');
+      if (p.hasLink) facts.push('Links to ' + p.links.map(function (u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return u; } }).join(', '));
+      if (p.quotedId) facts.push('Quotes another post');
+      if (p.lang) facts.push('Language: ' + p.lang);
+      if (facts.length) detailEl.appendChild(h('p', { class: 'muted small', text: facts.join(' · ') }));
+      if (p.caption) detailEl.appendChild(h('p', { class: 'd-caption', text: p.caption }));
+      if ((p.hashtags || []).length) {
+        detailEl.appendChild(h('div', { class: 'd-tags' }, p.hashtags.map(function (t) {
+          return h('button', { class: 'chip', type: 'button', 'data-tip': 'Show posts with #' + t, onclick: function () {
+            ui.query = '#' + t; ui.tab = 'reels'; ui.shown = PAGE; ui.detail = null; detailEl.hidden = true; render();
+          } }, '#' + t);
+        })));
+      }
+    }
+
     function redditRow(p, i) {
       var badges = h('span', { class: 'badges' });
       if (p.outlier) badges.appendChild(outlierBadge(p, 'This post got ' + p.ratio.toFixed(1) + '× the median score'));
@@ -1050,13 +1196,20 @@
       // card-velocity (phase 5 brings it to the panel list): tracked videos only, "24 h: 3.4×" from the bridge's tracker.
       var vel = isYT(p) && opts.velocityOf ? opts.velocityOf(p) : null;
       if (vel) badges.appendChild(h('span', { class: 'badge badge-vel' + (vel.hot ? ' is-hot' : ''), 'data-tip': vel.tip }, vel.text));
-      if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform', 'data-tip': siteName(p) }, isTT(p) ? 'TT' : isYT(p) ? 'YT' : 'IG'));
+      if (isX(p)) {
+        if (p.ratio != null && p.baselineApprox) badges.appendChild(h('span', { class: 'badge', 'data-tip': xBaseTip(p) }, '≈'));
+        if (p.noViews && M.xKind(p) !== 'repost') badges.appendChild(h('span', { class: 'badge', 'data-tip': xBaseTip(p) }, '≈ no data'));
+        badges.appendChild(h('span', { class: 'badge', 'data-tip': p.kind === 'original' ? 'Format (scored against this format\'s median)' : p.kind === 'repost' ? 'A repost' : 'A reply' }, p.kind === 'repost' ? 'Repost' : p.kind === 'reply' ? 'Reply' : p.kind === 'thread-part' ? 'Thread part' : (X_FORMAT_NAMES[p.type] || 'Text') + (p.type === 'thread' && p.threadLength ? ' ' + p.threadLength : '')));
+      }
+      if (multiPlat) badges.appendChild(h('span', { class: 'badge badge-platform', 'data-tip': siteName(p) }, isTT(p) ? 'TT' : isYT(p) ? 'YT' : isX(p) ? 'X' : 'IG'));
 
       var meta = [];
+      var xp = isX(p);
       if (!byLikes && p.likes !== null && p.likes !== undefined) meta.push(fmt(p.likes) + ' likes');
-      if (p.comments !== null && p.comments !== undefined) meta.push(fmt(p.comments) + ' comments');
-      if (p.shares !== null && p.shares !== undefined) meta.push(fmt(p.shares) + ' shares');
-      if (p.saves !== null && p.saves !== undefined) meta.push(fmt(p.saves) + ' saves');
+      if (p.comments !== null && p.comments !== undefined) meta.push(fmt(p.comments) + (xp ? ' replies' : ' comments'));
+      if (p.shares !== null && p.shares !== undefined) meta.push(fmt(p.shares) + (xp ? ' reposts' : ' shares'));
+      if (xp && p.quotes != null) meta.push(fmt(p.quotes) + ' quotes');
+      if (p.saves !== null && p.saves !== undefined) meta.push(fmt(p.saves) + (xp ? ' bookmarks' : ' saves'));
       if (byLikes && p.commentsPer100Likes != null) meta.push(p.commentsPer100Likes.toFixed(p.commentsPer100Likes < 10 ? 1 : 0) + ' comments / 100 likes');
       else if (!byLikes && p.engagement !== null) meta.push(pct(p.engagement) + ' eng.');
       if (p.duration) meta.push(dur(p.duration));
@@ -1067,7 +1220,7 @@
         ? downloadButton(p, 'media', DL_PATH, 1, 'Download video (yt-dlp through the OpenOutlier bridge)', '')
         : downloadButton(p, 'media', DL_PATH, nFiles,
           nFiles > 1 ? 'Download all ' + nFiles + ' files' : 'Download ' + (nFiles && p.files[0].kind === 'video' ? 'video' : 'photo'),
-          isTT(p) ? 'No video link captured yet. Open the video on TikTok once.' : 'No video link captured yet. It loads with the post details.');
+          isTT(p) ? 'No video link captured yet. Open the video on TikTok once.' : xp ? 'This post has no photo or video.' : 'No video link captured yet. It loads with the post details.');
       var cov = downloadButton(p, 'cover', IMG_PATH, p.thumb ? 1 : 0, 'Download cover image', 'No cover image captured yet.');
 
       if (opts.showOwner && p.owner) meta.unshift(ownerHandle(p));
@@ -1082,7 +1235,7 @@
             h('span', { class: 'row-top' },
               byLikes
                 ? h('span', { class: 'views', 'data-tip': p.likes != null ? fmtFull(p.likes) + ' likes. Instagram shows no views on carousels and photos.' : p.likesHidden ? 'The creator hid the like count' : 'Likes not loaded yet' }, p.likes != null ? fmt(p.likes) : '–', h('span', { class: 'unit', text: ' likes' }))
-                : h('span', { class: 'views', 'data-tip': viewsTip(p) }, p.views != null ? (isYT(p) && p.viewsApprox ? '≈' : '') + fmt(p.views) : '–', h('span', { class: 'unit', text: ' ' + (isYT(p) ? tx('viewsUnit', 'views') : 'views') })),
+                : h('span', { class: 'views', 'data-tip': xp ? (p.views != null ? fmtFull(p.views) + ' views. ' : '') + xBaseTip(p) : viewsTip(p) }, p.views != null ? (isYT(p) && p.viewsApprox ? '≈' : '') + fmt(p.views) : '–', h('span', { class: 'unit', text: ' ' + (isYT(p) ? tx('viewsUnit', 'views') : 'views') })),
               badges),
             h('span', { class: 'meta', text: meta.join(' · ') }),
             p.caption ? h('span', { class: 'caption', text: p.caption.replace(/\s+/g, ' ') }) : null)),
@@ -1105,6 +1258,7 @@
     function renderAnalytics(posts) {
       if (plat === 'reddit') return renderRedditAnalytics(posts);
       if (plat === 'youtube') return renderYouTubeAnalytics(posts);
+      if (plat === 'x') return renderXAnalytics(posts);
       var a = M.analyze(posts);
       var s = a.summary;
       var wrap = h('div', { class: 'analytics' });
@@ -1174,6 +1328,37 @@
       }
       if (!a.audio.kinds.length) audioBody.appendChild(h('p', { class: 'muted small', text: 'No audio data yet.' }));
       wrap.appendChild(section(tt ? 'Sounds' : 'Audio', tt ? 'Original sound vs. music, by median views.' : 'Original audio vs. licensed music, by median views.', audioBody));
+      return wrap;
+    }
+
+    function renderXAnalytics(posts) {
+      var all = opts.preEnriched ? state.posts : M.enrich(state.posts);
+      // Analytics are about original posts (what the medians are made of), whatever the list shows.
+      var originals = all.filter(function (p) { return M.xKind(p) === 'original'; });
+      var a = M.analyze(originals, { all: all });
+      var s = a.summary;
+      var x = a.x;
+      var wrap = h('div', { class: 'analytics' });
+      wrap.appendChild(h('p', { class: 'muted small', text: 'Original posts only (replies and reposts are listed under Kinds). Views are what X shows on each post, not the verified Home impressions X pays for.' }));
+      if (originals.length < 12) wrap.appendChild(h('p', { class: 'note', text: 'Only ' + originals.length + ' original posts so far. Collect more (Auto-scroll) for reliable patterns.' }));
+      wrap.appendChild(h('div', { class: 'tiles' },
+        tile('Originals analyzed', fmtFull(s.count)),
+        tile('Median views', fmt(s.medianViews), s.medianViews != null ? fmtFull(s.medianViews) + ' (all formats together; each post is scored against its own format)' : null),
+        tile('Outliers (≥ ' + M.OUTLIER_RATIO + '×)', fmtFull(s.outliers), 'Posts with ≥ ' + M.OUTLIER_RATIO + '× the median of their format', s.outliers > 0),
+        tile('Avg. engagement', pct(s.avgEngagement), '(likes + replies + reposts + quotes + bookmarks) ÷ views'),
+        tile('Posts / week', s.postsPerWeek ? s.postsPerWeek.toFixed(1) : '–'),
+        tile('No view count', fmtFull(x.noViews), 'Posts before 2023 show no views on X; they are left out of every median')));
+      wrap.appendChild(section('Formats', 'Median views per format. Each format is scored against its own median; a format with fewer than 8 posts uses the overall median (≈).',
+        x.formats.length ? bars(x.formats, function (g) { return g.key; }) : h('p', { class: 'muted small', text: 'No original posts yet.' })));
+      if (x.kinds.length > 1) wrap.appendChild(section('Kinds', 'How many of the saved posts are originals, replies, thread parts and reposts.',
+        h('p', { class: 'muted small', text: x.kinds.map(function (k) { return k.key + ': ' + fmtFull(k.count); }).join(' · ') })));
+      wrap.appendChild(section('Best time to post', 'Views vs. what the account was getting at the time, by day and time, in your local time. Slots with few posts are pulled toward 1×.',
+        bestSlot(a.heatmap).concat(heatmapEl(a.heatmap))));
+      if (x.lengths.length > 1) wrap.appendChild(section('Text length', 'Median views by length of the post text.', bars(x.lengths, function (g) { return g.key; })));
+      if (x.links.length > 1) wrap.appendChild(section('Links', 'Posts with a link to another site vs. without.', bars(x.links, function (g) { return g.key; })));
+      if (a.durations.length) wrap.appendChild(section('Video length', 'Median views by video length.', bars(a.durations, function (g) { return g.key; })));
+      wrap.appendChild(section('Hashtags that bring views', 'Median views of posts using each hashtag.',
+        a.hashtags.length ? bars(a.hashtags.slice(0, 12), function (g) { return '#' + g.key; }) : h('p', { class: 'muted small', text: 'No hashtags in these posts.' })));
       return wrap;
     }
 
