@@ -157,7 +157,9 @@
         "src/own-metrics.js",
         "src/velocity.js",
         "src/x-own.js",
-        "src/x-own-content.js"
+        "src/x-own-content.js",
+        "src/x-growth.js",
+        "src/x-growth-content.js"
       ],
       "run_at": "document_idle"
     }

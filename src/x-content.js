@@ -234,6 +234,27 @@
     return ' X resets it at ' + new Date(reset).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) + '.';
   }
 
+  // ---- X add-on hooks (Phase 3: src/x-growth-content.js) ------------------------------------
+  // An add-on content script pushes { payload(res, msg) } onto self.OpenOutlierXHooks. It sees every
+  // parsed response (res is null for operations src/x.js doesn't read, e.g. CreateTweet) and may return
+  // a response to ingest instead: the user's annotated replies, a post they just sent. Read-only access
+  // to what this tab collected goes through self.OpenOutlierXApi.
+  function xHooks(res, msg) {
+    (self.OpenOutlierXHooks || []).forEach(function (h) {
+      try { var r = h && h.payload ? h.payload(res, msg) : null; if (r) res = r; } catch (err) { console.warn('[OpenOutlier] X hook failed', err); }
+    });
+    return res;
+  }
+  self.OpenOutlierXApi = {
+    baselines: function () { return baselines(); },
+    posts: function (id) { return accounts[id] || null; },
+    profile: function (id) { return profiles[id] || null; },
+    accountIds: function () { return Object.keys(accounts); },
+    accountOf: function (restId) { return byRestId[restId] || null; },
+    pagePosts: function () { return pagePosts; },
+    flush: function () { return flushSave(); }
+  };
+
   window.addEventListener('message', function (e) {
     if (e.source !== window || !e.data || e.data.__reelscope !== 1) return;
     var d = e.data;
@@ -241,7 +262,7 @@
     if (d.type === 'nav') { onNavigate(); return; }
     if (d.type !== 'payload') return;
     try {
-      var res = X.parsePayload(d.url, d.text);
+      var res = xHooks(X.parsePayload(d.url, d.text), d);
       if (!res) return;
       if (res.raw) { saveRaw(res.op, d.url, res.raw); return; }
       ingest(res);

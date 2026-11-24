@@ -1,0 +1,727 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/VXNlclJlcGxpZXNUaW1lbG/UserRepliesTimeline?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 500,
+   "remaining": 480,
+   "reset": 1795533300
+  },
+  "body": {
+   "data": {
+    "user": {
+     "result": {
+      "__typename": "User",
+      "timeline": {
+       "timeline": {
+        "instructions": [
+         {
+          "type": "TimelineAddEntries",
+          "entries": [
+           {
+            "entryId": "profile-conversation-2124548461163446300",
+            "sortIndex": "2124548461163446300",
+            "content": {
+             "entryType": "TimelineTimelineModule",
+             "displayType": "VerticalConversation",
+             "items": [
+              {
+               "entryId": "profile-conversation-2124548461163446300-tweet-2124503162680246299",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2124503162680246299",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "rest_id": "1500000000000418916",
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1500000000000418916/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                       "name": "Fitting Niche",
+                       "screen_name": "niche_fit_demo"
+                      },
+                      "is_blue_verified": true,
+                      "verification": {
+                       "verified": false
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "relationship_counts": {
+                       "followers": 900,
+                       "following": 200
+                      },
+                      "tweet_counts": {
+                       "tweets": 500,
+                       "media_tweets": 50
+                      },
+                      "relationship_perspectives": {
+                       "following": true,
+                       "followed_by": false
+                      },
+                      "pinned_items": []
+                     }
+                    }
+                   },
+                   "views": {
+                    "count": "800",
+                    "state": "EnabledWithCount"
+                   },
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "created_at": "Sun Nov 22 14:00:00 +0000 2026",
+                    "conversation_id_str": "2124503162680246299",
+                    "display_text_range": [
+                     0,
+                     10
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "urls": [],
+                     "user_mentions": []
+                    },
+                    "favorite_count": 10,
+                    "full_text": "Shipping my first add-in",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "quote_count": 0,
+                    "reply_count": 2,
+                    "retweet_count": 0,
+                    "user_id_str": "1500000000000418916",
+                    "id_str": "2124503162680246299"
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "entryId": "profile-conversation-2124548461163446300-tweet-2124548461163446300",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2124548461163446300",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "rest_id": "1500000000000104729",
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1500000000000104729/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                       "name": "Me (demo)",
+                       "screen_name": "oo_me_demo"
+                      },
+                      "is_blue_verified": true,
+                      "verification": {
+                       "verified": false
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "relationship_counts": {
+                       "followers": 80,
+                       "following": 200
+                      },
+                      "tweet_counts": {
+                       "tweets": 500,
+                       "media_tweets": 50
+                      },
+                      "relationship_perspectives": {},
+                      "pinned_items": []
+                     }
+                    }
+                   },
+                   "views": {
+                    "count": "140",
+                    "state": "EnabledWithCount"
+                   },
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "created_at": "Sun Nov 22 17:00:00 +0000 2026",
+                    "conversation_id_str": "2124503162680246299",
+                    "display_text_range": [
+                     0,
+                     10
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "urls": [],
+                     "user_mentions": [
+                      {
+                       "id_str": "1500000000000418916",
+                       "screen_name": "niche_fit_demo",
+                       "name": "Fitting Niche",
+                       "indices": [
+                        0,
+                        0
+                       ]
+                      }
+                     ]
+                    },
+                    "favorite_count": 0,
+                    "full_text": "@niche_fit_demo Congrats, what does it do?",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "quote_count": 0,
+                    "reply_count": 0,
+                    "retweet_count": 0,
+                    "user_id_str": "1500000000000104729",
+                    "id_str": "2124548461163446300",
+                    "in_reply_to_status_id_str": "2124503162680246299",
+                    "in_reply_to_user_id_str": "1500000000000418916",
+                    "in_reply_to_screen_name": "niche_fit_demo"
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             ]
+            }
+           },
+           {
+            "entryId": "profile-conversation-2124518262174646298",
+            "sortIndex": "2124518262174646298",
+            "content": {
+             "entryType": "TimelineTimelineModule",
+             "displayType": "VerticalConversation",
+             "items": [
+              {
+               "entryId": "profile-conversation-2124518262174646298-tweet-2124472963691446297",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2124472963691446297",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "rest_id": "1500000000000314187",
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1500000000000314187/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                       "name": "Big Niche",
+                       "screen_name": "niche_big_demo"
+                      },
+                      "is_blue_verified": true,
+                      "verification": {
+                       "verified": false
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "relationship_counts": {
+                       "followers": 400000,
+                       "following": 200
+                      },
+                      "tweet_counts": {
+                       "tweets": 500,
+                       "media_tweets": 50
+                      },
+                      "relationship_perspectives": {
+                       "following": true,
+                       "followed_by": false
+                      },
+                      "pinned_items": []
+                     }
+                    }
+                   },
+                   "views": {
+                    "count": "90000",
+                    "state": "EnabledWithCount"
+                   },
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "created_at": "Sun Nov 22 12:00:00 +0000 2026",
+                    "conversation_id_str": "2124472963691446297",
+                    "display_text_range": [
+                     0,
+                     10
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "urls": [],
+                     "user_mentions": []
+                    },
+                    "favorite_count": 2000,
+                    "full_text": "Power Query or VBA?",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "quote_count": 0,
+                    "reply_count": 400,
+                    "retweet_count": 0,
+                    "user_id_str": "1500000000000314187",
+                    "id_str": "2124472963691446297"
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "entryId": "profile-conversation-2124518262174646298-tweet-2124518262174646298",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2124518262174646298",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "rest_id": "1500000000000104729",
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1500000000000104729/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                       "name": "Me (demo)",
+                       "screen_name": "oo_me_demo"
+                      },
+                      "is_blue_verified": true,
+                      "verification": {
+                       "verified": false
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "relationship_counts": {
+                       "followers": 80,
+                       "following": 200
+                      },
+                      "tweet_counts": {
+                       "tweets": 500,
+                       "media_tweets": 50
+                      },
+                      "relationship_perspectives": {},
+                      "pinned_items": []
+                     }
+                    }
+                   },
+                   "views": {
+                    "count": "60",
+                    "state": "EnabledWithCount"
+                   },
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "created_at": "Sun Nov 22 15:00:00 +0000 2026",
+                    "conversation_id_str": "2124472963691446297",
+                    "display_text_range": [
+                     0,
+                     10
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "urls": [],
+                     "user_mentions": [
+                      {
+                       "id_str": "1500000000000314187",
+                       "screen_name": "niche_big_demo",
+                       "name": "Big Niche",
+                       "indices": [
+                        0,
+                        0
+                       ]
+                      }
+                     ]
+                    },
+                    "favorite_count": 1,
+                    "full_text": "@niche_big_demo Power Query for cleaning",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "quote_count": 0,
+                    "reply_count": 3,
+                    "retweet_count": 0,
+                    "user_id_str": "1500000000000104729",
+                    "id_str": "2124518262174646298",
+                    "in_reply_to_status_id_str": "2124472963691446297",
+                    "in_reply_to_user_id_str": "1500000000000314187",
+                    "in_reply_to_screen_name": "niche_big_demo"
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             ]
+            }
+           },
+           {
+            "entryId": "profile-conversation-2124155874309046295",
+            "sortIndex": "2124155874309046295",
+            "content": {
+             "entryType": "TimelineTimelineModule",
+             "displayType": "VerticalConversation",
+             "items": [
+              {
+               "entryId": "profile-conversation-2124155874309046295-tweet-2124125675320246294",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2124125675320246294",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "rest_id": "1500000000000209458",
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                       "name": "Mutual Niche",
+                       "screen_name": "niche_mut_demo"
+                      },
+                      "is_blue_verified": true,
+                      "verification": {
+                       "verified": false
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "relationship_counts": {
+                       "followers": 1200,
+                       "following": 200
+                      },
+                      "tweet_counts": {
+                       "tweets": 500,
+                       "media_tweets": 50
+                      },
+                      "relationship_perspectives": {
+                       "following": true,
+                       "followed_by": true
+                      },
+                      "pinned_items": []
+                     }
+                    }
+                   },
+                   "views": {
+                    "count": "5000",
+                    "state": "EnabledWithCount"
+                   },
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "created_at": "Sat Nov 21 13:00:00 +0000 2026",
+                    "conversation_id_str": "2124125675320246294",
+                    "display_text_range": [
+                     0,
+                     10
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "urls": [],
+                     "user_mentions": []
+                    },
+                    "favorite_count": 80,
+                    "full_text": "What is your favourite Excel function?",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "quote_count": 0,
+                    "reply_count": 12,
+                    "retweet_count": 0,
+                    "user_id_str": "1500000000000209458",
+                    "id_str": "2124125675320246294"
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "entryId": "profile-conversation-2124155874309046295-tweet-2124155874309046295",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2124155874309046295",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "rest_id": "1500000000000104729",
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1500000000000104729/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                       "name": "Me (demo)",
+                       "screen_name": "oo_me_demo"
+                      },
+                      "is_blue_verified": true,
+                      "verification": {
+                       "verified": false
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "relationship_counts": {
+                       "followers": 80,
+                       "following": 200
+                      },
+                      "tweet_counts": {
+                       "tweets": 500,
+                       "media_tweets": 50
+                      },
+                      "relationship_perspectives": {},
+                      "pinned_items": []
+                     }
+                    }
+                   },
+                   "views": {
+                    "count": "420",
+                    "state": "EnabledWithCount"
+                   },
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "created_at": "Sat Nov 21 15:00:00 +0000 2026",
+                    "conversation_id_str": "2124125675320246294",
+                    "display_text_range": [
+                     0,
+                     10
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "urls": [],
+                     "user_mentions": [
+                      {
+                       "id_str": "1500000000000209458",
+                       "screen_name": "niche_mut_demo",
+                       "name": "Mutual Niche",
+                       "indices": [
+                        0,
+                        0
+                       ]
+                      }
+                     ]
+                    },
+                    "favorite_count": 6,
+                    "full_text": "@niche_mut_demo XLOOKUP, by far",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "quote_count": 0,
+                    "reply_count": 1,
+                    "retweet_count": 0,
+                    "user_id_str": "1500000000000104729",
+                    "id_str": "2124155874309046295",
+                    "in_reply_to_status_id_str": "2124125675320246294",
+                    "in_reply_to_user_id_str": "1500000000000209458",
+                    "in_reply_to_screen_name": "niche_mut_demo"
+                   }
+                  }
+                 }
+                }
+               }
+              },
+              {
+               "entryId": "profile-conversation-2124155874309046295-tweet-2124163424056246296",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2124163424056246296",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "rest_id": "1500000000000209458",
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                       "name": "Mutual Niche",
+                       "screen_name": "niche_mut_demo"
+                      },
+                      "is_blue_verified": true,
+                      "verification": {
+                       "verified": false
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "relationship_counts": {
+                       "followers": 1200,
+                       "following": 200
+                      },
+                      "tweet_counts": {
+                       "tweets": 500,
+                       "media_tweets": 50
+                      },
+                      "relationship_perspectives": {
+                       "following": true,
+                       "followed_by": true
+                      },
+                      "pinned_items": []
+                     }
+                    }
+                   },
+                   "views": {
+                    "count": "200",
+                    "state": "EnabledWithCount"
+                   },
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "created_at": "Sat Nov 21 15:30:00 +0000 2026",
+                    "conversation_id_str": "2124125675320246294",
+                    "display_text_range": [
+                     0,
+                     10
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "urls": [],
+                     "user_mentions": [
+                      {
+                       "id_str": "1500000000000104729",
+                       "screen_name": "oo_me_demo",
+                       "name": "Me (demo)",
+                       "indices": [
+                        0,
+                        0
+                       ]
+                      }
+                     ]
+                    },
+                    "favorite_count": 2,
+                    "full_text": "@oo_me_demo Same here!",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "quote_count": 0,
+                    "reply_count": 0,
+                    "retweet_count": 0,
+                    "user_id_str": "1500000000000209458",
+                    "id_str": "2124163424056246296",
+                    "in_reply_to_status_id_str": "2124155874309046295",
+                    "in_reply_to_user_id_str": "1500000000000104729",
+                    "in_reply_to_screen_name": "oo_me_demo"
+                   }
+                  }
+                 }
+                }
+               }
+              }
+             ]
+            }
+           },
+           {
+            "entryId": "tweet-2124880650040246301",
+            "sortIndex": "2124880650040246301",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2124880650040246301",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1500000000000104729",
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1500000000000104729/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                    "name": "Me (demo)",
+                    "screen_name": "oo_me_demo"
+                   },
+                   "is_blue_verified": true,
+                   "verification": {
+                    "verified": false
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "relationship_counts": {
+                    "followers": 80,
+                    "following": 200
+                   },
+                   "tweet_counts": {
+                    "tweets": 500,
+                    "media_tweets": 50
+                   },
+                   "relationship_perspectives": {},
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "views": {
+                 "count": "35",
+                 "state": "EnabledWithCount"
+                },
+                "legacy": {
+                 "bookmark_count": 0,
+                 "created_at": "Mon Nov 23 15:00:00 +0000 2026",
+                 "conversation_id_str": "2124880650040246301",
+                 "display_text_range": [
+                  0,
+                  10
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 1,
+                 "full_text": "My own post",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "quote_count": 0,
+                 "reply_count": 0,
+                 "retweet_count": 0,
+                 "user_id_str": "1500000000000104729",
+                 "id_str": "2124880650040246301"
+                }
+               }
+              }
+             }
+            }
+           }
+          ]
+         }
+        ]
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+]

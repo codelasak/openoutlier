@@ -1,0 +1,58 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/YWNjb3VudE92ZXJ2aWV3RG/accountOverviewDailyQuery?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 500,
+   "remaining": 480,
+   "reset": 1795533300
+  },
+  "body": {
+   "data": {
+    "viewer_v2": {
+     "user_results": {
+      "result": {
+       "__typename": "User",
+       "rest_id": "1500000000000104729",
+       "verified_follower_count": "9",
+       "relationship_counts": {
+        "followers": 80
+       },
+       "current_time_series": [
+        {
+         "engagement_type": "Follow",
+         "is_engaging_user_verified": "false",
+         "count": "3",
+         "timestamp": "1795219200000"
+        },
+        {
+         "engagement_type": "Follow",
+         "is_engaging_user_verified": "true",
+         "count": "1",
+         "timestamp": "1795219200000"
+        },
+        {
+         "engagement_type": "Unfollow",
+         "is_engaging_user_verified": "false",
+         "count": "1",
+         "timestamp": "1795219200000"
+        },
+        {
+         "engagement_type": "Follow",
+         "is_engaging_user_verified": "false",
+         "count": "2",
+         "timestamp": "1795305600000"
+        },
+        {
+         "engagement_type": "Displayed",
+         "is_engaging_user_verified": "false",
+         "count": "40",
+         "timestamp": "1795305600000"
+        }
+       ]
+      }
+     }
+    }
+   }
+  }
+ }
+]

@@ -1,0 +1,794 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/TGlzdExhdGVzdFR3ZWV0c1/ListLatestTweetsTimeline?variables=%7B%22listId%22%3A%221790000000000000001%22%2C%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 500,
+   "remaining": 480,
+   "reset": 1795533300
+  },
+  "body": {
+   "data": {
+    "list": {
+     "tweets_timeline": {
+      "timeline": {
+       "instructions": [
+        {
+         "type": "TimelineAddEntries",
+         "entries": [
+          {
+           "entryId": "tweet-2125238004741046285",
+           "sortIndex": "2125238004741046285",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125238004741046285",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000209458",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Mutual Niche",
+                   "screen_name": "niche_mut_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 1200,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": true,
+                   "followed_by": true
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "300",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 14:40:00 +0000 2026",
+                "conversation_id_str": "2125238004741046285",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 9,
+                "full_text": "Hot take: LET makes formulas readable",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 2,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000209458",
+                "id_str": "2125238004741046285"
+               }
+              }
+             }
+            }
+           }
+          },
+          {
+           "entryId": "tweet-2125231713285046286",
+           "sortIndex": "2125231713285046286",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125231713285046286",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000314187",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000314187/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Big Niche",
+                   "screen_name": "niche_big_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 400000,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": true,
+                   "followed_by": false
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "40000",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 14:15:00 +0000 2026",
+                "conversation_id_str": "2125231713285046286",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 900,
+                "full_text": "Big account post",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 220,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000314187",
+                "id_str": "2125231713285046286"
+               }
+              }
+             }
+            }
+           }
+          },
+          {
+           "entryId": "tweet-2125220388664246287",
+           "sortIndex": "2125220388664246287",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125220388664246287",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000418916",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000418916/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Fitting Niche",
+                   "screen_name": "niche_fit_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 900,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": true,
+                   "followed_by": false
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "150",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 13:30:00 +0000 2026",
+                "conversation_id_str": "2125220388664246287",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 3,
+                "full_text": "A quiet post with no replies yet",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 0,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000418916",
+                "id_str": "2125220388664246287"
+               }
+              }
+             }
+            }
+           }
+          },
+          {
+           "entryId": "tweet-2125235488158646288",
+           "sortIndex": "2125235488158646288",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125235488158646288",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000523645",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000523645/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "List Only",
+                   "screen_name": "list_only_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 2400,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": false,
+                   "followed_by": false
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "90",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 14:30:00 +0000 2026",
+                "conversation_id_str": "2125235488158646288",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 1,
+                "full_text": "List member nobody follows",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 1,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000523645",
+                "id_str": "2125235488158646288"
+               }
+              }
+             }
+            }
+           }
+          },
+          {
+           "entryId": "tweet-2125192706257846289",
+           "sortIndex": "2125192706257846289",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125192706257846289",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000209458",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Mutual Niche",
+                   "screen_name": "niche_mut_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 1200,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": true,
+                   "followed_by": true
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "900",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 11:40:00 +0000 2026",
+                "conversation_id_str": "2125192706257846289",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 20,
+                "full_text": "Older than two hours",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 4,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000209458",
+                "id_str": "2125192706257846289"
+               }
+              }
+             }
+            }
+           }
+          },
+          {
+           "entryId": "tweet-2125240521323446290",
+           "sortIndex": "2125240521323446290",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125240521323446290",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000209458",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Mutual Niche",
+                   "screen_name": "niche_mut_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 1200,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": true,
+                   "followed_by": true
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "30",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 14:50:00 +0000 2026",
+                "conversation_id_str": "2125231713285046286",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": [
+                  {
+                   "id_str": "1500000000000314187",
+                   "screen_name": "niche_big_demo",
+                   "name": "Big Niche",
+                   "indices": [
+                    0,
+                    0
+                   ]
+                  }
+                 ]
+                },
+                "favorite_count": 0,
+                "full_text": "@niche_big_demo agreed",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 0,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000209458",
+                "id_str": "2125240521323446290",
+                "in_reply_to_status_id_str": "2125231713285046286",
+                "in_reply_to_user_id_str": "1500000000000314187",
+                "in_reply_to_screen_name": "niche_big_demo"
+               }
+              }
+             }
+            }
+           }
+          },
+          {
+           "entryId": "tweet-2125239263032246291",
+           "sortIndex": "2125239263032246291",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125239263032246291",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000209458",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000209458/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Mutual Niche",
+                   "screen_name": "niche_mut_demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 1200,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": true,
+                   "followed_by": true
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "0",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 14:45:00 +0000 2026",
+                "conversation_id_str": "2125239263032246291",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 0,
+                "full_text": "RT",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 0,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000209458",
+                "id_str": "2125239263032246291",
+                "retweeted_status_result": {
+                 "result": {
+                  "__typename": "Tweet",
+                  "rest_id": "2125231713285046286",
+                  "core": {
+                   "user_results": {
+                    "result": {
+                     "__typename": "User",
+                     "rest_id": "1500000000000314187",
+                     "avatar": {
+                      "image_url": "https://pbs.twimg.com/profile_images/1500000000000314187/demo_normal.jpg"
+                     },
+                     "core": {
+                      "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                      "name": "Big Niche",
+                      "screen_name": "niche_big_demo"
+                     },
+                     "is_blue_verified": true,
+                     "verification": {
+                      "verified": false
+                     },
+                     "privacy": {
+                      "protected": false
+                     },
+                     "relationship_counts": {
+                      "followers": 400000,
+                      "following": 200
+                     },
+                     "tweet_counts": {
+                      "tweets": 500,
+                      "media_tweets": 50
+                     },
+                     "relationship_perspectives": {
+                      "following": true,
+                      "followed_by": false
+                     },
+                     "pinned_items": []
+                    }
+                   }
+                  },
+                  "views": {
+                   "count": "40000",
+                   "state": "EnabledWithCount"
+                  },
+                  "legacy": {
+                   "bookmark_count": 0,
+                   "created_at": "Tue Nov 24 14:15:00 +0000 2026",
+                   "conversation_id_str": "2125231713285046286",
+                   "display_text_range": [
+                    0,
+                    10
+                   ],
+                   "entities": {
+                    "hashtags": [],
+                    "symbols": [],
+                    "urls": [],
+                    "user_mentions": []
+                   },
+                   "favorite_count": 900,
+                   "full_text": "Big account post",
+                   "is_quote_status": false,
+                   "lang": "en",
+                   "quote_count": 0,
+                   "reply_count": 220,
+                   "retweet_count": 0,
+                   "user_id_str": "1500000000000314187",
+                   "id_str": "2125231713285046286"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          },
+          {
+           "entryId": "promoted-tweet-2125241779614646292",
+           "sortIndex": "2125241779614646292",
+           "content": {
+            "entryType": "TimelineTimelineItem",
+            "itemContent": {
+             "itemType": "TimelineTweet",
+             "__typename": "TimelineTweet",
+             "tweet_results": {
+              "result": {
+               "__typename": "Tweet",
+               "rest_id": "2125241779614646292",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "rest_id": "1500000000000628374",
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1500000000000628374/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                   "name": "Promo",
+                   "screen_name": "Promo_Demo"
+                  },
+                  "is_blue_verified": true,
+                  "verification": {
+                   "verified": false
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "relationship_counts": {
+                   "followers": 90000,
+                   "following": 200
+                  },
+                  "tweet_counts": {
+                   "tweets": 500,
+                   "media_tweets": 50
+                  },
+                  "relationship_perspectives": {
+                   "following": false,
+                   "followed_by": false
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "views": {
+                "count": "9000",
+                "state": "EnabledWithCount"
+               },
+               "legacy": {
+                "bookmark_count": 0,
+                "created_at": "Tue Nov 24 14:55:00 +0000 2026",
+                "conversation_id_str": "2125241779614646292",
+                "display_text_range": [
+                 0,
+                 10
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 0,
+                "full_text": "Buy now",
+                "is_quote_status": false,
+                "lang": "en",
+                "quote_count": 0,
+                "reply_count": 0,
+                "retweet_count": 0,
+                "user_id_str": "1500000000000628374",
+                "id_str": "2125241779614646292"
+               }
+              }
+             },
+             "promotedMetadata": {
+              "advertiser_results": {
+               "result": {
+                "__typename": "User",
+                "rest_id": "1500000000000628374",
+                "avatar": {
+                 "image_url": "https://pbs.twimg.com/profile_images/1500000000000628374/demo_normal.jpg"
+                },
+                "core": {
+                 "created_at": "Sat Feb 01 00:00:00 +0000 2020",
+                 "name": "Promo",
+                 "screen_name": "Promo_Demo"
+                },
+                "is_blue_verified": true,
+                "verification": {
+                 "verified": false
+                },
+                "privacy": {
+                 "protected": false
+                },
+                "relationship_counts": {
+                 "followers": 90000,
+                 "following": 200
+                },
+                "tweet_counts": {
+                 "tweets": 500,
+                 "media_tweets": 50
+                },
+                "relationship_perspectives": {
+                 "following": false,
+                 "followed_by": false
+                },
+                "pinned_items": []
+               }
+              }
+             }
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     }
+    }
+   }
+  }
+ }
+]
