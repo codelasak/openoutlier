@@ -174,3 +174,62 @@ Nothing below could be checked without the user's logged-in x.com.
 - **The CRM** (`rs:x:crm`) stays browser-only and is not synced to MCP.
 - **UI language.** The x.com drawer and the strip's tool buttons are English. The strip's findings follow TR/EN.
 - **`.claude/launch.json`.** It is tracked in the repo. The demo-server entries the sessions added for this work are not committed.
+
+## Live check on x.com (2026-11-24, data layer)
+
+Done in the user's Chrome, logged in as @heyEshagh. The extension was **not** loaded.
+
+**Method:**
+- A temporary, read-only XHR hook recorded the GraphQL responses x.com loaded while browsing.
+- The branch's own `src/x.js`, `src/x-own.js` and their helpers were put into the page as `<script>` tags. x.com's CSP blocks `eval` but allows a script that carries the page's nonce.
+- They were run over those responses.
+- Nothing was liked, followed or posted. The only clicks were the analytics range buttons. No response was saved to disk. The tab was closed afterwards.
+
+**Pages:**
+- Own profile: Posts, Replies, Media.
+- @levelsio: Posts, 4 pages.
+- @thedankoe: Posts and Articles.
+- Home: For you and Following.
+- Two pinned community tabs.
+- Search (Latest).
+- One post (an article) in TweetDetail.
+- Analytics overview: 3M and 1Y.
+
+### Results
+- **Post fields match the raw JSON.** 524 parsed posts were checked against their raw `legacy`/`views`/`core` fields: views, likes, replies, reposts, quotes, bookmarks, time (snowflake vs `created_at`, within 1 s) and owner.
+  - 517 match.
+  - The 7 that differ are all `kind: 'repost'` wrappers on Home. They keep `views: null` and no counts, while the raw wrapper repeats the reposted post's counts.
+  - That is by design: reposts never enter a median, and the reposted post itself is parsed as its own record.
+- **Formats and kinds.** All seven formats occur on real pages: text, image, video, thread, article, link, quote.
+  - Articles get their title, for example "How to fix your entire life in 1 day".
+  - Threads seen so far are self-reply chains that appear as quoted posts (length 2).
+  - Pinned posts are flagged. No `promotedMetadata` was present on either Home tab today.
+- **Views.** Every 2023+ post had a count. The only nulls were the repost wrappers.
+- **Analytics (`accountOverviewDailyQuery`).**
+  - 3M gave 32 rows from 2026-09-14. 1Y gave 256 rows from 2025-11-25, with 18 engagement types.
+  - `verifiedFollowers` 8, `followers` 79. The days and the verified split are as in Faz 0.
+
+### Fixed on this branch
+- **`activeFollowers` was always null.**
+  - The live field is `realtime_active_followers.active_count` (`{ active_count: 36, is_approximate: false }`); the parser read `.count`.
+  - It now reads `active_count` and falls back to `count`.
+  - The fixture (`dev/x/accountOverviewDailyQuery.json`, `dev/make-x-fixture.mjs`) now has the live shape.
+- **`UserArticlesTweets` was not read.** This is a profile's Articles tab, at path `data.user.result.timeline.timeline.instructions`.
+  - It is now in `TIMELINE_OPS` and `PROFILE_OPS`, and in the x-watch list.
+  - Live: 12 posts, all articles, one owner.
+- **`CommunityTweetsTimeline` was not read.** This is a community pinned as a Home tab, at path `data.communityResults.result.ranked_community_timeline.timeline.instructions`.
+  - It is now a timeline op and a niche source: `sourceOf` → `'community'`, `rs:x:niche-src.communityAt`, and the reply feed's "where" line.
+  - It is in the x-watch list.
+  - Live: 24 and 22 posts from 16 and 15 authors.
+  - The user has no X List but has three pinned communities, so this is a real niche source for them.
+- **Tests:** two new checks.
+  - `tests/x.test.js`: both operations are parsed.
+  - `tests/x-growth.test.js`: community source.
+  - `npm test`: 520 / 520 pass.
+
+### Still not checked live (needs the extension loaded from this worktree)
+- The panel, badges and auto-scroll on a profile.
+- The draft strip under the compose box, and whether "Put in compose box" makes Post clickable.
+- My X page with real analytics, the reply feed from Following and communities, and the Library pages.
+- `contentPageQuery` with posts: the user has no posts in the last 3 months.
+- `ListLatestTweetsTimeline`: the user has no List.

@@ -142,7 +142,8 @@
     var rc = r.relationship_counts || findKey(r, 'relationship_counts');
     out.followers = num(rc && rc.followers != null ? rc.followers : (r.legacy && r.legacy.followers_count));
     var raf = r.realtime_active_followers || findKey(r, 'realtime_active_followers');
-    out.activeFollowers = num(raf && typeof raf === 'object' ? raf.count : raf);
+    // Live shape (2026-11-24): { active_count: 36, is_approximate: false }.
+    out.activeFollowers = num(raf && typeof raf === 'object' ? (raf.active_count != null ? raf.active_count : raf.count) : raf);
     var series = r.current_time_series || findKey(r, 'current_time_series');
     var rows = [];
     if (series) walk(series, function (o) { var x = seriesRow(o); if (x) { rows.push(x); return false; } });

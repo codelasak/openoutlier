@@ -443,7 +443,8 @@
        "hourly_backfill": [],
        "legacy_current_metrics": {},
        "realtime_active_followers": {
-        "count": "36"
+        "active_count": 36,
+        "is_approximate": false
        }
       }
      }

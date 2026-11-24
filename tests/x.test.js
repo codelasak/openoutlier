@@ -410,3 +410,17 @@ test('swipe file: X posts are saved with the post id, format, account and × med
   // YouTube items are unchanged.
   assert.equal(SW.save({ folders: [] }, { video: 'abcdefghijk', type: 'short' }).item.platform, 'youtube');
 });
+
+// Live check 2026-11-24: two operations x.com loads that the synthetic fixtures did not have.
+test('UserArticlesTweets (profile → Articles) and CommunityTweetsTimeline (a pinned community tab) are read', () => {
+  const src = pages('UserOriginalsTimeline')[0].body;
+  const instructions = src.data.user.result.timeline.timeline.instructions;
+  const articles = X.parsePayload('https://x.com/i/api/graphql/q/UserArticlesTweets', JSON.stringify(src));
+  assert.ok(articles && articles.posts.length > 0);
+  assert.ok(X.PROFILE_OPS.includes('UserArticlesTweets'));
+  const community = { data: { communityResults: { result: { __typename: 'Community', ranked_community_timeline: { timeline: { instructions } } } } } };
+  const c = X.parsePayload('https://x.com/i/api/graphql/q/CommunityTweetsTimeline', JSON.stringify(community));
+  assert.ok(c && c.posts.length > 0);
+  assert.equal(c.posts.length, X.parsePayload(pages('UserOriginalsTimeline')[0].url, JSON.stringify(src)).posts.length);
+  assert.ok(!X.PROFILE_OPS.includes('CommunityTweetsTimeline'));
+});

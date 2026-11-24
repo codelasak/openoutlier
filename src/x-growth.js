@@ -142,9 +142,10 @@
     });
     return set;
   }
-  /** Which niche source a GraphQL operation is: 'list' | 'following' | 'home' | 'search' | null. */
+  /** Which niche source a GraphQL operation is: 'list' | 'following' | 'community' | 'home' | 'search' | null. */
   function sourceOf(op) {
-    return op === 'ListLatestTweetsTimeline' ? 'list' : op === 'HomeLatestTimeline' ? 'following' : op === 'HomeTimeline' ? 'home' : op === 'SearchTimeline' ? 'search' : null;
+    return op === 'ListLatestTweetsTimeline' ? 'list' : op === 'HomeLatestTimeline' ? 'following' : op === 'CommunityTweetsTimeline' ? 'community' :
+      op === 'HomeTimeline' ? 'home' : op === 'SearchTimeline' ? 'search' : null;
   }
   /** Remember that a list (or the Following tab) was read: rs:x:niche-src. */
   function noteSource(src, op, listId, posts, now) {
@@ -158,6 +159,7 @@
       s.lists[listId] = { seenAt: now, posts: (l.posts || 0) + (posts || []).length, authors: Object.keys(authors).slice(0, 500) };
     }
     if (op === 'HomeLatestTimeline') s.followingAt = now;
+    if (op === 'CommunityTweetsTimeline') s.communityAt = now;
     return s;
   }
   /** Authors seen on a list who are not in the niche folders yet (to offer "add to the niche folder"). */

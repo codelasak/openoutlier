@@ -75,7 +75,7 @@
         st.pace = G.paceAdd(st.pace, fresh, now);
         dirty.feed = dirty.pace = true;
       }
-      if (op === 'ListLatestTweetsTimeline' || op === 'HomeLatestTimeline') {
+      if (op === 'ListLatestTweetsTimeline' || op === 'HomeLatestTimeline' || op === 'CommunityTweetsTimeline') {
         st.src = G.noteSource(st.src, op, c.list, res.posts, now);
         dirty.src = true;
         if (op === 'ListLatestTweetsTimeline') lastListLoad = now;
@@ -478,7 +478,8 @@
     var mem = members();
     var src = st.src || {};
     var lists = Object.keys(src.lists || {}).sort(function (a, b) { return src.lists[b].seenAt - src.lists[a].seenAt; });
-    var where = lists.length ? 'your list (read ' + ago(src.lists[lists[0]].seenAt) + ')' : src.followingAt ? 'Home → Following (read ' + ago(src.followingAt) + ')' : null;
+    var where = lists.length ? 'your list (read ' + ago(src.lists[lists[0]].seenAt) + ')' : src.followingAt ? 'Home → Following (read ' + ago(src.followingAt) + ')' :
+      src.communityAt ? 'a community tab (read ' + ago(src.communityAt) + ')' : null;
     out.appendChild(h('p', { class: 'note' },
       (mem ? 'Niche: ' + Object.keys(mem).length + ' accounts in your X niche folder. ' : 'No X niche folder yet: showing accounts you follow. ') +
       (where ? 'Source: ' + where + '. ' : 'Open your niche list (x.com/i/lists/…) or Home → Following to fill this feed. ') +
@@ -723,7 +724,7 @@
     var src = st.src || {};
     var lists = Object.keys(src.lists || {});
     out.appendChild(h('h3', null, 'Sources'));
-    if (!lists.length && !src.followingAt) out.appendChild(h('p', { class: 'dim' }, 'Nothing read yet. Open your list (x.com/i/lists/…) or Home → Following.'));
+    if (!lists.length && !src.followingAt && !src.communityAt) out.appendChild(h('p', { class: 'dim' }, 'Nothing read yet. Open your list (x.com/i/lists/…), Home → Following or a community tab.'));
     lists.forEach(function (id) {
       var l = src.lists[id];
       var missing = G.listAuthorsMissing(src, id, mem);

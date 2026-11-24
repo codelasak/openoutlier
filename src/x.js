@@ -41,13 +41,13 @@
   var TIMELINE_OPS = ['UserOriginalsTimeline', 'UserRepliesTimeline', 'UserRepostsTimeline', 'UserHighlightsTweets',
     'UserPhotoTimeline', 'UserVideoTimeline', 'UserTweets', 'UserTweetsAndReplies', 'UserMedia',
     'HomeTimeline', 'HomeLatestTimeline', 'SearchTimeline', 'ListLatestTweetsTimeline', 'TweetDetail', 'TweetResultByRestId',
-    'TweetResultsByRestIds', 'Bookmarks', 'Likes'];
+    'TweetResultsByRestIds', 'Bookmarks', 'Likes', 'UserArticlesTweets', 'CommunityTweetsTimeline'];
   var USER_OPS = ['UserByScreenName', 'UserByRestId', 'BlueVerifiedFollowers', 'Followers', 'Following'];
   var RAW_OPS = ['accountOverviewDailyQuery', 'contentPageQuery'];
   var OPS = TIMELINE_OPS.concat(USER_OPS, RAW_OPS);
   // Profile tabs: which ops come from "the profile being viewed" (their posts are the author's own).
   var PROFILE_OPS = ['UserOriginalsTimeline', 'UserRepliesTimeline', 'UserRepostsTimeline', 'UserHighlightsTweets',
-    'UserPhotoTimeline', 'UserVideoTimeline', 'UserTweets', 'UserTweetsAndReplies', 'UserMedia'];
+    'UserPhotoTimeline', 'UserVideoTimeline', 'UserTweets', 'UserTweetsAndReplies', 'UserMedia', 'UserArticlesTweets'];
 
   var OP_RE = /\/i\/api\/graphql\/[^/?]+\/([A-Za-z]+)/;
 
@@ -394,7 +394,9 @@
       SearchTimeline: [['search_by_raw_query', 'search_timeline', 'timeline', 'instructions']],
       ListLatestTweetsTimeline: [['list', 'tweets_timeline', 'timeline', 'instructions']],
       TweetDetail: [['threaded_conversation_with_injections_v2', 'instructions']],
-      Bookmarks: [['bookmark_timeline_v2', 'timeline', 'instructions']]
+      Bookmarks: [['bookmark_timeline_v2', 'timeline', 'instructions']],
+      // A community's timeline (Home tabs of pinned communities; seen live 2026-11-24).
+      CommunityTweetsTimeline: [['communityResults', 'result', 'ranked_community_timeline', 'timeline', 'instructions']]
     };
     var tries = (paths[op] || []).concat([
       ['user', 'result', 'timeline', 'timeline', 'instructions'],

@@ -54,6 +54,8 @@ test('HomeLatestTimeline (the Following tab) unwraps visibility results', () => 
   assert.deepEqual(r.posts.map((p) => p.code).sort(), [ids.aHour, ids.cQuiet].sort());
   assert.equal(G.sourceOf('HomeTimeline'), 'home');
   assert.equal(G.sourceOf('SearchTimeline'), 'search');
+  assert.equal(G.sourceOf('CommunityTweetsTimeline'), 'community');
+  assert.equal(G.noteSource({}, 'CommunityTweetsTimeline', null, [], 5).communityAt, 5);
   assert.equal(G.sourceOf('UserTweets'), null);
 });
 

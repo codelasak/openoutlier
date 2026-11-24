@@ -342,7 +342,7 @@ for (let d = 0; d < 90; d += 3) {
 }
 writeFileSync(join(out, 'accountOverviewDailyQuery.json'), JSON.stringify([page('accountOverviewDailyQuery', { data: { viewer_v2: { user_results: { result: {
   __typename: 'User', rest_id: small.restId, verified_follower_count: '9', relationship_counts: { followers: 80 },
-  current_time_series: series, previous_totals: [], hourly_backfill: [], legacy_current_metrics: {}, realtime_active_followers: { count: '36' }
+  current_time_series: series, previous_totals: [], hourly_backfill: [], legacy_current_metrics: {}, realtime_active_followers: { active_count: 36, is_approximate: false }
 } } } } }, 99, 100)], null, 1));
 writeFileSync(join(out, 'contentPageQuery.json'), JSON.stringify([page('contentPageQuery', { data: { viewer_v2: { user_results: { result: {
   __typename: 'User', rest_id: small.restId, tweets_results: [] } } } } }, 99, 100)], null, 1));
