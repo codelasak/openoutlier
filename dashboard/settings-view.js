@@ -109,6 +109,21 @@
     }
   };
 
+  // One switch, two places: the Features list (x.llm) and this card. rs:x-llm.enabled (src/x-llm-bg.js) is the
+  // source of truth; the x.llm flag mirrors it. Turning it on asks for the api.anthropic.com permission first
+  // (inside the click), turning it off removes the permission.
+  async function setXLlm(on) {
+    if (on) {
+      var granted = false;
+      try { granted = await chrome.permissions.request({ origins: [XLLM_ORIGIN] }); } catch (e) { granted = false; }
+      if (!granted) { await F.set('x.llm', false); return { ok: false, denied: true }; }
+    }
+    var r = await chrome.runtime.sendMessage({ type: 'reelscope:x-llm-settings', patch: { enabled: !!on } }).catch(function (e) { return { ok: false, error: e.message }; });
+    if (!on) chrome.permissions.remove({ origins: [XLLM_ORIGIN] }).catch(function () {});
+    await F.set('x.llm', !!(on && r && r.ok));
+    return r || { ok: false, error: '?' };
+  }
+
   /** The card; state lives in xs (create() keeps one per page). */
   function xLlmCard(h, lang, xs, rerender) {
     var T = XS[lang] || XS.en;
@@ -122,13 +137,8 @@
     }
     async function refresh() { xs.status = await call('reelscope:x-llm-status'); }
     async function setOn(on) {
-      if (on) {
-        var granted = false;
-        try { granted = await chrome.permissions.request({ origins: [XLLM_ORIGIN] }); } catch (e) { granted = false; }
-        if (!granted) { msg(T.permDenied); return; }
-      }
-      var r = await call('reelscope:x-llm-settings', { patch: { enabled: on } });
-      if (!on) chrome.permissions.remove({ origins: [XLLM_ORIGIN] }).catch(function () {});
+      var r = await setXLlm(on);
+      if (r.denied) { msg(T.permDenied); return; }
       await refresh();
       msg(r.ok ? '' : r.error);
     }
@@ -209,6 +219,8 @@
       } else st.providers = null;
       st.xllm.status = await chrome.runtime.sendMessage({ type: 'reelscope:x-llm-status' }).catch(function () { return null; });
       if (st.xllm.status && !st.xllm.status.ok) st.xllm.status = null;
+      // Keep the x.llm feature flag equal to the helper's own switch (rs:x-llm.enabled).
+      if (st.xllm.status && !!st.flags['x.llm'] !== !!st.xllm.status.enabled) { await F.set('x.llm', !!st.xllm.status.enabled); st.flags = F.flags(); }
     }
 
     function L() { return S[F.uiLang()] || S.en; }
@@ -413,7 +425,11 @@
       main.appendChild(h('div', { class: 'view-head' }, h('h1', { text: T.title }), h('span', { class: 'sub', text: T.sub })));
       var list = FV.render({
         h: h, lang: F.uiLang(), flags: st.flags, env: st.env, message: st.msg,
-        onToggle: function (id, on) { st.msg = ''; F.set(id, on); },
+        onToggle: function (id, on) {
+          st.msg = '';
+          if (id === 'x.llm') { setXLlm(on).then(function (r) { st.xllm.msg = r.denied ? (XS[F.uiLang()] || XS.en).permDenied : r.ok ? '' : r.error; return load(); }).then(env.rerender); return; }
+          F.set(id, on);
+        },
         onFix: fix,
         onReset: function () { F.reset().then(function () { st.msg = T === S.tr ? S.tr.features + ': varsayılanlar geri yüklendi.' : 'Features: defaults restored.'; return load(); }).then(env.rerender); }
       });

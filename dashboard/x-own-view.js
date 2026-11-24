@@ -11,6 +11,8 @@
   var O = root.OpenOutlierXOwn;
   var P = root.OpenOutlierXPatterns;
   var M = root.ReelScopeMetrics;
+  var XF = root.OpenOutlierXForecast; // Phase 6: reach forecast (feature x.reachForecast, off by default)
+  var FORECAST_KEY = 'rs:x:forecast';  // { model, trainedAt, account }: read by the x.com draft strip
 
   var S = {
     en: {
@@ -30,7 +32,10 @@
       date: 'Posted', type: 'Type', text: 'Text', views: 'Views', likes: 'Likes', rep: 'Replies', rt: 'Reposts',
       none: 'No posts of @{h} saved yet. Open x.com/{h} with OpenOutlier on (the panel\'s auto-scroll reads up to 300 posts).',
       off: 'My X is switched off in Features.', turnOn: 'Turn on', capture: 'Last analytics capture: {t}. Covered from {d}.', contentPage: 'Analytics → Content: {n} posts read ({s}).',
-      other: 'The last analytics capture belongs to another X account and was not counted.'
+      other: 'The last analytics capture belongs to another X account and was not counted.',
+      fc: 'Reach forecast', fcSub: 'Learned from your own originals (format, length, hour, weekday, number, emoji, link, quote). Shown only because it beat "the post does your median" on your {t} newest posts: error {m} vs {b} (log views), {g}% better.',
+      fcDraft: 'Draft to estimate', fcGo: 'Estimate', fcResult: 'About {v} views (likely {lo}–{hi}), {x}× your recent median.', fcDrivers: 'Biggest effects',
+      fcNote: 'A rough guide from your history, not a promise: X\'s ranking also uses signals nobody outside X can see.'
     },
     tr: {
       nav: 'X hesabım', title: 'X hesabım', sub: 'Kendi X hesabın Original Content Rewards\'a göre nerede ve sende ne işe yarıyor. Sadece okur: OpenOutlier hiçbir şey paylaşmaz.',
@@ -49,7 +54,10 @@
       date: 'Tarih', type: 'Tip', text: 'Metin', views: 'Görüntülenme', likes: 'Beğeni', rep: 'Yanıt', rt: 'Repost',
       none: '@{h} için kayıtlı post yok. OpenOutlier açıkken x.com/{h} sayfasını aç (paneldeki otomatik kaydırma 300 posta kadar okur).',
       off: 'X hesabım Özellikler\'de kapalı.', turnOn: 'Aç', capture: 'Son analitik: {t}. {d} tarihinden itibaren.', contentPage: 'Analitik → İçerik: {n} post okundu ({s}).',
-      other: 'Son analitik başka bir X hesabına ait; sayılmadı.'
+      other: 'Son analitik başka bir X hesabına ait; sayılmadı.',
+      fc: 'Erişim tahmini', fcSub: 'Kendi orijinal postlarından öğrenildi (format, uzunluk, saat, gün, rakam, emoji, link, alıntı). Sadece en yeni {t} postunda "post medyanını yapar" tahmininden isabetli olduğu için gösteriliyor: hata {m}, medyan {b} (log görüntülenme), %{g} daha iyi.',
+      fcDraft: 'Tahmin edilecek taslak', fcGo: 'Tahmin et', fcResult: 'Yaklaşık {v} görüntülenme (muhtemelen {lo}–{hi}), son medyanının {x} katı.', fcDrivers: 'En büyük etkiler',
+      fcNote: 'Geçmişinden çıkan kaba bir yol gösterici, söz değil: X\'in sıralaması dışarıdan görülemeyen sinyaller de kullanır.'
     }
   };
 
@@ -84,7 +92,8 @@
     function day(t) { return t ? new Date(t).toLocaleDateString(loc(), { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
 
     async function load() {
-      var r = await chrome.storage.local.get([O.OWN_KEY, O.HISTORY_KEY, O.EARLY_KEY]);
+      var r = await chrome.storage.local.get([O.OWN_KEY, O.HISTORY_KEY, O.EARLY_KEY, 'rs:x:watch']);
+      st.watch = r['rs:x:watch'] || null; // the bridge's X watch (schema drift, new weights), shown as a banner
       st.handle = (r[O.OWN_KEY] && r[O.OWN_KEY].handle) || O.DEFAULT_HANDLE;
       st.history = r[O.HISTORY_KEY] || null;
       st.early = r[O.EARLY_KEY] || {};
@@ -100,7 +109,7 @@
     chrome.storage.onChanged.addListener(function (changes, area) {
       if (area !== 'local' || !O) return;
       var id = 'rs:p:' + O.ownId(st.handle);
-      if (changes[O.OWN_KEY] || changes[O.HISTORY_KEY] || changes[O.EARLY_KEY] || changes[id]) load();
+      if (changes[O.OWN_KEY] || changes[O.HISTORY_KEY] || changes[O.EARLY_KEY] || changes[id] || changes['rs:x:watch']) load();
     });
 
     function card(title, sub, body, extra) {
@@ -234,6 +243,40 @@
         h('tbody', null, h('tr', null, cps.map(function (x) { return h('td', { class: 'num', title: src.curve.cps[x].n + ' posts', text: num(src.curve.cps[x].value) }); }))))));
     }
 
+    // Phase 6 (docs/x-plan.md 6): ridge regression on the user's own originals. The number is shown only
+    // when it beat the median on held-out posts; otherwise the refusal's sentence, never a number.
+    function forecastInput(p) {
+      return { id: p.code, createdAt: p.takenAt, views: p.views, format: p.type, text: p.caption || '', quote: !!p.quotedId, isReply: p.kind !== 'original', isRepost: p.kind === 'repost' };
+    }
+    function forecastCard(originals) {
+      var c = L();
+      var model = XF.train(originals.map(forecastInput));
+      var id = O.ownId(st.handle);
+      var saved = model.shown ? { model: model, trainedAt: Date.now(), account: id } : null;
+      if (JSON.stringify(saved && saved.model) !== JSON.stringify(st.forecastSaved)) {
+        st.forecastSaved = saved && saved.model;
+        if (saved) { var o = {}; o[FORECAST_KEY] = saved; chrome.storage.local.set(o).catch(function () {}); }
+        else chrome.storage.local.remove(FORECAST_KEY).catch(function () {});
+      }
+      if (!model.shown) return card(c.fc, null, h('p', { class: 'xo-small', text: model[lang()] || model.en || model.reason }));
+      var ev = model.eval || {};
+      var ta = h('textarea', { rows: '3', 'aria-label': c.fcDraft, placeholder: c.fcDraft, style: 'width:100%;font:inherit;padding:8px;border:1.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)' });
+      ta.value = st.fcText || '';
+      var out = h('div', null);
+      function run() {
+        st.fcText = ta.value;
+        out.textContent = '';
+        if (!ta.value.trim()) return;
+        var f = XF.forecastDraft(model, { text: ta.value, at: Date.now() });
+        if (!f.shown) { out.appendChild(h('p', { class: 'xo-small', text: f[lang()] || f.en || f.reason })); return; }
+        out.appendChild(h('p', null, h('b', { text: fill(c.fcResult, { v: num(f.views), lo: num(f.low), hi: num(f.high), x: num(f.ratio, 2) }) })));
+        if (f.drivers && f.drivers.length) out.appendChild(h('p', { class: 'xo-small', text: c.fcDrivers + ': ' + f.drivers.map(function (d) { return (d[lang()] || d.en) + ' ' + times(d.effect); }).join(' · ') }));
+      }
+      var body = [h('p', { class: 'xo-small', text: c.fcNote }), ta, h('div', { class: 'xo-handle' }, h('button', { class: 'btn btn-primary', type: 'button', onclick: run }, c.fcGo)), out];
+      if (st.fcText) setTimeout(run, 0);
+      return card(c.fc, fill(c.fcSub, { t: num(ev.test), m: num(ev.mae, 2), b: num(ev.baselineMae, 2), g: num((ev.gain || 0) * 100, 0) }), body);
+    }
+
     function postsTable(list, title, sub) {
       var c = L();
       return card(title, sub, list.length ? h('div', { class: 'cmp-wrap' }, h('table', { class: 'cmp-table' },
@@ -261,6 +304,9 @@
           var o = {}; o[O.OWN_KEY] = { handle: input.value.trim().replace(/^@/, '') };
           chrome.storage.local.set(o).then(function () { st.msg = c.saved; st.loaded = false; env.rerender(); });
         } }, c.save), st.msg ? h('span', { class: 'xo-small', text: st.msg }) : null));
+      var XIV = root.OpenOutlierXIdeasView;
+      var wb = XIV && XIV.watchBanner(h, st.watch);
+      if (wb) main.appendChild(wb);
       if (F && F.isOn && !F.isOn('x.own')) {
         main.appendChild(h('p', { class: 'muted' }, c.off, ' ', h('button', { class: 'btn btn-ghost', type: 'button', onclick: function () { F.set('x.own', true).then(env.rerender); } }, c.turnOn)));
         return;
@@ -274,6 +320,7 @@
       var split = O.splitOwn(posts);
       main.appendChild(h('div', { class: 'xo-full' }, worksCard(posts)));
       main.appendChild(h('div', { class: 'xo-full' }, earlyCard()));
+      if (XF && F && F.isOn && F.isOn('x.reachForecast')) main.appendChild(h('div', { class: 'xo-full' }, forecastCard(split.originals)));
       main.appendChild(h('div', { class: 'xo-full' }, postsTable(split.originals, c.originals, c.originalsSub)));
       main.appendChild(h('div', { class: 'xo-full' }, postsTable(split.replies, c.replies, c.repliesSub)));
     }

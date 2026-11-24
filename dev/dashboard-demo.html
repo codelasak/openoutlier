@@ -391,6 +391,32 @@
         store['rs:niche-alerts'] = { items: [], unseen: nicheMode === 'new' ? 0 : 2 };
       }
 
+      // X integration (Phases 4–6): the idea sources' settings, the X-niche folder, the bridge's X watch answer,
+      // and with ?forecast a long synthetic history of the own account so the reach forecast can pass its test.
+      store['rs:org'].xNiche = { folders: ['f2'] };
+      store['rs:org'].xIdeas = { own: ['excel.bugs.demo', 'tt/excel.bugs.demo', 'yt/handsonexcel'], subreddits: [] };
+      store['rs:x:watch'] = { at: Date.now() - 2 * 3600e3, weights: null, status: {
+        weights: { on: true, version: '2026-11-24', bundled: true, checkedAt: new Date(Date.now() - 2 * 864e5).toISOString(), changedAt: null, lastDiff: [] },
+        schema: { on: true, checkedAt: new Date(Date.now() - 3 * 3600e3).toISOString(), ok: false, count: 862, queryIdChanged: [],
+          warnings: [{ op: 'UserOriginalsTimeline', kind: 'renamed', severity: 'warn', candidates: ['UserOriginalPostsTimeline'], en: 'renamed?', tr: 'adı değişmiş olabilir' }] } } };
+      if (new URLSearchParams(location.search).has('forecast')) {
+        var fs = store['rs:settings'] = store['rs:settings'] || {};
+        fs.features = Object.assign({}, fs.features, { 'x.reachForecast': true });
+        var own = store['rs:p:x/excelbugs_demo'];
+        if (own) {
+          var seed = 7;
+          var rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+          for (var fi = 0; fi < 110; fi++) {
+            var at = Date.now() - (fi + 1) * 1.6 * 864e5 - (fi % 5) * 3 * 3600e3;
+            var vid = fi % 4 === 0, numb = fi % 3 === 0;
+            var code = String(1800000000000000000 + fi * 7919);
+            var v = Math.round(180 * (vid ? 3.2 : 1) * (numb ? 1.6 : 1) * (0.7 + rnd() * 0.6));
+            own.posts[code] = { code: code, platform: 'x', owner: 'x/excelbugs_demo', author: 'ExcelBugs_Demo', kind: 'original', type: vid ? 'video' : 'text', url: 'https://x.com/ExcelBugs_Demo/status/' + code,
+              caption: (numb ? fi + ' ' : '') + 'Excel tip number ' + fi + (vid ? ' (video)' : ''), views: v, likes: Math.round(v / 40), comments: Math.round(v / 200), shares: Math.round(v / 300), quotes: 0, takenAt: at, seenAt: Date.now() - 1200e3 };
+          }
+        }
+      }
+
       // Phase 4: the swipe file (rs:org.swipe), unless ?swipe=empty.
       if (new URLSearchParams(location.search).get('swipe') !== 'empty' && self.OpenOutlierSwipe === undefined) {
         var swNow = Date.now();
@@ -480,7 +506,7 @@
         });
         store['rs:org'] = o;
       }
-      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/src/discovery.js', '/dashboard/discovery-view.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/top-filters.js', '/src/velocity.js', '/src/x-own.js', '/src/x-patterns.js', '/dashboard/x-own-view.js', '/dashboard/dashboard.js']) {
+      for (var src of ['/src/metrics.js', '/src/compare.js', '/src/panel.js', '/dashboard/mentions-view.js', '/src/studio.js', '/dashboard/studio-view.js', '/src/own-metrics.js', '/dashboard/youtube-channel-view.js', '/src/youtube-api.js', '/src/features.js', '/src/features-view.js', '/dashboard/settings-view.js', '/src/tracking.js', '/src/discovery.js', '/dashboard/discovery-view.js', '/dashboard/niche-view.js', '/src/swipe.js', '/dashboard/swipe-view.js', '/dashboard/thumb-test-view.js', '/dashboard/top-filters.js', '/src/velocity.js', '/src/x-own.js', '/src/x-patterns.js', '/src/x-composer.js', '/src/x-forecast.js', '/dashboard/x-own-view.js', '/src/x-growth.js', '/src/x-ideas.js', '/dashboard/x-ideas-view.js', '/dashboard/dashboard.js']) {
         await new Promise(function (res) { var s = document.createElement('script'); s.src = src; s.onload = res; document.body.appendChild(s); });
       }
     })();
