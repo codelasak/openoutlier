@@ -19,11 +19,23 @@
     .txt { margin: 4px 0 8px; white-space: pre-wrap; }
     [role="group"] { display: flex; justify-content: space-between; max-width: 425px; color: #536471; font-size: 13px; }
     #more { color: #536471; padding: 16px; text-align: center; }
+    #compose { max-width: 600px; margin: 0 auto; border: 1px solid #eff3f4; border-bottom: 0; }
+    #compose:empty { display: none; }
+    .cbox { padding: 12px 16px; }
+    .cbox label { display: block; cursor: text; }
+    .public-DraftEditor-content { min-height: 48px; font-size: 19px; outline: none; white-space: pre-wrap; }
+    .public-DraftEditor-content:empty:before { content: attr(data-placeholder); color: #536471; }
+    .ctools { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; color: #536471; font-size: 13px; }
+    .ctools button { font: 700 15px/1 inherit; padding: 9px 16px; border-radius: 999px; border: 0; background: #0f1419; color: #fff; opacity: .5; }
     @media (prefers-color-scheme: dark) { body { background: #000; color: #e7e9ea; } article, main, header { border-color: #2f3336; } .who b { color: #e7e9ea; } nav button { background: #000; color: #e7e9ea; border-color: #536471; } }
   </style>
   <!-- Stand-in for the chrome.* APIs so the content scripts run on a normal page. -->
   <script>
     (function () {
+      // #growth: the Phase 3 fixtures (dev/x/growth) are dated around their own "now" (meta.json); move the
+      // page's clock there so the reply feed sees fresh posts. Only on #growth.
+      if (location.hash === '#growth') { var realNow = Date.now; var shift = 1795532400000 + 10 * 60000 - realNow(); Date.now = function () { return realNow() + shift; }; }
+      window.__demoFixtureDir = location.hash === '#growth' ? '/dev/x/growth/' : '/dev/x/';
       var data = {};
       var listeners = [];
       var changeListeners = [];
@@ -50,11 +62,21 @@
           id: 'demo',
           getURL: function (p) { return '/' + p; },
           onMessage: { addListener: function (fn) { listeners.push(fn); } },
-          sendMessage: async function (m) { console.log('[demo] sendMessage', m.type, m); return { ok: true, queued: (m.posts || []).length }; }
+          sendMessage: async function (m) {
+            console.log('[demo] sendMessage', m.type, m);
+            // DEMO STUB: the x-llm service worker's answers (src/x-llm-bg.js) are faked by window.__demoLlm below.
+            if (/^reelscope:x-llm-/.test(m.type) && window.__demoLlm) return window.__demoLlm(m);
+            return { ok: true, queued: (m.posts || []).length };
+          }
         }
       };
       window.__demoStorage = data;
       data['rs:x-own'] = { handle: 'ExcelBugs_Demo' }; // Phase 2: the demo profile is "my" account
+      // Phase 6's badge and forecast start off in the extension; the demo turns them on to show them.
+      data['rs:settings'] = { features: { 'x.algoBadge': true, 'x.reachForecast': true } };
+      // One swipe-file item, so the draft strip's similarity check has something to compare with (Phase 4).
+      data['rs:org'] = { folders: [], accounts: {}, tags: [], swipe: { v: 1, items: { s1: { id: 's1', platform: 'x', video: '2000000000000000001', type: 'text', account: 'x/someone_demo', channel: 'Someone Demo',
+        title: 'Stop nesting IF formulas. IFS reads top to bottom and you can see every condition at once.' } } } };
       window.__reelscopeSite = 'x'; // hook.js: treat this page as x.com
       window.__demoOpenPanel = function () { listeners.forEach(function (fn) { fn({ type: 'reelscope:toggle' }, {}, function () {}); }); };
       window.__demoCommand = function (cmd) { return new Promise(function (resolve) {
@@ -76,7 +98,7 @@
         var m = /\/graphql\/[^/]+\/([A-Za-z]+)\?.*page=(\d+)/.exec(xhr._url);
         var op = m[1];
         var n = Number(m[2]);
-        (fixtures[op] = fixtures[op] || fetch('/dev/x/' + op + '.json').then(function (r) { return r.json(); })).then(function (pages) {
+        (fixtures[op] = fixtures[op] || fetch(window.__demoFixtureDir + op + '.json').then(function (r) { return r.json(); })).then(function (pages) {
           var pg = pages[n];
           setTimeout(function () {
             xhr.readyState = 4;
@@ -105,7 +127,7 @@
 <body>
   <header>
     <h1>OpenOutlier X demo page</h1>
-    <p>Stands in for x.com. The page "loads" fake GraphQL responses (dev/x, made by dev/make-x-fixture.mjs) through the same hook the extension uses. Profile: two pages of UserOriginalsTimeline (scroll for the second). Home and Post show the badges and the post toolbar. Analytics loads accountOverviewDailyQuery for Phase 2's My X card (@ExcelBugs_Demo is set as "my" account). All data is made up.</p>
+    <p>Stands in for x.com. The page "loads" fake GraphQL responses (dev/x, made by dev/make-x-fixture.mjs) through the same hook the extension uses. Profile: two pages of UserOriginalsTimeline (scroll for the second). Home and Post show the badges and the post toolbar. Analytics loads accountOverviewDailyQuery for Phase 2's My X card (@ExcelBugs_Demo is set as "my" account). Home and Post also have a compose box like x.com's with the draft strip (Phase 4–6); its writing-helper answers are demo stubs, nothing calls an API and the Post button does nothing. Growth reloads the page on the Phase 3 fixtures (clock moved to their date) for the reply feed. All data is made up.</p>
   </header>
   <nav>
     <button type="button" id="go-profile">Profile @ExcelBugs_Demo</button>
@@ -113,7 +135,10 @@
     <button type="button" id="go-status">Post page (thread)</button>
     <button type="button" id="go-panel">Open panel</button>
     <button type="button" id="go-analytics">Analytics (My X)</button>
+    <button type="button" id="go-growth">Growth (reply feed)</button>
+    <a data-testid="AppTabBar_Profile_Link" id="me-link" href="/ExcelBugs_Demo" style="align-self:center;color:#536471">my profile link</a>
   </nav>
+  <div id="compose"></div>
   <main id="feed"></main>
   <p id="more"></p>
   <script src="../src/metrics.js"></script>
@@ -122,6 +147,10 @@
   <script src="../src/swipe.js"></script>
   <script src="../src/brand.js"></script>
   <script src="../src/panel.js"></script>
+  <script src="../src/x-composer.js"></script>
+  <script src="../src/x-algo.js"></script>
+  <script src="../src/x-forecast.js"></script>
+  <script src="../src/x-compose.js"></script>
   <script src="../src/x-content.js"></script>
   <!-- Phase 2 (My X): the content script, and src/x-own-bg.js standing in for the service worker. -->
   <script src="../src/own-metrics.js"></script>
@@ -129,6 +158,89 @@
   <script src="../src/x-own.js"></script>
   <script src="../src/x-own-content.js"></script>
   <script src="../src/x-own-bg.js"></script>
+  <!-- Phase 3 (growth drawer) and Phases 4–6 (the draft strip). -->
+  <script src="../src/x-growth.js"></script>
+  <script src="../src/x-growth-content.js"></script>
+  <script src="../src/x-llm.js"></script>
+  <script src="../src/x-compose-content.js"></script>
+  <script>
+    // ---- DEMO STUBS for the x-llm service worker (src/x-llm-bg.js) -----------------------------------------
+    // prepare builds the real request with src/x-llm.js (so the preview and the estimate are the real ones);
+    // confirm returns a canned answer instead of calling the Anthropic API. Nothing leaves the page.
+    (function () {
+      var L = self.OpenOutlierXLlm;
+      var pending = {};
+      var n = 0;
+      var spent = { usd: 0.0213, calls: 2 };
+      var VOICE = 'Short, plain English. Opens with a number or a concrete Excel problem. One idea per post, no hashtags, rarely emoji.';
+      function canned(task, input) {
+        if (task === 'scoreDraft') return { score: 58, criteria: [
+          { id: 'hook', points: 13, max: 25, note: 'The first line is a warm-up; the tip starts in line two.' },
+          { id: 'one_idea', points: 18, max: 20, note: 'One clear idea.' },
+          { id: 'readability', points: 16, max: 20, note: 'Short lines; one long sentence in the middle.' },
+          { id: 'originality', points: 14, max: 20, note: 'Would be stronger with the file you fixed.' },
+          { id: 'pattern_fit', points: 9, max: 15, note: '70% of your ≥3× posts open with a number; this one doesn\'t.' }],
+          bait: ['retweet if you agree'], penalty: 20,
+          fix: { area: 'hook', instruction: 'Open with the number: "3 clicks to clean any messy table" instead of the warm-up line.', why: 'Your ≥3× posts open with a number 70% of the time.' },
+          rationale: 'The idea is useful and specific. The hook hides it, and the closing line asks for retweets, which costs points and doesn\'t count for Original Content Rewards.' };
+        if (task === 'variants') return { variants: [
+          { text: '3 clicks to clean any messy table:\n\nData → From Table → Transform.\n\nPower Query remembers every step, so next month it\'s one Refresh.', note: 'Number first, steps as lines.' },
+          { text: 'I used to clean the same export every Monday.\n\nNow it\'s 3 clicks in Power Query and a Refresh.', note: 'Story opener in your voice.' },
+          { text: 'Formulas clean a table once.\nPower Query cleans it every month.\n\n3 clicks, then Refresh.', note: 'Contrast hook.' }] };
+        if (task === 'hooks') return { hooks: [
+          { text: '3 clicks to clean any messy table.', pattern: 'number' },
+          { text: 'Stop cleaning the same export every Monday.', pattern: 'claim' },
+          { text: 'Formulas clean once. Power Query cleans forever.', pattern: 'contrast' }] };
+        if (task === 'splitThread') return { posts: [
+          { text: '3 clicks to clean any messy table (thread):', length: 44, over: false },
+          { text: '1/ Data → From Table. Power Query opens with your table.', length: 56, over: false },
+          { text: '2/ Remove the junk columns, fix the types. Every step is recorded.', length: 66, over: false },
+          { text: '3/ Close & Load. Next month: Refresh. Done.', length: 43, over: false }], note: 'Split at the steps.' };
+        if (task === 'translate') return { text: input.to === 'tr' ? 'Dağınık bir tabloyu 3 tıkla temizle: Veri → Tablodan → Dönüştür. Power Query her adımı hatırlar.' : '3 clicks to clean any messy table: Data → From Table → Transform. Power Query remembers every step.', note: 'Kept your short lines.' };
+        if (task === 'ideaToDraft') return { draft: 'Last week a client sent me a 40,000-row export with merged cells.\n\n[your time before] by hand. 4 minutes in Power Query.\n\nThe trick: Unpivot first, then fix the types.', material_used: input.material || '', placeholders: ['your time before'] };
+        if (task === 'replyAngles') return { angles: [
+          { kind: 'question', angle: 'Ask which version made it readable for them', draft: 'Did LET click for you before or after you started naming ranges?' },
+          { kind: 'data', angle: 'Add your own measurement', draft: 'Same here: my longest formula went from 9 nested IFs to 4 LET steps.' },
+          { kind: 'counter', angle: 'A respectful counter view', draft: 'LET helps, but for most teams a helper column is still easier to audit.' }] };
+        return {};
+      }
+      window.__demoLlm = async function (m) {
+        await new Promise(function (r) { setTimeout(r, 250); });
+        if (m.type === 'reelscope:x-llm-status') return { ok: true, enabled: true, hasKey: true, permission: true, sdk: true, ready: true, model: 'claude-opus-5-5', effortScore: 'low', effortWrite: 'medium', dailyCapUsd: 1, spentTodayUsd: spent.usd, callsToday: spent.calls, models: L.MODELS };
+        if (m.type === 'reelscope:x-llm-prepare') {
+          var built;
+          try { built = L.buildRequest(m.task, m.input || {}, { model: 'claude-opus-5-5', voice: VOICE, examples: m.examples }); }
+          catch (e) { return { ok: false, code: e.code || 'bad_input', error: e.message, question: e.question }; }
+          var id = 'demo' + (++n);
+          pending[id] = { task: m.task, input: m.input || {}, est: L.estimate(built.params, m.task) };
+          return { ok: true, id: id, task: m.task, preview: built.preview, estimate: pending[id].est, spend: { todayUsd: spent.usd, capUsd: 1, calls: spent.calls } };
+        }
+        if (m.type === 'reelscope:x-llm-confirm') {
+          var p = pending[m.id];
+          delete pending[m.id];
+          if (!p) return { ok: false, code: 'expired', error: 'Nothing to send: the preview expired or was already sent. Prepare it again.' };
+          var cost = { usd: Math.round(p.est.usdTypical * 0.8 * 1e4) / 1e4, approx: false, estimateUsd: p.est.usdTypical, tokens: { input: 820, cacheWrite: 0, cacheRead: p.est.cachedTokens || 1500, output: 310 }, models: ['claude-opus-5-5'] };
+          spent.usd += cost.usd; spent.calls += 1;
+          return { ok: true, result: canned(p.task, p.input), task: p.task, model: 'claude-opus-5-5', fallback: false, stop: 'end_turn', cost: cost, spend: { todayUsd: spent.usd, capUsd: 1, calls: spent.calls } };
+        }
+        if (m.type === 'reelscope:x-llm-cancel') { var had = !!pending[m.id]; delete pending[m.id]; return { ok: true, cancelled: had }; }
+        if (m.type === 'reelscope:x-llm-voice') return { ok: true, voice: { text: VOICE, updatedAt: Date.now(), source: 'edited' } };
+        return { ok: false, code: 'bad_task', error: 'not in the demo' };
+      };
+      // A reach-forecast model trained on made-up own posts (the Library's My X page writes rs:x:forecast).
+      var F = self.OpenOutlierXForecast;
+      var posts = [];
+      var t0 = Date.now() - 200 * 864e5;
+      for (var i = 0; i < 90; i++) {
+        var fmt = ['text', 'image', 'video', 'quote'][i % 4];
+        var mult = fmt === 'video' ? 3.2 : fmt === 'image' ? 1.6 : fmt === 'quote' ? 0.5 : 1;
+        posts.push({ id: String(i), createdAt: t0 + i * 2 * 864e5 + (i % 3) * 5 * 3600e3, views: Math.round(400 * mult * (0.85 + ((i * 37) % 30) / 100)), format: fmt, text: (i % 5 === 0 ? '5 ways to ' : '') + 'Excel tip number ' + i });
+      }
+      var model = F.train(posts);
+      console.log('[demo] forecast model shown:', model.shown, model.reason || '');
+      chrome.storage.local.set({ 'rs:x:forecast': { model: model, trainedAt: Date.now(), account: 'x/excelbugs_demo' } });
+    })();
+  </script>
   <script>
     var feed = document.getElementById('feed');
     var view = null;
@@ -153,9 +265,17 @@
       loading = true;
       return __demoGraphql(op, page).then(function (j) { render(j, op); loading = false; nextPage = page + 1; document.getElementById('more').textContent = view === 'profile' && nextPage < 2 ? 'Scroll down to load more…' : 'No more posts.'; });
     }
+    // A compose box shaped like x.com's (Draft.js: label > RichTextInputContainer > DraftEditor-root > contenteditable).
+    function composer(placeholder, button) {
+      var c = document.getElementById('compose');
+      c.innerHTML = placeholder ? '<div class="cbox"><label data-testid="tweetTextarea_0_label"><div data-testid="tweetTextarea_0RichTextInputContainer"><div class="DraftEditor-root">' +
+        '<div class="public-DraftEditor-content" contenteditable="true" role="textbox" data-testid="tweetTextarea_0" data-placeholder="' + placeholder + '"></div></div></div></label>' +
+        '<div class="ctools"><span>demo compose box (Draft.js-like)</span><button type="button" disabled title="Demo: nothing is posted">' + button + '</button></div></div>' : '';
+    }
     function go(path, v, ops) {
       history.pushState(null, '', path);
       feed.textContent = '';
+      composer(v === 'home' || v === 'growth' ? 'What\'s happening?' : v === 'status' ? 'Post your reply' : null, v === 'status' ? 'Reply' : 'Post');
       view = v;
       nextPage = 0;
       ops.reduce(function (p, op) { return p.then(function () { loading = false; return load(op, 0); }); }, Promise.resolve());
@@ -170,6 +290,11 @@
     };
     document.getElementById('go-panel').onclick = function () { __demoOpenPanel(); };
     document.getElementById('go-analytics').onclick = function () { go('/i/account_analytics', 'analytics', ['accountOverviewDailyQuery']); };
+    document.getElementById('go-growth').onclick = function () {
+      if (location.hash !== '#growth') { location.assign('/dev/x-demo.html?g=' + Date.now() + '#growth'); return; }
+      document.getElementById('me-link').setAttribute('href', '/oo_me_demo'); // the growth fixtures' own account
+      go('/home', 'growth', ['HomeLatestTimeline']);
+    };
     var start = location.hash.slice(1) || 'profile';
     setTimeout(function () { document.getElementById('go-' + start).click(); }, 300);
   </script>

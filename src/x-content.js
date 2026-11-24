@@ -28,6 +28,7 @@
   var KEY_PREFIX = 'rs:p:';
   var RAW_PREFIX = 'rs:x:raw:';
   var RATE_KEY = 'rs:x:rate';
+  var WATCH_KEY = 'rs:x:watch'; // the bridge's x-watch status; .weights = a newer x-algorithm copy (Phase 6)
   var MIN_POSTS = 5;
   // Auto-scroll limits (plan 2.2 and the Faz 0 notes).
   var AUTO = { minDelay: 3000, jitter: 2000, maxPosts: 300, maxAgeMs: 182 * 864e5, minRemaining: 20, staleTicks: 6 };
@@ -45,6 +46,7 @@
   var auto = { running: false, timer: null, stale: 0, last: 0, label: '', done: null, seen: {}, stopReason: null };
   var libBase = null;  // cached xBaselines over the Library (exact)
   var pageBase = null; // cached xBaselines over the page's posts (approximate)
+  var algoWeights = null; // rs:x:watch.weights when the bridge found a newer param.rs (else the bundled copy)
 
   try { await FT.ready; } catch (e) { /* defaults */ }
   function on(id) { return FT.isOn(id); }
@@ -62,6 +64,7 @@
       indexAccount(id);
     });
     if (saved[RATE_KEY]) rate = saved[RATE_KEY];
+    if (saved[WATCH_KEY] && saved[WATCH_KEY].weights) algoWeights = saved[WATCH_KEY].weights;
   } catch (e) { /* storage unavailable: run in memory */ }
 
   function indexAccount(id) {
@@ -105,6 +108,7 @@
   chrome.storage.onChanged.addListener(function (changes, area) {
     if (area !== 'local') return;
     var changed = false;
+    if (changes[WATCH_KEY]) { algoWeights = (changes[WATCH_KEY].newValue || {}).weights || null; scheduleBadges(); }
     Object.keys(changes).forEach(function (k) {
       if (!isXKey(k)) return;
       var id = k.slice(KEY_PREFIX.length);
@@ -390,6 +394,8 @@
       'background:rgba(127,127,127,.14);color:inherit;white-space:nowrap;vertical-align:middle;cursor:help;letter-spacing:.01em}',
       '.oo-x-badge.is-hot{background:#d4ff3a;color:#0d0d12}',
       '.oo-x-badge .oo-x-vs{opacity:.7;font-weight:500}',
+      '.oo-x-algo{display:inline-flex;align-items:center;margin-left:4px;padding:0 6px;height:18px;border-radius:9px;font:500 11px/18px system-ui,-apple-system,sans-serif;',
+      'border:1px dashed rgba(127,127,127,.55);color:inherit;opacity:.85;white-space:nowrap;vertical-align:middle;cursor:help}',
       '.oo-x-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 4px;padding:8px 10px;border-radius:12px;',
       'border:1px solid rgba(127,127,127,.28);font:13px/1.35 system-ui,-apple-system,sans-serif;color:inherit}',
       '.oo-x-bar b{font-size:15px}',
@@ -410,6 +416,27 @@
     return 'OpenOutlier: ' + (s.views != null ? s.views.toLocaleString() + ' views = ' : '') + ratioText(s) + ' ' + base + src + '. Viral Score ' + s.viralScore + ' (50 = median, 75 = 2×, 100 = 4×+).';
   }
 
+  // Phase 6 (docs/x-plan.md 6): the observed engagement rates × x-algorithm's weights, per 1,000 views.
+  // Off by default (x.algoBadge). null without views: no badge then.
+  function algoOf(p) {
+    var A = self.OpenOutlierXAlgo;
+    if (!p || !A || !on('x.algoBadge') || p.kind === 'repost') return null;
+    return A.algoSignal({ views: p.views, likes: p.likes, replies: p.comments, reposts: p.shares, quotes: p.quotes }, { weights: algoWeights });
+  }
+  function algoText(a) { return 'algo ' + (a.per1k >= 100 ? Math.round(a.per1k) : a.per1k.toFixed(1)); }
+  function algoTip(a) {
+    var lang = FT.uiLang && FT.uiLang() === 'tr' ? 'tr' : 'en';
+    var parts = a.terms.map(function (t) { return t.signal + ' ' + (t.rate * 1000).toFixed(1) + '/1k × ' + t.weight; });
+    return 'OpenOutlier algorithm signal: ' + a.per1k + ' per 1,000 views (' + parts.join(', ') + '; weights ' + a.version + '). ' + a.note[lang];
+  }
+  function algoBadge(a) {
+    var e = document.createElement('span');
+    e.className = 'oo-x-algo';
+    e.textContent = algoText(a);
+    e.title = algoTip(a);
+    return e;
+  }
+
   function postIdOfArticle(article) {
     var t = article.querySelector('a[href*="/status/"] time');
     var a = t && t.closest('a');
@@ -421,11 +448,14 @@
   function paintArticle(article, focal) {
     var id = postIdOfArticle(article);
     var s = id ? scoreOf(findPost(id)) : null;
-    var key = s ? [id, s.ratio, s.viralScore, s.baselineApprox, s.noViews].join('|') : 'none';
+    var algo = s ? algoOf(s) : null;
+    var key = s ? [id, s.ratio, s.viralScore, s.baselineApprox, s.noViews, algo ? algo.per1k + '@' + algo.version : '-'].join('|') : 'none';
     var old = article.querySelector(':scope .oo-x-badge');
-    if (article.getAttribute('data-oo-x') === key && (old || !s || (s.ratio == null && !s.noViews))) { if (focal) paintToolbar(article, id, s); return; }
+    var oldAlgo = article.querySelector(':scope .oo-x-algo');
+    if (article.getAttribute('data-oo-x') === key && (old || oldAlgo || !s || (s.ratio == null && !s.noViews))) { if (focal) paintToolbar(article, id, s); return; }
     article.setAttribute('data-oo-x', key);
     if (old) old.remove();
+    if (oldAlgo) oldAlgo.remove();
     if (s && (s.ratio != null || (s.noViews && s.kind !== 'repost' && accounts[s.owner]))) {
       var b = document.createElement('span');
       b.className = 'oo-x-badge' + (s.outlier ? ' is-hot' : '');
@@ -441,6 +471,12 @@
       var link = time && time.closest('a');
       if (link && link.parentElement) link.insertAdjacentElement('afterend', b);
     }
+    if (algo) {
+      var anchorB = article.querySelector(':scope .oo-x-badge');
+      var t2 = article.querySelector('a[href*="/status/"] time');
+      var l2 = anchorB || (t2 && t2.closest('a'));
+      if (l2 && l2.parentElement) l2.insertAdjacentElement('afterend', algoBadge(algo));
+    }
     if (focal) paintToolbar(article, id, s);
   }
 
@@ -448,7 +484,8 @@
     var bar = article.querySelector(':scope .oo-x-bar');
     var p = id ? findPost(id) : null;
     if (!p) { if (bar) bar.remove(); return; }
-    var sig2 = [id, s && s.ratio, p.views].join('|');
+    var algo = s ? algoOf(s) : null;
+    var sig2 = [id, s && s.ratio, p.views, algo ? algo.per1k + '@' + algo.version : '-'].join('|');
     if (bar && bar.getAttribute('data-sig') === sig2) return;
     if (bar) bar.remove();
     bar = document.createElement('div');
@@ -465,6 +502,7 @@
       bar.appendChild(r);
       bar.appendChild(span('oo-x-dim', 'Viral Score ' + s.viralScore));
     } else bar.appendChild(span('oo-x-dim', s && s.noViews ? 'no view count on this post' : 'not enough posts from this author to score (needs 8 with views)'));
+    if (algo) bar.appendChild(algoBadge(algo));
     bar.appendChild(span('', p.kind === 'original' ? FORMAT_NAMES[p.type] + (p.threadLength ? ' · ' + p.threadLength + ' posts' : '') : p.kind === 'thread-part' ? 'thread part' : p.kind));
     // Early speed: views per hour while the post is young (the velocity the algorithm reacts to).
     var ageH = p.takenAt ? (Date.now() - p.takenAt) / 3600000 : null;
@@ -505,7 +543,7 @@
     setTimeout(function () {
       badgeQueued = false;
       if (!on('x.badges')) {
-        document.querySelectorAll('.oo-x-badge, .oo-x-bar').forEach(function (e) { e.remove(); });
+        document.querySelectorAll('.oo-x-badge, .oo-x-algo, .oo-x-bar').forEach(function (e) { e.remove(); });
         document.querySelectorAll('article[data-oo-x]').forEach(function (a) { a.removeAttribute('data-oo-x'); });
         return;
       }

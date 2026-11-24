@@ -153,13 +153,18 @@
         "src/swipe.js",
         "src/brand.js",
         "src/panel.js",
+        "src/x-composer.js",
+        "src/x-algo.js",
+        "src/x-forecast.js",
+        "src/x-compose.js",
         "src/x-content.js",
         "src/own-metrics.js",
         "src/velocity.js",
         "src/x-own.js",
         "src/x-own-content.js",
         "src/x-growth.js",
-        "src/x-growth-content.js"
+        "src/x-growth-content.js",
+        "src/x-compose-content.js"
       ],
       "run_at": "document_idle"
     }

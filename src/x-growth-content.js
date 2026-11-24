@@ -141,6 +141,16 @@
     dirty.me = true;
     scheduleSave();
     ensureMeAccount();
+    adoptOwnHandle(m.handle);
+  }
+  /** Phase 2 (My X) reads rs:x-own.handle; if the user never set it, use the handle detected here, so both agree on "me". */
+  async function adoptOwnHandle(handle) {
+    try {
+      var r = await chrome.storage.local.get('rs:x-own');
+      var cur = r['rs:x-own'] && typeof r['rs:x-own'] === 'object' ? r['rs:x-own'] : {};
+      if (cur.handle || !handle) return;
+      await chrome.storage.local.set({ 'rs:x-own': Object.assign({}, cur, { handle: handle, source: 'nav' }) });
+    } catch (e) { /* storage unavailable */ }
   }
   /** The user's own account in the Library, so x-content.js keeps their posts and replies wherever they appear. */
   async function ensureMeAccount() {
@@ -459,7 +469,7 @@
       var n = opportunities().length;
       label.push(h('span', { class: 'dim' }, n ? n + ' to reply to' : 'Growth'));
     }
-    return h('button', { class: 'pill' + (met ? ' met' : ''), title: 'OpenOutlier growth: reply opportunities, reply ROI, goals', onclick: function () { ui.open = !ui.open; keepUi(); render(); } }, label);
+    return h('button', { class: 'pill' + (met ? ' met' : ''), title: 'OpenOutlier growth: reply opportunities, reply ROI, goals', onclick: function () { ui.open = !ui.open; if (ui.open) checkLlm(); keepUi(); render(); } }, label);
   }
 
   // ---- Reply now -------------------------------------------------------------------------------------------
@@ -501,8 +511,8 @@
     return card;
   }
 
-  // PHASE 5 HOOK (replyAngles): uses the x-llm service worker (docs/x-llm-notes.md) when it is merged and set
-  // up. prepare → the preview and cost are shown → the user sends → angles are listed (never typed into X).
+  // PHASE 5 HOOK (replyAngles): uses the x-llm service worker (docs/x-llm-notes.md) when it is set up
+  // (asked again each time the drawer opens, so turning the helper on needs no reload). prepare → the preview and cost are shown → the user sends → angles are listed (never typed into X).
   function checkLlm() {
     try {
       chrome.runtime.sendMessage({ type: 'reelscope:x-llm-status' }).then(function (r) {
@@ -525,7 +535,13 @@
     if (a.state === 'error') box.appendChild(h('p', { class: 'dim' }, a.error));
     if (a.state === 'preview') {
       var est = a.prep.estimate || {};
-      box.appendChild(h('p', { class: 'dim' }, 'Sends ' + fmt((a.prep.preview || {}).chars) + ' characters (this post and your voice profile) to ' + ((a.prep.preview || {}).model || 'the model') + '. About $' + (est.usdTypical != null ? est.usdTypical.toFixed(4) : '?') + '.'));
+      var pv = a.prep.preview || {};
+      var sp = a.prep.spend || {};
+      var money = function (n) { return n != null && isFinite(n) ? '$' + n.toFixed(4) : '$?'; };
+      box.appendChild(h('p', { class: 'dim' }, 'Sends ' + fmt(pv.chars) + ' characters (this post and your voice profile) to ' + (pv.model || 'the model') + '. About ' + money(est.usdTypical) + ', at most ' + money(est.usdMax) + (est.approx ? ' (approximate)' : '') + '. Today: ' + money(sp.todayUsd) + ' of the ' + (sp.capUsd != null ? '$' + Number(sp.capUsd).toFixed(2) : '$?') + ' daily cap.'));
+      box.appendChild(h('details', null, h('summary', null, 'The exact text that will be sent'),
+        pv.context ? h('pre', { style: 'white-space:pre-wrap;max-height:180px;overflow:auto;font-size:11px' }, pv.context) : null,
+        h('pre', { style: 'white-space:pre-wrap;max-height:180px;overflow:auto;font-size:11px' }, pv.message || '')));
       box.appendChild(h('div', { class: 'row' },
         h('button', { class: 'b primary', onclick: function () {
           ui.angles[o.post.code] = { state: 'sending' }; render();
@@ -539,11 +555,29 @@
     if (a.state === 'done') {
       a.angles.forEach(function (x) {
         box.appendChild(h('p', null, h('span', { class: 'chip' }, x.kind), ' ', h('b', null, x.angle), h('br'), h('span', { class: 'dim' }, x.draft), ' ',
-          h('button', { class: 'b', onclick: function () { navigator.clipboard.writeText(x.draft).catch(function () {}); } }, 'Copy')));
+          h('button', { class: 'b', onclick: function () { navigator.clipboard.writeText(x.draft).catch(function () {}); } }, 'Copy'),
+          replyFillButton(o, x.draft)));
       });
-      if (a.cost && a.cost.usd != null) box.appendChild(h('p', { class: 'note' }, 'Cost $' + a.cost.usd.toFixed(4) + '. Edit it in your own words before you reply.'));
+      if (a.cost && a.cost.usd != null) {
+        var tk = a.cost.tokens || {};
+        box.appendChild(h('p', { class: 'note' }, 'Cost $' + a.cost.usd.toFixed(4) + (a.cost.approx ? ' (approx.)' : '') + ' · ' + fmt(tk.input) + ' in / ' + fmt(tk.output) + ' out tokens. Edit it in your own words before you reply.'));
+      }
     }
     return box;
+  }
+
+  /** "Put in reply box": only on that post's own page, only when its reply box is there; fills the text, never sends. */
+  function replyFillButton(o, text) {
+    var F = self.OpenOutlierXFill;
+    var c = ctx();
+    if (!F || c.kind !== 'status' || c.status !== o.post.code) return null;
+    var bx = F.boxes()[0];
+    if (!bx) return null;
+    var b = h('button', { class: 'b', onclick: function () {
+      var ok = F.fill(bx, text);
+      b.textContent = ok ? 'In the reply box — edit it, then press Reply yourself' : 'Could not fill the reply box';
+    } }, 'Put in reply box');
+    return b;
   }
 
   // ---- Reply ROI ---------------------------------------------------------------------------------------------
@@ -772,7 +806,7 @@
   window.addEventListener('popstate', onNav);
   setInterval(onNav, 1000);
   setInterval(scheduleRender, 60000); // ages and the 120-minute window move on
-  if (FT) FT.onChange(function (changed) { if (changed.some(function (k) { return /^x\./.test(k); })) { if (on('x.crm') || on('x.consistency')) ensureMeAccount(); scheduleRender(); } });
+  if (FT) FT.onChange(function (changed) { if (changed.some(function (k) { return /^x\./.test(k); })) { if (on('x.crm') || on('x.consistency')) ensureMeAccount(); checkLlm(); scheduleRender(); } });
 
   checkLlm();
   detectMe();
