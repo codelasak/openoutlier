@@ -272,6 +272,9 @@ This check ran in the user's Chrome, logged in, with the extension loaded unpack
   - **Effect:** every capture was recorded as covering only the last two days. The My X card said "the captured analytics start on 2026-11-23 … choose the 3M range" even with 3M chosen.
   - **Fix:** `rangeOf` now picks by name: `current_*` first, ignoring `prev_*` and `backfill_*`. The order doesn't matter any more (test in `tests/x-own.test.js`).
   - The wrong captures already stored are outvoted by the next correct one (`coveredFrom` takes the earliest), so a visit to x.com/i/account_analytics after reloading the extension corrects it.
+  - **Verified live after reloading the extension.**
+    - With 2W remembered by x.com, coverage read 11-11 (2W's `current_from`).
+    - After choosing 3M, the card's warning disappeared and the bridge's `x_own.coveredFrom` became 2026-08-27.
   - **How it was found:** the extension hook's own `postMessage` carried the full URL. The bridge's `putDaily`, run on a copy of the DB, lowered the coverage as it should. That left the stored variables: `rangeOf` on them with sorted keys returns 11-23.
 - **Not reachable by the browser tool:** the Library pages (My X, X ideas). Extension pages can't be opened.
 - **Not checked:** "Put in compose box" (needs the LLM turned on), `contentPageQuery` with posts, and `ListLatestTweetsTimeline` (no List).
