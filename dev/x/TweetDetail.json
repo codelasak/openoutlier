@@ -1,0 +1,974 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/VHdlZXREZXRhaWw/TweetDetail?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 150,
+   "remaining": 148,
+   "reset": 1795176900
+  },
+  "body": {
+   "data": {
+    "threaded_conversation_with_injections_v2": {
+     "instructions": [
+      {
+       "type": "TimelineAddEntries",
+       "entries": [
+        {
+         "entryId": "tweet-2119399533573046410",
+         "sortIndex": "2119399533573046410",
+         "content": {
+          "entryType": "TimelineTimelineItem",
+          "__typename": "TimelineTimelineItem",
+          "itemContent": {
+           "itemType": "TimelineTweet",
+           "__typename": "TimelineTweet",
+           "tweet_results": {
+            "result": {
+             "__typename": "Tweet",
+             "rest_id": "2119399533573046410",
+             "core": {
+              "user_results": {
+               "result": {
+                "__typename": "User",
+                "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDA3OTE5",
+                "rest_id": "1400000000000007919",
+                "affiliates_highlighted_label": {},
+                "avatar": {
+                 "image_url": "https://pbs.twimg.com/profile_images/1400000000000007919/demo_normal.jpg"
+                },
+                "core": {
+                 "created_at": "Thu May 02 00:00:00 +0000 2019",
+                 "name": "Excel Bugs (demo)",
+                 "screen_name": "ExcelBugs_Demo"
+                },
+                "dm_permissions": {
+                 "can_dm": false
+                },
+                "has_graduated_access": true,
+                "is_blue_verified": true,
+                "location": {
+                 "location": ""
+                },
+                "privacy": {
+                 "protected": false
+                },
+                "profile_bio": {
+                 "description": "Demo account for OpenOutlier tests"
+                },
+                "relationship_counts": {
+                 "followers": 18400,
+                 "following": 300
+                },
+                "tweet_counts": {
+                 "tweets": 2140,
+                 "media_tweets": 428
+                },
+                "verification": {
+                 "verified": false
+                },
+                "professional": {
+                 "rest_id": "1400000000000007919",
+                 "professional_type": "Creator",
+                 "category": []
+                },
+                "relationship_perspectives": {
+                 "following": true,
+                 "followed_by": true
+                },
+                "pinned_items": [
+                 {
+                  "rest_id": "2065766129464246361"
+                 }
+                ]
+               }
+              }
+             },
+             "unmention_data": {},
+             "edit_control": {
+              "edit_tweet_ids": [
+               "2119399533573046410"
+              ],
+              "editable_until_msecs": "1794142800000",
+              "is_edit_eligible": true,
+              "edits_remaining": "5"
+             },
+             "is_translatable": false,
+             "views": {
+              "count": "26000",
+              "state": "EnabledWithCount"
+             },
+             "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+             "legacy": {
+              "bookmark_count": 0,
+              "bookmarked": false,
+              "created_at": "Sun Nov 08 12:00:00 +0000 2026",
+              "conversation_id_str": "2119399533573046410",
+              "display_text_range": [
+               0,
+               47
+              ],
+              "entities": {
+               "hashtags": [],
+               "symbols": [],
+               "timestamps": [],
+               "urls": [],
+               "user_mentions": []
+              },
+              "favorite_count": 410,
+              "favorited": false,
+              "full_text": "10 Excel functions I use every day. A thread 🧵",
+              "is_quote_status": false,
+              "lang": "en",
+              "possibly_sensitive": false,
+              "quote_count": 0,
+              "reply_count": 33,
+              "retweet_count": 60,
+              "retweeted": false,
+              "user_id_str": "1400000000000007919",
+              "id_str": "2119399533573046410"
+             }
+            }
+           },
+           "tweetDisplayType": "Tweet"
+          }
+         }
+        },
+        {
+         "entryId": "conversationthread-2119399785231286411",
+         "sortIndex": "7",
+         "content": {
+          "entryType": "TimelineTimelineModule",
+          "__typename": "TimelineTimelineModule",
+          "displayType": "VerticalConversation",
+          "items": [
+           {
+            "entryId": "conversationthread-2119399785231286411-tweet-2119399785231286411",
+            "item": {
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2119399785231286411",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDA3OTE5",
+                   "rest_id": "1400000000000007919",
+                   "affiliates_highlighted_label": {},
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1400000000000007919/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Thu May 02 00:00:00 +0000 2019",
+                    "name": "Excel Bugs (demo)",
+                    "screen_name": "ExcelBugs_Demo"
+                   },
+                   "dm_permissions": {
+                    "can_dm": false
+                   },
+                   "has_graduated_access": true,
+                   "is_blue_verified": true,
+                   "location": {
+                    "location": ""
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "profile_bio": {
+                    "description": "Demo account for OpenOutlier tests"
+                   },
+                   "relationship_counts": {
+                    "followers": 18400,
+                    "following": 300
+                   },
+                   "tweet_counts": {
+                    "tweets": 2140,
+                    "media_tweets": 428
+                   },
+                   "verification": {
+                    "verified": false
+                   },
+                   "professional": {
+                    "rest_id": "1400000000000007919",
+                    "professional_type": "Creator",
+                    "category": []
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": [
+                    {
+                     "rest_id": "2065766129464246361"
+                    }
+                   ]
+                  }
+                 }
+                },
+                "unmention_data": {},
+                "edit_control": {
+                 "edit_tweet_ids": [
+                  "2119399785231286411"
+                 ],
+                 "editable_until_msecs": "1794142860000",
+                 "is_edit_eligible": false,
+                 "edits_remaining": "5"
+                },
+                "is_translatable": false,
+                "views": {
+                 "count": "3500",
+                 "state": "EnabledWithCount"
+                },
+                "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                "legacy": {
+                 "bookmark_count": 0,
+                 "bookmarked": false,
+                 "created_at": "Sun Nov 08 12:01:00 +0000 2026",
+                 "conversation_id_str": "2119399533573046410",
+                 "display_text_range": [
+                  0,
+                  9
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "timestamps": [],
+                  "urls": [],
+                  "user_mentions": [
+                   {
+                    "id_str": "1400000000000007919",
+                    "name": "Excel Bugs (demo)",
+                    "screen_name": "ExcelBugs_Demo",
+                    "indices": [
+                     0,
+                     0
+                    ]
+                   }
+                  ]
+                 },
+                 "favorite_count": 30,
+                 "favorited": false,
+                 "full_text": "@ExcelBugs_Demo 1/ charts",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "possibly_sensitive": false,
+                 "quote_count": 0,
+                 "reply_count": 0,
+                 "retweet_count": 0,
+                 "retweeted": false,
+                 "user_id_str": "1400000000000007919",
+                 "id_str": "2119399785231286411",
+                 "in_reply_to_status_id_str": "2119399533573046410",
+                 "in_reply_to_user_id_str": "1400000000000007919",
+                 "in_reply_to_screen_name": "ExcelBugs_Demo"
+                }
+               }
+              },
+              "tweetDisplayType": "Tweet"
+             }
+            }
+           },
+           {
+            "entryId": "conversationthread-2119399785231286411-tweet-2119400036889526412",
+            "item": {
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2119400036889526412",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDA3OTE5",
+                   "rest_id": "1400000000000007919",
+                   "affiliates_highlighted_label": {},
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1400000000000007919/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Thu May 02 00:00:00 +0000 2019",
+                    "name": "Excel Bugs (demo)",
+                    "screen_name": "ExcelBugs_Demo"
+                   },
+                   "dm_permissions": {
+                    "can_dm": false
+                   },
+                   "has_graduated_access": true,
+                   "is_blue_verified": true,
+                   "location": {
+                    "location": ""
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "profile_bio": {
+                    "description": "Demo account for OpenOutlier tests"
+                   },
+                   "relationship_counts": {
+                    "followers": 18400,
+                    "following": 300
+                   },
+                   "tweet_counts": {
+                    "tweets": 2140,
+                    "media_tweets": 428
+                   },
+                   "verification": {
+                    "verified": false
+                   },
+                   "professional": {
+                    "rest_id": "1400000000000007919",
+                    "professional_type": "Creator",
+                    "category": []
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": true
+                   },
+                   "pinned_items": [
+                    {
+                     "rest_id": "2065766129464246361"
+                    }
+                   ]
+                  }
+                 }
+                },
+                "unmention_data": {},
+                "edit_control": {
+                 "edit_tweet_ids": [
+                  "2119400036889526412"
+                 ],
+                 "editable_until_msecs": "1794142920000",
+                 "is_edit_eligible": false,
+                 "edits_remaining": "5"
+                },
+                "is_translatable": false,
+                "views": {
+                 "count": "3000",
+                 "state": "EnabledWithCount"
+                },
+                "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                "legacy": {
+                 "bookmark_count": 0,
+                 "bookmarked": false,
+                 "created_at": "Sun Nov 08 12:02:00 +0000 2026",
+                 "conversation_id_str": "2119399533573046410",
+                 "display_text_range": [
+                  0,
+                  6
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "timestamps": [],
+                  "urls": [],
+                  "user_mentions": [
+                   {
+                    "id_str": "1400000000000007919",
+                    "name": "Excel Bugs (demo)",
+                    "screen_name": "ExcelBugs_Demo",
+                    "indices": [
+                     0,
+                     0
+                    ]
+                   }
+                  ]
+                 },
+                 "favorite_count": 30,
+                 "favorited": false,
+                 "full_text": "@ExcelBugs_Demo 2/ LET",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "possibly_sensitive": false,
+                 "quote_count": 0,
+                 "reply_count": 0,
+                 "retweet_count": 0,
+                 "retweeted": false,
+                 "user_id_str": "1400000000000007919",
+                 "id_str": "2119400036889526412",
+                 "in_reply_to_status_id_str": "2119399785231286411",
+                 "in_reply_to_user_id_str": "1400000000000007919",
+                 "in_reply_to_screen_name": "ExcelBugs_Demo"
+                }
+               }
+              },
+              "tweetDisplayType": "Tweet"
+             }
+            }
+           }
+          ]
+         }
+        },
+        {
+         "entryId": "conversationthread-2119402050155446414",
+         "sortIndex": "6",
+         "content": {
+          "entryType": "TimelineTimelineModule",
+          "__typename": "TimelineTimelineModule",
+          "displayType": "VerticalConversation",
+          "items": [
+           {
+            "entryId": "conversationthread-2119402050155446414-tweet-2119402050155446414",
+            "item": {
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2119402050155446414",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDM5NTk1",
+                   "rest_id": "1400000000000039595",
+                   "affiliates_highlighted_label": {},
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1400000000000039595/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Thu May 02 00:00:00 +0000 2019",
+                    "name": "Reply Guy",
+                    "screen_name": "reply_guy_demo"
+                   },
+                   "dm_permissions": {
+                    "can_dm": false
+                   },
+                   "has_graduated_access": true,
+                   "is_blue_verified": false,
+                   "location": {
+                    "location": ""
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "profile_bio": {
+                    "description": "Demo account for OpenOutlier tests"
+                   },
+                   "relationship_counts": {
+                    "followers": 1300,
+                    "following": 300
+                   },
+                   "tweet_counts": {
+                    "tweets": 900,
+                    "media_tweets": 180
+                   },
+                   "verification": {
+                    "verified": false
+                   },
+                   "relationship_perspectives": {
+                    "following": false,
+                    "followed_by": false
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "unmention_data": {},
+                "edit_control": {
+                 "edit_tweet_ids": [
+                  "2119402050155446414"
+                 ],
+                 "editable_until_msecs": "1794143400000",
+                 "is_edit_eligible": false,
+                 "edits_remaining": "5"
+                },
+                "is_translatable": false,
+                "views": {
+                 "count": "90",
+                 "state": "EnabledWithCount"
+                },
+                "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                "legacy": {
+                 "bookmark_count": 0,
+                 "bookmarked": false,
+                 "created_at": "Sun Nov 08 12:10:00 +0000 2026",
+                 "conversation_id_str": "2119399533573046410",
+                 "display_text_range": [
+                  0,
+                  11
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "timestamps": [],
+                  "urls": [],
+                  "user_mentions": [
+                   {
+                    "id_str": "1400000000000007919",
+                    "name": "Excel Bugs (demo)",
+                    "screen_name": "ExcelBugs_Demo",
+                    "indices": [
+                     0,
+                     0
+                    ]
+                   }
+                  ]
+                 },
+                 "favorite_count": 1,
+                 "favorited": false,
+                 "full_text": "@ExcelBugs_Demo Nice thread",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "possibly_sensitive": false,
+                 "quote_count": 0,
+                 "reply_count": 0,
+                 "retweet_count": 0,
+                 "retweeted": false,
+                 "user_id_str": "1400000000000039595",
+                 "id_str": "2119402050155446414",
+                 "in_reply_to_status_id_str": "2119399533573046410",
+                 "in_reply_to_user_id_str": "1400000000000007919",
+                 "in_reply_to_screen_name": "ExcelBugs_Demo"
+                }
+               }
+              },
+              "tweetDisplayType": "Tweet"
+             }
+            }
+           }
+          ]
+         }
+        },
+        {
+         "entryId": "tweetdetailrelatedtweets-1",
+         "sortIndex": "5",
+         "content": {
+          "entryType": "TimelineTimelineModule",
+          "__typename": "TimelineTimelineModule",
+          "displayType": "Vertical",
+          "items": [
+           {
+            "entryId": "tweetdetailrelatedtweets-1-tweet-2116500430648246416",
+            "item": {
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2116500430648246416",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDE1ODM4",
+                   "rest_id": "1400000000000015838",
+                   "affiliates_highlighted_label": {},
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1400000000000015838/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Thu May 02 00:00:00 +0000 2019",
+                    "name": "Sheet Tips (demo)",
+                    "screen_name": "SheetTips_Demo"
+                   },
+                   "dm_permissions": {
+                    "can_dm": false
+                   },
+                   "has_graduated_access": true,
+                   "is_blue_verified": true,
+                   "location": {
+                    "location": ""
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "profile_bio": {
+                    "description": "Demo account for OpenOutlier tests"
+                   },
+                   "relationship_counts": {
+                    "followers": 920000,
+                    "following": 300
+                   },
+                   "tweet_counts": {
+                    "tweets": 900,
+                    "media_tweets": 180
+                   },
+                   "verification": {
+                    "verified": false
+                   },
+                   "professional": {
+                    "rest_id": "1400000000000015838",
+                    "professional_type": "Creator",
+                    "category": []
+                   },
+                   "relationship_perspectives": {
+                    "following": true,
+                    "followed_by": false
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "unmention_data": {},
+                "edit_control": {
+                 "edit_tweet_ids": [
+                  "2116500430648246416"
+                 ],
+                 "editable_until_msecs": "1793451600000",
+                 "is_edit_eligible": true,
+                 "edits_remaining": "5"
+                },
+                "is_translatable": false,
+                "views": {
+                 "count": "31000",
+                 "state": "EnabledWithCount"
+                },
+                "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                "legacy": {
+                 "bookmark_count": 0,
+                 "bookmarked": false,
+                 "created_at": "Sat Oct 31 12:00:00 +0000 2026",
+                 "conversation_id_str": "2116500430648246416",
+                 "display_text_range": [
+                  0,
+                  23
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "timestamps": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 500,
+                 "favorited": false,
+                 "full_text": "dynamic arrays tip #144",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "possibly_sensitive": false,
+                 "quote_count": 0,
+                 "reply_count": 0,
+                 "retweet_count": 0,
+                 "retweeted": false,
+                 "user_id_str": "1400000000000015838",
+                 "id_str": "2116500430648246416"
+                }
+               }
+              },
+              "tweetDisplayType": "Tweet"
+             }
+            }
+           }
+          ]
+         }
+        },
+        {
+         "entryId": "cursor-showmorethreads-1",
+         "sortIndex": "4",
+         "content": {
+          "entryType": "TimelineTimelineItem",
+          "itemContent": {
+           "itemType": "TimelineTimelineCursor",
+           "value": "more",
+           "cursorType": "ShowMoreThreads"
+          }
+         }
+        }
+       ]
+      },
+      {
+       "type": "TimelineTerminateTimeline",
+       "direction": "Top"
+      }
+     ]
+    }
+   }
+  }
+ },
+ {
+  "url": "https://x.com/i/api/graphql/VHdlZXREZXRhaWw/TweetDetail?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 150,
+   "remaining": 147,
+   "reset": 1795176900
+  },
+  "body": {
+   "data": {
+    "threaded_conversation_with_injections_v2": {
+     "instructions": [
+      {
+       "type": "TimelineAddToModule",
+       "moduleEntryId": "conversationthread-2119399785231286411",
+       "prepend": false,
+       "moduleItems": [
+        {
+         "entryId": "x-tweet-2119400288547766413",
+         "item": {
+          "itemContent": {
+           "itemType": "TimelineTweet",
+           "tweet_results": {
+            "result": {
+             "__typename": "Tweet",
+             "rest_id": "2119400288547766413",
+             "core": {
+              "user_results": {
+               "result": {
+                "__typename": "User",
+                "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDA3OTE5",
+                "rest_id": "1400000000000007919",
+                "affiliates_highlighted_label": {},
+                "avatar": {
+                 "image_url": "https://pbs.twimg.com/profile_images/1400000000000007919/demo_normal.jpg"
+                },
+                "core": {
+                 "created_at": "Thu May 02 00:00:00 +0000 2019",
+                 "name": "Excel Bugs (demo)",
+                 "screen_name": "ExcelBugs_Demo"
+                },
+                "dm_permissions": {
+                 "can_dm": false
+                },
+                "has_graduated_access": true,
+                "is_blue_verified": true,
+                "location": {
+                 "location": ""
+                },
+                "privacy": {
+                 "protected": false
+                },
+                "profile_bio": {
+                 "description": "Demo account for OpenOutlier tests"
+                },
+                "relationship_counts": {
+                 "followers": 18400,
+                 "following": 300
+                },
+                "tweet_counts": {
+                 "tweets": 2140,
+                 "media_tweets": 428
+                },
+                "verification": {
+                 "verified": false
+                },
+                "professional": {
+                 "rest_id": "1400000000000007919",
+                 "professional_type": "Creator",
+                 "category": []
+                },
+                "relationship_perspectives": {
+                 "following": true,
+                 "followed_by": true
+                },
+                "pinned_items": [
+                 {
+                  "rest_id": "2065766129464246361"
+                 }
+                ]
+               }
+              }
+             },
+             "unmention_data": {},
+             "edit_control": {
+              "edit_tweet_ids": [
+               "2119400288547766413"
+              ],
+              "editable_until_msecs": "1794142980000",
+              "is_edit_eligible": false,
+              "edits_remaining": "5"
+             },
+             "is_translatable": false,
+             "views": {
+              "count": "2500",
+              "state": "EnabledWithCount"
+             },
+             "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+             "legacy": {
+              "bookmark_count": 0,
+              "bookmarked": false,
+              "created_at": "Sun Nov 08 12:03:00 +0000 2026",
+              "conversation_id_str": "2119399533573046410",
+              "display_text_range": [
+               0,
+               9
+              ],
+              "entities": {
+               "hashtags": [],
+               "symbols": [],
+               "timestamps": [],
+               "urls": [],
+               "user_mentions": [
+                {
+                 "id_str": "1400000000000007919",
+                 "name": "Excel Bugs (demo)",
+                 "screen_name": "ExcelBugs_Demo",
+                 "indices": [
+                  0,
+                  0
+                 ]
+                }
+               ]
+              },
+              "favorite_count": 30,
+              "favorited": false,
+              "full_text": "@ExcelBugs_Demo 3/ FILTER",
+              "is_quote_status": false,
+              "lang": "en",
+              "possibly_sensitive": false,
+              "quote_count": 0,
+              "reply_count": 0,
+              "retweet_count": 0,
+              "retweeted": false,
+              "user_id_str": "1400000000000007919",
+              "id_str": "2119400288547766413",
+              "in_reply_to_status_id_str": "2119400036889526412",
+              "in_reply_to_user_id_str": "1400000000000007919",
+              "in_reply_to_screen_name": "ExcelBugs_Demo"
+             }
+            }
+           }
+          }
+         }
+        }
+       ]
+      },
+      {
+       "type": "TimelineAddEntries",
+       "entries": [
+        {
+         "entryId": "conversationthread-2119402301813686415",
+         "sortIndex": "3",
+         "content": {
+          "entryType": "TimelineTimelineModule",
+          "__typename": "TimelineTimelineModule",
+          "displayType": "VerticalConversation",
+          "items": [
+           {
+            "entryId": "conversationthread-2119402301813686415-tweet-2119402301813686415",
+            "item": {
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2119402301813686415",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDM5NTk1",
+                   "rest_id": "1400000000000039595",
+                   "affiliates_highlighted_label": {},
+                   "avatar": {
+                    "image_url": "https://pbs.twimg.com/profile_images/1400000000000039595/demo_normal.jpg"
+                   },
+                   "core": {
+                    "created_at": "Thu May 02 00:00:00 +0000 2019",
+                    "name": "Reply Guy",
+                    "screen_name": "reply_guy_demo"
+                   },
+                   "dm_permissions": {
+                    "can_dm": false
+                   },
+                   "has_graduated_access": true,
+                   "is_blue_verified": false,
+                   "location": {
+                    "location": ""
+                   },
+                   "privacy": {
+                    "protected": false
+                   },
+                   "profile_bio": {
+                    "description": "Demo account for OpenOutlier tests"
+                   },
+                   "relationship_counts": {
+                    "followers": 1300,
+                    "following": 300
+                   },
+                   "tweet_counts": {
+                    "tweets": 900,
+                    "media_tweets": 180
+                   },
+                   "verification": {
+                    "verified": false
+                   },
+                   "relationship_perspectives": {
+                    "following": false,
+                    "followed_by": false
+                   },
+                   "pinned_items": []
+                  }
+                 }
+                },
+                "unmention_data": {},
+                "edit_control": {
+                 "edit_tweet_ids": [
+                  "2119402301813686415"
+                 ],
+                 "editable_until_msecs": "1794143460000",
+                 "is_edit_eligible": false,
+                 "edits_remaining": "5"
+                },
+                "is_translatable": false,
+                "views": {
+                 "count": "90",
+                 "state": "EnabledWithCount"
+                },
+                "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                "legacy": {
+                 "bookmark_count": 0,
+                 "bookmarked": false,
+                 "created_at": "Sun Nov 08 12:11:00 +0000 2026",
+                 "conversation_id_str": "2119399533573046410",
+                 "display_text_range": [
+                  0,
+                  11
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "timestamps": [],
+                  "urls": [],
+                  "user_mentions": [
+                   {
+                    "id_str": "1400000000000007919",
+                    "name": "Excel Bugs (demo)",
+                    "screen_name": "ExcelBugs_Demo",
+                    "indices": [
+                     0,
+                     0
+                    ]
+                   }
+                  ]
+                 },
+                 "favorite_count": 1,
+                 "favorited": false,
+                 "full_text": "@ExcelBugs_Demo Nice thread",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "possibly_sensitive": false,
+                 "quote_count": 0,
+                 "reply_count": 0,
+                 "retweet_count": 0,
+                 "retweeted": false,
+                 "user_id_str": "1400000000000039595",
+                 "id_str": "2119402301813686415",
+                 "in_reply_to_status_id_str": "2119399533573046410",
+                 "in_reply_to_user_id_str": "1400000000000007919",
+                 "in_reply_to_screen_name": "ExcelBugs_Demo"
+                }
+               }
+              },
+              "tweetDisplayType": "Tweet"
+             }
+            }
+           }
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    }
+   }
+  }
+ }
+]

@@ -47,6 +47,7 @@
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
   function isInstagram(p) { return !!p && (!p.platform || p.platform === 'instagram'); }
+  function isX(p) { return !!p && p.platform === 'x'; }
   /** Instagram shows no view count on carousels and photos, so those are ranked by likes. */
   function isLikesScored(p) { return isInstagram(p) && (p.type === 'carousel' || p.type === 'photo'); }
 
@@ -68,6 +69,8 @@
     if (p.platform === 'reddit' || isLikesScored(p)) return p.comments || 0;
     // YouTube: likes + comments where known (channel tabs show neither; watch pages show both).
     if (p.platform === 'tiktok') return (p.likes || 0) + (p.comments || 0) + (p.shares || 0) + (p.saves || 0);
+    // X: likes + replies + reposts + quotes + bookmarks (all public on every post).
+    if (p.platform === 'x') return (p.likes || 0) + (p.comments || 0) + (p.shares || 0) + (p.quotes || 0) + (p.saves || 0);
     return (p.likes || 0) + (p.comments || 0);
   }
   function isTikTok(p) { return !!p && p.platform === 'tiktok'; }
@@ -146,10 +149,75 @@
     return b;
   }
 
+  // ---- X (docs/x-plan.md 1, Faz 0 deviations) ----------------------------------
+  // Views ÷ the author's median of ORIGINAL posts (replies, thread parts and reposts stay out of
+  // the median), one median per format (text, image, video, thread, article, link, quote). Only
+  // posts with a view count count (X shows none on posts before 2023). The baseline is the
+  // newest originals of the last 90 days or the last 50, whichever is more. A format with fewer
+  // than 8 such posts falls back to the author's overall median, marked approximate (≈); with
+  // fewer than 8 overall there is no score ("not enough data").
+  var X_WINDOW_MS = 90 * 24 * 3600 * 1000;
+  var X_MIN_RECENT = 50;
+  var X_FRESH_MS = 24 * 3600 * 1000; // X posts collect most of their views within a day
+  function xKind(p) { return p.kind || (p.isRepost ? 'repost' : p.isReply ? 'reply' : 'original'); }
+  function xInBaseline(p, now) {
+    return xKind(p) === 'original' && p.views > 0 && !p.pinned && !p.promoted && !(p.takenAt && now - p.takenAt < X_FRESH_MS && now >= p.takenAt);
+  }
+  /**
+   * Per-author X baselines from a list of X posts.
+   * → { owner: { all: number|null, n, byFormat: { format: { med, n } }, approx: bool (from page posts, not the Library) } }
+   * opts.now; opts.approx marks every baseline as approximate (badges computed from a page's posts).
+   */
+  function xBaselines(posts, opts) {
+    var now = (opts && opts.now) || Date.now();
+    var by = {};
+    posts.forEach(function (p) {
+      if (!isX(p) || !p.owner) return;
+      (by[p.owner] = by[p.owner] || []).push(p);
+    });
+    var out = {};
+    Object.keys(by).forEach(function (owner) {
+      var pool = by[owner].filter(function (p) { return xInBaseline(p, now); })
+        .sort(function (a, b) { return (b.takenAt || 0) - (a.takenAt || 0); });
+      var recent = pool.filter(function (p) { return p.takenAt && now - p.takenAt <= X_WINDOW_MS; }).length;
+      var take = pool.slice(0, Math.max(recent, X_MIN_RECENT));
+      var byFormat = {};
+      take.forEach(function (p) { (byFormat[p.type || 'text'] = byFormat[p.type || 'text'] || []).push(p.views); });
+      var fm = {};
+      Object.keys(byFormat).forEach(function (f) { fm[f] = { med: byFormat[f].length >= MIN_BASELINE ? median(byFormat[f]) : null, n: byFormat[f].length }; });
+      out[owner] = { all: take.length >= MIN_BASELINE ? median(take.map(function (p) { return p.views; })) : null, n: take.length, byFormat: fm, approx: !!(opts && opts.approx) };
+    });
+    return out;
+  }
+  /**
+   * The median an X post is scored against → { med, approx, scope: 'format' | 'all' | null }.
+   * Originals: their format's median, else the overall one (approx). Replies and thread parts: the
+   * overall originals median. Reposts: none (a repost has no views of its own). single: one median per author.
+   */
+  function xBaselineFor(p, b, single) {
+    var none = { med: null, approx: false, scope: null };
+    if (!b || xKind(p) === 'repost') return none;
+    if (xKind(p) === 'original' && !single) {
+      var f = b.byFormat[p.type || 'text'];
+      if (f && f.med) return { med: f.med, approx: !!b.approx, scope: 'format' };
+      if (b.all) return { med: b.all, approx: true, scope: 'all' };
+      return none;
+    }
+    return b.all ? { med: b.all, approx: !!b.approx, scope: 'all' } : none;
+  }
+
+  /**
+   * opts.xBaselines: { owner: baseline } from the Library (xBaselines over each saved account), used
+   * before anything computed from `posts`; opts.xSingleMedian: one median per author instead of per format.
+   */
   function enrich(posts, opts) {
     var now = (opts && opts.now) || Date.now();
     var groups = {};
+    var xs = posts.filter(isX);
+    var xb = xs.length ? xBaselines(xs, { now: now }) : {};
+    if (opts && opts.xBaselines) Object.keys(opts.xBaselines).forEach(function (k) { if (opts.xBaselines[k]) xb[k] = opts.xBaselines[k]; });
     posts.forEach(function (p) {
+      if (isX(p)) return;
       var g = groups[medianGroup(p)] || (groups[medianGroup(p)] = { all: [], base: [], comments: [], likesScored: isLikesScored(p) });
       var v = val(p);
       g.all.push(v > 0 ? v : null);
@@ -167,6 +235,24 @@
     });
     return posts.map(function (p) {
       var v = val(p);
+      if (isX(p)) {
+        var xbf = xBaselineFor(p, xb[p.owner], opts && opts.xSingleMedian);
+        var xr = v > 0 && xbf.med > 0 ? v / xbf.med : null;
+        return Object.assign({}, p, {
+          ratio: xr,
+          viralScore: viralScore(v, xbf.med),
+          engagement: engagementOf(p, v),
+          outlier: xr !== null && xr >= OUTLIER_RATIO,
+          basis: 'views',
+          baseline: xbf.med,
+          baselineApprox: xbf.approx,
+          baselineScope: xbf.scope,
+          noViews: p.views === null || p.views === undefined,
+          commentRatio: null,
+          commentsPer100Likes: typeof p.comments === 'number' && p.likes > 0 ? p.comments / p.likes * 100 : null,
+          commentKeyword: null
+        });
+      }
       var g = groups[medianGroup(p)];
       var med = g.med;
       var ratio = v > 0 && med > 0 ? v / med : null;
@@ -686,7 +772,36 @@
     if (isRedditList(posts)) out.reddit = redditAnalysis(posts, s.medianViews);
     if (isInstagramList(posts)) out.instagram = instagramAnalysis(posts, s.medianViews);
     if (yt) out.youtube = youtubeAnalysis(posts, s.medianViews, opts && opts.all);
+    if (isXList(posts)) out.x = xAnalysis(posts, s.medianViews, opts && opts.all);
     return out;
+  }
+
+  var X_FORMAT_LABELS = { text: 'Text', image: 'Image', video: 'Video', thread: 'Thread', article: 'Article', link: 'Link', quote: 'Quote' };
+  var X_LENGTH_BUCKETS = [
+    { label: 'Under 50 chars', max: 49 }, { label: '50–139', max: 139 }, { label: '140–279', max: 279 },
+    { label: '280–999 (long post)', max: 999 }, { label: '1,000+', max: Infinity }
+  ];
+  /**
+   * X extras (pass every post of the account in `all`): formats (originals, each against the overall
+   * median), originals vs replies vs reposts, text length, link vs none, how many have no view count.
+   */
+  function xAnalysis(posts, med, all) {
+    var list = all || posts;
+    var originals = list.filter(function (p) { return xKind(p) === 'original'; });
+    var formats = {};
+    originals.forEach(function (p) { var k = X_FORMAT_LABELS[p.type] || 'Text'; (formats[k] = formats[k] || []).push(p); });
+    var kinds = { Originals: originals, Replies: list.filter(function (p) { return xKind(p) === 'reply'; }),
+      'Thread parts': list.filter(function (p) { return xKind(p) === 'thread-part'; }), Reposts: list.filter(function (p) { return xKind(p) === 'repost'; }) };
+    var links = { 'Has a link': [], 'No link': [] };
+    originals.forEach(function (p) { links[p.hasLink ? 'Has a link' : 'No link'].push(p); });
+    return {
+      formats: groupStats(formats, med).filter(function (g) { return g.count > 0; }).sort(function (a, b) { return b.count - a.count; }),
+      kinds: Object.keys(kinds).map(function (k) { return { key: k, count: kinds[k].length }; }).filter(function (k) { return k.count > 0; }),
+      lengths: bucketed(originals, X_LENGTH_BUCKETS, function (p) { return (p.caption || '').length; }, med),
+      links: groupStats(links, med).filter(function (g) { return g.count > 0; }),
+      noViews: list.filter(function (p) { return p.views == null && xKind(p) !== 'repost'; }).length,
+      approxMedian: posts.filter(function (p) { return p.ratio != null && p.baselineApprox; }).length
+    };
   }
 
   // ---- file names -----------------------------------------------------------
@@ -721,7 +836,7 @@
     if (p.views > 0 && (p.likes != null || p.comments != null)) {
       parts.push((interactions(p) / p.views * 100).toFixed(1) + 'pct');
     }
-    parts.push(tt ? 'tiktok' : yt ? (p.type === 'short' ? 'short' : 'youtube') : 'post', String(p.code || 'unknown').replace(/[^A-Za-z0-9_-]/g, ''));
+    parts.push(tt ? 'tiktok' : yt ? (p.type === 'short' ? 'short' : 'youtube') : isX(p) ? 'x' : 'post', String(p.code || 'unknown').replace(/[^A-Za-z0-9_-]/g, ''));
     return parts.join('_');
   }
 
@@ -785,7 +900,7 @@
     ['platform', function (p) { return p.platform || 'instagram'; }],
     ['url', function (p) { return p.url; }],
     ['id', function (p) { return p.code; }],
-    ['account', function (p) { return p.owner ? '@' + String(p.owner).replace(/^tt\//, '') : ''; }],
+    ['account', function (p) { return p.owner ? '@' + String(p.owner).replace(/^(tt|x)\//, '') : ''; }],
     ['type', function (p) { return p.type; }],
     ['posted_at', function (p) { return p.takenAt ? new Date(p.takenAt).toISOString() : ''; }],
     ['weekday', function (p) { return p.takenAt ? DAY_LABELS[dayIndex(new Date(p.takenAt))] : ''; }],
@@ -834,8 +949,41 @@
     ['title', function (p) { return (p.caption || '').replace(/\s+/g, ' ').trim(); }]
   ];
 
-  /** Any TikTok post in a list without Reddit posts → TikTok columns (they add platform, saves). */
-  function hasTikTok(posts) { return posts.some(isTikTok); }
+  var X_KIND_NAMES = { original: 'original', reply: 'reply', 'thread-part': 'thread part', repost: 'repost' };
+  var X_COLUMNS = [
+    ['rank', function (p, i) { return i + 1; }],
+    ['platform', function (p) { return p.platform; }],
+    ['url', function (p) { return p.url; }],
+    ['id', function (p) { return p.code; }],
+    ['account', function (p) { return p.author || String(p.owner || '').replace(/^x\//, ''); }], // bare handle: a leading @ reads as a formula
+    ['kind', function (p) { return X_KIND_NAMES[p.kind] || p.kind || ''; }],
+    ['format', function (p) { return p.type; }],
+    ['posted_at', function (p) { return p.takenAt ? new Date(p.takenAt).toISOString() : ''; }],
+    ['weekday', function (p) { return p.takenAt ? DAY_LABELS[dayIndex(new Date(p.takenAt))] : ''; }],
+    ['hour_local', function (p) { return p.takenAt ? new Date(p.takenAt).getHours() : ''; }],
+    ['views', function (p) { return p.views; }],
+    ['likes', function (p) { return p.likes; }],
+    ['replies', function (p) { return p.comments; }],
+    ['reposts', function (p) { return p.shares; }],
+    ['quotes', function (p) { return p.quotes; }],
+    ['bookmarks', function (p) { return p.saves; }],
+    ['engagement_rate_pct', function (p) { return p.engagement == null ? '' : p.engagement.toFixed(2); }],
+    ['viral_score', function (p) { return p.viralScore; }],
+    ['x_median', function (p) { return p.ratio == null ? '' : p.ratio.toFixed(2); }],
+    ['median_approx', function (p) { return p.ratio != null && p.baselineApprox ? 'yes' : ''; }],
+    ['author_followers', function (p) { return p.ownerFollowers; }],
+    ['duration_s', function (p) { return p.duration; }],
+    ['thread_length', function (p) { return p.threadLength || ''; }],
+    ['has_link', function (p) { return p.hasLink ? 'yes' : ''; }],
+    ['pinned', function (p) { return p.pinned ? 'yes' : ''; }],
+    ['article_title', function (p) { return p.article ? p.article.title : ''; }],
+    ['hashtags', function (p) { return (p.hashtags || []).map(function (t) { return '#' + t; }).join(' '); }],
+    ['text', function (p) { return (p.caption || '').replace(/\s+/g, ' ').trim(); }]
+  ];
+
+  /** Any TikTok (or X) post in a list without Reddit posts → TikTok columns (they add platform, saves). */
+  function hasTikTok(posts) { return posts.some(isTikTok) || posts.some(isX); }
+  function isXList(posts) { return posts.length > 0 && posts.every(isX); }
 
   function cell(value, delimiter) {
     if (value === null || value === undefined) return '';
@@ -850,7 +998,7 @@
   /** delimiter ',' → CSV (for files), '\t' → TSV (for pasting into Sheets/Excel). */
   function toTable(posts, delimiter) {
     delimiter = delimiter || ',';
-    var cols = isRedditList(posts) ? REDDIT_COLUMNS : isYouTubeList(posts) ? YOUTUBE_COLUMNS : hasTikTok(posts) ? TIKTOK_COLUMNS : COLUMNS;
+    var cols = isRedditList(posts) ? REDDIT_COLUMNS : isYouTubeList(posts) ? YOUTUBE_COLUMNS : isXList(posts) ? X_COLUMNS : hasTikTok(posts) ? TIKTOK_COLUMNS : COLUMNS;
     var lines = [cols.map(function (c) { return c[0]; }).join(delimiter)];
     posts.forEach(function (p, i) {
       lines.push(cols.map(function (c) { return cell(c[1](p, i), delimiter); }).join(delimiter));
@@ -864,6 +1012,12 @@
     REDDIT_COLUMN_NAMES: REDDIT_COLUMNS.map(function (c) { return c[0]; }),
     TIKTOK_COLUMN_NAMES: TIKTOK_COLUMNS.map(function (c) { return c[0]; }),
     YOUTUBE_COLUMN_NAMES: YOUTUBE_COLUMNS.map(function (c) { return c[0]; }),
+    X_COLUMN_NAMES: X_COLUMNS.map(function (c) { return c[0]; }),
+    isX: isX,
+    isXList: isXList,
+    xKind: xKind,
+    xBaselines: xBaselines,
+    xBaselineFor: xBaselineFor,
     MIN_BASELINE: MIN_BASELINE,
     FRESH_MS: FRESH_MS,
     val: val,

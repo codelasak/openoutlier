@@ -1,0 +1,262 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/VXNlclR3ZWV0c0FuZFJlcG/UserTweetsAndReplies?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 250,
+   "remaining": 240,
+   "reset": 1795176900
+  },
+  "body": {
+   "data": {
+    "user": {
+     "result": {
+      "__typename": "User",
+      "timeline": {
+       "timeline": {
+        "instructions": [
+         {
+          "type": "TimelineAddEntries",
+          "entries": [
+           {
+            "entryId": "tweet-2123204606161846389",
+            "sortIndex": "2123204606161846389",
+            "content": {
+             "entryType": "TimelineTimelineItem",
+             "__typename": "TimelineTimelineItem",
+             "itemContent": {
+              "itemType": "TimelineTweet",
+              "__typename": "TimelineTweet",
+              "tweet_results": {
+               "result": {
+                "__typename": "Tweet",
+                "rest_id": "2123204606161846389",
+                "core": {
+                 "user_results": {
+                  "result": {
+                   "__typename": "User",
+                   "rest_id": "1400000000000023757",
+                   "is_blue_verified": false,
+                   "legacy": {
+                    "screen_name": "tiny_maker_demo",
+                    "name": "Tiny Maker",
+                    "followers_count": 85,
+                    "friends_count": 401,
+                    "statuses_count": 211,
+                    "media_count": 12,
+                    "created_at": "Thu May 02 00:00:00 +0000 2019",
+                    "profile_image_url_https": "https://pbs.twimg.com/profile_images/1400000000000023757/old_normal.jpg",
+                    "verified": false,
+                    "following": false,
+                    "followed_by": false,
+                    "pinned_tweet_ids_str": []
+                   }
+                  }
+                 }
+                },
+                "unmention_data": {},
+                "edit_control": {
+                 "edit_tweet_ids": [
+                  "2123204606161846389"
+                 ],
+                 "editable_until_msecs": "1795050000000",
+                 "is_edit_eligible": true,
+                 "edits_remaining": "5"
+                },
+                "is_translatable": false,
+                "views": {
+                 "count": "16",
+                 "state": "EnabledWithCount"
+                },
+                "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                "legacy": {
+                 "bookmark_count": 0,
+                 "bookmarked": false,
+                 "created_at": "Thu Nov 19 00:00:00 +0000 2026",
+                 "conversation_id_str": "2123204606161846389",
+                 "display_text_range": [
+                  0,
+                  25
+                 ],
+                 "entities": {
+                  "hashtags": [],
+                  "symbols": [],
+                  "timestamps": [],
+                  "urls": [],
+                  "user_mentions": []
+                 },
+                 "favorite_count": 0,
+                 "favorited": false,
+                 "full_text": "Building in public, day 0",
+                 "is_quote_status": false,
+                 "lang": "en",
+                 "possibly_sensitive": false,
+                 "quote_count": 0,
+                 "reply_count": 0,
+                 "retweet_count": 0,
+                 "retweeted": false,
+                 "user_id_str": "1400000000000023757",
+                 "id_str": "2123204606161846389"
+                }
+               }
+              },
+              "tweetDisplayType": "Tweet"
+             }
+            }
+           },
+           {
+            "entryId": "profile-conversation-x",
+            "sortIndex": "1",
+            "content": {
+             "entryType": "TimelineTimelineModule",
+             "__typename": "TimelineTimelineModule",
+             "displayType": "VerticalConversation",
+             "items": [
+              {
+               "entryId": "profile-conversation-x-tweet-2123023412229046369",
+               "item": {
+                "itemContent": {
+                 "itemType": "TimelineTweet",
+                 "__typename": "TimelineTweet",
+                 "tweet_results": {
+                  "result": {
+                   "__typename": "Tweet",
+                   "rest_id": "2123023412229046369",
+                   "core": {
+                    "user_results": {
+                     "result": {
+                      "__typename": "User",
+                      "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDA3OTE5",
+                      "rest_id": "1400000000000007919",
+                      "affiliates_highlighted_label": {},
+                      "avatar": {
+                       "image_url": "https://pbs.twimg.com/profile_images/1400000000000007919/demo_normal.jpg"
+                      },
+                      "core": {
+                       "created_at": "Thu May 02 00:00:00 +0000 2019",
+                       "name": "Excel Bugs (demo)",
+                       "screen_name": "ExcelBugs_Demo"
+                      },
+                      "dm_permissions": {
+                       "can_dm": false
+                      },
+                      "has_graduated_access": true,
+                      "is_blue_verified": true,
+                      "location": {
+                       "location": ""
+                      },
+                      "privacy": {
+                       "protected": false
+                      },
+                      "profile_bio": {
+                       "description": "Demo account for OpenOutlier tests"
+                      },
+                      "relationship_counts": {
+                       "followers": 18400,
+                       "following": 300
+                      },
+                      "tweet_counts": {
+                       "tweets": 2140,
+                       "media_tweets": 428
+                      },
+                      "verification": {
+                       "verified": false
+                      },
+                      "professional": {
+                       "rest_id": "1400000000000007919",
+                       "professional_type": "Creator",
+                       "category": []
+                      },
+                      "relationship_perspectives": {
+                       "following": true,
+                       "followed_by": true
+                      },
+                      "pinned_items": [
+                       {
+                        "rest_id": "2065766129464246361"
+                       }
+                      ]
+                     }
+                    }
+                   },
+                   "unmention_data": {},
+                   "edit_control": {
+                    "edit_tweet_ids": [
+                     "2123023412229046369"
+                    ],
+                    "editable_until_msecs": "1795006800000",
+                    "is_edit_eligible": false,
+                    "edits_remaining": "5"
+                   },
+                   "is_translatable": false,
+                   "views": {
+                    "count": "150",
+                    "state": "EnabledWithCount"
+                   },
+                   "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                   "legacy": {
+                    "bookmark_count": 0,
+                    "bookmarked": false,
+                    "created_at": "Wed Nov 18 12:00:00 +0000 2026",
+                    "conversation_id_str": "2123008312734646368",
+                    "display_text_range": [
+                     0,
+                     28
+                    ],
+                    "entities": {
+                     "hashtags": [],
+                     "symbols": [],
+                     "timestamps": [],
+                     "urls": [],
+                     "user_mentions": [
+                      {
+                       "id_str": "1400000000000023757",
+                       "name": "Tiny Maker",
+                       "screen_name": "tiny_maker_demo",
+                       "indices": [
+                        0,
+                        0
+                       ]
+                      }
+                     ]
+                    },
+                    "favorite_count": 3,
+                    "favorited": false,
+                    "full_text": "@tiny_maker_demo Great point, also try charts",
+                    "is_quote_status": false,
+                    "lang": "en",
+                    "possibly_sensitive": false,
+                    "quote_count": 0,
+                    "reply_count": 0,
+                    "retweet_count": 0,
+                    "retweeted": false,
+                    "user_id_str": "1400000000000007919",
+                    "id_str": "2123023412229046369",
+                    "in_reply_to_status_id_str": "2123008312734646368",
+                    "in_reply_to_user_id_str": "1400000000000023757",
+                    "in_reply_to_screen_name": "tiny_maker_demo"
+                   }
+                  }
+                 },
+                 "tweetDisplayType": "Tweet"
+                }
+               }
+              }
+             ]
+            }
+           }
+          ]
+         }
+        ],
+        "metadata": {
+         "scribeConfig": {
+          "page": "profile"
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+]

@@ -1,0 +1,23 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/Y29udGVudFBhZ2VRdWVyeQ/contentPageQuery?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 100,
+   "remaining": 99,
+   "reset": 1795176900
+  },
+  "body": {
+   "data": {
+    "viewer_v2": {
+     "user_results": {
+      "result": {
+       "__typename": "User",
+       "rest_id": "1400000000000023757",
+       "tweets_results": []
+      }
+     }
+    }
+   }
+  }
+ }
+]

@@ -1,0 +1,960 @@
+[
+ {
+  "url": "https://x.com/i/api/graphql/SG9tZVRpbWVsaW5l/HomeTimeline?variables=%7B%22count%22%3A20%7D&features=%7B%7D",
+  "rateLimit": {
+   "limit": 500,
+   "remaining": 497,
+   "reset": 1795176900
+  },
+  "body": {
+   "data": {
+    "home": {
+     "home_timeline_urt": {
+      "instructions": [
+       {
+        "type": "TimelineAddEntries",
+        "entries": [
+         {
+          "entryId": "tweet-2123717988971446402",
+          "sortIndex": "2123717988971446402",
+          "content": {
+           "entryType": "TimelineTimelineItem",
+           "__typename": "TimelineTimelineItem",
+           "itemContent": {
+            "itemType": "TimelineTweet",
+            "__typename": "TimelineTweet",
+            "tweet_results": {
+             "result": {
+              "__typename": "Tweet",
+              "rest_id": "2123717988971446402",
+              "core": {
+               "user_results": {
+                "result": {
+                 "__typename": "User",
+                 "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDE1ODM4",
+                 "rest_id": "1400000000000015838",
+                 "affiliates_highlighted_label": {},
+                 "avatar": {
+                  "image_url": "https://pbs.twimg.com/profile_images/1400000000000015838/demo_normal.jpg"
+                 },
+                 "core": {
+                  "created_at": "Thu May 02 00:00:00 +0000 2019",
+                  "name": "Sheet Tips (demo)",
+                  "screen_name": "SheetTips_Demo"
+                 },
+                 "dm_permissions": {
+                  "can_dm": false
+                 },
+                 "has_graduated_access": true,
+                 "is_blue_verified": true,
+                 "location": {
+                  "location": ""
+                 },
+                 "privacy": {
+                  "protected": false
+                 },
+                 "profile_bio": {
+                  "description": "Demo account for OpenOutlier tests"
+                 },
+                 "relationship_counts": {
+                  "followers": 920000,
+                  "following": 300
+                 },
+                 "tweet_counts": {
+                  "tweets": 900,
+                  "media_tweets": 180
+                 },
+                 "verification": {
+                  "verified": false
+                 },
+                 "professional": {
+                  "rest_id": "1400000000000015838",
+                  "professional_type": "Creator",
+                  "category": []
+                 },
+                 "relationship_perspectives": {
+                  "following": true,
+                  "followed_by": false
+                 },
+                 "pinned_items": []
+                }
+               }
+              },
+              "unmention_data": {},
+              "edit_control": {
+               "edit_tweet_ids": [
+                "2123717988971446402"
+               ],
+               "editable_until_msecs": "1795172400000",
+               "is_edit_eligible": true,
+               "edits_remaining": "5"
+              },
+              "is_translatable": false,
+              "views": {
+               "count": "120000",
+               "state": "EnabledWithCount"
+              },
+              "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+              "legacy": {
+               "bookmark_count": 0,
+               "bookmarked": false,
+               "created_at": "Fri Nov 20 10:00:00 +0000 2026",
+               "conversation_id_str": "2123717988971446402",
+               "display_text_range": [
+                0,
+                31
+               ],
+               "entities": {
+                "hashtags": [],
+                "symbols": [],
+                "timestamps": [],
+                "urls": [],
+                "user_mentions": [],
+                "media": [
+                 {
+                  "display_url": "pic.x.com/demo",
+                  "expanded_url": "https://x.com/SheetTips_Demo/status/2123717988971446402/video/1",
+                  "id_str": "2123717988971446403",
+                  "indices": [
+                   0,
+                   0
+                  ],
+                  "media_key": "3_21237179889714464020",
+                  "media_url_https": "https://pbs.twimg.com/ext_tw_video_thumb/2123717988971446402/pu/img/demo0.jpg",
+                  "type": "video",
+                  "url": "https://t.co/demoMedia",
+                  "original_info": {
+                   "width": 1280,
+                   "height": 720
+                  },
+                  "video_info": {
+                   "aspect_ratio": [
+                    16,
+                    9
+                   ],
+                   "duration_millis": 41000,
+                   "variants": [
+                    {
+                     "content_type": "application/x-mpegURL",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/pl/demo.m3u8"
+                    },
+                    {
+                     "bitrate": 256000,
+                     "content_type": "video/mp4",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/vid/480x270/demo.mp4"
+                    },
+                    {
+                     "bitrate": 2176000,
+                     "content_type": "video/mp4",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/vid/1280x720/demo.mp4"
+                    },
+                    {
+                     "bitrate": 832000,
+                     "content_type": "video/mp4",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/vid/640x360/demo.mp4"
+                    }
+                   ]
+                  }
+                 }
+                ]
+               },
+               "favorite_count": 3000,
+               "favorited": false,
+               "full_text": "conditional formatting tip #130 https://t.co/demoMedia",
+               "is_quote_status": false,
+               "lang": "en",
+               "possibly_sensitive": false,
+               "quote_count": 0,
+               "reply_count": 0,
+               "retweet_count": 0,
+               "retweeted": false,
+               "user_id_str": "1400000000000015838",
+               "id_str": "2123717988971446402",
+               "extended_entities": {
+                "media": [
+                 {
+                  "display_url": "pic.x.com/demo",
+                  "expanded_url": "https://x.com/SheetTips_Demo/status/2123717988971446402/video/1",
+                  "id_str": "2123717988971446403",
+                  "indices": [
+                   0,
+                   0
+                  ],
+                  "media_key": "3_21237179889714464020",
+                  "media_url_https": "https://pbs.twimg.com/ext_tw_video_thumb/2123717988971446402/pu/img/demo0.jpg",
+                  "type": "video",
+                  "url": "https://t.co/demoMedia",
+                  "original_info": {
+                   "width": 1280,
+                   "height": 720
+                  },
+                  "video_info": {
+                   "aspect_ratio": [
+                    16,
+                    9
+                   ],
+                   "duration_millis": 41000,
+                   "variants": [
+                    {
+                     "content_type": "application/x-mpegURL",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/pl/demo.m3u8"
+                    },
+                    {
+                     "bitrate": 256000,
+                     "content_type": "video/mp4",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/vid/480x270/demo.mp4"
+                    },
+                    {
+                     "bitrate": 2176000,
+                     "content_type": "video/mp4",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/vid/1280x720/demo.mp4"
+                    },
+                    {
+                     "bitrate": 832000,
+                     "content_type": "video/mp4",
+                     "url": "https://video.twimg.com/ext_tw_video/2123717988971446402/pu/vid/640x360/demo.mp4"
+                    }
+                   ]
+                  }
+                 }
+                ]
+               }
+              }
+             }
+            },
+            "tweetDisplayType": "Tweet"
+           }
+          }
+         },
+         {
+          "entryId": "tweet-2123672690488246404",
+          "sortIndex": "2123672690488246404",
+          "content": {
+           "entryType": "TimelineTimelineItem",
+           "__typename": "TimelineTimelineItem",
+           "itemContent": {
+            "itemType": "TimelineTweet",
+            "__typename": "TimelineTweet",
+            "tweet_results": {
+             "result": {
+              "__typename": "TweetWithVisibilityResults",
+              "tweet": {
+               "__typename": "Tweet",
+               "rest_id": "2123672690488246404",
+               "core": {
+                "user_results": {
+                 "result": {
+                  "__typename": "User",
+                  "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDIzNzU3",
+                  "rest_id": "1400000000000023757",
+                  "affiliates_highlighted_label": {},
+                  "avatar": {
+                   "image_url": "https://pbs.twimg.com/profile_images/1400000000000023757/demo_normal.jpg"
+                  },
+                  "core": {
+                   "created_at": "Thu May 02 00:00:00 +0000 2019",
+                   "name": "Tiny Maker",
+                   "screen_name": "tiny_maker_demo"
+                  },
+                  "dm_permissions": {
+                   "can_dm": false
+                  },
+                  "has_graduated_access": true,
+                  "is_blue_verified": false,
+                  "location": {
+                   "location": ""
+                  },
+                  "privacy": {
+                   "protected": false
+                  },
+                  "profile_bio": {
+                   "description": "Demo account for OpenOutlier tests"
+                  },
+                  "relationship_counts": {
+                   "followers": 85,
+                   "following": 401
+                  },
+                  "tweet_counts": {
+                   "tweets": 211,
+                   "media_tweets": 42
+                  },
+                  "verification": {
+                   "verified": false
+                  },
+                  "relationship_perspectives": {
+                   "following": false,
+                   "followed_by": false
+                  },
+                  "pinned_items": []
+                 }
+                }
+               },
+               "unmention_data": {},
+               "edit_control": {
+                "edit_tweet_ids": [
+                 "2123672690488246404"
+                ],
+                "editable_until_msecs": "1795161600000",
+                "is_edit_eligible": true,
+                "edits_remaining": "5"
+               },
+               "is_translatable": false,
+               "views": {
+                "count": "40",
+                "state": "EnabledWithCount"
+               },
+               "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+               "legacy": {
+                "bookmark_count": 0,
+                "bookmarked": false,
+                "created_at": "Fri Nov 20 07:00:00 +0000 2026",
+                "conversation_id_str": "2123672690488246404",
+                "display_text_range": [
+                 0,
+                 15
+                ],
+                "entities": {
+                 "hashtags": [],
+                 "symbols": [],
+                 "timestamps": [],
+                 "urls": [],
+                 "user_mentions": []
+                },
+                "favorite_count": 2,
+                "favorited": false,
+                "full_text": "FILTER tip #132",
+                "is_quote_status": false,
+                "lang": "en",
+                "possibly_sensitive": false,
+                "quote_count": 0,
+                "reply_count": 0,
+                "retweet_count": 0,
+                "retweeted": false,
+                "user_id_str": "1400000000000023757",
+                "id_str": "2123672690488246404"
+               }
+              },
+              "tweetInterstitial": {
+               "__typename": "ContextualTweetInterstitial"
+              }
+             }
+            },
+            "tweetDisplayType": "Tweet"
+           }
+          }
+         },
+         {
+          "entryId": "tweet-2123642491499446405",
+          "sortIndex": "2123642491499446405",
+          "content": {
+           "entryType": "TimelineTimelineItem",
+           "__typename": "TimelineTimelineItem",
+           "itemContent": {
+            "itemType": "TimelineTweet",
+            "__typename": "TimelineTweet",
+            "tweet_results": {
+             "result": {
+              "__typename": "Tweet",
+              "rest_id": "2123642491499446405",
+              "core": {
+               "user_results": {
+                "result": {
+                 "__typename": "User",
+                 "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDA3OTE5",
+                 "rest_id": "1400000000000007919",
+                 "affiliates_highlighted_label": {},
+                 "avatar": {
+                  "image_url": "https://pbs.twimg.com/profile_images/1400000000000007919/demo_normal.jpg"
+                 },
+                 "core": {
+                  "created_at": "Thu May 02 00:00:00 +0000 2019",
+                  "name": "Excel Bugs (demo)",
+                  "screen_name": "ExcelBugs_Demo"
+                 },
+                 "dm_permissions": {
+                  "can_dm": false
+                 },
+                 "has_graduated_access": true,
+                 "is_blue_verified": true,
+                 "location": {
+                  "location": ""
+                 },
+                 "privacy": {
+                  "protected": false
+                 },
+                 "profile_bio": {
+                  "description": "Demo account for OpenOutlier tests"
+                 },
+                 "relationship_counts": {
+                  "followers": 18400,
+                  "following": 300
+                 },
+                 "tweet_counts": {
+                  "tweets": 2140,
+                  "media_tweets": 428
+                 },
+                 "verification": {
+                  "verified": false
+                 },
+                 "professional": {
+                  "rest_id": "1400000000000007919",
+                  "professional_type": "Creator",
+                  "category": []
+                 },
+                 "relationship_perspectives": {
+                  "following": true,
+                  "followed_by": true
+                 },
+                 "pinned_items": [
+                  {
+                   "rest_id": "2065766129464246361"
+                  }
+                 ]
+                }
+               }
+              },
+              "unmention_data": {},
+              "edit_control": {
+               "edit_tweet_ids": [
+                "2123642491499446405"
+               ],
+               "editable_until_msecs": "1795154400000",
+               "is_edit_eligible": true,
+               "edits_remaining": "5"
+              },
+              "is_translatable": false,
+              "views": {
+               "count": "2600",
+               "state": "EnabledWithCount"
+              },
+              "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+              "legacy": {
+               "bookmark_count": 0,
+               "bookmarked": false,
+               "created_at": "Fri Nov 20 05:00:00 +0000 2026",
+               "conversation_id_str": "2123642491499446405",
+               "display_text_range": [
+                0,
+                16
+               ],
+               "entities": {
+                "hashtags": [],
+                "symbols": [],
+                "timestamps": [],
+                "urls": [],
+                "user_mentions": []
+               },
+               "favorite_count": 30,
+               "favorited": false,
+               "full_text": "XLOOKUP tip #133",
+               "is_quote_status": false,
+               "lang": "en",
+               "possibly_sensitive": false,
+               "quote_count": 0,
+               "reply_count": 0,
+               "retweet_count": 0,
+               "retweeted": false,
+               "user_id_str": "1400000000000007919",
+               "id_str": "2123642491499446405"
+              }
+             }
+            },
+            "tweetDisplayType": "Tweet"
+           }
+          }
+         },
+         {
+          "entryId": "tweet-2123627392005046406",
+          "sortIndex": "2123627392005046406",
+          "content": {
+           "entryType": "TimelineTimelineItem",
+           "__typename": "TimelineTimelineItem",
+           "itemContent": {
+            "itemType": "TimelineTweet",
+            "__typename": "TimelineTweet",
+            "tweet_results": {
+             "result": {
+              "__typename": "Tweet",
+              "rest_id": "2123627392005046406",
+              "core": {
+               "user_results": {
+                "result": {
+                 "__typename": "User",
+                 "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDM5NTk1",
+                 "rest_id": "1400000000000039595",
+                 "affiliates_highlighted_label": {},
+                 "avatar": {
+                  "image_url": "https://pbs.twimg.com/profile_images/1400000000000039595/demo_normal.jpg"
+                 },
+                 "core": {
+                  "created_at": "Thu May 02 00:00:00 +0000 2019",
+                  "name": "Reply Guy",
+                  "screen_name": "reply_guy_demo"
+                 },
+                 "dm_permissions": {
+                  "can_dm": false
+                 },
+                 "has_graduated_access": true,
+                 "is_blue_verified": false,
+                 "location": {
+                  "location": ""
+                 },
+                 "privacy": {
+                  "protected": false
+                 },
+                 "profile_bio": {
+                  "description": "Demo account for OpenOutlier tests"
+                 },
+                 "relationship_counts": {
+                  "followers": 1300,
+                  "following": 300
+                 },
+                 "tweet_counts": {
+                  "tweets": 900,
+                  "media_tweets": 180
+                 },
+                 "verification": {
+                  "verified": false
+                 },
+                 "relationship_perspectives": {
+                  "following": false,
+                  "followed_by": false
+                 },
+                 "pinned_items": []
+                }
+               }
+              },
+              "unmention_data": {},
+              "edit_control": {
+               "edit_tweet_ids": [
+                "2123627392005046406"
+               ],
+               "editable_until_msecs": "1795150800000",
+               "is_edit_eligible": false,
+               "edits_remaining": "5"
+              },
+              "is_translatable": false,
+              "views": {
+               "count": "300",
+               "state": "EnabledWithCount"
+              },
+              "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+              "legacy": {
+               "bookmark_count": 0,
+               "bookmarked": false,
+               "created_at": "Fri Nov 20 04:00:00 +0000 2026",
+               "conversation_id_str": "2123627392005046406",
+               "display_text_range": [
+                0,
+                12
+               ],
+               "entities": {
+                "hashtags": [],
+                "symbols": [],
+                "timestamps": [],
+                "urls": [],
+                "user_mentions": []
+               },
+               "favorite_count": 4,
+               "favorited": false,
+               "full_text": "RT @SheetTips_Demo: pivot tables tip #108 https://t.co/demoMedia",
+               "is_quote_status": false,
+               "lang": "en",
+               "possibly_sensitive": false,
+               "quote_count": 0,
+               "reply_count": 0,
+               "retweet_count": 0,
+               "retweeted": false,
+               "user_id_str": "1400000000000039595",
+               "id_str": "2123627392005046406",
+               "retweeted_status_result": {
+                "result": {
+                 "__typename": "Tweet",
+                 "rest_id": "2122661024363446380",
+                 "core": {
+                  "user_results": {
+                   "result": {
+                    "__typename": "User",
+                    "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDE1ODM4",
+                    "rest_id": "1400000000000015838",
+                    "affiliates_highlighted_label": {},
+                    "avatar": {
+                     "image_url": "https://pbs.twimg.com/profile_images/1400000000000015838/demo_normal.jpg"
+                    },
+                    "core": {
+                     "created_at": "Thu May 02 00:00:00 +0000 2019",
+                     "name": "Sheet Tips (demo)",
+                     "screen_name": "SheetTips_Demo"
+                    },
+                    "dm_permissions": {
+                     "can_dm": false
+                    },
+                    "has_graduated_access": true,
+                    "is_blue_verified": true,
+                    "location": {
+                     "location": ""
+                    },
+                    "privacy": {
+                     "protected": false
+                    },
+                    "profile_bio": {
+                     "description": "Demo account for OpenOutlier tests"
+                    },
+                    "relationship_counts": {
+                     "followers": 920000,
+                     "following": 300
+                    },
+                    "tweet_counts": {
+                     "tweets": 900,
+                     "media_tweets": 180
+                    },
+                    "verification": {
+                     "verified": false
+                    },
+                    "professional": {
+                     "rest_id": "1400000000000015838",
+                     "professional_type": "Creator",
+                     "category": []
+                    },
+                    "relationship_perspectives": {
+                     "following": true,
+                     "followed_by": false
+                    },
+                    "pinned_items": []
+                   }
+                  }
+                 },
+                 "unmention_data": {},
+                 "edit_control": {
+                  "edit_tweet_ids": [
+                   "2122661024363446380"
+                  ],
+                  "editable_until_msecs": "1794920400000",
+                  "is_edit_eligible": true,
+                  "edits_remaining": "5"
+                 },
+                 "is_translatable": false,
+                 "views": {
+                  "count": "88000",
+                  "state": "EnabledWithCount"
+                 },
+                 "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+                 "legacy": {
+                  "bookmark_count": 0,
+                  "bookmarked": false,
+                  "created_at": "Tue Nov 17 12:00:00 +0000 2026",
+                  "conversation_id_str": "2122661024363446380",
+                  "display_text_range": [
+                   0,
+                   21
+                  ],
+                  "entities": {
+                   "hashtags": [],
+                   "symbols": [],
+                   "timestamps": [],
+                   "urls": [],
+                   "user_mentions": [],
+                   "media": [
+                    {
+                     "display_url": "pic.x.com/demo",
+                     "expanded_url": "https://x.com/SheetTips_Demo/status/2122661024363446380/photo/1",
+                     "id_str": "2122661024363446381",
+                     "indices": [
+                      0,
+                      0
+                     ],
+                     "media_key": "3_21226610243634463800",
+                     "media_url_https": "https://pbs.twimg.com/media/demo21226610243634463800.jpg",
+                     "type": "photo",
+                     "url": "https://t.co/demoMedia",
+                     "original_info": {
+                      "width": 1280,
+                      "height": 720
+                     }
+                    }
+                   ]
+                  },
+                  "favorite_count": 2000,
+                  "favorited": false,
+                  "full_text": "pivot tables tip #108 https://t.co/demoMedia",
+                  "is_quote_status": false,
+                  "lang": "en",
+                  "possibly_sensitive": false,
+                  "quote_count": 0,
+                  "reply_count": 0,
+                  "retweet_count": 0,
+                  "retweeted": false,
+                  "user_id_str": "1400000000000015838",
+                  "id_str": "2122661024363446380",
+                  "extended_entities": {
+                   "media": [
+                    {
+                     "display_url": "pic.x.com/demo",
+                     "expanded_url": "https://x.com/SheetTips_Demo/status/2122661024363446380/photo/1",
+                     "id_str": "2122661024363446381",
+                     "indices": [
+                      0,
+                      0
+                     ],
+                     "media_key": "3_21226610243634463800",
+                     "media_url_https": "https://pbs.twimg.com/media/demo21226610243634463800.jpg",
+                     "type": "photo",
+                     "url": "https://t.co/demoMedia",
+                     "original_info": {
+                      "width": 1280,
+                      "height": 720
+                     }
+                    }
+                   ]
+                  }
+                 }
+                }
+               }
+              }
+             }
+            },
+            "tweetDisplayType": "Tweet"
+           }
+          }
+         },
+         {
+          "entryId": "promoted-tweet-2109252673336246407",
+          "sortIndex": "1897500000000000000",
+          "content": {
+           "entryType": "TimelineTimelineItem",
+           "__typename": "TimelineTimelineItem",
+           "itemContent": {
+            "itemType": "TimelineTweet",
+            "__typename": "TimelineTweet",
+            "tweet_results": {
+             "result": {
+              "__typename": "Tweet",
+              "rest_id": "2109252673336246407",
+              "core": {
+               "user_results": {
+                "result": {
+                 "__typename": "User",
+                 "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDMxNjc2",
+                 "rest_id": "1400000000000031676",
+                 "affiliates_highlighted_label": {},
+                 "avatar": {
+                  "image_url": "https://pbs.twimg.com/profile_images/1400000000000031676/demo_normal.jpg"
+                 },
+                 "core": {
+                  "created_at": "Thu May 02 00:00:00 +0000 2019",
+                  "name": "Ad Brand",
+                  "screen_name": "AdBrand_Demo"
+                 },
+                 "dm_permissions": {
+                  "can_dm": false
+                 },
+                 "has_graduated_access": true,
+                 "is_blue_verified": true,
+                 "location": {
+                  "location": ""
+                 },
+                 "privacy": {
+                  "protected": false
+                 },
+                 "profile_bio": {
+                  "description": "Demo account for OpenOutlier tests"
+                 },
+                 "relationship_counts": {
+                  "followers": 51000,
+                  "following": 300
+                 },
+                 "tweet_counts": {
+                  "tweets": 900,
+                  "media_tweets": 180
+                 },
+                 "verification": {
+                  "verified": false
+                 },
+                 "professional": {
+                  "rest_id": "1400000000000031676",
+                  "professional_type": "Creator",
+                  "category": []
+                 },
+                 "relationship_perspectives": {
+                  "following": false,
+                  "followed_by": false
+                 },
+                 "pinned_items": []
+                }
+               }
+              },
+              "unmention_data": {},
+              "edit_control": {
+               "edit_tweet_ids": [
+                "2109252673336246407"
+               ],
+               "editable_until_msecs": "1791723600000",
+               "is_edit_eligible": true,
+               "edits_remaining": "5"
+              },
+              "is_translatable": false,
+              "views": {
+               "count": "900000",
+               "state": "EnabledWithCount"
+              },
+              "source": "<a href=\"https://mobile.twitter.com\" rel=\"nofollow\">Twitter Web App</a>",
+              "legacy": {
+               "bookmark_count": 0,
+               "bookmarked": false,
+               "created_at": "Sun Oct 11 12:00:00 +0000 2026",
+               "conversation_id_str": "2109252673336246407",
+               "display_text_range": [
+                0,
+                15
+               ],
+               "entities": {
+                "hashtags": [],
+                "symbols": [],
+                "timestamps": [],
+                "urls": [
+                 {
+                  "display_url": "brand.example/buy",
+                  "expanded_url": "https://brand.example/buy",
+                  "url": "https://t.co/demoLink",
+                  "indices": [
+                   0,
+                   0
+                  ]
+                 }
+                ],
+                "user_mentions": []
+               },
+               "favorite_count": 80,
+               "favorited": false,
+               "full_text": "LAMBDA tip #135",
+               "is_quote_status": false,
+               "lang": "en",
+               "possibly_sensitive": false,
+               "quote_count": 0,
+               "reply_count": 0,
+               "retweet_count": 0,
+               "retweeted": false,
+               "user_id_str": "1400000000000031676",
+               "id_str": "2109252673336246407"
+              },
+              "card": {
+               "rest_id": "card://2109252673336246407",
+               "legacy": {
+                "name": "summary_large_image",
+                "url": "https://t.co/demoLink",
+                "binding_values": [
+                 {
+                  "key": "card_url",
+                  "value": {
+                   "string_value": "https://t.co/demoLink",
+                   "type": "STRING"
+                  }
+                 },
+                 {
+                  "key": "title",
+                  "value": {
+                   "string_value": "Demo page",
+                   "type": "STRING"
+                  }
+                 }
+                ]
+               }
+              }
+             }
+            },
+            "tweetDisplayType": "Tweet",
+            "promotedMetadata": {
+             "advertiser_results": {
+              "result": {
+               "__typename": "User",
+               "id": "VXNlcjoxNDAwMDAwMDAwMDAwMDMxNjc2",
+               "rest_id": "1400000000000031676",
+               "affiliates_highlighted_label": {},
+               "avatar": {
+                "image_url": "https://pbs.twimg.com/profile_images/1400000000000031676/demo_normal.jpg"
+               },
+               "core": {
+                "created_at": "Thu May 02 00:00:00 +0000 2019",
+                "name": "Ad Brand",
+                "screen_name": "AdBrand_Demo"
+               },
+               "dm_permissions": {
+                "can_dm": false
+               },
+               "has_graduated_access": true,
+               "is_blue_verified": true,
+               "location": {
+                "location": ""
+               },
+               "privacy": {
+                "protected": false
+               },
+               "profile_bio": {
+                "description": "Demo account for OpenOutlier tests"
+               },
+               "relationship_counts": {
+                "followers": 51000,
+                "following": 300
+               },
+               "tweet_counts": {
+                "tweets": 900,
+                "media_tweets": 180
+               },
+               "verification": {
+                "verified": false
+               },
+               "professional": {
+                "rest_id": "1400000000000031676",
+                "professional_type": "Creator",
+                "category": []
+               },
+               "relationship_perspectives": {
+                "following": false,
+                "followed_by": false
+               },
+               "pinned_items": []
+              }
+             },
+             "disclosureType": "NoDisclosure",
+             "impressionId": "demo",
+             "clickTrackingInfo": {}
+            }
+           }
+          }
+         },
+         {
+          "entryId": "cursor-top-9",
+          "sortIndex": "9",
+          "content": {
+           "entryType": "TimelineTimelineCursor",
+           "__typename": "TimelineTimelineCursor",
+           "value": "DAABCgABtop9",
+           "cursorType": "Top"
+          }
+         },
+         {
+          "entryId": "cursor-bottom-8",
+          "sortIndex": "8",
+          "content": {
+           "entryType": "TimelineTimelineCursor",
+           "__typename": "TimelineTimelineCursor",
+           "value": "DAABCgABbottom8",
+           "cursorType": "Bottom"
+          }
+         }
+        ]
+       },
+       {
+        "type": "TimelineShowAlert",
+        "alertType": "NewTweets",
+        "triggerDelayMs": 240000,
+        "usersResults": []
+       }
+      ],
+      "metadata": {}
+     }
+    }
+   }
+  }
+ }
+]
