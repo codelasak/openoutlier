@@ -151,6 +151,11 @@
     F('x.autoscroll', 'x', 1, true, 'Yavaş otomatik kaydırma', 'Slow auto-scroll',
       'Profilde sayfalar arasında en az 3 sn bekler; 6 ay, 300 post ya da rate limit düşünce durur.', 'Waits at least 3 s between pages on a profile; stops at 6 months, 300 posts or when X\'s rate limit runs low.',
       { available: true, surface: ['x:profile'] }),
+    // X Phase 2 (docs/x-plan.md section 3).
+    F('x.own', 'x', 2, true, 'Hesabım ve ilerleme', 'My account & progress',
+      'Kendi X hesabın: orijinal postlar ve yanıtlar ayrı, Original Content Rewards ilerlemesi (doğrulanmış takipçi /500, 90 günde doğrulanmış gösterim /500K, tahmini tarih), ne işe yarıyor, en iyi saat, yeni postun ilk 2 saati. x.com/i/account_analytics açıldığında okur; bridge açıksa günlük geçmişi saklar.',
+      'Your own X account: originals and replies apart, Original Content Rewards progress (verified followers /500, verified impressions in 90 days /500K, an ETA), what works, best hours, a new post\'s first 2 hours. Reads x.com/i/account_analytics when you open it; keeps the daily history when the bridge runs.',
+      { available: true, optional: ['bridge'], surface: ['x:profile', 'x:status', 'library', 'bridge'] }),
 
     F('tracker', 'background', 1, true, 'Niş takibi', 'Niche tracking',
       'Takip edilen kanalları RSS ve Data API ile düzenli ölçer.', 'Measures tracked channels on a schedule with RSS and the Data API.',

@@ -770,6 +770,9 @@
     return true;
   });
 
+  // X Phase 2 (src/x-own-bg.js) talks to the same bridge through these.
+  if (typeof self !== 'undefined') self.OpenOutlierBridgeLink = { findServer: findServer, getState: getState, post: post, read: read };
+
   // ---- schedule -----------------------------------------------------------------
   chrome.alarms.get(ALARM).then(function (a) { if (!a) chrome.alarms.create(ALARM, { periodInMinutes: 0.5 }); },
     function () { chrome.alarms.create(ALARM, { periodInMinutes: 0.5 }); });

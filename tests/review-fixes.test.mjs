@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 
 process.env.OPENOUTLIER_HOME = mkdtempSync(join(tmpdir(), 'openoutlier-review-home-'));
 delete process.env.OPENOUTLIER_YOUTUBE_API_KEY;
-const { Store, collapseRssRuns, RSS_GAP_YOUNG } = await import('../mcp/store.mjs');
+const { Store, collapseRssRuns, RSS_GAP_YOUNG, SCHEMA_VERSION } = await import('../mcp/store.mjs');
 const { Tracker } = await import('../mcp/tracker.mjs');
 const N = await import('../mcp/niche.mjs');
 const V = createRequire(import.meta.url)('../src/velocity.js');
@@ -103,7 +103,7 @@ test('A1 migration 6: existing runs of equal RSS readings collapse, curves and c
   const beforeOld = s.videoStats('yTreviewOld');
   // Run migration 6 again from version 5.
   s.setMeta('schema_version', 5);
-  assert.equal(s.migrate(), 8);
+  assert.equal(s.migrate(), SCHEMA_VERSION);
   const countAfter = s.db.prepare('SELECT COUNT(*) AS n FROM video_stats').get().n;
   assert.ok(countAfter < countAll * 0.5, `rows ${countAll} → ${countAfter}`);
   const afterNew = s.videoStats('yTreview001');

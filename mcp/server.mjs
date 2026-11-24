@@ -26,6 +26,7 @@ import { Tracker, trackerStatus } from './tracker.mjs';
 import { registerNicheTools, INSTRUCTIONS as NICHE_INSTRUCTIONS, trackingSummary } from './niche-tools.mjs';
 import { registerContentTools, INSTRUCTIONS as CONTENT_INSTRUCTIONS } from './content.mjs';
 import { registerOwnTools } from './own-tools.mjs';
+import { registerXOwnTools, INSTRUCTIONS as X_OWN_INSTRUCTIONS } from './x-own.mjs'; // X Phase 2: my_x_account, my_x_progress, x_patterns
 import { registerDiscoveryTools, INSTRUCTIONS as DISCOVERY_INSTRUCTIONS } from './discovery.mjs';
 import { status as providerStatus } from './providers/index.mjs';
 
@@ -74,7 +75,8 @@ const server = new McpServer(
       YT_ANALYTICS_INSTRUCTIONS,
       NICHE_INSTRUCTIONS,
       CONTENT_INSTRUCTIONS,
-      DISCOVERY_INSTRUCTIONS
+      DISCOVERY_INSTRUCTIONS,
+      X_OWN_INSTRUCTIONS
     ].join('\n')
   }
 );
@@ -563,6 +565,7 @@ registerNicheTools(server, { z, json, safe, store });
 registerContentTools(server, { z, json, safe, store });
 registerDiscoveryTools(server, { z, json, safe, store });
 registerOwnTools(server, { z, json, safe, store });
+registerXOwnTools(server, { z, json, safe, store });
 registerTranscriptTool(server, { z, json, safe, fail, youtubeIdOf, findReel, readLibrary });
 // The bridge port Google's sign-in redirects to; it must be a bridge that knows the callback.
 registerAnalyticsTools(server, { z, json, safe, bridgePort: async () => {
