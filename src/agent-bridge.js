@@ -40,6 +40,8 @@
   var ORG_KEY = 'rs:org';
   var WATCHES_KEY = 'rs:watches';   // Reddit keyword watches (src/mentions-bg.js)
   var MENTIONS_KEY = 'rs:mentions'; // { items: {id: mention}, read: {id: 1} }
+  var XVOICE_KEY = 'rs:x-voice';    // { text, updatedAt, source, model? }: the X voice profile (src/x-llm-bg.js)
+  var XWATCH_KEY = 'rs:x:watch';    // { at, status: watchStatus(), weights: currentWeights() } from the bridge (mcp/x-watch.mjs)
   var SETTINGS_KEY = 'rs:settings';
   var STATE_KEY = 'rs:bridge'; // { port, syncId, connected, lastSyncAt, lastError }
   var ALERTS_KEY = 'rs:niche-alerts'; // { items: [breakout], unseen: n } (newest first, at most 40)
@@ -128,6 +130,8 @@
     return {
       accounts: accounts, org: all[ORG_KEY] || null,
       watches: all[WATCHES_KEY] || [], mentions: all[MENTIONS_KEY] || { items: {}, read: {} },
+      // X voice profile (plain text the user edits; for MCP x_voice_profile / x_draft_check). NEVER xllm:key.
+      xVoice: all[XVOICE_KEY] || null,
       count: Object.keys(all).filter(function (k) { return k.indexOf(KEY_PREFIX) === 0; }).length
     };
   }
@@ -148,7 +152,7 @@
     try {
       var snap = await snapshot();
       if (found.health.syncId !== state.syncId || found.health.accounts !== snap.count) {
-        var r = await post(found.port, '/sync', { full: true, accounts: snap.accounts, org: snap.org, watches: snap.watches, mentions: snap.mentions });
+        var r = await post(found.port, '/sync', { full: true, accounts: snap.accounts, org: snap.org, watches: snap.watches, mentions: snap.mentions, xVoice: snap.xVoice });
         await setState({ port: found.port, syncId: r.syncId, connected: true, lastSyncAt: Date.now(), lastError: null, lastBackupAt: found.health.lastBackupAt || null, lastBackupOk: found.health.lastBackupOk });
       } else {
         await setState({ port: found.port, connected: true, lastError: null, lastBackupAt: found.health.lastBackupAt || null, lastBackupOk: found.health.lastBackupOk });
@@ -162,9 +166,10 @@
     }
   }
 
-  function syncSoon(users, org, watches, mentions) {
+  function syncSoon(users, org, watches, mentions, xVoice) {
     users.forEach(function (u) { pendingUsers[u] = true; });
     if (org) pendingUsers[' org'] = true;
+    if (xVoice) pendingUsers[' xvoice'] = true;
     if (watches) pendingUsers[' watches'] = true;
     if (mentions) pendingUsers[' mentions'] = true;
     clearTimeout(pendingTimer);
@@ -177,15 +182,16 @@
     var withOrg = !!pendingUsers[' org'];
     var withWatches = !!pendingUsers[' watches'];
     var withMentions = !!pendingUsers[' mentions'];
+    var withVoice = !!pendingUsers[' xvoice'];
     pendingUsers = {};
-    if (!users.length && !withOrg && !withWatches && !withMentions) return;
+    if (!users.length && !withOrg && !withWatches && !withMentions && !withVoice) return;
     if (!(await enabled())) return;
     var state = await getState();
     if (!state.connected || !state.port) return; // the next tick does a full sync
     try {
       var snap = await snapshot(users);
       var r = await post(state.port, '/sync', { full: false, accounts: snap.accounts, org: withOrg ? snap.org : undefined,
-        watches: withWatches ? snap.watches : undefined, mentions: withMentions ? snap.mentions : undefined });
+        watches: withWatches ? snap.watches : undefined, mentions: withMentions ? snap.mentions : undefined, xVoice: withVoice ? snap.xVoice : undefined });
       await setState({ syncId: r.syncId, lastSyncAt: Date.now(), lastError: null });
     } catch (e) {
       await setState({ connected: false, lastError: String(e.message || e) });
@@ -211,6 +217,7 @@
     var res = await post(found.port, '/settings', JSON.parse(body));
     lastSettings = { body: body, at: Date.now() };
     await saveSettingsAnswer(res);
+    await saveXWatch(res.xWatch).catch(function () {});
     if (res.radarProposal && res.radarProposal.keywords) await applyRadarProposal(res.radarProposal).catch(function () {});
     if (res.niche && Array.isArray(res.niche.alerts) && res.niche.alerts.length) await showBreakouts(found.port, res.niche.alerts);
     if (res.own && Array.isArray(res.own.milestones) && res.own.milestones.length) await showMilestones(found.port, res.own.milestones);
@@ -299,6 +306,19 @@
     await setState({ radarProposalAt: p.at });
   }
 
+  // X Phase 6: the bridge's x-algorithm weights (the algo badge passes rs:x:watch.weights to algoSignal) and
+  // its schema-drift status (the Library warns from rs:x:watch.status.schema.warnings). Written only when it changed,
+  // so x.com tabs listening to storage don't wake up every 5 minutes.
+  async function saveXWatch(w) {
+    if (!w || typeof w !== 'object' || !w.status) return;
+    var cur = (await chrome.storage.local.get(XWATCH_KEY))[XWATCH_KEY];
+    var next = { status: w.status, weights: w.weights && w.weights.weights ? w.weights : null };
+    if (cur && JSON.stringify({ status: cur.status, weights: cur.weights }) === JSON.stringify(next)) return;
+    var o = {};
+    o[XWATCH_KEY] = Object.assign({ at: Date.now() }, next);
+    await chrome.storage.local.set(o);
+  }
+
   function saveSettingsAnswer(res) {
     return setState({
       bridgeApiKey: !!(res.apiKey && res.apiKey.configured),
@@ -348,7 +368,8 @@
     var org = !!changes[ORG_KEY];
     var watches = !!changes[WATCHES_KEY];
     var mentions = !!changes[MENTIONS_KEY];
-    if (users.length || org || watches || mentions) syncSoon(users, org, watches, mentions);
+    var xVoice = !!changes[XVOICE_KEY];
+    if (users.length || org || watches || mentions || xVoice) syncSoon(users, org, watches, mentions, xVoice);
     if (changes[SETTINGS_KEY]) tick();
   });
 

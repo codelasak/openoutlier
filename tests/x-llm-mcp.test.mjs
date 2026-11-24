@@ -42,7 +42,7 @@ test('both tools are read-only; without X data they say how to get it', async ()
   assert.deepEqual([v.saved_profile, v.post_count], [null, 0]);
   assert.match(v.hint, /x\.com/);
   const d = await run('x_draft_check', { draft: 'hello' });
-  assert.equal(d.checks.available, false, 'adapter: no composer, no guessed checks');
+  assert.equal(d.checks.available, false, 'no composer, no guessed checks');
   assert.match(d.rubric, /exactly one fix/i);
   assert.equal(d.own_posts_counted, 0);
 });
@@ -85,5 +85,17 @@ test('x_draft_check: checks from src/x-composer.js, their outliers and patterns,
   assert.deepEqual(d.criteria.map((c) => c.max), [25, 20, 20, 20, 15]);
   assert.match(d.output.fix, /exactly one/);
   assert.match(d.rules, /starting draft/);
-  XT.setComposer(null);
+  XT.setComposer();
+});
+
+test('x_draft_check uses the real src/x-composer.js by default (bait, similarity to the swipe file and recent posts)', async () => {
+  XT.setComposer();
+  const { run } = register({ ownPosts: () => POSTS, swipe: () => [{ id: 's1', text: 'Seven Excel formulas that quietly replaced all of my VBA macros at work', url: 'https://x.com/i/status/1', author: 'someone' }],
+    recentPosts: () => [{ text: 'Unrelated post about cats' }] });
+  const d = await run('x_draft_check', { draft: 'Seven Excel formulas that quietly replaced all of my VBA macros at work. Follow for more!' });
+  assert.equal(d.checks.available, true);
+  assert.ok(d.checks.bait.some((b) => b.level === 'warn'), JSON.stringify(d.checks.bait));
+  assert.equal(d.bait_penalty, 20);
+  assert.ok(d.checks.findings.some((f) => f.id === 'similar'), JSON.stringify(d.checks.findings));
+  assert.ok(d.checks.weighted_length > 50);
 });

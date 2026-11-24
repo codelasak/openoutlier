@@ -35,6 +35,7 @@ import { quotaOf, spendOn, apiKey as defaultApiKey } from './youtube-api.mjs';
 import { NICHE_KINDS, NICHE_AFTER_TICK, upsertJob } from './niche.mjs';
 import { OWN_KINDS } from './own-history.mjs';
 import { DISCOVERY_KINDS } from './discovery.mjs';
+import { X_WATCH_KINDS } from './x-watch.mjs'; // X Phase 6: weekly x-algorithm weights, daily GraphQL schema drift
 
 const require = createRequire(import.meta.url);
 const F = require('../src/features.js');
@@ -76,7 +77,8 @@ export const KINDS = {
   },
   ...NICHE_KINDS,
   ...OWN_KINDS,
-  ...DISCOVERY_KINDS
+  ...DISCOVERY_KINDS,
+  ...X_WATCH_KINDS
 };
 
 /** The resolved feature flags the bridge holds (defaults for anything the extension never sent). */

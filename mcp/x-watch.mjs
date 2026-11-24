@@ -252,9 +252,11 @@ export function watchStatus(store) {
 }
 
 // ---- tracker kinds (mcp/tracker.mjs) -------------------------------------------------------------------------------
-// No `feature`: the x.* toggles are not in src/features.js yet, so each job checks its toggle itself
-// (and records { off: true } while it is off). When features.js gains them, set feature: TOGGLES.*.
+// Spread into KINDS in mcp/tracker.mjs. The tracker runs a kind only while its x.* feature is on
+// (src/features.js: x.weightsUpdate, x.schemaWatch, both on by default); each job also checks its toggle.
+// A new bridge waits FIRST_DELAY before the first check, so a short-lived process (a test, a quick restart) makes no request.
+const FIRST_DELAY = 10 * MIN;
 export const X_WATCH_KINDS = {
-  'x-weights': { singleton: true, every: 7 * DAY, jitter: 2 * HOUR, units: 0, run: weightsJob },
-  'x-schema': { singleton: true, every: DAY, jitter: HOUR, units: 0, run: schemaJob }
+  'x-weights': { singleton: true, feature: TOGGLES.weights, first: (now) => now + FIRST_DELAY, every: 7 * DAY, jitter: 2 * HOUR, units: 0, run: weightsJob },
+  'x-schema': { singleton: true, feature: TOGGLES.schema, first: (now) => now + FIRST_DELAY, every: DAY, jitter: HOUR, units: 0, run: schemaJob }
 };

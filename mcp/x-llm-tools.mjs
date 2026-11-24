@@ -7,24 +7,23 @@
 //   x_draft_check    the LLM-free checks on a draft (src/x-composer.js), the user's own outliers and
 //                    what they share, the saved voice profile, and the scoring rubric (src/x-llm.js)
 //
-// Data access is injected (xData) because the X library (phase 1, src/x.js and the bridge's copy)
-// lands separately. registerXLlmTools(server, { z, json, safe, store, xData }) — wire it from
-// mcp/server.mjs next to registerOwnTools (see docs/x-llm-notes.md).
+// Data access is injected (xData): mcp/server.mjs passes mcp/x-data.mjs, which reads the bridge's copy of
+// the Library (Phase 1 storage), the synced voice profile and the swipe file. Tests pass their own.
+// registerXLlmTools(server, { z, json, safe, store, xData }).
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const L = require('../src/x-llm.js');
 
-// ---- adapter: src/x-composer.js (phase 4's LLM-free draft checks) -------------------------------------
-// ADAPTER: until the composer module is on this branch, x_draft_check says the checks are unavailable
-// instead of guessing them. When src/x-composer.js exists it is used as is (checkDraft, findBait).
-let Composer = null;
-try { Composer = require('../src/x-composer.js'); } catch { Composer = null; }
-export function setComposer(c) { Composer = c || null; }
+// ---- src/x-composer.js (phase 4's LLM-free draft checks: checkDraft, findBait) --------------------------
+// The same module the x.com strip uses. setComposer() swaps it, for tests only.
+const REAL_COMPOSER = require('../src/x-composer.js');
+let Composer = REAL_COMPOSER;
+export function setComposer(c) { Composer = c === undefined ? REAL_COMPOSER : c; }
 
 export function draftChecks(draft, opts = {}) {
   if (!Composer || typeof Composer.checkDraft !== 'function') {
-    return { available: false, note: 'LLM-free checks (src/x-composer.js) are not installed in this build; score the draft with the rubric only.', bait: [] };
+    return { available: false, note: 'The LLM-free checks (src/x-composer.js) did not load; score the draft with the rubric only.', bait: [] };
   }
   const r = Composer.checkDraft(draft, opts);
   return {
@@ -39,13 +38,12 @@ export function draftChecks(draft, opts = {}) {
   };
 }
 
-// ---- adapter: where the user's own X posts come from ---------------------------------------------------
-// Phase 1 stores X posts like the other platforms (accounts x/<handle> in the bridge's copy). Until that
-// is wired, nothing is returned and the tools say so.
+// ---- where the user's own X posts come from (mcp/x-data.mjs in the server; NO_X_DATA when none is passed) ----
 //   ownPosts(store, { limit })   → [{ id, text, views, x, format, created_at }]  the user's own ORIGINAL posts
 //                                   (no replies or reposts), newest first; x = views ÷ their own median
 //   voiceProfile(store)          → { text, updatedAt, source } | null   (the extension's rs:x-voice)
-//   recentPosts(store, { limit }) → [{ text }]  posts seen recently / the swipe file, for the similarity check
+//   recentPosts(store, { limit }) → [{ text, url, author }]  other accounts' posts seen recently, for the similarity check
+//   swipe(store)                 → [{ text, url, author }]  the swipe file (rs:org.swipe), any platform
 export const NO_X_DATA = {
   available: false,
   ownPosts: () => [],

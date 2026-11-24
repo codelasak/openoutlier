@@ -32,6 +32,8 @@ import * as PROV from './providers/index.mjs';
 import * as SB from './providers/socialblade.mjs';
 import * as DFS from './providers/dataforseo.mjs';
 import * as XOWN from './x-own.mjs';
+import { putVoice as putXVoice } from './x-data.mjs';
+import { watchStatus as xWatchStatus, currentWeights as xCurrentWeights } from './x-watch.mjs';
 import { createRequire } from 'node:module';
 
 const Features = createRequire(import.meta.url)('../src/features.js');
@@ -51,7 +53,9 @@ const VERSION = '0.1.0';
 // 'discovery': phase 5 (/youtube/discovery/*: radar, channel map, similar channels and thumbnails, keyword ideas, co-recommendations).
 // 'providers': phase 5's optional third-party providers (/providers*: status, keys, Social Blade backfill, DataForSEO ranks).
 // 'x-own': X Phase 2 (/x/own/*: own analytics days, the Library's My X page, early curves; x_post_stats from /sync).
-const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools', 'discovery', 'providers', 'x-own'];
+// 'x-watch': X Phase 6 (the /settings answer carries xWatch: the weights in use and the schema-drift status).
+// 'x-voice': /sync keeps the X voice profile (rs:x-voice) for x_voice_profile / x_draft_check.
+const FEATURES = ['youtube-download', 'youtube-analytics', 'settings', 'tracker', 'niche', 'own-history', 'cards', 'content-tools', 'discovery', 'providers', 'x-own', 'x-watch', 'x-voice'];
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a); // stdout belongs to MCP
 const seenWrittenAt = {}; // port → when "extension last seen" was last written to status.json
@@ -151,6 +155,7 @@ async function handle(req, res, port) {
     let tracking = null;
     try { tracking = NICHE.syncTracked(store(), lib); } catch (e) { log('niche tracking sync failed:', e.message); }
     try { XOWN.recordStats(store(), body.accounts); } catch (e) { log('x_post_stats failed:', e.message); } // X Phase 2
+    try { putXVoice(store(), body.xVoice); } catch (e) { log('x voice profile failed:', e.message); } // X Phase 5 (undefined = unchanged)
     return send(res, 200, { ok: true, syncId: lib.syncId, accounts: Object.keys(lib.accounts).length, tracking }, origin);
   }
   // Feature flags (src/features.js) and the extension's Data API unit count. Answers what the
@@ -363,7 +368,9 @@ async function settingsAnswer() {
     // New milestones of the connected channels (the extension notifies when own-milestones is on, and acks).
     own: (() => { try { return { channels: OWN.ownChannels(store()).length, milestones: OWN.pendingMilestones(store()) }; } catch { return null; } })(),
     // Phase 5: the optional providers (on / key set / scraping), never the keys.
-    providers: (() => { try { return PROV.status(store()); } catch { return null; } })()
+    providers: (() => { try { return PROV.status(store()); } catch { return null; } })(),
+    // X Phase 6: what the x.com algo badge uses (weights) and the Library warns about (status.schema.warnings).
+    xWatch: (() => { try { const st = store(); return { status: xWatchStatus(st), weights: xCurrentWeights(st) }; } catch { return null; } })()
   };
 }
 

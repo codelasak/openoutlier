@@ -30,6 +30,10 @@ import { registerXOwnTools, INSTRUCTIONS as X_OWN_INSTRUCTIONS } from './x-own.m
 import { registerDiscoveryTools, INSTRUCTIONS as DISCOVERY_INSTRUCTIONS } from './discovery.mjs';
 import { status as providerStatus } from './providers/index.mjs';
 import { registerXGrowthTools, INSTRUCTIONS as X_GROWTH_INSTRUCTIONS } from './x-growth-tools.mjs'; // X Phase 3
+import { registerXLlmTools, X_LLM_INSTRUCTIONS } from './x-llm-tools.mjs'; // X Phase 5: x_voice_profile, x_draft_check
+import { registerXIdeasTools, INSTRUCTIONS as X_IDEAS_INSTRUCTIONS } from './x-ideas.mjs'; // X Phase 4: x_ideas
+import { xData, xPostStats, xFollowerDeltas } from './x-data.mjs'; // the X data Phases 3–5 share
+import { watchStatus as xWatchStatus } from './x-watch.mjs'; // X Phase 6: weights + schema drift jobs
 
 const log = (...a) => console.error('[openoutlier-mcp]', ...a);
 
@@ -78,7 +82,9 @@ const server = new McpServer(
       CONTENT_INSTRUCTIONS,
       DISCOVERY_INSTRUCTIONS,
       X_OWN_INSTRUCTIONS,
-      X_GROWTH_INSTRUCTIONS
+      X_GROWTH_INSTRUCTIONS,
+      X_IDEAS_INSTRUCTIONS,
+      X_LLM_INSTRUCTIONS
     ].join('\n')
   }
 );
@@ -510,7 +516,7 @@ server.registerTool('command_status', {
 
 server.registerTool('bridge_status', {
   title: 'Connection status',
-  description: 'Whether the OpenOutlier extension is connected to this server, when the library was last synced, the last backup, whether yt-dlp + ffmpeg (for YouTube video downloads) are installed, the YouTube Data API key and today\'s quota use (bridge + extension together), the feature switches the user changed, the background tracker (jobs, last heartbeat) and niche tracking (channels, last RSS read, breakouts in the last 7 days, and rss_lag: how far RSS view counts trail the Data API, with how_to_read).',
+  description: 'Whether the OpenOutlier extension is connected to this server, when the library was last synced, the last backup, whether yt-dlp + ffmpeg (for YouTube video downloads) are installed, the YouTube Data API key and today\'s quota use (bridge + extension together), the feature switches the user changed, the background tracker (jobs, last heartbeat) and niche tracking (channels, last RSS read, breakouts in the last 7 days, and rss_lag: how far RSS view counts trail the Data API, with how_to_read), and x_watch: the X algorithm weights in use (bundled or a newer copy from xai-org/x-algorithm) and the daily check that the x.com GraphQL operations OpenOutlier reads still exist.',
   inputSchema: {},
   annotations: { readOnlyHint: true }
 }, () => safe(() => {
@@ -536,7 +542,9 @@ server.registerTool('bridge_status', {
     // Niche tracking: channels, last RSS read, breakouts, and the RSS-vs-API lag check (rss_lag.how_to_read).
     niche_tracking: (() => { try { return trackingSummary(store()); } catch (e) { return { error: e.message }; } })(),
     // Phase 5: the optional third-party providers (on / key set / scraping-based), never the keys.
-    providers: (() => { try { return providerStatus(store()); } catch (e) { return { error: e.message }; } })()
+    providers: (() => { try { return providerStatus(store()); } catch (e) { return { error: e.message }; } })(),
+    // X Phase 6: the x-algorithm weights in use (bundled or a newer copy) and the GraphQL schema-drift check.
+    x_watch: (() => { try { return xWatchStatus(store()); } catch (e) { return { error: e.message }; } })()
   });
 }));
 
@@ -568,7 +576,9 @@ registerContentTools(server, { z, json, safe, store });
 registerDiscoveryTools(server, { z, json, safe, store });
 registerOwnTools(server, { z, json, safe, store });
 registerXOwnTools(server, { z, json, safe, store });
-registerXGrowthTools(server, { z, json, safe, store }); // X Phase 3: x_reply_opportunities, x_reply_roi
+registerXGrowthTools(server, { z, json, safe, store, xPostStats, xFollowerDeltas }); // X Phase 3: x_reply_opportunities, x_reply_roi (+ Phase 2's tables)
+registerXIdeasTools(server, { z, json, safe, store, readLibrary });
+registerXLlmTools(server, { z, json, safe, store, xData });
 registerTranscriptTool(server, { z, json, safe, fail, youtubeIdOf, findReel, readLibrary });
 // The bridge port Google's sign-in redirects to; it must be a bridge that knows the callback.
 registerAnalyticsTools(server, { z, json, safe, bridgePort: async () => {

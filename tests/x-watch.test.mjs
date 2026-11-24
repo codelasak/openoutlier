@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 process.env.OPENOUTLIER_HOME = mkdtempSync(join(tmpdir(), 'openoutlier-xwatch-home-'));
 const W = await import('../mcp/x-watch.mjs');
 const { Store } = await import('../mcp/store.mjs');
-const { Tracker } = await import('../mcp/tracker.mjs');
+const { Tracker, KINDS } = await import('../mcp/tracker.mjs');
 const ALGO = createRequire(import.meta.url)('../src/x-algo.js');
 
 const NOW = Date.UTC(2026, 10, 24, 12);
@@ -214,23 +214,58 @@ test('X_WATCH_KINDS through the Tracker: weekly + daily singletons, only raw Git
   const f = fakeFetch({ [W.ALGO_RAW_URL]: paramRs({ ...ALGO.WEIGHTS.weights, quote: 6 }), [W.GRAPHQL_RAW_URL]: graphql() });
   const t = new Tracker({ store: st, kinds: W.X_WATCH_KINDS, now: () => now, fetch: f.fetch, random: () => 0 });
   t.seed();
+  assert.deepEqual((await t.tick()).ran, [], 'a new bridge waits 10 minutes before the first check');
+  assert.equal(f.calls.length, 0);
+  now = NOW + 10 * 60000;
   const out = await t.tick();
   assert.deepEqual(out.ran.sort(), ['x-schema', 'x-weights']);
   assert.ok(f.calls.every((u) => u.startsWith('https://raw.githubusercontent.com/')));
   assert.equal(W.currentWeights(st).weights.quote, 6);
   assert.equal(st.getMeta(W.SCHEMA_META).ok, true);
-  assert.equal(t.job('x-weights').next_at, NOW + 7 * 864e5);
-  assert.equal(t.job('x-schema').next_at, NOW + 864e5);
+  assert.equal(t.job('x-weights').next_at, now + 7 * 864e5);
+  assert.equal(t.job('x-schema').next_at, now + 864e5);
 
-  now = NOW + 864e5;
+  now += 864e5;
   const day2 = await t.tick();
   assert.deepEqual(day2.ran, ['x-schema'], 'the next day only the daily job is due');
 
   st.setMeta('features', { 'x.schemaWatch': false });
-  now = NOW + 2 * 864e5;
+  now += 864e5;
   const n = f.calls.length;
   await t.tick();
   assert.equal(f.calls.length, n, 'switched off: no request');
-  assert.deepEqual(t.job('x-schema').data, { off: true });
+  assert.ok(!t.enabled('x-schema') && t.enabled('x-weights'), 'the tracker skips a kind whose x.* feature is off');
+  st.close();
+});
+
+test('wired: the bridge tracker runs both kinds behind x.weightsUpdate / x.schemaWatch (src/features.js)', () => {
+  assert.equal(KINDS['x-weights'], W.X_WATCH_KINDS['x-weights']);
+  assert.equal(KINDS['x-schema'], W.X_WATCH_KINDS['x-schema']);
+  assert.equal(KINDS['x-weights'].feature, 'x.weightsUpdate');
+  assert.equal(KINDS['x-schema'].feature, 'x.schemaWatch');
+  const F = createRequire(import.meta.url)('../src/features.js');
+  assert.equal(F.defaults()['x.weightsUpdate'], true);
+  assert.equal(F.defaults()['x.schemaWatch'], true);
+  // Unknown ids would be dropped by Features.sanitize on the bridge's /settings route; these survive.
+  assert.deepEqual(F.sanitize({ 'x.schemaWatch': false }), { 'x.schemaWatch': false });
+});
+
+test('what the extension stores as rs:x:watch: watchStatus + currentWeights, usable by algoSignal as is', () => {
+  const st = new Store(mkdtempSync(join(tmpdir(), 'openoutlier-xwatch-st-')));
+  const post = { views: 10000, likes: 200, replies: 30, reposts: 20, quotes: 5 };
+  const bundled = W.currentWeights(st);
+  assert.equal(bundled, ALGO.WEIGHTS);
+  const newer = { ...ALGO.WEIGHTS, version: '2026-12-01', weights: { ...ALGO.WEIGHTS.weights, reply: ALGO.WEIGHTS.weights.reply * 2 } };
+  st.setMeta(W.WEIGHTS_META, JSON.parse(JSON.stringify(newer)));
+  const cur = JSON.parse(JSON.stringify(W.currentWeights(st))); // as it travels through the /settings answer and chrome.storage
+  assert.equal(cur.version, '2026-12-01');
+  const a = ALGO.algoSignal(post);
+  const b = ALGO.algoSignal(post, { weights: cur });
+  assert.equal(b.version, '2026-12-01');
+  assert.ok(b.score > a.score, 'the newer reply weight is used');
+  const status = W.watchStatus(st);
+  assert.deepEqual(Object.keys(status).sort(), ['schema', 'weights']);
+  assert.equal(status.weights.bundled, false);
+  assert.ok(Array.isArray(status.schema.warnings));
   st.close();
 });

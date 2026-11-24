@@ -118,7 +118,8 @@ test('radar and the shared budget: stops before the reserve, leaves the rest for
   const t = new Tracker({ store: s3, now: () => NOW, fetch: f3.fetch, apiKey: () => KEY, random: () => 0, budget: 9000 });
   t.seed();
   await t.tick();
-  assert.equal(f3.calls.length, 0, 'niche-radar is off by default');
+  // (X Phase 6's watch jobs read raw.githubusercontent.com through the same fake; only Google requests count here.)
+  assert.equal(f3.calls.filter((u) => !String(u).startsWith('https://raw.githubusercontent.com/')).length, 0, 'niche-radar is off by default');
   s3.setMeta('features', { 'niche-radar': true });
   s3.setMeta('youtube_api_quota', { day: createRequire(import.meta.url)('../src/youtube-api.js').quotaDay(NOW), units: 8950 });
   const out = await t.tick();
