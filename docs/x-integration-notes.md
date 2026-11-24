@@ -306,3 +306,15 @@ The tools were called through a fresh `mcp/server.mjs` over stdio, against the r
 - **Algo badge and reach forecast** (`x.algoBadge`, `x.reachForecast`). Both are off by default. Turning them on is done on the Library's Features page, which the browser tool can't open. Their logic is covered by `tests/x-algo.test.js` and `tests/x-forecast.test.js`.
 - **LLM tools and "Put in compose box"**: they need `x.llm` and the user's Anthropic key.
 - **List feed and the Content tab's per-post shape**: the user has no List and no posts in the last 3 months.
+
+### Writing helper (LLM), live (2026-11-24)
+- The user turned on `x.llm` and added their Anthropic key; the model chosen in Settings is `claude-sonnet-5-5`. `x.algoBadge` and `x.reachForecast` are still off: no `.oo-x-algo` appeared on a profile, a post page or Home.
+- **The strip** shows the draft tools (Score, Hooks, Split into thread, Translate TR↔EN, Idea → draft).
+- **Score preview:** 3,183 characters to send, about $0.015 (at most $0.043), and today's spend against the $2.00 daily cap. The exact text is in a `<details>`.
+- **Score result**, sent with the user's OK:
+  - 51 / 100 overall: hook 10/25, one_idea 16/20, readability 14/20, originality 6/20, pattern_fit 5/15.
+  - Each part has a reason. pattern_fit was compared against the user's own outliers (AI and dev-workflow takes).
+  - One fix, plus a "3 variants with this fix" button.
+  - Cost $0.011: 481 input tokens, a 1,716-token cache write, 533 output tokens.
+  - Nothing was posted.
+- **Not yet run:** "3 variants with this fix" and "Put in compose box" (the next paid call).
