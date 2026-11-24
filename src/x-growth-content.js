@@ -319,7 +319,8 @@
   // ---- UI ----------------------------------------------------------------------------------------------------
   var host = document.createElement('div');
   host.id = 'openoutlier-x-growth';
-  host.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:2147483000;';
+  // Above x.com's account switcher (bottom-left of the nav), below the Post button: at bottom:12px it covered the switcher (live 2026-11-24).
+  host.style.cssText = 'position:fixed;left:12px;bottom:78px;z-index:2147483000;';
   var shadow = host.attachShadow({ mode: 'open' });
   var styleEl = document.createElement('style');
   styleEl.textContent = [

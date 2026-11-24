@@ -22,7 +22,7 @@
 //   media [{ kind 'photo'|'video'|'gif', url, thumb, duration }], duration (s), thumb, files,
 //   isReply, isRepost, quotedId, replyToId, replyToUser, conversationId, threadOf (root id),
 //   threadLength (on a thread root), repostOf, article { id, title }, aiGenerated, edit { ids, editable,
-//   editsRemaining, edited }, pinned, promoted, seenAt.
+//   editsRemaining, edited }, pinned, promoted, embedded (only seen inside a quote / repost), seenAt.
 (function (root, factory) {
   var api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -373,14 +373,16 @@
   }
 
   /** The post plus its embedded posts (a quoted post, the original of a repost) as separate records. */
-  function tweetAndEmbedded(raw, extra, out) {
+  // embedded: true when the post was only reached inside another one (a quoted post, a repost's original),
+  // not as a timeline entry. A profile's own old post quoted today must not count as "how far back we scrolled".
+  function tweetAndEmbedded(raw, extra, out, embedded) {
     var t = unwrapTweet(raw);
     if (!t) return;
     var p = parseTweet(t, extra);
-    if (p) out.push(p);
+    if (p) { p.embedded = !!embedded; out.push(p); }
     var rt = getPath(t, ['legacy', 'retweeted_status_result']) || t.retweeted_status_result;
-    if (rt) tweetAndEmbedded(rt, null, out);
-    if (t.quoted_status_result) tweetAndEmbedded(t.quoted_status_result, null, out);
+    if (rt) tweetAndEmbedded(rt, null, out, true);
+    if (t.quoted_status_result) tweetAndEmbedded(t.quoted_status_result, null, out, true);
   }
 
   // ---- timelines -----------------------------------------------------------
@@ -577,6 +579,7 @@
         out[k] = k === 'duration' || k === 'ownerFollowers' ? b : Math.max(a, b);
       } else if (k === 'pinned' || k === 'promoted' || k === 'aiGenerated') out[k] = Boolean(a) || Boolean(b);
       else if (k === 'viewsHidden') out[k] = Boolean(a) && Boolean(b);
+      else if (k === 'embedded') out[k] = a === undefined ? Boolean(b) : Boolean(a) && Boolean(b); // false once seen as an entry
       else if (k === 'type' && a === 'thread' && b !== 'article') out[k] = a; // a root stays a thread once its parts were seen
       else out[k] = b;
     }

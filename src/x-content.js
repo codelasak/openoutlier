@@ -188,7 +188,7 @@
       bucket[p.code] = X.merge(bucket[p.code], p);
       if (before !== sig(bucket[p.code])) { dirty[id] = true; touched[id] = true; }
       if (p.ownerId && p.kind !== 'repost' && !byRestId[p.ownerId]) byRestId[p.ownerId] = id;
-      if (auto.running && id === auto.account) auto.seen[p.code] = p;
+      if (auto.running && id === auto.account && !p.embedded) auto.seen[p.code] = p;
     });
     // A thread root seen before its parts (or after): link them inside the stored account.
     Object.keys(touched).forEach(function (id) { X.linkThreads(Object.values(accounts[id])); });
@@ -329,7 +329,7 @@
     auto.deadline = deadline || null;
     auto.max = Math.min(max || AUTO.maxPosts, AUTO.maxPosts);
     // Count what is already on the page for this account as seen this run.
-    Object.values(pagePosts).forEach(function (p) { if (storeIdFor(p, ctx()) === auto.account) auto.seen[p.code] = p; });
+    Object.values(pagePosts).forEach(function (p) { if (!p.embedded && storeIdFor(p, ctx()) === auto.account) auto.seen[p.code] = p; });
     auto.timer = setTimeout(tick, 600);
     scheduleRender();
   }

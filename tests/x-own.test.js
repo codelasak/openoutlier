@@ -319,3 +319,17 @@ test('singleHit: median vs mean, "reach comes from a few posts", for any account
   const s3 = P.singleHit(posts);
   assert.ok(s3.n > 30 && s3.median > 0 && s3.mean > 0);
 });
+
+// Live 2026-11-24: the overview has no rest_id and the active-follower field is active_count.
+test('parseOverview: live shape without rest_id → rest_id from the base64 user id; active_count', () => {
+  const live = { data: { viewer_v2: { user_results: { id: Buffer.from('User:921746576019808256').toString('base64'), result: {
+    __typename: 'User', verified_follower_count: '8', relationship_counts: { followers: 79 },
+    realtime_active_followers: { active_count: 36, is_approximate: false },
+    current_time_series: [{ count: 3, engagement_type: 'Displayed', is_engaging_user_verified: 'true', timestamp: Date.UTC(2026, 10, 20) }]
+  } } } } };
+  const p = O.parseOverview(live);
+  assert.equal(p.restId, '921746576019808256');
+  assert.equal(p.verifiedFollowers, 8);
+  assert.equal(p.activeFollowers, 36);
+  assert.equal(p.rows, 1);
+});

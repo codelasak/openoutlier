@@ -45,8 +45,10 @@
 
   function looksUseful(text) {
     // X: a post or user object always has a rest_id; analytics carry current_time_series / tweets_results.
-    if (XCOM) return text.indexOf('"rest_id"') !== -1 && (text.indexOf('"tweet_results"') !== -1 || text.indexOf('"user_results"') !== -1 ||
-      text.indexOf('"tweetResult"') !== -1 || text.indexOf('"screen_name"') !== -1 || text.indexOf('"current_time_series"') !== -1 || text.indexOf('"tweets_results"') !== -1);
+    // The analytics overview (accountOverviewDailyQuery) has no rest_id at all (live 2026-11-24), so it passes on its own.
+    if (XCOM) return text.indexOf('"current_time_series"') !== -1 || text.indexOf('"tweets_results"') !== -1 ||
+      (text.indexOf('"rest_id"') !== -1 && (text.indexOf('"tweet_results"') !== -1 || text.indexOf('"user_results"') !== -1 ||
+      text.indexOf('"tweetResult"') !== -1 || text.indexOf('"screen_name"') !== -1));
     // Cheap pre-filter. Instagram media objects always carry a shortcode ("code");
     // TikTok video items always carry createTime and a stats block.
     // YouTube: every useful response names a videoId (watch, Shorts) or a contentId (grid lockups).

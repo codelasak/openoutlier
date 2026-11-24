@@ -201,8 +201,17 @@
     renderTools(s);
     return s;
   }
+  // The anchor can sit in a flex *row* (live 2026-11-24: tweetTextarea_0_label's parent is a row next to the
+  // avatar), where a full-width strip squeezes the editor to 0 px. Climb until the parent stacks children vertically.
+  function isRow(el) {
+    try { var cs = getComputedStyle(el); return /flex/.test(cs.display) && !/column/.test(cs.flexDirection); } catch (e) { return false; }
+  }
+  function placeAfter(a) {
+    for (var i = 0; i < 6 && a && a.parentElement && isRow(a.parentElement); i++) a = a.parentElement;
+    return a;
+  }
   function place(s) {
-    var a = anchorOf(s.box);
+    var a = placeAfter(anchorOf(s.box));
     if (a && a.parentElement && a.nextSibling !== s.host) a.parentElement.insertBefore(s.host, a.nextSibling);
   }
 

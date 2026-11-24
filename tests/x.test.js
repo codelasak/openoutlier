@@ -424,3 +424,14 @@ test('UserArticlesTweets (profile → Articles) and CommunityTweetsTimeline (a p
   assert.equal(c.posts.length, X.parsePayload(pages('UserOriginalsTimeline')[0].url, JSON.stringify(src)).posts.length);
   assert.ok(!X.PROFILE_OPS.includes('CommunityTweetsTimeline'));
 });
+
+// Live check 2026-11-24: @levelsio quotes his own old posts, which stopped auto-scroll at "6 months" after one page.
+test('posts reached only inside a quote or a repost are flagged embedded; a timeline sighting clears the flag', () => {
+  const all = pages('UserOriginalsTimeline').flatMap((pg) => X.parsePayload(pg.url, JSON.stringify(pg.body)).posts);
+  assert.ok(all.every((p) => typeof p.embedded === 'boolean'));
+  const quoting = all.find((p) => p.quotedId && !p.embedded);
+  if (quoting) assert.equal(all.find((p) => p.code === quoting.quotedId)?.embedded ?? true, true);
+  assert.equal(X.merge({ code: '1', embedded: true }, { code: '1', embedded: false }).embedded, false);
+  assert.equal(X.merge({ code: '1', embedded: false }, { code: '1', embedded: true }).embedded, false);
+  assert.equal(X.merge({ code: '1' }, { code: '1', embedded: true }).embedded, true);
+});

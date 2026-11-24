@@ -107,6 +107,17 @@
     return out;
   }
   /** data.viewer_v2.user_results.result, or the first object with rest_id, or the input. */
+  /** Live overview has no rest_id; viewer_v2.user_results.id is base64 "User:<rest_id>" (2026-11-24). */
+  function userIdOf(raw) {
+    try {
+      var d = raw && raw.data ? raw.data : raw;
+      var id = d && d.viewer_v2 && d.viewer_v2.user_results && d.viewer_v2.user_results.id;
+      if (!id || typeof atob !== 'function') return null;
+      var m = /^User:(\d{1,25})$/.exec(atob(String(id)));
+      return m ? m[1] : null;
+    } catch (e) { return null; }
+  }
+
   function resultOf(raw) {
     var d = raw && raw.data ? raw.data : raw;
     var r = d && d.viewer_v2 && d.viewer_v2.user_results && d.viewer_v2.user_results.result;
@@ -137,7 +148,7 @@
     var r = resultOf(raw);
     var out = { restId: null, verifiedFollowers: null, followers: null, activeFollowers: null, days: {}, from: null, to: null, types: [], rows: 0 };
     if (!r || typeof r !== 'object') return out;
-    out.restId = r.rest_id ? String(r.rest_id) : null;
+    out.restId = r.rest_id ? String(r.rest_id) : userIdOf(raw);
     out.verifiedFollowers = num(r.verified_follower_count != null ? r.verified_follower_count : findKey(r, 'verified_follower_count'));
     var rc = r.relationship_counts || findKey(r, 'relationship_counts');
     out.followers = num(rc && rc.followers != null ? rc.followers : (r.legacy && r.legacy.followers_count));
